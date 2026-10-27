@@ -230,7 +230,7 @@
         "price_size": 16,
         "empty_title": "Your collection is ready",
         "empty_message": "Add store items to replace the theme’s starter content.",
-        "card_outline_color": "#4ea999",
+        "card_outline_color": "#D3EAE6",
         "card_outline_width": 0.5
       }
     },
@@ -441,7 +441,7 @@
         "price_size": 16,
         "empty_title": "Your collection is ready",
         "empty_message": "Add store items to replace the theme’s starter content.",
-        "card_outline_color": "#4ea999",
+        "card_outline_color": "#D3EAE6",
         "card_outline_width": 0.5
       }
     },
@@ -548,7 +548,7 @@
         "price_size": 16,
         "empty_title": "Your collection is ready",
         "empty_message": "Add store items to replace the theme’s starter content.",
-        "card_outline_color": "#4ea999",
+        "card_outline_color": "#D3EAE6",
         "card_outline_width": 0.5
       }
     },
@@ -684,7 +684,7 @@
         "price_size": 16,
         "empty_title": "Your collection is ready",
         "empty_message": "Add store items to replace the theme’s starter content.",
-        "card_outline_color": "#4ea999",
+        "card_outline_color": "#D3EAE6",
         "card_outline_width": 0.5
       }
     }
@@ -726,8 +726,8 @@
           "logo_url": "",
           "logo_text": "Kids & Baby",
           "logo_text_color": "#253a46",
-          "logo_width": 90,
-          "logo_height": 30.6,
+          "logo_width": 85.5,
+          "logo_height": 29.07,
           "logo_fit": "contain",
           "search_font_size": 14,
           "style": "standard",
@@ -757,7 +757,7 @@
           "title_offset_y": 0,
           "title_transform": "none",
           "logo_offset_x": 0,
-          "logo_offset_y": 6,
+          "logo_offset_y": 3,
           "search_icon_offset_x": 0,
           "search_icon_offset_y": 0,
           "search_bar_offset_x": 0,
@@ -765,7 +765,7 @@
           "back_offset_x": 0,
           "back_offset_y": 0,
           "cart_offset_x": 0,
-          "cart_offset_y": -3,
+          "cart_offset_y": -6,
           "wishlist_offset_x": 0,
           "wishlist_offset_y": 0,
           "account_offset_x": 0,
@@ -817,7 +817,7 @@
           "cart_badge_size": 18,
           "cart_badge_background": "#e94b5f",
           "cart_badge_text_color": "#ffffff",
-          "cart_size": 28,
+          "cart_size": 26.6,
           "cart_color": "#1f2933",
           "cart_background": "#ffffff",
           "cart_radius": 12,
@@ -1452,7 +1452,7 @@
             "background_color": "#ffffff",
             "primary_color": "#4ea999",
             "text_color": "#253A46",
-            "card_outline_color": "#4ea999",
+            "card_outline_color": "#D3EAE6",
             "card_outline_width": 0.5
           }
         }
@@ -2663,7 +2663,7 @@
             "background_color": "#ffffff",
             "primary_color": "#4ea999",
             "text_color": "#253A46",
-            "card_outline_color": "#4ea999",
+            "card_outline_color": "#D3EAE6",
             "card_outline_width": 0.5
           }
         },

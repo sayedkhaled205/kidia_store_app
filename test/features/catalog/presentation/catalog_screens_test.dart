@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/app/main_shell.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,11 +26,81 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
-  testWidgets('system back unwinds category levels before returning Home', (tester) async {
-    await tester.pumpWidget(_app(_ScreenCatalogRepository(
-      categoryLayout: 'visual_grid', gridColumns: 2,
-      navigationMode: 'separate_page', deepTree: true,
-    ), const CategoriesScreen(), shell: true));
+  testWidgets(
+    'Android keeps edge back in non-home tabs after category depth clears',
+    (tester) async {
+      final flags = <bool>[];
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        (call) async {
+          if (call.method == 'SystemNavigator.setFrameworkHandlesBack')
+            flags.add(call.arguments as bool);
+          return null;
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          null,
+        ),
+      );
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(
+            categoryLayout: 'visual_grid',
+            gridColumns: 2,
+            navigationMode: 'separate_page',
+            deepTree: true,
+          ),
+          const CategoriesScreen(),
+          shell: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final router = GoRouter.of(tester.element(find.byType(CategoriesScreen)));
+      expect(flags.last, isTrue);
+      await tester.tap(find.text('Women').last);
+      await tester.pumpAndSettle();
+      await router.routerDelegate.popRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Men'), findsOneWidget);
+      expect(
+        flags.last,
+        isTrue,
+        reason:
+            'Android must still send back to Flutter at the Categories root',
+      );
+      for (final tab in ['wishlist', 'account']) {
+        router.go('/$tab');
+        await tester.pumpAndSettle();
+        expect(flags.last, isTrue);
+      }
+      await router.routerDelegate.popRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Home screen'), findsOneWidget);
+      expect(flags.last, isFalse);
+      await tester.pumpWidget(const SizedBox.shrink());
+      router.dispose();
+    },
+    variant: const TargetPlatformVariant({TargetPlatform.android}),
+  );
+
+  testWidgets('system back unwinds category levels before returning Home', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _app(
+        _ScreenCatalogRepository(
+          categoryLayout: 'visual_grid',
+          gridColumns: 2,
+          navigationMode: 'separate_page',
+          deepTree: true,
+        ),
+        const CategoriesScreen(),
+        shell: true,
+      ),
+    );
     await tester.pumpAndSettle();
     final router = GoRouter.of(tester.element(find.byType(CategoriesScreen)));
     await tester.tap(find.text('Women').last);
@@ -52,121 +123,188 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('system back from root navigator respects category depth and dialogs', (tester) async {
-    await tester.pumpWidget(_app(_ScreenCatalogRepository(
-      categoryLayout: 'visual_grid', gridColumns: 2,
-      navigationMode: 'separate_page', deepTree: true,
-    ), const CategoriesScreen(), shell: true));
-    await tester.pumpAndSettle();
-    final context = tester.element(find.byType(CategoriesScreen));
-    final router = GoRouter.of(context);
-    final root = router.routerDelegate.navigatorKey.currentState!;
-    await tester.tap(find.text('Women').last);
-    await tester.pumpAndSettle();
-    showDialog<void>(context: context, builder: (_) => const AlertDialog(title: Text('Category dialog')));
-    await tester.pumpAndSettle();
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-    expect(find.text('Category dialog'), findsNothing);
-    expect(find.byKey(const Key('category-level-title')), findsOneWidget);
-    expect(await root.maybePop(), isTrue);
-    await tester.pumpAndSettle();
-    expect(find.text('Women'), findsOneWidget);
-    expect(find.text('Men'), findsOneWidget);
-    expect(find.text('Home screen'), findsNothing);
-    // A retained category branch must not consume back from Wishlist.
-    await tester.tap(find.text('Women'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('cms-bottom-nav-wishlist')));
-    await tester.pumpAndSettle();
-    await tester.binding.handlePopRoute();
-    await tester.pumpAndSettle();
-    expect(find.text('Home screen'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('visual cards apply saved height and image spacing at every level', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(_app(_ScreenCatalogRepository(
-      categoryLayout: 'visual_grid', gridColumns: 2,
-      navigationMode: 'separate_page', deepTree: true,
-      cardHeight: 192, imageScale: .95, nameHighlightEnabled: true,
-    ), const CategoriesScreen()));
-    await tester.pumpAndSettle();
-    for (final id in [1, 2]) {
-      final card = find.byKey(Key('category-visual-card-$id'));
-      // The material surface sits inside the card's one-pixel outline.
-      expect(tester.getSize(card).height, closeTo(190, 0.1));
-      final image = tester.widget<Transform>(find.byKey(Key('category-visual-image-$id')));
-      expect(image.transform.entry(0, 0), .95);
-      expect(image.transform.entry(1, 1), .95);
-      expect(image.alignment, Alignment.center);
-      expect(tester.takeException(), isNull);
-      await tester.tap(find.text(id == 1 ? 'Women' : 'Dresses').last);
+  testWidgets(
+    'system back from root navigator respects category depth and dialogs',
+    (tester) async {
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(
+            categoryLayout: 'visual_grid',
+            gridColumns: 2,
+            navigationMode: 'separate_page',
+            deepTree: true,
+          ),
+          const CategoriesScreen(),
+          shell: true,
+        ),
+      );
       await tester.pumpAndSettle();
-    }
-  });
-  testWidgets('Categories footer always returns from a child to root after Home', (tester) async {
-    await tester.pumpWidget(_app(_ScreenCatalogRepository(
-      categoryLayout:'visual_grid', gridColumns:2, navigationMode:'separate_page', deepTree:true,
-    ), const CategoriesScreen(), shell:true));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Women').last);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Dresses').last);
-    await tester.pumpAndSettle();
-    expect(find.text('Summer dresses'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('cms-bottom-nav-home')));
-    await tester.pumpAndSettle();
-    expect(find.text('Home screen'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('cms-bottom-nav-categories')));
-    await tester.pumpAndSettle();
-    expect(find.text('Women'), findsOneWidget);
-    expect(find.text('Men'), findsOneWidget);
-    expect(find.byKey(const Key('category-back-to-roots')), findsNothing);
-    // A second tap after opening another child must also reset the local path.
-    await tester.tap(find.text('Women'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('cms-bottom-nav-categories')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('category-back-to-roots')), findsNothing);
-  });
-  for (final direction in TextDirection.values) {
-    for (final width in [320.0,360.0,390.0]) {
-      testWidgets('single-line category title and centered header $direction $width', (tester) async {
-        tester.view.physicalSize = Size(width, 844);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        await tester.pumpWidget(_app(_ScreenCatalogRepository(
-          categoryLayout:'visual_grid', gridColumns:2, rootName:'مستلزمات الأطفال', navigationMode:'separate_page',
-        ), const CategoriesScreen(),direction:direction,scale:1.5));
-        await tester.pumpAndSettle();
-        final title = find.text('مستلزمات الأطفال');
-        expect(tester.widget<Text>(title).maxLines, 1);
-        expect(tester.widget<Text>(title).softWrap, false);
-        expect(find.ancestor(of:title,matching:find.byType(FittedBox)), findsOneWidget);
-        await tester.tap(title);
-        await tester.pumpAndSettle();
-        expect(tester.getCenter(find.byKey(const Key('category-level-title'))).dx, closeTo(width/2, 1));
-        expect(find.byKey(const Key('category-view-all')), findsOneWidget);
-        expect(tester.widget(find.byKey(const Key('category-view-all'))), isA<OutlinedButton>());
-        await tester.tap(find.byKey(const Key('category-back-to-roots')));
-        await tester.pumpAndSettle();
-        expect(find.byKey(const Key('category-level-title')), findsNothing);
+      final context = tester.element(find.byType(CategoriesScreen));
+      final router = GoRouter.of(context);
+      final root = router.routerDelegate.navigatorKey.currentState!;
+      await tester.tap(find.text('Women').last);
+      await tester.pumpAndSettle();
+      showDialog<void>(
+        context: context,
+        builder: (_) => const AlertDialog(title: Text('Category dialog')),
+      );
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Category dialog'), findsNothing);
+      expect(find.byKey(const Key('category-level-title')), findsOneWidget);
+      expect(await root.maybePop(), isTrue);
+      await tester.pumpAndSettle();
+      expect(find.text('Women'), findsOneWidget);
+      expect(find.text('Men'), findsOneWidget);
+      expect(find.text('Home screen'), findsNothing);
+      // A retained category branch must not consume back from Wishlist.
+      await tester.tap(find.text('Women'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('cms-bottom-nav-wishlist')));
+      await tester.pumpAndSettle();
+      await tester.binding.handlePopRoute();
+      await tester.pumpAndSettle();
+      expect(find.text('Home screen'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'visual cards apply saved height and image spacing at every level',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(
+            categoryLayout: 'visual_grid',
+            gridColumns: 2,
+            navigationMode: 'separate_page',
+            deepTree: true,
+            cardHeight: 192,
+            imageScale: .95,
+            nameHighlightEnabled: true,
+          ),
+          const CategoriesScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final id in [1, 2]) {
+        final card = find.byKey(Key('category-visual-card-$id'));
+        // The material surface sits inside the card's one-pixel outline.
+        expect(tester.getSize(card).height, closeTo(190, 0.1));
+        final image = tester.widget<Transform>(
+          find.byKey(Key('category-visual-image-$id')),
+        );
+        expect(image.transform.entry(0, 0), .95);
+        expect(image.transform.entry(1, 1), .95);
+        expect(image.alignment, Alignment.center);
         expect(tester.takeException(), isNull);
-      });
+        await tester.tap(find.text(id == 1 ? 'Women' : 'Dresses').last);
+        await tester.pumpAndSettle();
+      }
+    },
+  );
+  testWidgets(
+    'Categories footer always returns from a child to root after Home',
+    (tester) async {
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(
+            categoryLayout: 'visual_grid',
+            gridColumns: 2,
+            navigationMode: 'separate_page',
+            deepTree: true,
+          ),
+          const CategoriesScreen(),
+          shell: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Women').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Dresses').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Summer dresses'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('cms-bottom-nav-home')));
+      await tester.pumpAndSettle();
+      expect(find.text('Home screen'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('cms-bottom-nav-categories')));
+      await tester.pumpAndSettle();
+      expect(find.text('Women'), findsOneWidget);
+      expect(find.text('Men'), findsOneWidget);
+      expect(find.byKey(const Key('category-back-to-roots')), findsNothing);
+      // A second tap after opening another child must also reset the local path.
+      await tester.tap(find.text('Women'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('cms-bottom-nav-categories')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('category-back-to-roots')), findsNothing);
+    },
+  );
+  for (final direction in TextDirection.values) {
+    for (final width in [320.0, 360.0, 390.0]) {
+      testWidgets(
+        'single-line category title and centered header $direction $width',
+        (tester) async {
+          tester.view.physicalSize = Size(width, 844);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          await tester.pumpWidget(
+            _app(
+              _ScreenCatalogRepository(
+                categoryLayout: 'visual_grid',
+                gridColumns: 2,
+                rootName: 'مستلزمات الأطفال',
+                navigationMode: 'separate_page',
+              ),
+              const CategoriesScreen(),
+              direction: direction,
+              scale: 1.5,
+            ),
+          );
+          await tester.pumpAndSettle();
+          final title = find.text('مستلزمات الأطفال');
+          expect(tester.widget<Text>(title).maxLines, 1);
+          expect(tester.widget<Text>(title).softWrap, false);
+          expect(
+            find.ancestor(of: title, matching: find.byType(FittedBox)),
+            findsOneWidget,
+          );
+          await tester.tap(title);
+          await tester.pumpAndSettle();
+          expect(
+            tester.getCenter(find.byKey(const Key('category-level-title'))).dx,
+            closeTo(width / 2, 1),
+          );
+          expect(find.byKey(const Key('category-view-all')), findsOneWidget);
+          expect(
+            tester.widget(find.byKey(const Key('category-view-all'))),
+            isA<OutlinedButton>(),
+          );
+          await tester.tap(find.byKey(const Key('category-back-to-roots')));
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('category-level-title')), findsNothing);
+          expect(tester.takeException(), isNull);
+        },
+      );
     }
   }
 
-  testWidgets('cursor load more works without an exact page count', (tester) async {
+  testWidgets('cursor load more works without an exact page count', (
+    tester,
+  ) async {
     final repository = _ScreenCatalogRepository(cursor: true);
-      await tester.pumpWidget(_app(repository, const CatalogProductListScreen(
-        request: CatalogProductListRequest(),
-      )));
+    await tester.pumpWidget(
+      _app(
+        repository,
+        const CatalogProductListScreen(request: CatalogProductListRequest()),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.text('Cursor item 1'), findsOneWidget);
@@ -178,30 +316,49 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('square card name band is optional, full width and inherited', (tester) async {
+  testWidgets('square card name band is optional, full width and inherited', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(_app(
-      _ScreenCatalogRepository(categoryLayout: 'visual_grid', gridColumns: 2, nameHighlightEnabled: false),
-      const CategoriesScreen(),
-    ));
+    await tester.pumpWidget(
+      _app(
+        _ScreenCatalogRepository(
+          categoryLayout: 'visual_grid',
+          gridColumns: 2,
+          nameHighlightEnabled: false,
+        ),
+        const CategoriesScreen(),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('category-name-highlight-1')), findsNothing);
-    final cardSize = tester.getSize(find.byKey(const Key('category-visual-card-1')));
+    final cardSize = tester.getSize(
+      find.byKey(const Key('category-visual-card-1')),
+    );
     await tester.pumpWidget(const SizedBox());
-    await tester.pumpWidget(_app(
-      _ScreenCatalogRepository(categoryLayout: 'visual_grid', gridColumns: 2,
-        nameHighlightEnabled: true, navigationMode: 'separate_page'),
-      const CategoriesScreen(),
-    ));
+    await tester.pumpWidget(
+      _app(
+        _ScreenCatalogRepository(
+          categoryLayout: 'visual_grid',
+          gridColumns: 2,
+          nameHighlightEnabled: true,
+          navigationMode: 'separate_page',
+        ),
+        const CategoriesScreen(),
+      ),
+    );
     await tester.pumpAndSettle();
     final band = find.byKey(const Key('category-name-highlight-1'));
     final card = find.byKey(const Key('category-visual-card-1'));
     expect(tester.widget<ColoredBox>(band).color, const Color(0xffe0f2ed));
     expect(tester.getSize(band).width, closeTo(tester.getSize(card).width, 1));
-    expect(tester.getBottomLeft(band).dy, closeTo(tester.getBottomLeft(card).dy, 1));
+    expect(
+      tester.getBottomLeft(band).dy,
+      closeTo(tester.getBottomLeft(card).dy, 1),
+    );
     expect(tester.getSize(card), cardSize);
     await tester.tap(find.text('Women').last);
     await tester.pumpAndSettle();
@@ -209,20 +366,43 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  for (final layout in ['default', 'circular_grid', 'compact_grid', 'sidebar',
-    'image_banner', 'top_tabs', 'split_rows', 'grouped_shelves', 'text_directory']) {
-    testWidgets('name highlight remains usable in $layout on a phone', (tester) async {
+  for (final layout in [
+    'default',
+    'circular_grid',
+    'compact_grid',
+    'sidebar',
+    'image_banner',
+    'top_tabs',
+    'split_rows',
+    'grouped_shelves',
+    'text_directory',
+  ]) {
+    testWidgets('name highlight remains usable in $layout on a phone', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      await tester.pumpWidget(_app(
-        _ScreenCatalogRepository(categoryLayout: layout, gridColumns: 2,
-          nameHighlightEnabled: true), const CategoriesScreen(),
-      ));
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(
+            categoryLayout: layout,
+            gridColumns: 2,
+            nameHighlightEnabled: true,
+          ),
+          const CategoriesScreen(),
+        ),
+      );
       await tester.pumpAndSettle();
-      expect(find.byWidgetPredicate((widget) => widget is ColoredBox &&
-        widget.key.toString().contains('category-name-highlight-')), findsWidgets);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is ColoredBox &&
+              widget.key.toString().contains('category-name-highlight-'),
+        ),
+        findsWidgets,
+      );
       expect(tester.takeException(), isNull);
     });
   }
@@ -641,7 +821,13 @@ void main() {
   });
 }
 
-Widget _app(CatalogRepository repository, Widget home, {bool shell = false, TextDirection? direction, double scale = 1}) {
+Widget _app(
+  CatalogRepository repository,
+  Widget home, {
+  bool shell = false,
+  TextDirection? direction,
+  double scale = 1,
+}) {
   return ProviderScope(
     overrides: [
       catalogRepositoryProvider.overrideWithValue(repository),
@@ -652,11 +838,17 @@ Widget _app(CatalogRepository repository, Widget home, {bool shell = false, Text
       portableAppDesign58Provider.overrideWithValue(null),
       cmsPageLayoutProvider.overrideWith((ref, page) async {
         final base = CmsPageLayout.fallback(page);
-        if (repository is! _ScreenCatalogRepository || repository.nameHighlightEnabled == null) return base;
+        if (repository is! _ScreenCatalogRepository ||
+            repository.nameHighlightEnabled == null)
+          return base;
         // Exercise the saved general settings path, shared by all platforms,
         // rather than assigning presentation only to a fixture's parent node.
-        return CmsPageLayout(page: page, header: base.header, footer: base.footer,
-          elements: base.elements, settings: {
+        return CmsPageLayout(
+          page: page,
+          header: base.header,
+          footer: base.footer,
+          elements: base.elements,
+          settings: {
             'category_general': {
               'category_layout': repository.categoryLayout,
               'navigation_mode': repository.navigationMode,
@@ -664,30 +856,68 @@ Widget _app(CatalogRepository repository, Widget home, {bool shell = false, Text
               'card_gap': 12,
               'card_height': repository.cardHeight,
               'image_scale': repository.imageScale * 100,
-              'name_highlight_enabled': repository.nameHighlightEnabled! ? '1' : '0',
+              'name_highlight_enabled': repository.nameHighlightEnabled!
+                  ? '1'
+                  : '0',
               'name_highlight_color': '#E0F2ED',
             },
-          });
+          },
+        );
       }),
     ],
     child: MaterialApp.router(
       locale: const Locale('en'),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
-        child: Directionality(textDirection: direction ?? TextDirection.ltr, child: child!),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(scale)),
+        child: Directionality(
+          textDirection: direction ?? TextDirection.ltr,
+          child: child!,
+        ),
       ),
       routerConfig: GoRouter(
         initialLocation: shell ? '/categories' : '/',
         routes: [
-          if (shell) StatefulShellRoute.indexedStack(
-            builder: (context, state, navigationShell) => MainShell(navigationShell: navigationShell),
-            branches: [
-              StatefulShellBranch(routes:[GoRoute(path:'/home',builder:(_,_)=>const Scaffold(body:Text('Home screen')))]),
-              StatefulShellBranch(routes:[GoRoute(path:'/categories',builder:(_,_)=>home)]),
-              StatefulShellBranch(routes:[GoRoute(path:'/wishlist',builder:(_,_)=>const Scaffold())]),
-              StatefulShellBranch(routes:[GoRoute(path:'/account',builder:(_,_)=>const Scaffold())]),
-            ],
-          ) else GoRoute(path: '/', builder: (context, state) => home),
+          if (shell)
+            StatefulShellRoute.indexedStack(
+              builder: (context, state, navigationShell) =>
+                  MainShell(navigationShell: navigationShell),
+              branches: [
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/home',
+                      builder: (_, _) =>
+                          const Scaffold(body: Text('Home screen')),
+                    ),
+                  ],
+                ),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(path: '/categories', builder: (_, _) => home),
+                  ],
+                ),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/wishlist',
+                      builder: (_, _) => const Scaffold(),
+                    ),
+                  ],
+                ),
+                StatefulShellBranch(
+                  routes: [
+                    GoRoute(
+                      path: '/account',
+                      builder: (_, _) => const Scaffold(),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          else
+            GoRoute(path: '/', builder: (context, state) => home),
           GoRoute(
             path: '/categories/:id',
             builder: (context, state) => Scaffold(
@@ -731,12 +961,27 @@ class _ScreenCatalogRepository implements CatalogRepository {
     productQueries.add(query);
     if (cursor) {
       return CatalogPage<CatalogProduct>(
-        items: [CatalogProduct(id: query.page, name: 'Cursor item ${query.page}',
-          slug: 'cursor-${query.page}', type: 'simple', isInStock: true,
-          prices: const CatalogMoney(currencyCode: 'USD', currencySymbol: r'$',
-            currencyMinorUnit: 2, priceMinor: '1999'))],
-        page: query.page, perPage: query.perPage, totalItems: null,
-        totalPages: null, cursorPagination: true, cursorHasNextPage: query.page == 1,
+        items: [
+          CatalogProduct(
+            id: query.page,
+            name: 'Cursor item ${query.page}',
+            slug: 'cursor-${query.page}',
+            type: 'simple',
+            isInStock: true,
+            prices: const CatalogMoney(
+              currencyCode: 'USD',
+              currencySymbol: r'$',
+              currencyMinorUnit: 2,
+              priceMinor: '1999',
+            ),
+          ),
+        ],
+        page: query.page,
+        perPage: query.perPage,
+        totalItems: null,
+        totalPages: null,
+        cursorPagination: true,
+        cursorHasNextPage: query.page == 1,
       );
     }
     final List<CatalogProduct> products = <CatalogProduct>[

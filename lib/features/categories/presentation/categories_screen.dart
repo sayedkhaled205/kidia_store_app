@@ -184,61 +184,103 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         if (!didPop && _categoryPath.isNotEmpty) _goBackOneLevel();
       },
       child: Transform.translate(
-      key: const Key('category-section-layout-merge'),
-      offset: Offset(0, _settings.marginBottom - _settings.marginTop),
-      child: Padding(
-        key: const Key('category-section-layout-spacing'),
-        padding: EdgeInsets.only(
-          top: _settings.spaceUp,
-          bottom: _settings.spaceDown,
-        ),
-        child: ColoredBox(
-          color: _categoryColor(
-            _settings.elementBackgroundColor,
-            Theme.of(context).colorScheme.surface,
+        key: const Key('category-section-layout-merge'),
+        offset: Offset(0, _settings.marginBottom - _settings.marginTop),
+        child: Padding(
+          key: const Key('category-section-layout-spacing'),
+          padding: EdgeInsets.only(
+            top: _settings.spaceUp,
+            bottom: _settings.spaceDown,
           ),
-          child: Column(
-            children: <Widget>[
-              if (selected != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: SizedBox(
-                    height: 48,
-                    child: NavigationToolbar(
-                      centerMiddle: true,
-                      middleSpacing: 8,
-                      leading: SizedBox(width: 96, child: Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: IconButton(
-                          key: const Key('category-back-to-roots'),
-                          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                          onPressed: _goBackOneLevel,
-                          icon: const BackButtonIcon(),
+          child: ColoredBox(
+            color: _categoryColor(
+              _settings.elementBackgroundColor,
+              Theme.of(context).colorScheme.surface,
+            ),
+            child: Column(
+              children: <Widget>[
+                if (selected != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: SizedBox(
+                      height: 48,
+                      child: NavigationToolbar(
+                        centerMiddle: true,
+                        middleSpacing: 8,
+                        leading: SizedBox(
+                          width: 96,
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: IconButton(
+                              key: const Key('category-back-to-roots'),
+                              tooltip: MaterialLocalizations.of(
+                                context,
+                              ).backButtonTooltip,
+                              onPressed: _goBackOneLevel,
+                              icon: const BackButtonIcon(),
+                            ),
+                          ),
                         ),
-                      )),
-                      middle: Text(selected.category.name,
-                        key: const Key('category-level-title'),
-                        maxLines: 1, overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      trailing: SizedBox(width: 96, child: OutlinedButton(
-                        key: const Key('category-view-all'),
-                        style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 8)),
-                        onPressed: () => _openCategoryProducts(context, selected.category),
-                        child: FittedBox(fit: BoxFit.scaleDown, child: Text(
-                          CatalogCopy.of(context).isArabic ? 'عرض الكل' : 'View all',
+                        middle: Text(
+                          selected.category.name,
+                          key: const Key('category-level-title'),
                           maxLines: 1,
-                        )),
-                      )),
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        trailing: SizedBox(
+                          width: 96,
+                          child: Align(
+                            alignment: AlignmentDirectional.centerEnd,
+                            child: OutlinedButton(
+                              key: const Key('category-view-all'),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(64, 32),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                side: BorderSide(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: .28),
+                                  width: .7,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: () => _openCategoryProducts(
+                                context,
+                                selected.category,
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  CatalogCopy.of(context).isArabic
+                                      ? 'عرض الكل'
+                                      : 'View all',
+                                  maxLines: 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              Expanded(child: content),
-            ],
+                Expanded(child: content),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -928,7 +970,9 @@ class _CategoryGridTile extends StatelessWidget {
                     child: Transform.scale(
                       key: Key('category-visual-image-${category.id}'),
                       scale: category.imageScale,
-                      alignment: _categoryImageAlignment(category.imagePosition),
+                      alignment: _categoryImageAlignment(
+                        category.imagePosition,
+                      ),
                       child: SizedBox.expand(
                         child: category.image != null
                             ? AppNetworkImage(
@@ -962,27 +1006,29 @@ class _CategoryGridTile extends StatelessWidget {
                         Expanded(
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
-                            alignment: category.textAlign == 'center' ? Alignment.center
-                                : category.textAlign == 'end' ? AlignmentDirectional.centerEnd
+                            alignment: category.textAlign == 'center'
+                                ? Alignment.center
+                                : category.textAlign == 'end'
+                                ? AlignmentDirectional.centerEnd
                                 : AlignmentDirectional.centerStart,
                             child: Text(
-                            category.name,
-                            maxLines: 1,
-                            softWrap: false,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: _categoryTextAlign(category.textAlign),
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: _categoryColor(
-                                category.fontColor,
-                                theme.colorScheme.onSurface,
+                              category.name,
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: _categoryTextAlign(category.textAlign),
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: _categoryColor(
+                                  category.fontColor,
+                                  theme.colorScheme.onSurface,
+                                ),
+                                fontSize: category.fontSize,
+                                fontWeight: _categoryFontWeight(
+                                  category.fontWeight,
+                                ),
+                                height: category.lineHeight,
                               ),
-                              fontSize: category.fontSize,
-                              fontWeight: _categoryFontWeight(
-                                category.fontWeight,
-                              ),
-                              height: category.lineHeight,
                             ),
-                          ),
                           ),
                         ),
                         if (category.showArrow)

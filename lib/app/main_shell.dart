@@ -146,19 +146,27 @@ class _MainShellState extends ConsumerState<MainShell>
     // Render navigation defaults without rewriting its saved purchase layout.
     final footerJson = footer.json('layout_json');
     final configuredIds = <String>[];
-    if (footerJson['items'] is List) configuredIds.addAll((footerJson['items'] as List).map((id) => '$id'));
+    if (footerJson['items'] is List)
+      configuredIds.addAll((footerJson['items'] as List).map((id) => '$id'));
     if (footerJson['rows'] is List) {
       for (final row in footerJson['rows'] as List) {
         if (row is! Map || row['columns'] is! List) continue;
         for (final column in row['columns'] as List) {
-          if (column is Map && column['items'] is List) configuredIds.addAll((column['items'] as List).map((id) => '$id'));
+          if (column is Map && column['items'] is List)
+            configuredIds.addAll((column['items'] as List).map((id) => '$id'));
         }
       }
     }
-    if (page == 'product' && footer.string('style','product_action') != 'product_action' &&
+    if (page == 'product' &&
+        footer.string('style', 'product_action') != 'product_action' &&
         placements.every((p) => p.id.isEmpty) &&
-        configuredIds.any((id) => ['share','like','add_to_cart'].contains(id))) {
-      placements = _items.take(4).map((item) => _FooterPlacement(item.id,25,0)).toList();
+        configuredIds.any(
+          (id) => ['share', 'like', 'add_to_cart'].contains(id),
+        )) {
+      placements = _items
+          .take(4)
+          .map((item) => _FooterPlacement(item.id, 25, 0))
+          .toList();
     }
     final List<String> order = placements
         .map((placement) => placement.id)
@@ -202,153 +210,174 @@ class _MainShellState extends ConsumerState<MainShell>
         if (!didPop) _handleSystemBack();
       },
       child: Scaffold(
-      body: NotificationListener<ScrollUpdateNotification>(
-        onNotification: (ScrollUpdateNotification notification) {
-          if (!footer.boolean('hide_on_scroll', false) ||
-              notification.metrics.axis != Axis.vertical ||
-              notification.scrollDelta == null) {
+        body: NotificationListener<NavigationNotification>(
+          onNotification: (NavigationNotification notification) {
+            // A non-home branch at its own root still reports canHandlePop:false,
+            // but the PopScope above intercepts that pop to return to Home, so
+            // Android must not be told the framework can't handle back here.
+            if (!notification.canHandlePop &&
+                widget.navigationShell.currentIndex != 0) {
+              NavigationNotification(canHandlePop: true).dispatch(context);
+              return true;
+            }
             return false;
-          }
-          final bool hidden = notification.scrollDelta! > 0;
-          if (hidden != _footerHidden) setState(() => _footerHidden = hidden);
-          return false;
-        },
-        child: widget.navigationShell,
-      ),
-      bottomNavigationBar:
-          waitingForLayout ||
-              !footer.enabled ||
-              (_footerHidden && footer.boolean('hide_on_scroll', false)) ||
-              visibleItems.isEmpty ||
-              (page == 'product' &&
-                  footer.string('style', 'navigation') == 'product_action')
-          ? null
-          : SafeArea(
-              top: false,
-              bottom: !AppConfig.isCmsPreview || footer.boolean('safe_area', true),
-              minimum: const EdgeInsets.only(bottom: 6),
-              child: Padding(
-                padding: EdgeInsets.only(
-                  top:
-                      footer.number('margin_top', 0).clamp(0, 80) +
-                      footer.number('space_up', 0).clamp(0, 80),
-                  bottom:
-                      footer.number('margin_bottom', 0).clamp(0, 80) +
-                      footer.number('space_down', 0).clamp(0, 80),
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    border: Border(
-                      top: BorderSide(
-                        color: _cmsColor(
-                          footer.string('border_color', '#E2E6E4'),
-                          MobiShopColors.divider,
+          },
+          child: NotificationListener<ScrollUpdateNotification>(
+            onNotification: (ScrollUpdateNotification notification) {
+              if (!footer.boolean('hide_on_scroll', false) ||
+                  notification.metrics.axis != Axis.vertical ||
+                  notification.scrollDelta == null) {
+                return false;
+              }
+              final bool hidden = notification.scrollDelta! > 0;
+              if (hidden != _footerHidden)
+                setState(() => _footerHidden = hidden);
+              return false;
+            },
+            child: widget.navigationShell,
+          ),
+        ),
+        bottomNavigationBar:
+            waitingForLayout ||
+                !footer.enabled ||
+                (_footerHidden && footer.boolean('hide_on_scroll', false)) ||
+                visibleItems.isEmpty ||
+                (page == 'product' &&
+                    footer.string('style', 'navigation') == 'product_action')
+            ? null
+            : SafeArea(
+                top: false,
+                bottom:
+                    !AppConfig.isCmsPreview ||
+                    footer.boolean('safe_area', true),
+                minimum: const EdgeInsets.only(bottom: 6),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    top:
+                        footer.number('margin_top', 0).clamp(0, 80) +
+                        footer.number('space_up', 0).clamp(0, 80),
+                    bottom:
+                        footer.number('margin_bottom', 0).clamp(0, 80) +
+                        footer.number('space_down', 0).clamp(0, 80),
+                  ),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: backgroundColor,
+                      border: Border(
+                        top: BorderSide(
+                          color: _cmsColor(
+                            footer.string('border_color', '#E2E6E4'),
+                            MobiShopColors.divider,
+                          ),
+                          width: footer.number('border_width', 1),
                         ),
-                        width: footer.number('border_width', 1),
                       ),
-                    ),
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(footer.number('top_radius', 0)),
-                    ),
-                    boxShadow: footer.string('shadow', 'subtle') == 'none'
-                        ? null
-                        : <BoxShadow>[
-                            BoxShadow(
-                              color: Colors.black.withValues(
-                                alpha:
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(footer.number('top_radius', 0)),
+                      ),
+                      boxShadow: footer.string('shadow', 'subtle') == 'none'
+                          ? null
+                          : <BoxShadow>[
+                              BoxShadow(
+                                color: Colors.black.withValues(
+                                  alpha:
+                                      footer.string('shadow', 'subtle') ==
+                                          'strong'
+                                      ? .18
+                                      : .08,
+                                ),
+                                blurRadius:
                                     footer.string('shadow', 'subtle') ==
                                         'strong'
-                                    ? .18
-                                    : .08,
+                                    ? 16
+                                    : 6,
                               ),
-                              blurRadius:
-                                  footer.string('shadow', 'subtle') == 'strong'
-                                  ? 16
-                                  : 6,
-                            ),
-                          ],
-                  ),
-                  child: Padding(
-                    key: const Key('cms-bottom-navigation'),
-                    padding: EdgeInsets.symmetric(
-                      horizontal:
-                          MediaQuery.sizeOf(context).width *
-                              footer
-                                  .number('side_spacing_percent', 5)
-                                  .clamp(0, 25) /
-                              100 +
-                          footer.number('horizontal_padding', 0).clamp(0, 32),
+                            ],
                     ),
-                    child: SizedBox(
-                      key: const Key('cms-bottom-navigation-size'),
-                      height: footerHeight < requiredHeight
-                          ? requiredHeight
-                          : footerHeight,
-                      child: _footerGrid(placements, visibleItems, (entry) {
-                        final item = entry.value;
-                        final selected =
-                            entry.key == widget.navigationShell.currentIndex;
-                        final color = selected ? activeColor : inactiveColor;
-                        return InkWell(
-                          key: Key('cms-bottom-nav-${item.id}'),
-                          onTap: () => _openBranch(ref, entry.key),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              _NavigationIcon(
-                                boxKey: Key(
-                                  'cms-bottom-nav-icon-box-${item.id}',
-                                ),
-                                icon: _footerIcon(footer, item, selected),
-                                color: color,
-                                size: footerIconSize,
-                                boxSize: footerIconBoxSize,
-                              ),
-                              if (footer.boolean(
-                                'show_labels',
-                                true,
-                              )) ...<Widget>[
-                                SizedBox(
-                                  key: Key(
-                                    'cms-bottom-nav-icon-label-gap-${item.id}',
+                    child: Padding(
+                      key: const Key('cms-bottom-navigation'),
+                      padding: EdgeInsets.symmetric(
+                        horizontal:
+                            MediaQuery.sizeOf(context).width *
+                                footer
+                                    .number('side_spacing_percent', 5)
+                                    .clamp(0, 25) /
+                                100 +
+                            footer.number('horizontal_padding', 0).clamp(0, 32),
+                      ),
+                      child: SizedBox(
+                        key: const Key('cms-bottom-navigation-size'),
+                        height: footerHeight < requiredHeight
+                            ? requiredHeight
+                            : footerHeight,
+                        child: _footerGrid(placements, visibleItems, (entry) {
+                          final item = entry.value;
+                          final selected =
+                              entry.key == widget.navigationShell.currentIndex;
+                          final color = selected ? activeColor : inactiveColor;
+                          return InkWell(
+                            key: Key('cms-bottom-nav-${item.id}'),
+                            onTap: () => _openBranch(ref, entry.key),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                _NavigationIcon(
+                                  boxKey: Key(
+                                    'cms-bottom-nav-icon-box-${item.id}',
                                   ),
-                                  height: footer
-                                      .number('icon_label_gap', 3)
-                                      .clamp(0, 12),
+                                  icon: _footerIcon(footer, item, selected),
+                                  color: color,
+                                  size: footerIconSize,
+                                  boxSize: footerIconBoxSize,
                                 ),
-                                SizedBox(
-                                  key: Key(
-                                    'cms-bottom-nav-label-box-${item.id}',
+                                if (footer.boolean(
+                                  'show_labels',
+                                  true,
+                                )) ...<Widget>[
+                                  SizedBox(
+                                    key: Key(
+                                      'cms-bottom-nav-icon-label-gap-${item.id}',
+                                    ),
+                                    height: footer
+                                        .number('icon_label_gap', 3)
+                                        .clamp(0, 12),
                                   ),
-                                  height: MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6,
-                                  child: Center(
-                                    child: Text(
-                                      _footerLabel(footer, item),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: color,
-                                        fontSize: footerLabelSize,
-                                        fontFamily: footerFontFamily,
-                                        height: 1.3,
-                                        fontWeight: selected
-                                            ? FontWeight.w700
-                                            : FontWeight.w500,
+                                  SizedBox(
+                                    key: Key(
+                                      'cms-bottom-nav-label-box-${item.id}',
+                                    ),
+                                    height:
+                                        MediaQuery.textScalerOf(
+                                          context,
+                                        ).scale(footerLabelSize) *
+                                        1.6,
+                                    child: Center(
+                                      child: Text(
+                                        _footerLabel(footer, item),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: color,
+                                          fontSize: footerLabelSize,
+                                          fontFamily: footerFontFamily,
+                                          height: 1.3,
+                                          fontWeight: selected
+                                              ? FontWeight.w700
+                                              : FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ],
-                            ],
-                          ),
-                        );
-                      }),
+                            ),
+                          );
+                        }),
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
       ),
     );
   }

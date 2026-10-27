@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -11,48 +12,191 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/wishlist_test_data.dart';
 
 void main() {
+  test('recommendations preserve every supported disabled quick-add value', () {
+    final base = CmsPageLayout.fallback('wishlist');
+    for (final disabled in <Object>[false, 0, '0', 'false']) {
+      final layout = CmsPageLayout(
+        page: base.page,
+        header: base.header,
+        footer: base.footer,
+        elements: [CmsPageComponent(id: 'grid', type: 'wishlist_grid', enabled: true,
+          settings: {'quick_add_enabled': disabled})],
+      );
+      final result = wishlistRecommendationAppearance(
+        const CmsPageComponent(id: 'recommendations', type: 'empty_recommendations',
+          enabled: true, settings: {}), layout);
+      expect(result.boolean('quick_add_enabled', true), isFalse);
+    }
+  });
+  testWidgets(
+    'wishlist recommendations use the saved card appearance and light outline',
+    (tester) async {
+      final base = CmsPageLayout.fallback('wishlist');
+      final layout = CmsPageLayout(
+        page: base.page,
+        header: base.header,
+        footer: base.footer,
+        elements: base.elements
+            .map(
+              (e) => CmsPageComponent(
+                id: e.id,
+                type: e.type,
+                enabled: e.enabled,
+                settings: {
+                  ...e.settings,
+                  if (e.type == 'wishlist_grid') ...{
+                    'card_style': 'outlined',
+                    'card_outline_color': '#D3EAE6',
+                    'card_outline_width': .5,
+                    'card_background_color': '#FAF1E1',
+                    'quick_add_icon_color': '#4EA999',
+                    'quick_add_icon_style': 'filled',
+                  },
+                },
+              ),
+            )
+            .toList(),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            cmsPageLayoutProvider('wishlist').overrideWith((_) async => layout),
+          ],
+          child: MaterialApp(
+            home: WishlistScreen(
+              repository: FakeWishlistRepository(),
+              catalogRepository: FakeWishlistCatalogRepository(
+                onGetProducts: (_) async => catalogPage([wishlistProductOne]),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final card = tester.widget<CatalogProductCard>(
+        find.byType(CatalogProductCard).first,
+      );
+      expect(card.settings!.string('quick_add_icon_style', ''), 'filled');
+      expect(card.settings!.string('quick_add_icon_color', ''), '#4EA999');
+      final materials = tester.widgetList<Material>(
+        find.descendant(
+          of: find.byType(CatalogProductCard).first,
+          matching: find.byType(Material),
+        ),
+      );
+      final shape = materials
+          .map((m) => m.shape)
+          .whereType<RoundedRectangleBorder>()
+          .first;
+      expect(materials.first.color, const Color(0xFFFAF1E1));
+      expect(shape.side.width, .5);
+      expect(shape.side.color, const Color(0xFFD3EAE6));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  test('recommendations retain explicit actions and disabled quick add', () {
+    final base = CmsPageLayout.fallback('wishlist');
+    final result = wishlistRecommendationAppearance(
+      const CmsPageComponent(
+        id: 'empty_recommendations',
+        type: 'empty_recommendations',
+        enabled: true,
+        settings: {
+          'show_quick_add': false,
+          'action_type': 'url',
+          'action_value': 'https://example.com',
+          'card_outline_color': '#112233',
+        },
+      ),
+      base,
+    );
+    expect(result.boolean('quick_add_enabled', true), isFalse);
+    expect(result.string('action_value', ''), 'https://example.com');
+    expect(result.string('card_outline_color', ''), '#112233');
+  });
+
   testWidgets('Arabic wishlist preserves merchant custom text', (tester) async {
     final base = CmsPageLayout.fallback('wishlist');
-    final layout = CmsPageLayout(page:base.page,header:base.header,footer:base.footer,
-      elements:base.elements.map((e)=>CmsPageComponent(id:e.id,type:e.type,enabled:e.enabled,
-        settings:{...e.settings, if(e.type == 'empty_state') ...{
-          'title':'My special collection','description':'Custom instructions','button_label':'Browse my shop',
-        }},
-      )).toList());
-    await tester.pumpWidget(ProviderScope(overrides:[
-      cmsPageLayoutProvider('wishlist').overrideWith((_) async=>layout),
-    ],child:MaterialApp(locale:const Locale('ar'),supportedLocales:const[Locale('ar'),Locale('en')],
-      localizationsDelegates:GlobalMaterialLocalizations.delegates,
-      home:WishlistScreen(repository:FakeWishlistRepository(),catalogRepository:FakeWishlistCatalogRepository()),
-    )));
+    final layout = CmsPageLayout(
+      page: base.page,
+      header: base.header,
+      footer: base.footer,
+      elements: base.elements
+          .map(
+            (e) => CmsPageComponent(
+              id: e.id,
+              type: e.type,
+              enabled: e.enabled,
+              settings: {
+                ...e.settings,
+                if (e.type == 'empty_state') ...{
+                  'title': 'My special collection',
+                  'description': 'Custom instructions',
+                  'button_label': 'Browse my shop',
+                },
+              },
+            ),
+          )
+          .toList(),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cmsPageLayoutProvider('wishlist').overrideWith((_) async => layout),
+        ],
+        child: MaterialApp(
+          locale: const Locale('ar'),
+          supportedLocales: const [Locale('ar'), Locale('en')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          home: WishlistScreen(
+            repository: FakeWishlistRepository(),
+            catalogRepository: FakeWishlistCatalogRepository(),
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('My special collection'), findsOneWidget);
     expect(find.text('Custom instructions'), findsOneWidget);
     expect(find.text('Browse my shop'), findsOneWidget);
   });
-  testWidgets('Arabic wishlist translates saved default empty and sign-in copy', (tester) async {
-    for (final signIn in [false, true]) {
-      await tester.pumpWidget(ProviderScope(child: MaterialApp(
-        locale: const Locale('ar'),
-        supportedLocales: const [Locale('ar'), Locale('en')],
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        home: WishlistScreen(
-          key: ValueKey(signIn),
-          repository: FakeWishlistRepository(),
-          catalogRepository: FakeWishlistCatalogRepository(),
-          requiresSignIn: signIn,
-        ),
-      )));
-      await tester.pumpAndSettle();
-      expect(find.text(signIn ? 'سجّل الدخول لعرض المفضلة' : 'المفضلة فارغة'), findsOneWidget);
-      expect(find.text(signIn ? 'تسجيل الدخول' : 'متابعة التسوق'), findsOneWidget);
-      expect(find.text('قد يعجبك أيضًا'), findsOneWidget);
-      expect(find.text('Your wishlist is empty'), findsNothing);
-      expect(find.text('You may also like'), findsNothing);
-      expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox.shrink());
-    }
-  });
+  testWidgets(
+    'Arabic wishlist translates saved default empty and sign-in copy',
+    (tester) async {
+      for (final signIn in [false, true]) {
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp(
+              locale: const Locale('ar'),
+              supportedLocales: const [Locale('ar'), Locale('en')],
+              localizationsDelegates: GlobalMaterialLocalizations.delegates,
+              home: WishlistScreen(
+                key: ValueKey(signIn),
+                repository: FakeWishlistRepository(),
+                catalogRepository: FakeWishlistCatalogRepository(),
+                requiresSignIn: signIn,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.text(signIn ? 'سجّل الدخول لعرض المفضلة' : 'المفضلة فارغة'),
+          findsOneWidget,
+        );
+        expect(
+          find.text(signIn ? 'تسجيل الدخول' : 'متابعة التسوق'),
+          findsOneWidget,
+        );
+        expect(find.text('قد يعجبك أيضًا'), findsOneWidget);
+        expect(find.text('Your wishlist is empty'), findsNothing);
+        expect(find.text('You may also like'), findsNothing);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
+    },
+  );
   testWidgets('shows an empty wishlist without the local-only banner', (
     WidgetTester tester,
   ) async {
