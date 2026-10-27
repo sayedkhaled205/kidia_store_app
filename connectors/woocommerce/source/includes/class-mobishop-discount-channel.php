@@ -5,6 +5,8 @@ defined( 'ABSPATH' ) || exit;
 final class MobiShop_Discount_Channel {
     public const KEY = 'mobishop_channel';
     private static bool $embedded_checkout = false;
+    private static array $rule_locks = array();
+    private static bool $lock_cleanup_registered = false;
 
     public static function register(): void {
         add_filter( 'advanced_woo_discount_rules_has_rule_conditions', static fn( $has, $rule ) => $has || ! self::allowed( $rule ), 100, 2 );
@@ -15,6 +17,7 @@ final class MobiShop_Discount_Channel {
         // The original FlyCart editor does not render our additional field. Its
         // normal save must retain the channel chosen in the central builder.
         add_filter( 'advanced_woo_discount_rules_before_save_rule_column', array( __CLASS__, 'preserve_channel' ), 100, 2 );
+        add_action( 'advanced_woo_discount_rules_after_save_rule', array( __CLASS__, 'unlock_rule' ), PHP_INT_MAX, 1 );
     }
 
     /** Called only after checkout88 validates its scoped ticket/cookie and path. */
@@ -58,15 +61,65 @@ final class MobiShop_Discount_Channel {
         return $scope === 'all' || $scope === self::current();
     }
 
-    public static function preserve_channel( array $columns, $id ): array {
-        if ( (int) $id <= 0 ) return $columns;
+    private static function lock_name( int $id ): string {
         global $wpdb;
-        $old = $wpdb->get_row( $wpdb->prepare( "SELECT additional FROM {$wpdb->prefix}wdr_rules WHERE id=%d", $id ), ARRAY_A );
-        if ( ! is_array( $old ) ) return $columns;
-        $extra = json_decode( (string) ( $columns['additional'] ?? '[]' ), true );
-        if ( ! is_array( $extra ) ) $extra = array();
-        $extra[ self::KEY ] = self::scope( $old );
-        $columns['additional'] = wp_json_encode( $extra );
-        return $columns;
+        // Advisory lock names are server-wide and limited to 64 characters.
+        return 'mobishop_discount_' . substr( hash( 'sha256', ( defined( 'DB_NAME' ) ? DB_NAME : '' ) . ':' . $wpdb->prefix . ':' . $id ), 0, 40 );
+    }
+
+    /** Central mutations acquire this before starting their transaction. */
+    public static function lock_rule( int $id ): void {
+        if ( $id <= 0 ) return;
+        $name = self::lock_name( $id );
+        if ( isset( self::$rule_locks[ $name ] ) ) {
+            self::$rule_locks[ $name ]++;
+            return;
+        }
+        global $wpdb;
+        if ( (int) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 5)', $name ) ) !== 1 ) throw new RuntimeException( 'Offer is being saved. Retry after the other save finishes.' );
+        self::$rule_locks[ $name ] = 1;
+        if ( ! self::$lock_cleanup_registered ) {
+            register_shutdown_function( array( __CLASS__, 'release_all_locks' ) );
+            self::$lock_cleanup_registered = true;
+        }
+    }
+
+    public static function unlock_rule( int $id ): void {
+        if ( $id <= 0 ) return;
+        $name = self::lock_name( $id );
+        if ( ! isset( self::$rule_locks[ $name ] ) || --self::$rule_locks[ $name ] > 0 ) return;
+        unset( self::$rule_locks[ $name ] );
+        global $wpdb;
+        $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) );
+    }
+
+    /** Also covers an exception/fatal error before FlyCart's after-save hook. */
+    public static function release_all_locks(): void {
+        global $wpdb;
+        foreach ( array_keys( self::$rule_locks ) as $name ) {
+            $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) );
+            unset( self::$rule_locks[ $name ] );
+        }
+    }
+
+    public static function preserve_channel( array $columns, $id ): array {
+        $id = (int) $id;
+        if ( $id <= 0 ) return $columns;
+        self::lock_rule( $id );
+        try {
+            global $wpdb;
+            $old = $wpdb->get_row( $wpdb->prepare( "SELECT additional FROM {$wpdb->prefix}wdr_rules WHERE id=%d", $id ), ARRAY_A );
+            if ( ! is_array( $old ) ) throw new RuntimeException( 'Offer could not be read. Reload before saving.' );
+            $extra = json_decode( (string) ( $columns['additional'] ?? '[]' ), true );
+            if ( ! is_array( $extra ) ) $extra = array();
+            $extra[ self::KEY ] = self::scope( $old );
+            $columns['additional'] = wp_json_encode( $extra );
+            // Keep the lock until FlyCart writes these columns and calls its
+            // after-save hook, so a central update cannot be overwritten here.
+            return $columns;
+        } catch ( Throwable $error ) {
+            self::unlock_rule( $id );
+            throw $error;
+        }
     }
 }

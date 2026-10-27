@@ -2,6 +2,7 @@
 define( 'ABSPATH', __DIR__ );
 $hooks = array(); $checks = 0;
 function add_filter( $name, $callback, $priority, $args ) { $GLOBALS['hooks'][$name] = $callback; }
+function add_action( $name, $callback, $priority, $args ) { add_filter( $name, $callback, $priority, $args ); }
 function check( $ok, $message ) { $GLOBALS['checks']++; if ( ! $ok ) throw new RuntimeException( $message ); }
 require __DIR__ . '/../source/includes/class-mobishop-discount-channel.php';
 MobiShop_Discount_Channel::register();

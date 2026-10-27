@@ -161,8 +161,10 @@ final class MobiShop_Discount_Rules_Admin {
         $table = $wpdb->prefix . 'wdr_rules';
         $option = 'mobishop_discount_request_' . hash( 'sha256', $key );
         $hash = hash( 'sha256', wp_json_encode( $input ) );
-        if ( $wpdb->query( 'START TRANSACTION' ) === false ) throw new RuntimeException( 'Transaction unavailable.' );
+        $lock_id = $operation === 'create' ? 0 : $input['id'];
+        MobiShop_Discount_Channel::lock_rule( $lock_id );
         try {
+            if ( $wpdb->query( 'START TRANSACTION' ) === false ) throw new RuntimeException( 'Transaction unavailable.' );
             // Unique option_name serializes concurrent retries. No frontend data.
             $claimed = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name,option_value,autoload) VALUES (%s,%s,'off')", $option, wp_json_encode( array( 'hash' => $hash ) ) ) );
             if ( $claimed === false ) throw new RuntimeException( 'Request claim failed.' );
@@ -209,6 +211,8 @@ final class MobiShop_Discount_Rules_Admin {
             $wpdb->query( 'ROLLBACK' );
             wp_cache_delete( $option, 'options' );
             throw $error;
+        } finally {
+            MobiShop_Discount_Channel::unlock_rule( $lock_id );
         }
     }
 }

@@ -63,6 +63,7 @@ function WC() {
         function save_data() {}
     }];
 }
+require __DIR__.'/../source/includes/class-mobishop-discount-channel.php';
 require __DIR__.'/../source/api/class-embedded-checkout88.php';
 $count=0;
 function expect88($ok,$message) { global $count; if (!$ok) throw new \RuntimeException($message); ++$count; }
