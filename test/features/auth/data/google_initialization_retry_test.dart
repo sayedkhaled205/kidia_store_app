@@ -13,36 +13,59 @@ class _GooglePlatform extends GoogleSignInPlatform {
     initializations++;
     if (initializations == 1) throw StateError('temporarily unavailable');
   }
+
   @override
   bool supportsAuthenticate() => true;
   @override
-  Future<AuthenticationResults> authenticate(AuthenticateParameters params) async {
+  Future<AuthenticationResults?> attemptLightweightAuthentication(
+    AttemptLightweightAuthenticationParameters params,
+  ) async => null;
+  @override
+  Future<AuthenticationResults> authenticate(
+    AuthenticateParameters params,
+  ) async {
     authentications++;
     return const AuthenticationResults(
       user: GoogleSignInUserData(email: 'test@example.com', id: 'test'),
       authenticationTokens: AuthenticationTokenData(idToken: 'test-proof'),
     );
   }
+
   @override
-  Future<void> signOut(SignOutParams params) async { signOuts++; }
+  Future<void> signOut(SignOutParams params) async {
+    signOuts++;
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
+
 void main() {
-  test('real Google backend retries initialization after a transient platform failure', () async {
-    final old = GoogleSignInPlatform.instance;
-    final platform = _GooglePlatform();
-    GoogleSignInPlatform.instance = platform;
-    addTearDown(() => GoogleSignInPlatform.instance = old);
-    final sdk = FirebaseNativeAuthSdk(platform: TargetPlatform.android, isWeb: false);
-    const config = {'google': {'server_client_id': 'merchant.apps.googleusercontent.com'}};
-    await expectLater(sdk.google(config), throwsA(isA<NativeAuthSdkException>()));
-    expect(platform.authentications, 0);
-    expect(await sdk.google(config), 'test-proof');
-    expect(platform.initializations, 2);
-    expect(platform.authentications, 1);
-    expect(platform.signOuts, 1);
-    expect(await sdk.google(config), 'test-proof');
-    expect(platform.initializations, 2);
-  });
+  test(
+    'real Google backend retries initialization after a transient platform failure',
+    () async {
+      final old = GoogleSignInPlatform.instance;
+      final platform = _GooglePlatform();
+      GoogleSignInPlatform.instance = platform;
+      addTearDown(() => GoogleSignInPlatform.instance = old);
+      final sdk = FirebaseNativeAuthSdk(
+        platform: TargetPlatform.android,
+        isWeb: false,
+      );
+      const config = {
+        'google': {'server_client_id': 'merchant.apps.googleusercontent.com'},
+      };
+      await expectLater(
+        sdk.google(config),
+        throwsA(isA<NativeAuthSdkException>()),
+      );
+      expect(platform.authentications, 0);
+      expect(await sdk.google(config), 'test-proof');
+      expect(platform.initializations, 2);
+      expect(platform.authentications, 1);
+      expect(platform.signOuts, 1);
+      expect(await sdk.google(config), 'test-proof');
+      expect(platform.initializations, 2);
+    },
+  );
 }

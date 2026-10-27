@@ -25,6 +25,12 @@ ThemeData _identityTheme(
 
   final primary = color('primary_color') ?? base.colorScheme.primary;
   final secondary = color('secondary_color') ?? base.colorScheme.secondary;
+  final kids = identity?['theme'] == 'kids_baby';
+  // Pick legible message/action text even after a merchant publishes a new
+  // primary color. Google/system-owned authentication dialogs are separate.
+  final messageForeground = primary.computeLuminance() > 0.179
+      ? Colors.black
+      : Colors.white;
   final font = builderFontFamily('${identity?['font_family'] ?? 'system'}');
   TextStyle? style(TextStyle? value) => font == null
       ? value
@@ -53,6 +59,18 @@ ThemeData _identityTheme(
     appBarTheme: base.appBarTheme.copyWith(
       titleTextStyle: style(base.appBarTheme.titleTextStyle),
     ),
+    snackBarTheme: kids
+        ? base.snackBarTheme.copyWith(
+            backgroundColor: primary,
+            contentTextStyle: style(
+              (base.snackBarTheme.contentTextStyle ?? base.textTheme.bodyMedium)
+                  ?.copyWith(color: messageForeground),
+            ),
+            actionTextColor: messageForeground,
+            disabledActionTextColor: messageForeground.withValues(alpha: 0.6),
+            closeIconColor: messageForeground,
+          )
+        : base.snackBarTheme,
     filledButtonTheme: FilledButtonThemeData(
       style: base.filledButtonTheme.style?.copyWith(
         textStyle: WidgetStateProperty.resolveWith(

@@ -473,7 +473,22 @@ final class _GoogleBackend implements NativeGoogleBackend {
       if (!google.supportsAuthenticate()) {
         throw const NativeAuthSdkException('native-platform-required');
       }
-      final account = await google.authenticate();
+      GoogleSignInAccount? account;
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        // Credential Manager's bottom sheet uses the app's registered branding.
+        // Keep cancellation distinct from an unavailable sheet: dismissing it
+        // must not immediately open a second account picker.
+        try {
+          account = await google.attemptLightweightAuthentication(
+            reportAllExceptions: true,
+          );
+        } on GoogleSignInException catch (error) {
+          if (error.code != GoogleSignInExceptionCode.uiUnavailable) rethrow;
+        }
+      }
+      // The explicit flow also lets users add an account when none are eligible
+      // for the sheet. iOS retains its native Google authentication flow.
+      account ??= await google.authenticate();
       final token = account.authentication.idToken;
       if (token == null || token.isEmpty) {
         throw const NativeAuthSdkException('missing-id-token');
