@@ -529,12 +529,20 @@ void main() {
       await fixture.pump(tester, size: const Size(320, 640));
       await _tap(tester, 'auth-google');
       expect(find.byKey(const Key('auth-name')), findsNothing);
+      final phoneField = tester.widget<TextField>(
+        find.descendant(
+          of: find.byKey(const Key('auth-phone')),
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(phoneField.decoration?.hintText, '01XXXXXXXXX');
       await tester.enterText(
         find.byKey(const Key('auth-phone')),
-        '+201012345678',
+        '01012345678',
       );
       await _tap(tester, 'auth-send-otp');
       expect(fixture.actions.otpTickets.last, 'google-ticket');
+      expect(fixture.actions.sentPhones.last, '+201012345678');
       await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
       await _tap(tester, 'auth-verify-otp');
       expect(fixture.actions.verifyTicket, 'google-ticket');
@@ -800,6 +808,7 @@ class _Fixture {
 
 class _Actions implements NativeAuthActions {
   NativeAuthConfig configuration = const NativeAuthConfig(
+    phoneCountryCode: '20',
     methods: {
       'email_password': true,
       'phone_password': true,

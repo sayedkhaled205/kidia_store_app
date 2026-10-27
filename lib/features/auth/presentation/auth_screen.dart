@@ -610,15 +610,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           _textField(
             key: const Key('auth-phone'),
             controller: _phone,
-            label: copy.internationalPhone,
+            label: copy.phone,
+            hint: config.phoneHint,
             keyboard: TextInputType.phone,
             autofill: AutofillHints.telephoneNumber,
-            validator: (value) =>
-                RegExp(
-                  r'^\+[1-9]\d{7,14}$',
-                ).hasMatch(_digits(value?.trim() ?? ''))
+            validator: (value) => config.normalizeOtpPhone(value ?? '') != null
                 ? null
-                : copy.internationalPhoneRequired,
+                : copy.phoneRequired,
             onSubmitted: () => _submit(copy, config),
           ),
         ];
@@ -697,6 +695,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     VoidCallback? onSubmitted,
     TextInputFormatter? formatter,
     int? maxLength,
+    String? hint,
     TextDirection? direction = TextDirection.ltr,
   }) {
     final field = TextFormField(
@@ -712,7 +711,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       enableSuggestions: false,
       maxLength: maxLength,
       inputFormatters: formatter == null ? null : [formatter],
-      decoration: _decoration(label).copyWith(counterText: ''),
+      decoration: _decoration(label).copyWith(
+        counterText: '',
+        hintText: hint,
+        hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
+        floatingLabelBehavior: hint?.isNotEmpty == true
+            ? FloatingLabelBehavior.always
+            : null,
+      ),
       validator: validator,
       onFieldSubmitted: (_) {
         if (!_busy) onSubmitted?.call();
@@ -882,7 +888,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         case _AuthStep.phone:
           await _sendOtp(
             flow,
-            _digits(_phone.text.trim()),
+            config.normalizeOtpPhone(_phone.text)!,
             ticket: _continuation!.ticket,
           );
         case _AuthStep.otp:

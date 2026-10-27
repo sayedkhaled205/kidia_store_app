@@ -6,16 +6,54 @@ class NativeAuthConfig {
     this.methods = const {},
     this.firebase = const {},
     this.google = const {},
+    this.phoneCountryCode = '',
   });
   final bool enabled;
   final Map<String, bool> methods;
   final Map<String, dynamic> firebase;
   final Map<String, dynamic> google;
+  final String phoneCountryCode;
+
+  String get phoneHint => phoneCountryCode == '20' ? '01XXXXXXXXX' : '';
+
+  /// Use the store's dialing code, never the customer's UI language.
+  String? normalizeOtpPhone(String input) {
+    var value = input
+        .trim()
+        .split('')
+        .map((character) {
+          final code = character.codeUnitAt(0);
+          if (code >= 0x660 && code <= 0x669) return '${code - 0x660}';
+          if (code >= 0x6f0 && code <= 0x6f9) return '${code - 0x6f0}';
+          return character;
+        })
+        .join()
+        .replaceAll(RegExp(r'[\s().-]'), '');
+    if (value.startsWith('00')) value = '+${value.substring(2)}';
+    if (!value.startsWith('+')) {
+      if (!RegExp(r'^\d+$').hasMatch(value) || phoneCountryCode.isEmpty) {
+        return null;
+      }
+      if (phoneCountryCode == '20' &&
+          !RegExp(r'^01[0125]\d{8}$').hasMatch(value)) {
+        return null;
+      }
+      value = '+$phoneCountryCode${value.replaceFirst(RegExp(r'^0+'), '')}';
+    }
+    return RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(value) ? value : null;
+  }
+
   bool allows(String method) => enabled && methods[method] == true;
   bool get supportsPhone => allows('phone_password') || allows('phone_otp');
   factory NativeAuthConfig.fromJson(Map<String, dynamic> json) =>
       NativeAuthConfig(
         enabled: json['enabled'] == true,
+        phoneCountryCode:
+            RegExp(
+              r'^[1-9]\d{0,3}$',
+            ).hasMatch('${json['phone_country_code'] ?? ''}')
+            ? '${json['phone_country_code']}'
+            : '',
         methods: json['methods'] is Map
             ? Map<String, dynamic>.from(
                 json['methods'] as Map,
