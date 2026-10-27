@@ -79,6 +79,7 @@ jobs:
           node tools/live_ui_controls/page-controls.test.cjs
           node tools/live_ui_controls/page-controls-runtime.test.cjs
           php tools/live_ui_controls/presentation-test.php
+          php tools/live_ui_controls/normalization-test.php
       - name: Check connected sign-in preview availability
         run: node tool/builder-assets/preview-auth-config.test.cjs
       - name: Check shared preview scrolling and element selection

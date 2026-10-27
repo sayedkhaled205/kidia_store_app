@@ -1,6 +1,6 @@
 # Published page UI controls
 
-The 36 fields in `schema.json` extend the existing live-design release. They are
+The 51 fields in `schema.json` extend the existing live-design release. They are
 stored in the authenticated Builder draft at `builder.ui_controls_v1`, and are
 only exposed publicly after the owner publishes a release. Saving is separate
 from publishing. Each save checks a digest under a store row lock so an old tab
@@ -37,7 +37,15 @@ Controls now live in their existing editor pages rather than a toolbar dialog:
 
 - Account: sign-in, existing Logout Button and public support cards (25 controls).
 - Home: Fixed Header / cart counter animation (3 controls).
-- Checkout: cart text card (8 controls).
+- Checkout: cart text and appearance cards (23 controls).
+
+The 15 cart appearance controls select the existing theme/classic/compact layout,
+side padding, item gap, image dimensions/radius, name font size/line count,
+checkout button dimensions/radius/font size, coupon/summary expansion and empty
+cart icon/spacing. Blank numeric fields inherit the current layout; zero is a
+valid radius. Their choices and numeric limits are validated on server and app.
+They require a compatible baseline app once; subsequent edits use Publish.
+They do not change quantities, discounts, prices, checkout or customer accounts.
 
 The normal Save Page Layout / Save Home Layout / Save Checkout action calls
 `await window.MobiShopPageControls.save(sender)` before the existing page save.

@@ -7,7 +7,7 @@ use App\Services\LiveAppDesign as Design;
 use App\Services\LiveAppUiControls as Controls;
 use Illuminate\Support\Facades\DB;
 function check($value, $message) { if (!$value) throw new RuntimeException($message); }
-check(count(Controls::schema()) === 36, '36 controls exposed');
+check(count(Controls::schema()) === 51, '51 controls exposed');
 foreach ([['unknown'=>true],['auth_title_size'=>999],['cart_pulse_enabled'=>'false'],['auth_title_en'=>'<script>'],['auth_title_en'=>str_repeat('x',121)],['support_contact_email'=>'https://buyer@example.com'],['support_whatsapp'=>'javascript:alert(1)']] as $bad) {
     try { Controls::normalize($bad); throw new RuntimeException('Unsafe value accepted'); }
     catch (Illuminate\Validation\ValidationException) {}
@@ -25,7 +25,9 @@ try {
     $status = Controls::status($store);
     $new = Controls::save($store, (int)$store->user_id,
         ['auth_title_en'=>'Welcome back','logout_height'=>42,'cart_pulse_enabled'=>false,
-         'support_contact_email'=>'help@example.com','support_whatsapp_enabled'=>false], $status['controls_digest']);
+         'support_contact_email'=>'help@example.com','support_whatsapp_enabled'=>false,
+         'cart_layout'=>'compact','cart_item_image_radius'=>0,
+         'cart_item_image_width'=>null,'cart_summary_display'=>'expanded'], $status['controls_digest']);
     $store->refresh(); $after = $store->settings; unset($after['builder']['ui_controls_v1']); unset($settings['builder']['ui_controls_v1']);
     check($after === $settings, 'Other store and Builder settings preserved');
     check(Design::query($store)->orderByDesc('id')->first()->bundle === $original, 'Saving controls does not publish');
@@ -48,8 +50,12 @@ try {
     $bundle = json_decode(base64_decode($release->bundle),true);
     check($bundle['pages']['home']['settings']['ui_controls_v1']['cart_pulse_enabled'] === false, 'Controls included in public release');
     check($bundle['pages']['home']['settings']['ui_controls_v1']['support_contact_email'] === 'help@example.com', 'Public support published');
+    $ui = $bundle['pages']['home']['settings']['ui_controls_v1'];
+    check($ui['cart_layout'] === 'compact' && $ui['cart_summary_display'] === 'expanded', 'Cart choices published');
+    check($ui['cart_item_image_radius'] === 0, 'Zero cart radius published');
+    check(!array_key_exists('cart_item_image_width', $ui), 'Blank cart size inherits theme');
     check($bundle['pages']['home']['settings']['checkout_presentation_v1'] === ['design'=>'compact'], 'Saved checkout design published');
     Design::publish($store,(int)$store->user_id,$two['revision'],null,true);
     check(Design::query($store)->orderByDesc('id')->first()->bundle === $original, 'Rollback restores prior settings');
-    echo "PASS: 36 controls, bounds, default compatibility, draft isolation, owner scope, conflicts, publish, rollback\n";
+    echo "PASS: 51 controls, bounds, default compatibility, draft isolation, owner scope, conflicts, publish, rollback\n";
 } finally { DB::rollBack(); echo "All test data rolled back.\n"; }

@@ -25,6 +25,10 @@ class AppUiControls {
           }
         case 'boolean':
           if (value is bool) result[entry.key] = value;
+        case 'choice':
+          if (value is String && (spec['options'] as Map).containsKey(value)) {
+            result[entry.key] = value;
+          }
         case 'color':
           if (value is String && RegExp(r'^#[a-fA-F0-9]{6}$').hasMatch(value)) {
             result[entry.key] = value;

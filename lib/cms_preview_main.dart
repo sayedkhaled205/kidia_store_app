@@ -43,6 +43,7 @@ void main() {
     'account' => '/account',
     'splash' => '/cms-preview/splash',
     'checkout' => '/cms-preview/checkout',
+    'cart' => '/cart',
     _ => '/products',
   };
   final router = createAppRouter(
@@ -106,6 +107,7 @@ void main() {
         'account' => '/account',
         'splash' => '/cms-preview/splash',
         'checkout' => '/cms-preview/checkout',
+        'cart' => '/cart',
         _ => null,
       };
       if (path != null) router.go(path);
