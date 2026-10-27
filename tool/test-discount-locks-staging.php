@@ -42,7 +42,7 @@ try {
         'set_adjustments' => '[]',
         'additional' => wp_json_encode( array( 'mobishop_channel' => 'mobile' ) ),
     ) );
-    $fixture = (int) $wpdb->insert_id;
+    $fixture = $inserted === 1 ? (int) $wpdb->insert_id : 0;
     $assert( $inserted === 1 && $fixture > 0, 'An isolated fixture rule must be inserted.' );
 
     $incoming = array( 'additional' => wp_json_encode( array( 'condition_relationship' => 'or' ) ) );
