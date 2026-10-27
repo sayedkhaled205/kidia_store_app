@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.106
+Stable tag: 1.46.107
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -62,7 +62,7 @@ Yes. Application language, direction, typography, and other visual settings can 
 
 == Changelog ==
 
-= 1.46.106 =
+= 1.46.107 =
 * Use FlyCart Discount Rules prices in the mobile catalogue and preserve automatic gift quantity limits.
 * Expose read-only discount rule summaries to the authorized merchant builder, alongside WooCommerce coupons.
 * Match variation prices to the shop tax display and prevent caching contextual prices.
