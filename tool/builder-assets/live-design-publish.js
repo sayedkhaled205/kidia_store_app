@@ -5,7 +5,7 @@
   if (!shell) return;
   const button = document.createElement('button');
   button.id = 'wm-publish-design'; button.type = 'button';
-  button.className = 'button button-primary'; button.textContent = 'نشر للموبايل';
+  button.className = 'button button-primary'; button.textContent = 'Publish now';
   button.style.marginInlineStart = '8px'; shell.append(button);
   const style = document.createElement('style');
   style.textContent = `

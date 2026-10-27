@@ -334,8 +334,8 @@ void main() {
       final SizedBox wishlistIconBox = tester.widget<SizedBox>(
         find.byKey(const Key('cms-bottom-nav-icon-box-wishlist')),
       );
-      expect(homeIconBox.width, 44);
-      expect(homeIconBox.height, 44);
+      expect(homeIconBox.width, 40);
+      expect(homeIconBox.height, 40);
       expect(wishlistIconBox.width, homeIconBox.width);
       expect(wishlistIconBox.height, homeIconBox.height);
       expect(
