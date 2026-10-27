@@ -123,8 +123,8 @@ class _MainShellState extends ConsumerState<MainShell>
         .number('icon_size', 24)
         .clamp(14, 40)
         .toDouble();
-    final double footerIconBoxSize = (footerIconSize + 8)
-        .clamp(32, 48)
+    final double footerIconBoxSize = (footerIconSize + 4)
+        .clamp(28, 48)
         .toDouble();
     final double footerLabelSize = footer
         .number('label_size', 11)
@@ -182,7 +182,8 @@ class _MainShellState extends ConsumerState<MainShell>
             : 0) +
         8;
     final footerHeight = footer.number('height', 64).clamp(48, 100).toDouble();
-    final requiredHeight = minimumRowHeight * rowCount;
+    final requiredHeight =
+        minimumRowHeight.clamp(48, double.infinity).toDouble() * rowCount;
     final Color activeColor = _cmsColor(
       footer.string('active_color', '#1F6F61'),
       MobiShopColors.primaryDark,

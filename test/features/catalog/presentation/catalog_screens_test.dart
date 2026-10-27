@@ -25,6 +25,30 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
+  testWidgets('visual cards apply saved height and image spacing at every level', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(_app(_ScreenCatalogRepository(
+      categoryLayout: 'visual_grid', gridColumns: 2,
+      navigationMode: 'separate_page', deepTree: true,
+      cardHeight: 192, imageScale: .95, nameHighlightEnabled: true,
+    ), const CategoriesScreen()));
+    await tester.pumpAndSettle();
+    for (final id in [1, 2]) {
+      final card = find.byKey(Key('category-visual-card-$id'));
+      // The material surface sits inside the card's one-pixel outline.
+      expect(tester.getSize(card).height, closeTo(190, 0.1));
+      final image = tester.widget<Transform>(find.byKey(Key('category-visual-image-$id')));
+      expect(image.transform.entry(0, 0), .95);
+      expect(image.transform.entry(1, 1), .95);
+      expect(image.alignment, Alignment.center);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text(id == 1 ? 'Women' : 'Dresses').last);
+      await tester.pumpAndSettle();
+    }
+  });
   testWidgets('Categories footer always returns from a child to root after Home', (tester) async {
     await tester.pumpWidget(_app(_ScreenCatalogRepository(
       categoryLayout:'visual_grid', gridColumns:2, navigationMode:'separate_page', deepTree:true,
@@ -578,6 +602,8 @@ Widget _app(CatalogRepository repository, Widget home, {bool shell = false, Text
               'navigation_mode': repository.navigationMode,
               'grid_columns': repository.gridColumns,
               'card_gap': 12,
+              'card_height': repository.cardHeight,
+              'image_scale': repository.imageScale * 100,
               'name_highlight_enabled': repository.nameHighlightEnabled! ? '1' : '0',
               'name_highlight_color': '#E0F2ED',
             },
@@ -623,6 +649,8 @@ class _ScreenCatalogRepository implements CatalogRepository {
     this.deepTree = false,
     this.nameHighlightEnabled,
     this.cursor = false,
+    this.cardHeight = 0,
+    this.imageScale = 1,
   });
 
   final String categoryLayout;
@@ -632,6 +660,8 @@ class _ScreenCatalogRepository implements CatalogRepository {
   final bool deepTree;
   final bool? nameHighlightEnabled;
   final bool cursor;
+  final double cardHeight;
+  final double imageScale;
   final List<CatalogProductQuery> productQueries = <CatalogProductQuery>[];
 
   @override
@@ -709,6 +739,8 @@ class _ScreenCatalogRepository implements CatalogRepository {
           navigationMode: navigationMode,
           gridColumns: gridColumns,
           cardRadius: 20,
+          cardHeight: cardHeight,
+          imageScale: imageScale,
           cardGap: 12,
           marginTop: 7,
           marginBottom: 8,

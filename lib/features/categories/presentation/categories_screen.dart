@@ -914,22 +914,32 @@ class _CategoryGridTile extends StatelessWidget {
             child: Column(
               children: <Widget>[
                 Expanded(
-                  child: SizedBox.expand(
-                    child: category.image != null
-                        ? AppNetworkImage(
-                            imageUrl: category.image!.source.toString(),
-                            fit: category.imageFit == 'contain'
-                                ? BoxFit.contain
-                                : BoxFit.cover,
-                          )
-                        : ColoredBox(
-                            color: theme.colorScheme.surfaceContainerLow,
-                            child: Icon(
-                              Icons.category_outlined,
-                              size: 38,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
+                  child: ClipRect(
+                    child: Transform.scale(
+                      key: Key('category-visual-image-${category.id}'),
+                      scale: category.imageScale,
+                      alignment: _categoryImageAlignment(category.imagePosition),
+                      child: SizedBox.expand(
+                        child: category.image != null
+                            ? AppNetworkImage(
+                                imageUrl: category.image!.source.toString(),
+                                fit: category.imageFit == 'contain'
+                                    ? BoxFit.contain
+                                    : BoxFit.cover,
+                                alignment: _categoryImageAlignment(
+                                  category.imagePosition,
+                                ),
+                              )
+                            : ColoredBox(
+                                color: theme.colorScheme.surfaceContainerLow,
+                                child: Icon(
+                                  Icons.category_outlined,
+                                  size: 38,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                      ),
+                    ),
                   ),
                 ),
                 _CategoryNameHighlight(
@@ -1533,6 +1543,14 @@ class _CategoryCardSurface extends StatelessWidget {
   }
 }
 
+Alignment _categoryImageAlignment(String position) => switch (position) {
+  'top' => Alignment.topCenter,
+  'bottom' => Alignment.bottomCenter,
+  'left' => Alignment.centerLeft,
+  'right' => Alignment.centerRight,
+  _ => Alignment.center,
+};
+
 class _CategoryArtwork extends StatelessWidget {
   const _CategoryArtwork({
     required this.category,
@@ -1565,13 +1583,7 @@ class _CategoryArtwork extends StatelessWidget {
             'rounded' => size * category.imageRadius,
             _ => 0,
           };
-    final Alignment alignment = switch (category.imagePosition) {
-      'top' => Alignment.topCenter,
-      'bottom' => Alignment.bottomCenter,
-      'left' => Alignment.centerLeft,
-      'right' => Alignment.centerRight,
-      _ => Alignment.center,
-    };
+    final Alignment alignment = _categoryImageAlignment(category.imagePosition);
     Widget artwork = imageUrl == null || imageUrl.isEmpty
         ? fallback
         : Transform.scale(
