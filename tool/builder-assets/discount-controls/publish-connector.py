@@ -31,7 +31,7 @@ def fetch(commit, path):
 def publish(base, commit, directory, backup, apply=False):
     old = json.loads(fetch(base, 'connectors/woocommerce/source-manifest.json'))
     new = json.loads(fetch(commit, 'connectors/woocommerce/source-manifest.json'))
-    assert old['version'] == '1.46.106' and new['version'] == '1.46.107'
+    assert old['version'] in ('1.46.105', '1.46.106') and new['version'] == '1.46.107'
     alias = directory / 'mobi2app-connector.zip'
     release = directory / 'connector-release.json'
     before = {p: p.read_bytes() for p in (alias, release)}
@@ -58,7 +58,11 @@ def publish(base, commit, directory, backup, apply=False):
         assert digest(data) == record['sha256'], name
         files[name] = data
         changed.append(name)
-    assert set(changed) == {'SOURCE-BUILD.txt','readme.txt','mobi2app-connector.php','includes/class-mobishop.php','api/class-embedded-checkout88.php','includes/central/loader.php','includes/central/class-discount-rules-summary.php','includes/central/class-discount-rules-admin.php','includes/class-mobishop-discount-channel.php'}
+    expected = {'SOURCE-BUILD.txt','readme.txt','mobi2app-connector.php','includes/class-mobishop.php','api/class-embedded-checkout88.php','includes/central/loader.php','includes/central/class-discount-rules-summary.php','includes/central/class-discount-rules-admin.php','includes/class-mobishop-discount-channel.php'}
+    if old['version'] == '1.46.105':
+        # Retain the already merged 106 layout fixes when upgrading the still-105 public download.
+        expected |= {'includes/blocks/class-mobishop-product-carousel-block.php','includes/blocks/class-mobishop-product-grid-block.php','includes/class-mobishop-page-layout-store.php'}
+    assert set(changed) == expected
     assert set(files) == set(new['files'])
     target_name = 'mobi2app-connector-1.46.107.zip'
     buffer = io.BytesIO()
