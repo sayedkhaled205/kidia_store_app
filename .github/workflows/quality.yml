@@ -78,6 +78,7 @@ jobs:
           python3 tool/generate_app_ui_controls.py --check
           node tools/live_ui_controls/page-controls.test.cjs
           node tools/live_ui_controls/page-controls-runtime.test.cjs
+          node --test tool/builder-assets/live-design-publish.test.cjs tool/builder-assets/publish-edits.test.cjs
           php tools/live_ui_controls/presentation-test.php
           php tools/live_ui_controls/normalization-test.php
       - name: Check connected sign-in preview availability
