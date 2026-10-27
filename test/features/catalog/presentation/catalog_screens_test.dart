@@ -33,8 +33,9 @@ void main() {
       tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
         SystemChannels.platform,
         (call) async {
-          if (call.method == 'SystemNavigator.setFrameworkHandlesBack')
+          if (call.method == 'SystemNavigator.setFrameworkHandlesBack') {
             flags.add(call.arguments as bool);
+          }
           return null;
         },
       );
@@ -839,8 +840,9 @@ Widget _app(
       cmsPageLayoutProvider.overrideWith((ref, page) async {
         final base = CmsPageLayout.fallback(page);
         if (repository is! _ScreenCatalogRepository ||
-            repository.nameHighlightEnabled == null)
+            repository.nameHighlightEnabled == null) {
           return base;
+        }
         // Exercise the saved general settings path, shared by all platforms,
         // rather than assigning presentation only to a fixture's parent node.
         return CmsPageLayout(

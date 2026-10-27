@@ -146,14 +146,16 @@ class _MainShellState extends ConsumerState<MainShell>
     // Render navigation defaults without rewriting its saved purchase layout.
     final footerJson = footer.json('layout_json');
     final configuredIds = <String>[];
-    if (footerJson['items'] is List)
+    if (footerJson['items'] is List) {
       configuredIds.addAll((footerJson['items'] as List).map((id) => '$id'));
+    }
     if (footerJson['rows'] is List) {
       for (final row in footerJson['rows'] as List) {
         if (row is! Map || row['columns'] is! List) continue;
         for (final column in row['columns'] as List) {
-          if (column is Map && column['items'] is List)
+          if (column is Map && column['items'] is List) {
             configuredIds.addAll((column['items'] as List).map((id) => '$id'));
+          }
         }
       }
     }
@@ -230,8 +232,9 @@ class _MainShellState extends ConsumerState<MainShell>
                 return false;
               }
               final bool hidden = notification.scrollDelta! > 0;
-              if (hidden != _footerHidden)
+              if (hidden != _footerHidden) {
                 setState(() => _footerHidden = hidden);
+              }
               return false;
             },
             child: widget.navigationShell,
