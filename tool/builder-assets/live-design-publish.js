@@ -93,7 +93,7 @@
       const inspection = await bridge.inspect(store);
       if (ownGeneration !== generation || store !== storeId()) return;
       state = data; dirty = inspection.dirtyCount;
-      render('ready', dirty ? 'سيتم حفظ تعديلات الصفحات المفتوحة قبل النشر (' + dirty + ').' : (!state.ready ? 'احفظ الصفحات لإكمال التصميم قبل التحديث.' : !state.has_changes ? 'Up to date' : ''));
+      render('ready', dirty ? 'سيتم حفظ تعديلات الصفحات قبل النشر: ' + (inspection.pages?.join('، ') || dirty) : (!state.ready ? 'احفظ الصفحات لإكمال التصميم قبل التحديث.' : !state.has_changes ? 'Up to date' : ''));
     } catch (error) {
       if (ownGeneration === generation) { needsRefresh = true; render('error', error.message); }
     }

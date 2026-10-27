@@ -3,6 +3,7 @@
   const screens = new Set(['splash', 'home-builder', 'category-builder', 'catalog-builder', 'product-builder', 'size-chart-builder', 'wishlist-builder', 'account-builder', 'checkout-builder']);
   const message = 'تعذر تأكيد حفظ التعديلات. حدّث البيلدر وراجع القيم المحفوظة قبل النشر.';
   const snapshot = value => JSON.stringify(value);
+  const labels = {'splash':'Splash','home-builder':'Home','category-builder':'Categories','catalog-builder':'Catalog','product-builder':'Product','size-chart-builder':'Size chart','wishlist-builder':'Wishlist','account-builder':'Account','checkout-builder':'Checkout'};
   function sameSavedState(left, right) {
     const entries = value => (value?.entries || []).map(pair => pair.slice()).sort((a, b) => a[0].localeCompare(b[0]));
     return snapshot(entries(left)) === snapshot(entries(right));
@@ -88,7 +89,8 @@
       accepts(frame, packet) { return Boolean(batch?.saving?.frame === frame && packet.type === 'kidia:save' && packet.screen === batch.saving.screen && packet.request_id === batch.saving.id); },
       async inspect(store) {
         if (batch) throw new Error('النشر شغال بالفعل.');
-        return {dirtyCount: (await collect(store)).filter(item => item.dirty).length};
+        const changed = (await collect(store)).filter(item => item.dirty);
+        return {dirtyCount: changed.length, pages: changed.map(item => labels[item.screen])};
       },
       async begin(store) {
         if (batch) throw new Error('النشر شغال بالفعل.');
