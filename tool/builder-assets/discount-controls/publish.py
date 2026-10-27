@@ -13,10 +13,22 @@ def once(text, before, after):
 
 
 def patch(commerce):
-    return once(commerce, '  function start() {',
-        "  document.addEventListener('mobishop:discount-saved', () => {\n"
+    if 'const tableScroll =' not in commerce:
+        commerce = once(commerce, '      root.replaceChildren(...fragment.childNodes);',
+            "      const tableScroll = Array.from(root.querySelectorAll('.mobishop-data-table-wrap'), table => table.scrollLeft);\n"
+            "      root.replaceChildren(...fragment.childNodes);")
+        commerce = once(commerce, '      wire();',
+            "      wire();\n      root.querySelectorAll('.mobishop-data-table-wrap').forEach((table,index) => { table.scrollLeft = tableScroll[index] || 0; });")
+    listener = ("  document.addEventListener('mobishop:discount-saved', () => {\n"
         "    if (root && query.store_tab === 'discounts') load();\n"
-        "  });\n  function start() {")
+        "  });\n")
+    commerce = commerce.replace(listener, '')
+    return once(commerce, '  function start() {', listener + '  function start() {')
+
+
+def strip_existing_controls(frame):
+    frame = re.sub(r'<link rel="stylesheet" href="assets/discount-rule-controls-[a-f0-9]+\.css">\n?', '', frame)
+    return re.sub(r'<script src="assets/discount-rule-controls-[a-f0-9]+\.js"></script>\n?', '', frame)
 
 
 def main():
@@ -66,6 +78,7 @@ def main():
     index = index.replace(central_name, new_central)
     central = central.replace(frame_name, new_frame)
     frame = frame.replace(commerce_name, new_commerce)
+    frame = strip_existing_controls(frame)
     frame = once(frame, '</head>', '<link rel="stylesheet" href="' + controls + '.css">\n</head>')
     frame = once(frame, '</body>', '<script src="' + controls + '.js"></script>\n</body>')
     changes = {new_central:central.encode(),new_commerce:commerce.encode(),new_frame:frame.encode(),review:index.encode(),

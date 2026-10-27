@@ -274,3 +274,4 @@
 .mobishop-discount-rules-table button {white-space:nowrap;}
 .mobishop-discount-rules-summary .mobishop-discount-rules-table {min-width:1100px!important;table-layout:auto!important;width:100%!important;}
 .mobishop-discount-rules-summary .mobishop-discount-rules-table :is(th,td) {word-break:normal!important;overflow-wrap:normal!important;}
+.mobishop-discount-rules-summary .mobishop-discount-rules-table tr > :last-child {position:sticky;left:0;z-index:1;min-width:115px;background:#fff;box-shadow:1px 0 0 #dce7e4;}
