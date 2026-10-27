@@ -25,7 +25,7 @@ ThemeData _identityTheme(
 
   final primary = color('primary_color') ?? base.colorScheme.primary;
   final secondary = color('secondary_color') ?? base.colorScheme.secondary;
-  final kids = identity?['theme'] == 'kids_baby';
+  final hasBrandColor = color('primary_color') != null;
   // Pick legible message/action text even after a merchant publishes a new
   // primary color. Google/system-owned authentication dialogs are separate.
   final messageForeground = primary.computeLuminance() > 0.179
@@ -59,7 +59,7 @@ ThemeData _identityTheme(
     appBarTheme: base.appBarTheme.copyWith(
       titleTextStyle: style(base.appBarTheme.titleTextStyle),
     ),
-    snackBarTheme: kids
+    snackBarTheme: hasBrandColor
         ? base.snackBarTheme.copyWith(
             backgroundColor: primary,
             contentTextStyle: style(

@@ -10,7 +10,6 @@ void main() {
       for (final direction in TextDirection.values) {
         for (final color in ['#4ea999', '#163c35']) {
           final theme = applicationIdentityTheme(MobiShopTheme.light, {
-            'theme': 'kids_baby',
             'primary_color': color,
           });
           final key = GlobalKey<ScaffoldMessengerState>();
@@ -58,7 +57,6 @@ void main() {
           expect(theme.snackBarTheme.closeIconColor, foreground);
           expect(
             previewIdentityTheme(MobiShopTheme.light, {
-              'theme': 'kids_baby',
               'primary_color': color,
             }).snackBarTheme,
             theme.snackBarTheme,
@@ -70,10 +68,10 @@ void main() {
     },
   );
 
-  test('Other themes keep their existing message appearance', () {
+  test('Unbranded applications keep their existing message appearance', () {
     final base = MobiShopTheme.light;
     expect(
-      applicationIdentityTheme(base, {'theme': 'fashion'}).snackBarTheme,
+      applicationIdentityTheme(base, {'app_name': 'Example'}).snackBarTheme,
       base.snackBarTheme,
     );
   });
