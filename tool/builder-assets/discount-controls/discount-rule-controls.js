@@ -270,7 +270,7 @@
     modal.setDraftLocked(busy || unresolved);
     buttons.saveBtn.disabled = busy;
     buttons.cancelBtn.disabled = busy || unresolved;
-    buttons.saveBtn.textContent = busy ? 'Saving…' : unresolved ? 'Retry same save' : 'Save';
+    buttons.saveBtn.textContent = busy ? 'Saving...' : unresolved ? 'Retry same save' : 'Save';
   }
 
   function buildFooter(modal) {
@@ -419,7 +419,7 @@
     var searchInput = document.createElement('input');
     searchInput.type = 'search';
     searchInput.className = 'mdrc-picker-search';
-    searchInput.placeholder = 'Searchâ€¦';
+    searchInput.placeholder = 'Search...';
     searchInput.setAttribute('aria-label', 'Search');
 
     var resultsList = document.createElement('div');
@@ -456,7 +456,7 @@
         removeBtn.type = 'button';
         removeBtn.className = 'mdrc-chip-remove';
         removeBtn.setAttribute('aria-label', 'Remove ' + label);
-        removeBtn.textContent = 'أ—';
+        removeBtn.textContent = 'x';
         removeBtn.addEventListener('click', function () {
           selected.delete(id);
           renderChips();
@@ -642,7 +642,7 @@
   }
 
   function uncertainSaveMessage() {
-    return 'Saving is not confirmed. Use “Retry same save” to check the result. Editing and closing stay locked to avoid a duplicate.';
+    return 'Saving is not confirmed. Use "Retry same save" to check the result. Editing and closing stay locked to avoid a duplicate.';
   }
 
   // ---------------------------------------------------------------------
@@ -847,7 +847,7 @@
 
     var dateNote = document.createElement('p');
     dateNote.className = 'mdrc-note mdrc-note-full';
-    dateNote.textContent = 'Dates use your storeâ€™s local timezone.';
+    dateNote.textContent = "Dates use your store's local timezone.";
     form.appendChild(dateNote);
 
     modal.body.appendChild(form);
