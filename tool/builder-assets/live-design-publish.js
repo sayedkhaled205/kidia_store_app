@@ -36,10 +36,20 @@
   const title = dialog.querySelector('h2');
   const icon = dialog.querySelector('[data-icon]');
   const footer = dialog.querySelector('footer');
-  let context, state, busy = false, generation = 0, closeTimer, needsRefresh = false;
+  let context, state, busy = false, generation = 0, closeTimer, needsRefresh = false, dirty = 0;
   const storeId = () => new URL(location.href).searchParams.get('store');
+  function requireBridge() {
+    const bridge = window.MobiShopPublishEdits;
+    if (!bridge || typeof bridge.inspect !== 'function' || typeof bridge.begin !== 'function') {
+      throw new Error('تعذر التحقق من التعديلات. حدّث الصفحة وحاول مرة أخرى.');
+    }
+    return bridge;
+  }
   async function request(url, body) {
-    const response = await fetch(url, {method: body ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
+    const response = await fetch(url, {method: body ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store', signal: controller.signal,
       headers: {Accept: 'application/json', ...(body ? {'Content-Type': 'application/json', 'X-CSRF-TOKEN': context.csrf_token} : {})},
       ...(body ? {body: JSON.stringify(body)} : {})});
     if (!response.ok) {
@@ -48,7 +58,11 @@
       if (response.status === 422) throw new Error('احفظ كل الصفحات وتأكد من اكتمال تصميم الرئيسية قبل النشر.');
       throw new Error('تعذر تأكيد التحديث. حاول مرة أخرى.');
     }
-    return response.json();
+    return await response.json();
+    } catch (error) {
+      if (controller.signal.aborted) throw new Error('تعذر تأكيد التحديث في الوقت المحدد. حاول تاني للتحقق من حالة الحفظ والنشر.');
+      throw error;
+    } finally { clearTimeout(timeout); }
   }
   function render(phase, message = '') {
     dialog.dataset.phase = phase;
@@ -60,22 +74,26 @@
     footer.hidden = phase === 'updating' || phase === 'complete';
     cancel.disabled = busy;
     publish.textContent = phase === 'error' ? 'Try again' : 'Update now';
-    publish.disabled = busy || phase === 'loading' || (phase !== 'error' && (!state || !state.ready || !state.has_changes));
+    const canPublish = dirty > 0 || (state && state.ready && state.has_changes);
+    publish.disabled = busy || phase === 'loading' || (phase !== 'error' && !canPublish);
   }
   async function loadState() {
     const ownGeneration = ++generation;
-    const store = storeId(); state = null; context = null; busy = false;
+    const store = storeId(); state = null; context = null; dirty = 0; busy = false;
     needsRefresh = false;
     clearTimeout(closeTimer);
     render('loading');
     try {
+      const bridge = requireBridge();
       const ctx = await request(`/account/builder/context?store=${encodeURIComponent(store || '')}`);
       if (ownGeneration !== generation || store !== storeId()) return;
       context = ctx;
       const data = await request(`/account/builder/live-design?store=${encodeURIComponent(store)}`);
       if (ownGeneration !== generation || store !== storeId()) return;
-      state = data;
-      render('ready', !state.ready ? 'احفظ الصفحات لإكمال التصميم قبل التحديث.' : !state.has_changes ? 'Up to date' : '');
+      const inspection = await bridge.inspect(store);
+      if (ownGeneration !== generation || store !== storeId()) return;
+      state = data; dirty = inspection.dirtyCount;
+      render('ready', dirty ? 'سيتم حفظ تعديلات الصفحات قبل النشر: ' + (inspection.pages?.join('، ') || dirty) : (!state.ready ? 'احفظ الصفحات لإكمال التصميم قبل التحديث.' : !state.has_changes ? 'Up to date' : ''));
     } catch (error) {
       if (ownGeneration === generation) { needsRefresh = true; render('error', error.message); }
     }
@@ -89,19 +107,47 @@
     if (busy) return;
     // Recheck the server after any failure: a timed-out request may have succeeded.
     if (needsRefresh) { await loadState(); return; }
-    if (!state || !state.ready || !state.has_changes || !context || context.store !== storeId()) return;
+    if (!context || context.store !== storeId()) return;
+    if (!(dirty > 0 || (state && state.ready && state.has_changes))) return;
     const ownGeneration = generation, store = storeId();
+    const aborted = () => {
+      if (ownGeneration !== generation) return true;
+      if (store !== storeId()) { ++generation; dialog.close(); return true; }
+      return false;
+    };
     busy = true; render('updating');
+    let session;
     try {
+      const bridge = requireBridge();
+      session = await bridge.begin(store);
+      if (aborted()) return;
+      render('updating', 'جارٍ حفظ التعديلات…');
+      await session.save();
+      if (aborted()) return;
+      session.assertCurrent();
+      render('updating');
+      const fresh = await request(`/account/builder/live-design?store=${encodeURIComponent(store)}`);
+      if (aborted()) return;
+      session.assertCurrent();
+      if (context.store !== storeId()) return;
+      state = fresh; dirty = 0;
+      if (!state.ready) throw new Error('احفظ كل الصفحات وتأكد من اكتمال تصميم الرئيسية قبل النشر.');
+      if (!state.has_changes) {
+        busy = false; render('complete');
+        closeTimer = setTimeout(() => { if (ownGeneration === generation && dialog.open) { ++generation; dialog.close(); } }, 1400);
+        return;
+      }
       const data = await request('/account/builder/live-design/publish', {store: context.store,
         revision: state.revision, draft_digest: state.draft_digest});
-      if (ownGeneration !== generation) return;
+      if (aborted()) return;
+      session.assertCurrent();
       busy = false;
-      if (store !== storeId()) { ++generation; dialog.close(); return; }
       state = data; render('complete');
       closeTimer = setTimeout(() => { if (ownGeneration === generation && dialog.open) { ++generation; dialog.close(); } }, 1400);
     } catch (error) {
       if (ownGeneration === generation) { busy = false; needsRefresh = true; render('error', error.message); }
+    } finally {
+      if (session) { try { session.release(); } catch (_) {} }
     }
   }
   publish.addEventListener('click', submit);

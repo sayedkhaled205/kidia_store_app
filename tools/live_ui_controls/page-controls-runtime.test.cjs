@@ -27,6 +27,11 @@ async function fixture(store, draft, screen='account-builder') {
 (async()=>{
   const f=await fixture('alpha');
   assert.ok(f.refreshes()>0,'Async initial load refreshes preview');
+  assert.equal((await f.w.MobiShopPageControls.inspect(f.frame)).dirty,false);
+  f.input('logout_height').value='999';
+  assert.equal((await f.w.MobiShopPageControls.inspect(f.frame)).dirty,true,'Invalid control is still an edit');
+  await assert.rejects(f.w.MobiShopPageControls.validate(f.frame));
+  f.input('logout_height').value=String(schema.logout_height.default);
   await f.w.MobiShopPageControls.save(f.frame);
   assert.equal(f.writes(),0,'Untouched colors must not count as edits');
   f.input('auth_title_en').value='Draft title';
@@ -58,9 +63,11 @@ async function fixture(store, draft, screen='account-builder') {
   assert.equal(cart.input('cart_layout').tagName,'SELECT');
   assert.equal(cart.input('cart_layout').value,'theme');
   assert.equal(cart.input('cart_item_image_radius').value,'');
+  assert.equal((await cart.w.MobiShopPageControls.inspect(cart.frame)).dirty,false);
   await cart.w.MobiShopPageControls.save(cart.frame);
   assert.equal(cart.writes(),0,'Inherited sizes must not become edits');
   cart.input('cart_item_image_radius').value='0';
+  assert.equal((await cart.w.MobiShopPageControls.inspect(cart.frame)).dirty,true);
   cart.input('cart_layout').value='compact';
   cart.input('cart_layout').dispatchEvent(new cart.w.Event('change',{bubbles:true}));
   const cartDraft=JSON.parse(cart.w.sessionStorage.getItem(draftKey('alpha','checkout-builder')));

@@ -44,8 +44,11 @@
   const endpoint = '/account/builder/live-design/controls';
   const supported = new Set(['home-builder', 'account-builder', 'checkout-builder']);
   async function request(url, body, csrf) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    try {
     const response = await fetch(url, {
-      method: body ? 'POST' : 'GET', credentials: 'same-origin',
+      method: body ? 'POST' : 'GET', credentials: 'same-origin', signal: controller.signal,
       headers: {Accept: 'application/json', ...(body ? {'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf} : {})},
       ...(body ? {body: JSON.stringify(body)} : {}),
     });
@@ -54,7 +57,8 @@
       if (response.status === 422) throw new Error('راجع القيم والأحجام والنصوص قبل الحفظ.');
       throw new Error('تعذر تأكيد حفظ إعدادات الصفحة. حدّث البيلدر وراجع القيم المحفوظة.');
     }
-    return response.json();
+    return await response.json();
+    } finally { clearTimeout(timeout); }
   }
   function load() {
     if (!loaded) loaded = Promise.all([
@@ -222,6 +226,26 @@
     });
     return state;
   }
+  function stamp(frame) {
+    if (!supported.has(frame.dataset.screen)) return '';
+    const state = states.get(frame.contentDocument);
+    if (!state?.data) throw new Error('إعدادات الصفحة لسه بتتحمل.');
+    return JSON.stringify([...state.inputs].map(([key, input]) => [key, input.value, input.checked, input.validity.valid]));
+  }
+  async function inspect(frame, validate = false) {
+    if (!supported.has(frame.dataset.screen)) return {dirty: false, stamp: ''};
+    const state = await mount(frame);
+    if (!state) throw new Error('إعدادات الصفحة لسه بتتحمل. حاول النشر بعد اكتمالها.');
+    await state.ready;
+    if (!state.data || store !== new URL(location.href).searchParams.get('store')) throw new Error('اتغير المتجر. حدّث الصفحة قبل النشر.');
+    let dirty = false;
+    for (const [key, input] of state.inputs) {
+      const valid = input.checkValidity();
+      if (validate && !valid) throw new Error('راجع القيم والأحجام قبل النشر.');
+      if (!valid || inputValue(input, state.data.schema[key]) !== state.baseline[key]) dirty = true;
+    }
+    return {dirty, stamp: stamp(frame)};
+  }
   async function save(frame) {
     if (!supported.has(frame.dataset.screen)) return;
     const state = await mount(frame);
@@ -265,7 +289,7 @@
     if (frame) mount(frame).then(s => s?.ready).catch(() => {});
   });
   new MutationObserver(observe).observe(document.querySelector('.kidia-central-stage') || document.body, {childList: true, subtree: true});
-  scope.MobiShopPageControls = {save, decoratePreview};
+  scope.MobiShopPageControls = {save, decoratePreview, inspect, stamp, validate: frame => inspect(frame, true)};
   observe();
   load().catch(() => {});
 })(typeof window === 'undefined' ? globalThis : window);
