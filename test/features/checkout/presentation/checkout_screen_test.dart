@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/saved_checkout_address92.dart';
@@ -318,7 +319,7 @@ void main() {
     expect(repository.submitCalls, 1);
     expect(reported?.orderId, 730);
     expect(find.byKey(const Key('checkout-success')), findsOneWidget);
-    expect(find.text('Order number: 730'), findsOneWidget);
+    expect(find.text('730'), findsOneWidget);
   });
 
   testWidgets('shows a retryable load failure', (WidgetTester tester) async {
@@ -408,7 +409,7 @@ void main() {
 }
 
 Widget _testApp(Widget home) {
-  return MaterialApp(theme: ThemeData(useMaterial3: true), home: home);
+  return ProviderScope(child: MaterialApp(theme: ThemeData(useMaterial3: true), home: home));
 }
 
 void _useTallSurface(WidgetTester tester) {

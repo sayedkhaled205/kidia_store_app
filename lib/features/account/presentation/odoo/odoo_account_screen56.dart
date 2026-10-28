@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/core/identity/customer_display_email.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -110,8 +111,13 @@ class OdooAccountScreen56 extends ConsumerWidget {
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    if (customer != null && summary.boolean('show_email', true))
-                      Text(customer.email, textAlign: TextAlign.center),
+                    if (customer != null &&
+                        summary.boolean('show_email', true) &&
+                        customerDisplayEmail(customer.email).isNotEmpty)
+                      Text(
+                        customerDisplayEmail(customer.email),
+                        textAlign: TextAlign.center,
+                      ),
                     if (sessionState.isLoading)
                       const Padding(
                         padding: EdgeInsets.all(12),

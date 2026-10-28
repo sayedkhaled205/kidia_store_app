@@ -28,6 +28,8 @@ class CustomerOrder {
     this.needsPayment,
     this.paymentUri,
     this.paymentMethod = '',
+    this.paymentMethodTitle = '',
+    this.shippingMethod = '',
     this.paymentEndpointPath = '',
   });
 
@@ -47,6 +49,8 @@ class CustomerOrder {
   final bool? needsPayment;
   final Uri? paymentUri;
   final String paymentMethod;
+  final String paymentMethodTitle;
+  final String shippingMethod;
   final String paymentEndpointPath;
 
   bool get isCancellationRequest =>

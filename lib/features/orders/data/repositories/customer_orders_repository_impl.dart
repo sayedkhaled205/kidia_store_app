@@ -223,6 +223,8 @@ class CustomerOrdersRepositoryImpl
       paymentMethod: json['payment_method'] is String
           ? json['payment_method'] as String
           : '',
+      paymentMethodTitle: _text(json['payment_method_title']).trim(),
+      shippingMethod: _text(json['shipping_method']).trim(),
       paymentEndpointPath: json['payment_endpoint_path'] is String
           ? json['payment_endpoint_path'] as String
           : '',

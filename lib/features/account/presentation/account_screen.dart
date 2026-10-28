@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/core/identity/customer_display_email.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 
@@ -361,12 +362,15 @@ class _AccountHeader extends StatelessWidget {
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.w900),
                         ),
-                        if (showEmail) ...<Widget>[
+                        if (showEmail &&
+                            customerDisplayEmail(
+                              current.user.email,
+                            ).isNotEmpty) ...<Widget>[
                           const SizedBox(height: 4),
                           Directionality(
                             textDirection: TextDirection.ltr,
                             child: Text(
-                              current.user.email,
+                              customerDisplayEmail(current.user.email),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyMedium

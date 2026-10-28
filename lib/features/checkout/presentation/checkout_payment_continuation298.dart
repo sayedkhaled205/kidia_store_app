@@ -2,15 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/features/checkout/application/checkout_payment_controller298.dart';
 import 'package:mobishop_store_app/features/checkout/presentation/providers/checkout_payment_provider298.dart';
+import 'checkout_order_receipt.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 class CheckoutPaymentContinuation298 extends ConsumerStatefulWidget {
   const CheckoutPaymentContinuation298({
     required this.orderId,
     this.onReviewOrders,
+    this.onContinueShopping,
+    this.onViewDetails,
     super.key,
   });
   final int orderId;
   final VoidCallback? onReviewOrders;
+  final VoidCallback? onContinueShopping;
+  final VoidCallback? onViewDetails;
 
   @override
   ConsumerState<CheckoutPaymentContinuation298> createState() =>
@@ -81,26 +87,44 @@ class _CheckoutPaymentContinuation298State
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              resolved
-                  ? Icons.check_circle_rounded
-                  : Icons.receipt_long_outlined,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              title,
-              key: Key('checkout-payment-${state.name}'),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              ar
-                  ? 'رقم الطلب: ${widget.orderId}'
-                  : 'Order number: ${widget.orderId}',
-            ),
+            if (resolved && controller.order != null)
+              CheckoutOrderReceipt(
+                orderId: widget.orderId,
+                order: controller.order,
+                title: title,
+                titleKey: Key('checkout-payment-${state.name}'),
+                logoUrl:
+                    ref
+                        .watch(cmsPageLayoutProvider('account'))
+                        .value
+                        ?.header
+                        .string('logo_url', '') ??
+                    '',
+                onContinueShopping: widget.onContinueShopping,
+                onViewDetails: widget.onViewDetails,
+              ),
+            if (!resolved) ...[
+              Icon(
+                resolved
+                    ? Icons.check_circle_rounded
+                    : Icons.receipt_long_outlined,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 18),
+              Text(
+                title,
+                key: Key('checkout-payment-${state.name}'),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                ar
+                    ? 'رقم الطلب: ${widget.orderId}'
+                    : 'Order number: ${widget.orderId}',
+              ),
+            ],
             if (!resolved) ...[
               const SizedBox(height: 12),
               Text(

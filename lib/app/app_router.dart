@@ -584,6 +584,8 @@ GoRouter createAppRouter({
               onBackToCart: () => context.go('/cart'),
               onReviewOrders: () => context.push('/orders'),
               onOrderSuccess: (_) => ref.invalidate(cartControllerProvider),
+              onContinueShopping: () => context.go('/'),
+              onViewOrderDetails: (id) => context.push('/orders/$id'),
               design:
                   ref.watch(checkoutPresentationProvider).value?.design ??
                   CheckoutDesign.classic,

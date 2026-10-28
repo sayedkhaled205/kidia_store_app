@@ -20,6 +20,17 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/native_a
 import '../../auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  for (final email in ['', 'guest-201000000000@no-email.invalid', 'real@gmail.com']) {
+    testWidgets('account subtitle hides placeholder email: $email', (tester) async {
+      await tester.pumpWidget(ProviderScope(overrides: [
+        authRepositoryProvider.overrideWithValue(_SignedInRepository(email)),
+      ], child: const MaterialApp(home: AccountScreen())));
+      await tester.pumpAndSettle();
+      expect(find.text('Customer'), findsOneWidget);
+      if (email.isNotEmpty) expect(find.text(email), email == 'real@gmail.com' ? findsOneWidget : findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  }
   testWidgets('legacy English guest title follows Arabic app language', (tester) async {
     await tester.pumpWidget(ProviderScope(overrides: [
       authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
@@ -296,14 +307,16 @@ class _SignedOutRepository implements AuthRepository {
 }
 
 class _SignedInRepository extends _SignedOutRepository {
+  _SignedInRepository([this.email = 'customer@example.com']);
+  final String email;
   @override
   Future<AuthSession?> restoreSession() async {
     return AuthSession(
       token: 'session-token',
       expiresAt: DateTime.utc(2099),
-      user: const AuthUser(
+      user: AuthUser(
         id: 7,
-        email: 'customer@example.com',
+        email: email,
         displayName: 'Customer',
       ),
     );
