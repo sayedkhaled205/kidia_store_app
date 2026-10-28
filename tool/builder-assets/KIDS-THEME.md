@@ -10,7 +10,8 @@ Merchant identity and live catalog data are supplied by the existing Setup flow.
 
 Kids enables `align_compact_cart` in Home, Categories and Wishlist. The three
 compact headers share a 51px height, 38px content slot and 48px cart touch target;
-Wishlist puts its localized title in the search slot. Cart artwork is 26.6px,
+Wishlist centers its localized title across the full header width; its cart
+keeps the same position as the other two pages. Cart artwork is 26.6px,
 offset 1px right and 1px up from the shared center. Expanded Home keeps the
 cart fixed while its logo/search transition. Other presets retain their layout.
 This renderer and order thumbnails require a new app build; publishing settings
