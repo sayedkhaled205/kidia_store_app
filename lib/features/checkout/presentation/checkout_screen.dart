@@ -15,6 +15,7 @@ import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_or
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_presentation.dart';
 import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 import 'checkout_payment_continuation298.dart';
+import 'checkout_appearance.dart';
 import 'checkout_order_receipt.dart';
 import 'providers/checkout_inline_payment95.dart';
 
@@ -132,26 +133,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       canPop: !_payingInline,
       child: Theme(
         data: theme.copyWith(
-          inputDecorationTheme: InputDecorationTheme(
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 19,
-            ),
-            border: border,
-            enabledBorder: border,
-            disabledBorder: border,
-            focusedBorder: border.copyWith(
-              borderSide: BorderSide(
-                color: theme.colorScheme.primary,
-                width: 1.5,
+          inputDecorationTheme: CheckoutAppearance.of(context).fields(
+            InputDecorationThemeData(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 19,
               ),
-            ),
-            labelStyle: const TextStyle(fontSize: 16, color: Color(0xff727272)),
-            floatingLabelStyle: const TextStyle(
-              fontSize: 13,
-              color: Color(0xff727272),
+              border: border,
+              enabledBorder: border,
+              disabledBorder: border,
+              focusedBorder: border.copyWith(
+                borderSide: BorderSide(
+                  color: theme.colorScheme.primary,
+                  width: 1.5,
+                ),
+              ),
+              labelStyle: const TextStyle(
+                fontSize: 16,
+                color: Color(0xff727272),
+              ),
+              floatingLabelStyle: const TextStyle(
+                fontSize: 13,
+                color: Color(0xff727272),
+              ),
             ),
           ),
         ),
@@ -529,7 +535,12 @@ class _CheckoutReady extends StatelessWidget {
             primary: true,
             physics: const AlwaysScrollableScrollPhysics(),
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsetsDirectional.fromSTEB(16, 18, 16, 36),
+            padding: EdgeInsetsDirectional.fromSTEB(
+              CheckoutAppearance.of(context).number('side_padding', 16),
+              18,
+              CheckoutAppearance.of(context).number('side_padding', 16),
+              36,
+            ),
             child: Column(
               key: Key('checkout-design-${design.apiValue}'),
               children: content,
@@ -585,7 +596,10 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
             ),
           const SizedBox(height: 8),
           SizedBox(
-            height: 112,
+            height: math.max(
+              CheckoutAppearance.of(context).number('address_height', 112),
+              24 + MediaQuery.textScalerOf(context).scale(20) * 4.4,
+            ),
             child: ListView.separated(
               key: const Key('checkout-saved-addresses'),
               scrollDirection: Axis.horizontal,
@@ -596,17 +610,34 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
                 final selected =
                     controller.selectedSavedAddressId == address.id;
                 return SizedBox(
-                  width: 240,
+                  width: CheckoutAppearance.of(
+                    context,
+                  ).number('address_width', 240),
                   child: OutlinedButton(
                     key: ValueKey('checkout-address-${address.id}'),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.all(12),
                       foregroundColor: Theme.of(context).colorScheme.onSurface,
+                      shape:
+                          CheckoutAppearance.of(
+                                context,
+                              ).optional('address_radius') ==
+                              null
+                          ? null
+                          : RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                CheckoutAppearance.of(
+                                  context,
+                                ).number('address_radius', 16),
+                              ),
+                            ),
                       backgroundColor: selected
                           ? Color.alphaBlend(
-                              Theme.of(
-                                context,
-                              ).colorScheme.primary.withValues(alpha: 0.10),
+                              Theme.of(context).colorScheme.primary.withValues(
+                                alpha: CheckoutAppearance.of(
+                                  context,
+                                ).number('address_tint', 0.10),
+                              ),
                               Theme.of(context).colorScheme.surface,
                             )
                           : Theme.of(context).colorScheme.surface,
@@ -1481,6 +1512,7 @@ class _OrderSummary extends StatelessWidget {
           const SizedBox(height: 18),
           FilledButton.icon(
             key: const Key('checkout-place-order'),
+            style: CheckoutAppearance.of(context).buttonStyle(),
             onPressed:
                 controller.canSubmit &&
                     !controller.isSubmitting &&
@@ -1588,13 +1620,20 @@ class _CheckoutSection extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    fontSize: design == CheckoutDesign.compact ? 18 : 22,
+                    fontSize: CheckoutAppearance.of(context).number(
+                      'heading_size',
+                      design == CheckoutDesign.compact ? 18 : 22,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: design == CheckoutDesign.compact ? 10 : 16),
+          SizedBox(
+            height: CheckoutAppearance.of(
+              context,
+            ).number('section_gap', design == CheckoutDesign.compact ? 10 : 16),
+          ),
           child,
         ],
       ),

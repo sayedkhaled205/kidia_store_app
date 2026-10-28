@@ -1,6 +1,6 @@
 # Published page UI controls
 
-The 51 fields in `schema.json` extend the existing live-design release. They are
+The 73 fields in `schema.json` extend the existing live-design release. They are
 stored in the authenticated Builder draft at `builder.ui_controls_v1`, and are
 only exposed publicly after the owner publishes a release. Saving is separate
 from publishing. Each save checks a digest under a store row lock so an old tab
@@ -78,3 +78,11 @@ Publishing no longer replays completed app startup. Existing safe-route update
 deferral, cache validation, store isolation and rollback behavior remain in place.
 
 See `docs/live-publication-coverage.md` for scope and native-version limits.
+
+The additional 22 controls cover notification-message appearance (theme/soft/
+brand, radius, inset, type size), native checkout field/button/address dimensions,
+order thumbnail dimensions and radius, the Google button height, and localized
+identifier placeholders. Optional sizes inherit the current theme when cleared.
+Checkout validation, saved data, provider authentication and payment logic are
+unchanged. These consumers require a new baseline binary before publication can
+affect an older installation. The server's field-count bound follows the schema.

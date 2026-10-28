@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
@@ -360,7 +361,7 @@ class _OrderCard extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 5),
                     child: Row(
                       children: <Widget>[
-                        CustomerOrderItemImage(item: item, size: 40),
+                        CustomerOrderItemImage(item: item, compact: true),
                         const SizedBox(width: MobiShopSpacing.xs),
                         Expanded(
                           child: Text(
@@ -440,12 +441,24 @@ typedef _CancelOrderCallback =
 
 /// Order imagery stays optional for older connectors and deleted products.
 class CustomerOrderItemImage extends StatelessWidget {
-  const CustomerOrderItemImage({required this.item, this.size = 56, super.key});
+  const CustomerOrderItemImage({
+    required this.item,
+    this.size = 56,
+    this.compact = false,
+    super.key,
+  });
   final CustomerOrderItem item;
   final double size;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final ui = AppUiControlsScope.of(context).values;
+    final imageSize =
+        (ui[compact ? 'orders_list_image_size' : 'orders_detail_image_size']
+                as num?)
+            ?.toDouble() ??
+        (compact ? 40 : size);
     final colors = Theme.of(context).colorScheme;
     final fallback = ColoredBox(
       color: colors.surfaceContainerHighest,
@@ -458,13 +471,15 @@ class CustomerOrderItemImage extends StatelessWidget {
       ),
     );
     return SizedBox.square(
-      dimension: size,
+      dimension: imageSize,
       child: AppNetworkImage(
         imageUrl: item.imageUrl,
-        width: size,
-        height: size,
+        width: imageSize,
+        height: imageSize,
         fit: BoxFit.contain,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(
+          (ui['orders_image_radius'] as num?)?.toDouble() ?? 8,
+        ),
         semanticLabel: item.name,
         placeholder: fallback,
         errorWidget: fallback,

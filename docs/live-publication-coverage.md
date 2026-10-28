@@ -15,6 +15,10 @@ store/origin binding, digest checks, cache, foreground refresh and rollback.
 | Cart appearance | 15 additional controls for existing layouts, padding, images, names, checkout button, coupon/summary expansion and empty state; blank values retain theme defaults |
 | Support contacts | Four new shared controls: public WhatsApp/email and independent enable switches |
 | Native checkout presentation | Three saved styles on WooCommerce/Odoo, now part of the shared release |
+| Native checkout details | Field padding/radius, page padding, headings/spacing, submit-button dimensions and saved-address dimensions/tint; WooCommerce/Odoo supported widgets |
+| Order images | List/detail thumbnail size and radius |
+| Messages | Theme, soft or brand background with automatic readable contrast, font size, inset and radius |
+| Sign-in details | Google button height and separate Arabic/English phone/email placeholders |
 | Shopify checkout | Official Shopify checkout presentation remains controlled by Shopify |
 | Products/prices, addresses, shipping/rates, payment availability | Live connector APIs; never stale public design copies |
 | Customer language | Primary phone locale (Arabic or English fallback), persistent customer override; publication must not reset it |
@@ -41,3 +45,12 @@ widgets and retained login input, strict shared contact validation, checkout
 allowlisting, owner/concurrency checks and transaction-only backend publication.
 CI also checks that generated server/mobile schema copies match and rebuilds the
 preview from committed Flutter source to prevent stale preview deployments.
+
+The shared schema now contains 73 controls. Controlled pressure tests exercise
+500 overlapping refresh calls, 50 successive releases, offline retention and
+background suspension for each platform. They are client simulation tests, not
+a production throughput or physical-device benchmark. Within one home hydration,
+identical catalog selectors share a read; distinct reads remain capped at three.
+The six-identical-section 600 ms latency fixture drops from six requests/two
+waves (1200 ms) to one request/one wave (600 ms). No result is reused across a new
+hydration, language, customer or store.

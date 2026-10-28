@@ -323,7 +323,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       }
                                     }),
                               style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(50),
+                                minimumSize: Size.fromHeight(
+                                  (_ui.values['auth_google_button_height']
+                                              as num?)
+                                          ?.toDouble() ??
+                                      50,
+                                ),
                                 shape: const StadiumBorder(),
                               ),
                               icon: Image.asset(
@@ -411,7 +416,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           _textField(
             key: const Key('auth-email'),
             controller: _identifier,
-            hint: config.supportsPhone ? config.phoneHint : null,
+            hint: _ui.text(
+              'auth_identifier_hint',
+              copy.isArabic,
+              config.supportsPhone ? config.phoneHint : '',
+            ),
             label: config.supportsPhone
                 ? (config.allows('email_password')
                       ? copy.identifier

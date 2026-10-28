@@ -4,11 +4,11 @@ const {pageKeys, valueOf, mergeChanges, decoratePacket, draftKey, draftChanges, 
 const schema = JSON.parse(fs.readFileSync(require('node:path').join(__dirname, 'schema.json'), 'utf8'));
 const pages = ['account-builder', 'home-builder', 'checkout-builder'];
 const mapped = pages.flatMap(page => pageKeys(page, schema));
-assert.equal(mapped.length, 51);
-assert.equal(new Set(mapped).size, 51);
-assert.equal(pageKeys('account-builder', schema).length, 25);
-assert.equal(pageKeys('home-builder', schema).length, 3);
-assert.equal(pageKeys('checkout-builder', schema).length, 23);
+assert.equal(mapped.length, Object.keys(schema).length);
+assert.equal(new Set(mapped).size, 73);
+assert.equal(pageKeys('account-builder', schema).length, 31);
+assert.equal(pageKeys('home-builder', schema).length, 7);
+assert.equal(pageKeys('checkout-builder', schema).length, 35);
 assert.deepEqual(pageKeys('product-builder', schema), []);
 assert.equal(valueOf({schema, values:{}}, 'logout_height'), 38);
 assert.equal(valueOf({schema, values:{cart_pulse_enabled:false}}, 'cart_pulse_enabled'), false);
@@ -39,4 +39,4 @@ assert.notEqual(draftKey('merchant-a','account-builder'), draftKey('merchant-b',
 assert.notEqual(draftKey('merchant-a','account-builder'), draftKey('merchant-a','home-builder'));
 assert.deepEqual(draftChanges(schema, {logout_height:38,auth_title_en:''}, {logout_height:42,auth_title_en:'',unknown:1}), {logout_height:42});
 console.log('PASS draft preview preserves layouts, typed controls and merchant/screen isolation');
-console.log('PASS: all 51 controls mapped once; defaults, inherited sizes, zero radius, choices, page isolation, concurrent edits and reset');
+console.log('PASS: all 73 controls mapped once; defaults, inherited sizes, zero radius, choices, page isolation, concurrent edits and reset');
