@@ -14,6 +14,8 @@ class CatalogCategoryModel extends CatalogCategory {
     super.permalink,
     super.categoryLayout,
     super.navigationMode,
+    super.rootViewAllMode,
+    super.viewAllStyle,
     super.gridColumns,
     super.cardRadius,
     super.cardGap,
@@ -88,6 +90,14 @@ class CatalogCategoryModel extends CatalogCategory {
         'expand_inline',
         'separate_page',
       }, 'drilldown'),
+      rootViewAllMode: _choice(presentation['root_view_all_mode'], const {
+        'hidden',
+        'visible',
+      }, 'hidden'),
+      viewAllStyle: _choice(presentation['view_all_style'], const {
+        'outline',
+        'soft',
+      }, 'outline'),
       gridColumns: _boundedDouble(
         presentation['grid_columns'],
         2,
@@ -190,7 +200,10 @@ class CatalogCategoryModel extends CatalogCategory {
       ),
       fontWeight: _fontWeight(presentation['font_weight']),
       nameVerticalPadding: _boundedDouble(
-        presentation['name_vertical_padding'], 0, 24, 7,
+        presentation['name_vertical_padding'],
+        0,
+        24,
+        7,
       ),
       textAlign: _choice(presentation['text_align'], const <String>{
         'start',
@@ -220,6 +233,8 @@ class CatalogCategoryModel extends CatalogCategory {
       permalink: permalink,
       categoryLayout: categoryLayout,
       navigationMode: navigationMode,
+      rootViewAllMode: rootViewAllMode,
+      viewAllStyle: viewAllStyle,
       gridColumns: gridColumns,
       cardRadius: cardRadius,
       cardGap: cardGap,

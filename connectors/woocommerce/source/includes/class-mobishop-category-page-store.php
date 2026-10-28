@@ -11,6 +11,8 @@ final class MobiShop_Category_Page_Store {
 		return array(
 			'category_layout'  => 'default',
 			'navigation_mode'  => 'expand_inline',
+			'root_view_all_mode' => 'hidden',
+			'view_all_style' => 'outline',
 			'grid_columns'     => 2,
 			'card_radius'      => 17,
 			'card_gap'         => 10,
@@ -162,6 +164,8 @@ final class MobiShop_Category_Page_Store {
 		return array(
 			'category_layout'  => self::choice( $settings['category_layout'] ?? '', array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar', 'image_banner', 'top_tabs', 'split_rows', 'grouped_shelves', 'text_directory' ), $defaults['category_layout'] ),
 			'navigation_mode'  => self::choice( $settings['navigation_mode'] ?? '', array( 'expand_inline', 'separate_page' ), $defaults['navigation_mode'] ),
+			'root_view_all_mode' => self::choice( $settings['root_view_all_mode'] ?? '', array( 'hidden', 'visible' ), $defaults['root_view_all_mode'] ),
+			'view_all_style' => self::choice( $settings['view_all_style'] ?? '', array( 'outline', 'soft' ), $defaults['view_all_style'] ),
 			'grid_columns'     => min( 4, max( 2, absint( $settings['grid_columns'] ?? $defaults['grid_columns'] ) ) ),
 			'card_radius'      => min( 32, max( 0, absint( $settings['card_radius'] ?? $defaults['card_radius'] ) ) ),
 			'card_gap'         => min( 24, max( 0, absint( $settings['card_gap'] ?? $defaults['card_gap'] ) ) ),

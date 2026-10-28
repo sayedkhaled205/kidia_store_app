@@ -199,7 +199,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
             ),
             child: Column(
               children: <Widget>[
-                if (selected != null)
+                if (selected != null || _settings.rootViewAllMode == 'visible')
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -210,22 +210,25 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                       child: NavigationToolbar(
                         centerMiddle: true,
                         middleSpacing: 8,
-                        leading: SizedBox(
-                          width: 96,
-                          child: Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: IconButton(
-                              key: const Key('category-back-to-roots'),
-                              tooltip: MaterialLocalizations.of(
-                                context,
-                              ).backButtonTooltip,
-                              onPressed: _goBackOneLevel,
-                              icon: const BackButtonIcon(),
-                            ),
-                          ),
-                        ),
+                        leading: selected == null
+                            ? const SizedBox(width: 96)
+                            : SizedBox(
+                                width: 96,
+                                child: Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: IconButton(
+                                    key: const Key('category-back-to-roots'),
+                                    tooltip: MaterialLocalizations.of(
+                                      context,
+                                    ).backButtonTooltip,
+                                    onPressed: _goBackOneLevel,
+                                    icon: const BackButtonIcon(),
+                                  ),
+                                ),
+                              ),
                         middle: Text(
-                          selected.category.name,
+                          selected?.category.name ??
+                              CatalogCopy.of(context).categories,
                           key: const Key('category-level-title'),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -238,29 +241,16 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                             alignment: AlignmentDirectional.centerEnd,
                             child: OutlinedButton(
                               key: const Key('category-view-all'),
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size(64, 32),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                ),
-                                textStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                side: BorderSide(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withValues(alpha: .28),
-                                  width: .7,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed: () => _openCategoryProducts(
+                              style: _viewAllButtonStyle(
                                 context,
-                                selected.category,
+                                _settings.viewAllStyle,
                               ),
+                              onPressed: selected == null
+                                  ? () => context.push('/products')
+                                  : () => _openCategoryProducts(
+                                      context,
+                                      selected.category,
+                                    ),
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
                                 child: Text(
@@ -1001,7 +991,10 @@ class _CategoryGridTile extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   child: Padding(
                     padding: EdgeInsetsDirectional.fromSTEB(
-                      10, category.nameVerticalPadding, 6, category.nameVerticalPadding,
+                      10,
+                      category.nameVerticalPadding,
+                      6,
+                      category.nameVerticalPadding,
                     ),
                     child: Row(
                       children: <Widget>[
@@ -1358,6 +1351,31 @@ class _CategorySidebarRootButton extends StatelessWidget {
 void _openCategoryProducts(BuildContext context, CatalogCategory category) {
   final String name = Uri.encodeQueryComponent(category.name);
   context.push('/categories/${category.id}?name=$name');
+}
+
+ButtonStyle _viewAllButtonStyle(BuildContext context, String style) {
+  final colors = Theme.of(context).colorScheme;
+  final soft = style == 'soft';
+  return OutlinedButton.styleFrom(
+    minimumSize: const Size(64, 32),
+    padding: const EdgeInsets.symmetric(horizontal: 10),
+    foregroundColor: soft ? colors.onSurface : null,
+    backgroundColor: soft
+        ? Color.alphaBlend(
+            colors.primary.withValues(alpha: .10),
+            colors.surface,
+          )
+        : null,
+    textStyle: TextStyle(
+      fontSize: soft ? 13 : 12,
+      fontWeight: soft ? FontWeight.w700 : FontWeight.w600,
+    ),
+    side: BorderSide(
+      color: colors.primary.withValues(alpha: soft ? .55 : .28),
+      width: soft ? 1 : .7,
+    ),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  );
 }
 
 class _CategoryBranch extends StatelessWidget {

@@ -12,6 +12,8 @@ class CatalogCategory {
     this.permalink,
     this.categoryLayout = 'default',
     this.navigationMode = 'drilldown',
+    this.rootViewAllMode = 'hidden',
+    this.viewAllStyle = 'outline',
     this.gridColumns = 2,
     this.cardRadius = 17,
     this.cardGap = 10,
@@ -62,6 +64,8 @@ class CatalogCategory {
   final Uri? permalink;
   final String categoryLayout;
   final String navigationMode;
+  final String rootViewAllMode;
+  final String viewAllStyle;
   final int gridColumns;
   final double cardRadius;
   final double cardGap;
@@ -113,6 +117,8 @@ class CatalogCategory {
       permalink: permalink,
       categoryLayout: presentation.categoryLayout,
       navigationMode: presentation.navigationMode,
+      rootViewAllMode: presentation.rootViewAllMode,
+      viewAllStyle: presentation.viewAllStyle,
       gridColumns: presentation.gridColumns,
       cardRadius: presentation.cardRadius,
       cardGap: presentation.cardGap,

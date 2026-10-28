@@ -122,6 +122,7 @@
   function installDesigns(root){
     installNameHighlight(root);
     installNamePadding(root);
+    installViewAll(root);
     const select=q(root,'[name="category_general[category_layout]"]');if(!select||q(root,'.kidia-category-designs'))return;
     const doc=root.ownerDocument;const current=select.value;
     select.replaceChildren(...designs.map(d=>{const option=el(doc,'option','',d.title);option.value=d.id;return option;}));select.value=current||'default';
@@ -185,6 +186,19 @@
     input.min='0';input.max='24';input.step='1';input.value='7';label.append(input);
     const anchor=q(general,'[name="category_general[name_highlight_color]"]')?.closest('label');
     if(anchor)anchor.after(label);else general.append(label);
+  }
+  function installViewAll(root){
+    const general=q(root,'.mobishop-category-general');
+    if(!general||q(general,'[name="category_general[root_view_all_mode]"]'))return;
+    for(const [key,title,choices] of [
+      ['root_view_all_mode','View all on main categories',[['hidden','Hidden'],['visible','Visible']]],
+      ['view_all_style','View all button style',[['outline','Light outline'],['soft','Soft background · clearer text']]]
+    ]){
+      const label=el(root.ownerDocument,'label','',title);
+      const select=el(root.ownerDocument,'select');select.name=`category_general[${key}]`;
+      for(const [value,text] of choices){const option=el(root.ownerDocument,'option','',text);option.value=value;select.append(option);}
+      label.append(select);general.append(label);
+    }
   }
   const api={designs,normalize,prepare,hydrate,refresh,installDesigns};scope.KidiaCategoryDesigner=api;
   if(typeof module!=='undefined')module.exports=api;
