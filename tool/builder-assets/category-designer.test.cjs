@@ -113,3 +113,14 @@ test('updated catalog preserves unsaved names and never restores removed IDs', (
   assert.equal(s.root.querySelectorAll('.mobishop-category-row').length,4);
   s.dom.window.close();
 });
+
+test('name strip spacing installs once beside existing highlight controls and persists on design changes', () => {
+  const s=setup(); s.api.prepare(s.root);
+  const input=s.root.querySelector('[name="category_general[name_vertical_padding]"]');
+  assert.equal(input.value,'7'); input.value='4';
+  s.api.prepare(s.root);
+  assert.equal(s.root.querySelectorAll('[name="category_general[name_vertical_padding]"]').length,1);
+  for(const button of s.root.querySelectorAll('.kidia-category-design'))button.click();
+  assert.equal(new s.w.FormData(s.root).get(input.name),'4');
+  s.dom.window.close();
+});

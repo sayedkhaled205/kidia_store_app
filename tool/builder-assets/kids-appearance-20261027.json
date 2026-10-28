@@ -3121,7 +3121,7 @@
       "card_radius": 16,
       "card_gap": 14,
       "card_width_percent": 100,
-      "card_height": 190,
+      "card_height": 184,
       "margin_top": 0,
       "margin_bottom": 0,
       "space_up": 0,
@@ -3153,7 +3153,8 @@
       "text_max_lines": 2,
       "line_height": 100,
       "name_highlight_enabled": 1,
-      "name_highlight_color": "#eff8f5"
+      "name_highlight_color": "#eff8f5",
+      "name_vertical_padding": 4
     },
     "categories": []
   },

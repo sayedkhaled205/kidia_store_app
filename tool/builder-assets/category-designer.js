@@ -121,6 +121,7 @@
   }
   function installDesigns(root){
     installNameHighlight(root);
+    installNamePadding(root);
     const select=q(root,'[name="category_general[category_layout]"]');if(!select||q(root,'.kidia-category-designs'))return;
     const doc=root.ownerDocument;const current=select.value;
     select.replaceChildren(...designs.map(d=>{const option=el(doc,'option','',d.title);option.value=d.id;return option;}));select.value=current||'default';
@@ -174,6 +175,16 @@
     const color=el(doc,'input');color.type='color';color.name='category_general[name_highlight_color]';color.value='#eff8f5';colorLabel.append(color);
     if(anchor){anchor.after(toggle,colorLabel);}else{general.append(toggle,colorLabel);}
     // The ordinary form pipeline owns persistence, dirty state and preview updates.
+  }
+  function installNamePadding(root){
+    const general=q(root,'.mobishop-category-general');
+    if(!general||q(general,'[name="category_general[name_vertical_padding]"]'))return;
+    const label=el(root.ownerDocument,'label','','Name strip vertical padding (px)');
+    const input=el(root.ownerDocument,'input');
+    input.type='number';input.name='category_general[name_vertical_padding]';
+    input.min='0';input.max='24';input.step='1';input.value='7';label.append(input);
+    const anchor=q(general,'[name="category_general[name_highlight_color]"]')?.closest('label');
+    if(anchor)anchor.after(label);else general.append(label);
   }
   const api={designs,normalize,prepare,hydrate,refresh,installDesigns};scope.KidiaCategoryDesigner=api;
   if(typeof module!=='undefined')module.exports=api;

@@ -1999,13 +1999,13 @@ class _PurchaseBar extends StatelessWidget {
                   100 +
               footer.number('horizontal_padding', 0).clamp(0, 32),
           footer.number('margin_top', 0).clamp(0, 80) +
-              footer.number('space_up', 0).clamp(0, 80),
+              footer.number('space_up', 0).clamp(0, 80) + 3,
           MediaQuery.sizeOf(context).width *
                   footer.number('side_spacing_percent', 5).clamp(0, 25) /
                   100 +
               footer.number('horizontal_padding', 0).clamp(0, 32),
           footer.number('margin_bottom', 0).clamp(0, 80) +
-              footer.number('space_down', 0).clamp(0, 80) + 6,
+              footer.number('space_down', 0).clamp(0, 80) + 3,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

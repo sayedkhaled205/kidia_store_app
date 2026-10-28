@@ -47,6 +47,7 @@ class CatalogCategoryModel extends CatalogCategory {
     super.fontColor,
     super.nameHighlightEnabled,
     super.nameHighlightColor,
+    super.nameVerticalPadding,
     super.fontWeight,
     super.textAlign,
     super.textMaxLines,
@@ -188,6 +189,9 @@ class CatalogCategoryModel extends CatalogCategory {
         '#EFF8F5',
       ),
       fontWeight: _fontWeight(presentation['font_weight']),
+      nameVerticalPadding: _boundedDouble(
+        presentation['name_vertical_padding'], 0, 24, 7,
+      ),
       textAlign: _choice(presentation['text_align'], const <String>{
         'start',
         'center',
@@ -249,6 +253,7 @@ class CatalogCategoryModel extends CatalogCategory {
       fontColor: fontColor,
       nameHighlightEnabled: nameHighlightEnabled,
       nameHighlightColor: nameHighlightColor,
+      nameVerticalPadding: nameVerticalPadding,
       fontWeight: fontWeight,
       textAlign: textAlign,
       textMaxLines: textMaxLines,

@@ -21,10 +21,11 @@ class CmsPreviewAuthActions implements NativeAuthActions {
         'Preview authentication settings unavailable.',
       );
     }
-    // Only public availability flags belong in the visual preview.
+    // Only public availability and phone-format hints belong in the preview.
     return NativeAuthConfig.fromJson({
       'enabled': json['enabled'],
       'methods': json['methods'],
+      'phone_country_code': json['phone_country_code'],
     });
   }
 

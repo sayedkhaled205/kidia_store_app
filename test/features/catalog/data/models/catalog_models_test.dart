@@ -8,17 +8,20 @@ void main() {
   test('category name highlight defaults off and survives saved presentation', () {
     final original = CatalogCategoryModel.fromJson({'id': 9, 'name': 'Child'});
     expect(original.nameHighlightEnabled, isFalse);
+    expect(original.nameVerticalPadding, 7);
     for (final value in [true, 1, '1', 'true']) {
       final settings = CatalogCategoryModel.fromJson({
         'id': 1,
         'presentation': {
           'name_highlight_enabled': value,
           'name_highlight_color': '#E0F2ED',
+          'name_vertical_padding': '4',
         },
       }).toEntity();
       final child = original.withPresentation(settings);
       expect(child.nameHighlightEnabled, isTrue);
       expect(child.nameHighlightColor, '#E0F2ED');
+      expect(child.nameVerticalPadding, 4);
       expect(child.id, 9);
       expect(child.name, 'Child');
     }

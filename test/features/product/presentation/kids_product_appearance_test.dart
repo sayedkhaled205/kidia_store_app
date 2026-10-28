@@ -135,7 +135,8 @@ void main() {
         );
         expect(
           tester.getTopLeft(find.byKey(const Key('product-footer-size'))).dy,
-          closeTo(navTop, .01),
+          // The purchase row moves down 3px inside the same total footer height.
+          closeTo(navTop + 3, .01),
         );
         expect(
           tester.getSize(

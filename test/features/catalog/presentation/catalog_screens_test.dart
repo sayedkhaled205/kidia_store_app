@@ -317,6 +317,34 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('saved category name spacing reduces only the band and follows children', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    double? oldBand, oldImage;
+    for (final padding in [7.0, 4.0]) {
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(_app(_ScreenCatalogRepository(
+        categoryLayout: 'visual_grid', gridColumns: 2, nameHighlightEnabled: true,
+        navigationMode: 'separate_page', nameVerticalPadding: padding,
+        cardHeight: padding == 7 ? 190 : 184,
+      ), const CategoriesScreen()));
+      await tester.pumpAndSettle();
+      final band = tester.getSize(find.byKey(const Key('category-name-highlight-1'))).height;
+      final image = tester.getSize(find.byKey(const Key('category-visual-image-1'))).height;
+      if (padding == 7) { oldBand = band; oldImage = image; }
+      else {
+        expect(band, closeTo(oldBand! - 6, .01));
+        expect(image, closeTo(oldImage!, .01));
+        await tester.tap(find.text('Women').last);
+        await tester.pumpAndSettle();
+        expect(tester.getSize(find.byKey(const Key('category-name-highlight-2'))).height, band);
+      }
+      expect(tester.takeException(), isNull);
+    }
+  });
+
   testWidgets('square card name band is optional, full width and inherited', (
     tester,
   ) async {
@@ -862,6 +890,7 @@ Widget _app(
                   ? '1'
                   : '0',
               'name_highlight_color': '#E0F2ED',
+              'name_vertical_padding': repository.nameVerticalPadding,
             },
           },
         );
@@ -940,6 +969,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
     this.gridColumns = 4,
     this.deepTree = false,
     this.nameHighlightEnabled,
+    this.nameVerticalPadding = 7,
     this.cursor = false,
     this.cardHeight = 0,
     this.imageScale = 1,
@@ -951,6 +981,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
   final int gridColumns;
   final bool deepTree;
   final bool? nameHighlightEnabled;
+  final double nameVerticalPadding;
   final bool cursor;
   final double cardHeight;
   final double imageScale;

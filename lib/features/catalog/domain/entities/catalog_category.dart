@@ -45,6 +45,7 @@ class CatalogCategory {
     this.fontColor = '#1F2933',
     this.nameHighlightEnabled = false,
     this.nameHighlightColor = '#EFF8F5',
+    this.nameVerticalPadding = 7,
     this.fontWeight = 800,
     this.textAlign = 'start',
     this.textMaxLines = 2,
@@ -94,6 +95,7 @@ class CatalogCategory {
   final String fontColor;
   final bool nameHighlightEnabled;
   final String nameHighlightColor;
+  final double nameVerticalPadding;
   final int fontWeight;
   final String textAlign;
   final int textMaxLines;
@@ -144,6 +146,7 @@ class CatalogCategory {
       fontColor: presentation.fontColor,
       nameHighlightEnabled: presentation.nameHighlightEnabled,
       nameHighlightColor: presentation.nameHighlightColor,
+      nameVerticalPadding: presentation.nameVerticalPadding,
       fontWeight: presentation.fontWeight,
       textAlign: presentation.textAlign,
       textMaxLines: presentation.textMaxLines,

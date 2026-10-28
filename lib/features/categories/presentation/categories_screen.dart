@@ -1000,7 +1000,9 @@ class _CategoryGridTile extends StatelessWidget {
                   category: category,
                   padding: EdgeInsets.zero,
                   child: Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(10, 7, 6, 7),
+                    padding: EdgeInsetsDirectional.fromSTEB(
+                      10, category.nameVerticalPadding, 6, category.nameVerticalPadding,
+                    ),
                     child: Row(
                       children: <Widget>[
                         Expanded(
