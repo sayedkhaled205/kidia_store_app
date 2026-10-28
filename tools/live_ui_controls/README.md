@@ -35,9 +35,9 @@ and rollback. The backend test rolls back all test changes.
 
 Controls now live in their existing editor pages rather than a toolbar dialog:
 
-- Account: sign-in, existing Logout Button and public support cards (25 controls).
-- Home: Fixed Header / cart counter animation (3 controls).
-- Checkout: cart text and appearance cards (23 controls).
+- Account: sign-in, existing Logout Button and public support and order-thumbnail cards (31 controls).
+- Home: Fixed Header / cart counter animation and messages (7 controls).
+- Checkout: cart text and appearance cards (35 controls).
 
 The 15 cart appearance controls select the existing theme/classic/compact layout,
 side padding, item gap, image dimensions/radius, name font size/line count,
@@ -86,3 +86,27 @@ identifier placeholders. Optional sizes inherit the current theme when cleared.
 Checkout validation, saved data, provider authentication and payment logic are
 unchanged. These consumers require a new baseline binary before publication can
 affect an older installation. The server's field-count bound follows the schema.
+
+## cPanel Nginx deployment
+
+The API host's generated default `location /` enables `proxy_cache`. Nginx then
+removes the original conditional headers before forwarding, even when the
+application response is not cacheable. This made every native design poll
+return the full payload instead of 304. See the official proxy module docs:
+https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header
+
+Install `nginx-live-design.conf` in the API domain's existing custom include
+folder (on this host, `/etc/nginx/conf.d/users/woomobile/api.woomobile.app/`).
+Check the generated vhost includes that directory and provides the existing
+`$CPANEL_APACHE_PROXY_PASS` variable. Run `nginx -t` before a graceful reload.
+The include changes only `/v1/app-design/`, retains cPanel's proxy header rules,
+and lets Laravel handle revalidation. Do not edit cPanel's generated vhost or
+disable caching globally. Roll back by renaming this include to a non-`.conf`
+extension, validating configuration, then reloading Nginx.
+
+Verified on 29 October 2026: the controller received no conditional header
+before this change; afterward 18 live native-style conditional reads (maximum
+three simultaneous) all returned 304 with zero body bytes. Median round trip
+was 0.441 s, maximum/p95 0.714 s. The initial 200 response was 99,341 uncompressed
+bytes. This is a small connectivity/revalidation check, not a capacity test.
+The temporary diagnostic hook was removed and original source hash restored.
