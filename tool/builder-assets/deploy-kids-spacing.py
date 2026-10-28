@@ -128,6 +128,11 @@ new_preset = 'assets/theme-snapshots-kids-spacing-' + version + '.json'
 write(root / new_preset, (json.dumps(presets, ensure_ascii=False, separators=(',', ':'))+'\n').encode())
 staged[new_preset] = sha((root / new_preset).read_bytes())
 central = central.replace(preset_ref, new_preset)
+# Keep the preview's country-specific phone hint in sync with the native app.
+before_auth = git_source('tool/builder-assets/preview-auth-config.js').decode().strip()
+after_auth = (repo / 'tool/builder-assets/preview-auth-config.js').read_text().strip()
+assert central.count(before_auth) == 1, 'Preview auth helper changed since review'
+central = central.replace(before_auth, after_auth, 1)
 for reference in set(re.findall(r'assets/theme-snapshots[^"\x27?\s]+\.json', script)):
     script = script.replace(reference, new_preset)
 
@@ -182,8 +187,10 @@ new_metadata = json.loads((repo / 'build/woocommerce/connector-release.json').re
 new_zip = (repo / 'build/woocommerce' / new_metadata['file']).read_bytes()
 assert new_metadata['version'] == '1.46.110' and sha(new_zip) == new_metadata['sha256']
 versioned = downloads / new_metadata['file']
-assert not versioned.exists()
-write(versioned, new_zip)
+if versioned.exists():
+    assert versioned.read_bytes() == new_zip, 'Versioned connector artifact differs'
+else:
+    write(versioned, new_zip)
 stage_external(alias, new_zip)
 stage_external(release, (json.dumps(new_metadata, indent=2)+'\n').encode())
 

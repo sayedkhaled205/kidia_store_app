@@ -10,6 +10,7 @@ void main() {
         () async => {
           'version': 1,
           'enabled': true,
+          'phone_country_code': '20',
           'methods': {
             'google': true,
             'phone_otp': true,
@@ -23,6 +24,7 @@ void main() {
       final config = await actions.config();
       expect(config.allows('google'), isTrue);
       expect(config.supportsPhone, isTrue);
+      expect(config.phoneHint, '01XXXXXXXXX');
       expect(config.google, isEmpty);
       expect(config.firebase, isEmpty);
       final previewOnly = isA<AuthRepositoryException>().having(
