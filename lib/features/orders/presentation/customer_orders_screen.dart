@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
@@ -359,11 +360,7 @@ class _OrderCard extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 5),
                     child: Row(
                       children: <Widget>[
-                        Icon(
-                          Icons.checkroom_outlined,
-                          size: 18,
-                          color: colors.onSurfaceVariant,
-                        ),
+                        CustomerOrderItemImage(item: item, size: 40),
                         const SizedBox(width: MobiShopSpacing.xs),
                         Expanded(
                           child: Text(
@@ -440,6 +437,41 @@ class _OrderCard extends StatelessWidget {
 
 typedef _CancelOrderCallback =
     Future<void> Function(BuildContext context, CustomerOrder order);
+
+/// Order imagery stays optional for older connectors and deleted products.
+class CustomerOrderItemImage extends StatelessWidget {
+  const CustomerOrderItemImage({required this.item, this.size = 56, super.key});
+  final CustomerOrderItem item;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final fallback = ColoredBox(
+      color: colors.surfaceContainerHighest,
+      child: Center(
+        child: Icon(
+          Icons.image_outlined,
+          size: 22,
+          color: colors.onSurfaceVariant,
+        ),
+      ),
+    );
+    return SizedBox.square(
+      dimension: size,
+      child: AppNetworkImage(
+        imageUrl: item.imageUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        borderRadius: BorderRadius.circular(8),
+        semanticLabel: item.name,
+        placeholder: fallback,
+        errorWidget: fallback,
+      ),
+    );
+  }
+}
 
 class _CustomerOrderDetailsScreen extends StatelessWidget {
   const _CustomerOrderDetailsScreen({
@@ -568,10 +600,8 @@ class _CustomerOrderDetailsScreen extends StatelessWidget {
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
-                                Icon(
-                                  Icons.checkroom_outlined,
-                                  size: 20,
-                                  color: colors.onSurfaceVariant,
+                                CustomerOrderItemImage(
+                                  item: order.items[index],
                                 ),
                                 const SizedBox(width: MobiShopSpacing.sm),
                                 Expanded(

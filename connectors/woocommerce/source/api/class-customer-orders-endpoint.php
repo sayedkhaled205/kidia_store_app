@@ -254,6 +254,7 @@ final class MobiShop_Customer_Orders_Endpoint {
 			$items[]  = array(
 				'name'     => sanitize_text_field( (string) $item->get_name() ),
 				'quantity' => $quantity,
+				'image_url' => $this->item_image_url( $item ),
 			);
 		}
 
@@ -302,6 +303,18 @@ final class MobiShop_Customer_Orders_Endpoint {
 	}
 
 	/** Only an owned order's canonical same-store Woo payment URL may leave the API. */
+	private function item_image_url( $item ): string {
+		$product = is_callable( array( $item, 'get_product' ) ) ? $item->get_product() : false;
+		$image_id = $product && is_callable( array( $product, 'get_image_id' ) ) ? (int) $product->get_image_id() : 0;
+		// Older/deleted variations can still use the parent product's image.
+		if ( ! $image_id && is_callable( array( $item, 'get_product_id' ) ) && function_exists( 'wc_get_product' ) ) {
+			$parent = wc_get_product( $item->get_product_id() );
+			$image_id = $parent ? (int) $parent->get_image_id() : 0;
+		}
+		$url = $image_id && function_exists( 'wp_get_attachment_image_url' ) ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : '';
+		return $url ? esc_url_raw( $url, array( 'http', 'https' ) ) : '';
+	}
+
 	private function payment_url( $order ): string {
 		if ( ! is_callable( array( $order, 'get_checkout_payment_url' ) ) || ! is_callable( array( $order, 'get_order_key' ) )
 			|| ! function_exists( 'wc_get_endpoint_url' ) || ! function_exists( 'wc_get_checkout_url' ) ) {

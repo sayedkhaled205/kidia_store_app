@@ -28,6 +28,7 @@ final class MobiShop_Page_Layout_Store {
 		return array(
 			self::field( 'layout_json', __( 'Header element layout', 'mobi2app-connector' ), 'json', '' ),
 			self::field( 'compact_layout_json', __( 'Collapsed header element layout', 'mobi2app-connector' ), 'json', '' ),
+			self::field( 'align_compact_cart', __( 'Align cart across compact headers', 'mobi2app-connector' ), 'checkbox', false ),
 			self::field( 'collapse_on_scroll', __( 'Show collapsed header while page is scrolled', 'mobi2app-connector' ), 'checkbox', false ),
 			self::field( 'collapse_transition', __( 'Collapsed header transition', 'mobi2app-connector' ), 'select', 'smooth_compact', array( 'smooth_compact' => __( 'Smooth layout transition', 'mobi2app-connector' ), 'instant' => __( 'Instant (no animation)', 'mobi2app-connector' ), 'fade' => __( 'Fade in / out', 'mobi2app-connector' ), 'slide' => __( 'Slide up', 'mobi2app-connector' ), 'fade_slide' => __( 'Fade + slide', 'mobi2app-connector' ), 'scale' => __( 'Shrink / scale', 'mobi2app-connector' ) ) ),
 			self::field( 'compact_search_width_percent', __( 'Transition search width (%)', 'mobi2app-connector' ), 'number', 84, array(), 30, 100 ),

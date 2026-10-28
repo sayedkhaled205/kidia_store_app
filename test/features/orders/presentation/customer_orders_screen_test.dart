@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,17 @@ import 'package:mobishop_store_app/features/orders/presentation/customer_orders_
 import 'package:mobishop_store_app/features/orders/presentation/providers/customer_orders_providers.dart';
 
 void main() {
+  testWidgets('order thumbnails use the item image with a stable fallback', (tester) async {
+    for (final url in ['', 'https://store.example/item.jpg']) {
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: CustomerOrderItemImage(item:CustomerOrderItem(name:'Product',quantity:1,imageUrl:url)))));
+      await tester.pumpAndSettle();
+      expect(tester.widget<AppNetworkImage>(find.byType(AppNetworkImage)).imageUrl,url);
+      expect(tester.getSize(find.byType(CustomerOrderItemImage)),const Size(56,56));
+      expect(find.byIcon(Icons.checkroom_outlined),findsNothing);
+      expect(tester.takeException(),isNull);
+    }
+  });
+
   testWidgets('notification opens exact order outside the loaded history page', (tester) async {
     final repository = _LookupOrdersRepository();
     await tester.pumpWidget(ProviderScope(overrides:[customerOrdersRepositoryProvider.overrideWithValue(repository),cartBadgeCountProvider.overrideWithValue(0)],child:const MaterialApp(locale:Locale('ar'),supportedLocales:[Locale('ar')],localizationsDelegates:GlobalMaterialLocalizations.delegates,home:CustomerOrdersScreen(initialOrderId:321))));

@@ -100,6 +100,7 @@ class CmsPageLayout {
 	final Map<String, dynamic> headerSettings = <String, dynamic>{
 		'layout_json': jsonEncode(_fallbackHeaderLayout(page)),
 		'compact_layout_json': jsonEncode(<String, dynamic>{'rows': <Map<String, dynamic>>[<String, dynamic>{'columns': <Map<String, dynamic>>[<String, dynamic>{'width': 84, 'align': 'left', 'items': <String>['search_bar']}, <String, dynamic>{'width': 16, 'align': 'right', 'items': <String>['cart']}]}]}),
+		'align_compact_cart': false,
 		'collapse_on_scroll': page == 'home',
 		'collapse_transition': page == 'home' ? 'smooth_compact' : 'fade_slide',
 		'compact_search_width_percent': 84,

@@ -234,7 +234,20 @@ class CustomerOrdersRepositoryImpl
     return CustomerOrderItem(
       name: _requiredText(json['name'], 'order item.name'),
       quantity: _positiveInt(json['quantity'], 'order item.quantity'),
+      imageUrl: _imageUrl(json['image_url']),
     );
+  }
+
+  String _imageUrl(dynamic value) {
+    if (value is! String) return '';
+    final source = value.trim();
+    final uri = Uri.tryParse(source);
+    return uri != null &&
+            const ['http', 'https'].contains(uri.scheme) &&
+            uri.host.isNotEmpty &&
+            uri.userInfo.isEmpty
+        ? source
+        : '';
   }
 
   Map<String, dynamic> _object(dynamic value, String field) {
