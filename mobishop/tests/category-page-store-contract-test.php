@@ -59,3 +59,7 @@ mobishop_category_assert( false === $disabled['general']['name_highlight_enabled
 $invalid = $store->save_settings( array( 'general' => array( 'name_highlight_color' => 'invalid' ) ) );
 mobishop_category_assert( '#EFF8F5' === $invalid['general']['name_highlight_color'], 'Invalid name highlight colors must use the safe default.' );
 fwrite( STDOUT, "Category-page store migration and one-element schema passed.\n" );
+$view_all = $store->save_settings( array( 'general' => array( 'root_view_all_mode' => 'visible', 'view_all_style' => 'soft' ) ) );
+mobishop_category_assert( 'visible' === $store->get_settings()['general']['root_view_all_mode'] && 'soft' === $view_all['general']['view_all_style'], 'View all choices must survive save and reload.' );
+$invalid_view_all = $store->save_settings( array( 'general' => array( 'root_view_all_mode' => 'invalid', 'view_all_style' => 'invalid' ) ) );
+mobishop_category_assert( 'hidden' === $invalid_view_all['general']['root_view_all_mode'] && 'outline' === $invalid_view_all['general']['view_all_style'], 'Invalid choices must keep backward-compatible defaults.' );

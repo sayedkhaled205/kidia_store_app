@@ -26,6 +26,61 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
+  for (final direction in TextDirection.values) {
+    testWidgets(
+      'Kids view all opens the correct catalog at each level $direction',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 844);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        await tester.pumpWidget(
+          _app(
+            _ScreenCatalogRepository(
+              categoryLayout: 'visual_grid',
+              gridColumns: 2,
+              navigationMode: 'separate_page',
+              nameHighlightEnabled: true,
+              rootViewAllMode: 'visible',
+              viewAllStyle: 'soft',
+            ),
+            const CategoriesScreen(),
+            direction: direction,
+            scale: 1.5,
+          ),
+        );
+        await tester.pumpAndSettle();
+        final button = find.byKey(const Key('category-view-all'));
+        expect(button, findsOneWidget);
+        expect(find.byKey(const Key('category-back-to-roots')), findsNothing);
+        final rootStyle = tester.widget<OutlinedButton>(button).style!;
+        final bounds = tester.getRect(button);
+        expect(bounds.left, greaterThanOrEqualTo(0));
+        expect(bounds.right, lessThanOrEqualTo(320));
+        expect(bounds.height, greaterThanOrEqualTo(32));
+        expect(rootStyle.backgroundColor!.resolve({})!.a, 1);
+        expect(rootStyle.textStyle!.resolve({})!.fontSize, 13);
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        expect(find.text('All products'), findsOneWidget);
+        final context = tester.element(find.text('All products'));
+        GoRouter.of(context).pop();
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Women').last);
+        await tester.pumpAndSettle();
+        final childStyle = tester.widget<OutlinedButton>(button).style!;
+        expect(
+          childStyle.backgroundColor!.resolve({}),
+          rootStyle.backgroundColor!.resolve({}),
+        );
+        expect(tester.getSize(button), bounds.size);
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        expect(find.text('Products in 1'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   testWidgets(
     'Android keeps edge back in non-home tabs after category depth clears',
     (tester) async {
@@ -317,33 +372,55 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('saved category name spacing reduces only the band and follows children', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    double? oldBand, oldImage;
-    for (final padding in [7.0, 4.0]) {
-      await tester.pumpWidget(const SizedBox());
-      await tester.pumpWidget(_app(_ScreenCatalogRepository(
-        categoryLayout: 'visual_grid', gridColumns: 2, nameHighlightEnabled: true,
-        navigationMode: 'separate_page', nameVerticalPadding: padding,
-        cardHeight: padding == 7 ? 190 : 184,
-      ), const CategoriesScreen()));
-      await tester.pumpAndSettle();
-      final band = tester.getSize(find.byKey(const Key('category-name-highlight-1'))).height;
-      final image = tester.getSize(find.byKey(const Key('category-visual-image-1'))).height;
-      if (padding == 7) { oldBand = band; oldImage = image; }
-      else {
-        expect(band, closeTo(oldBand! - 6, .01));
-        expect(image, closeTo(oldImage!, .01));
-        await tester.tap(find.text('Women').last);
+  testWidgets(
+    'saved category name spacing reduces only the band and follows children',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      double? oldBand, oldImage;
+      for (final padding in [7.0, 4.0]) {
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpWidget(
+          _app(
+            _ScreenCatalogRepository(
+              categoryLayout: 'visual_grid',
+              gridColumns: 2,
+              nameHighlightEnabled: true,
+              navigationMode: 'separate_page',
+              nameVerticalPadding: padding,
+              cardHeight: padding == 7 ? 190 : 184,
+            ),
+            const CategoriesScreen(),
+          ),
+        );
         await tester.pumpAndSettle();
-        expect(tester.getSize(find.byKey(const Key('category-name-highlight-2'))).height, band);
+        final band = tester
+            .getSize(find.byKey(const Key('category-name-highlight-1')))
+            .height;
+        final image = tester
+            .getSize(find.byKey(const Key('category-visual-image-1')))
+            .height;
+        if (padding == 7) {
+          oldBand = band;
+          oldImage = image;
+        } else {
+          expect(band, closeTo(oldBand! - 6, .01));
+          expect(image, closeTo(oldImage!, .01));
+          await tester.tap(find.text('Women').last);
+          await tester.pumpAndSettle();
+          expect(
+            tester
+                .getSize(find.byKey(const Key('category-name-highlight-2')))
+                .height,
+            band,
+          );
+        }
+        expect(tester.takeException(), isNull);
       }
-      expect(tester.takeException(), isNull);
-    }
-  });
+    },
+  );
 
   testWidgets('square card name band is optional, full width and inherited', (
     tester,
@@ -882,6 +959,8 @@ Widget _app(
             'category_general': {
               'category_layout': repository.categoryLayout,
               'navigation_mode': repository.navigationMode,
+              'root_view_all_mode': repository.rootViewAllMode,
+              'view_all_style': repository.viewAllStyle,
               'grid_columns': repository.gridColumns,
               'card_gap': 12,
               'card_height': repository.cardHeight,
@@ -950,6 +1029,11 @@ Widget _app(
           else
             GoRoute(path: '/', builder: (context, state) => home),
           GoRoute(
+            path: '/products',
+            builder: (context, state) =>
+                const Scaffold(body: Text('All products')),
+          ),
+          GoRoute(
             path: '/categories/:id',
             builder: (context, state) => Scaffold(
               body: Text('Products in ${state.pathParameters['id']}'),
@@ -966,6 +1050,8 @@ class _ScreenCatalogRepository implements CatalogRepository {
     this.categoryLayout = 'default',
     this.rootName = 'Women',
     this.navigationMode = 'drilldown',
+    this.rootViewAllMode = 'hidden',
+    this.viewAllStyle = 'outline',
     this.gridColumns = 4,
     this.deepTree = false,
     this.nameHighlightEnabled,
@@ -978,6 +1064,8 @@ class _ScreenCatalogRepository implements CatalogRepository {
   final String categoryLayout;
   final String rootName;
   final String navigationMode;
+  final String rootViewAllMode;
+  final String viewAllStyle;
   final int gridColumns;
   final bool deepTree;
   final bool? nameHighlightEnabled;

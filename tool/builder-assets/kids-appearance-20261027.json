@@ -3120,6 +3120,8 @@
     "general": {
       "category_layout": "visual_grid",
       "navigation_mode": "separate_page",
+      "root_view_all_mode": "visible",
+      "view_all_style": "soft",
       "grid_columns": 2,
       "card_radius": 16,
       "card_gap": 14,
