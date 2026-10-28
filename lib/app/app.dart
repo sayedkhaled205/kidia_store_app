@@ -14,6 +14,7 @@ import '../core/app_design/app_ui_controls_provider.dart';
 import '../core/live_updates/native_live_updates_host.dart';
 import '../core/theme/mobishop_theme.dart';
 import '../core/theme/preview_identity_theme.dart';
+import '../core/theme/published_message_theme.dart';
 import '../core/theme/cms_preview_scroll_behavior.dart';
 import 'app_router.dart';
 export '../features/page_builder/presentation/providers/preview_identity_provider.dart';
@@ -50,11 +51,14 @@ class MobiShopApp extends ConsumerWidget {
       // preview is rendered inside a phone-sized viewport. The CMS preview is
       // an Android application preview, so make it use the same platform
       // defaults as the installed app without changing native builds.
-      theme: AppConfig.isCmsPreview
-          ? previewIdentityTheme(MobiShopTheme.light, identity)
-          : identity == null
-          ? MobiShopTheme.light
-          : applicationIdentityTheme(MobiShopTheme.light, identity),
+      theme: publishedMessageTheme(
+        AppConfig.isCmsPreview
+            ? previewIdentityTheme(MobiShopTheme.light, identity)
+            : identity == null
+            ? MobiShopTheme.light
+            : applicationIdentityTheme(MobiShopTheme.light, identity),
+        uiControls,
+      ),
       builder: (context, child) {
         // Protect every route and overlay, including the payment SDK's
         // separate host. Page SafeAreas consume the remaining insets without

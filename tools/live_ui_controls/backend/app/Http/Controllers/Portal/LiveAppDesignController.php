@@ -23,7 +23,7 @@ final class LiveAppDesignController extends Controller
     }
     public function saveControls(Request $request)
     {
-        $data = $request->validate(['controls' => 'present|array|max:64', 'controls_digest' => 'required|string|size:64']);
+        $data = $request->validate(['controls' => 'present|array|max:'.count(LiveAppUiControls::schema()), 'controls_digest' => 'required|string|size:64']);
         return response()->json(LiveAppUiControls::save($this->owned($request), (int)$request->user()->id,
             $data['controls'], $data['controls_digest']))->header('Cache-Control', 'no-store, private');
     }
@@ -41,12 +41,18 @@ final class LiveAppDesignController extends Controller
     }
     public function show(Request $request, string $store)
     {
-        $model = Store::where('public_id', $store)->firstOrFail();
-        $release = LiveAppDesign::query($model)->orderByDesc('id')->first();
+        $model = Store::select('id')->where('public_id', $store)->firstOrFail();
+        // Foreground polling usually receives 304. Avoid loading the full
+        // merchant settings and design bundle for those unchanged responses.
+        $release = LiveAppDesign::query($model)->select('id', 'digest')->orderByDesc('id')->first();
         abort_unless($release, 404);
         $etag = '"'.$release->id.'-'.$release->digest.'"';
         $headers = ['ETag' => $etag, 'Cache-Control' => 'public, max-age=0, must-revalidate', 'X-Content-Type-Options' => 'nosniff'];
         if ($request->header('If-None-Match') === $etag) return response('', 304, $headers);
+        // Releases are immutable. Read the exact metadata row even if another
+        // publication is appended between these two queries.
+        $release = LiveAppDesign::query($model)->where('id', $release->id)->first();
+        abort_unless($release, 404);
         return response()->json(LiveAppDesign::envelope($release), 200, $headers);
     }
 }

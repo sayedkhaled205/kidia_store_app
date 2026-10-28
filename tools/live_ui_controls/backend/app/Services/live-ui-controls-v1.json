@@ -414,5 +414,201 @@
     "min": 16,
     "max": 80,
     "step": 1
+  },
+  "message_style": {
+    "group": "رسائل التطبيق",
+    "label": "خلفية رسائل التطبيق",
+    "type": "choice",
+    "default": "theme",
+    "options": {
+      "theme": "حسب الثيم",
+      "soft": "لون هادئ",
+      "brand": "لون المتجر"
+    }
+  },
+  "message_radius": {
+    "group": "رسائل التطبيق",
+    "label": "استدارة الرسالة العائمة",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 24,
+    "step": 1
+  },
+  "message_inset": {
+    "group": "رسائل التطبيق",
+    "label": "المسافة حول الرسالة العائمة",
+    "type": "number",
+    "default": null,
+    "min": 4,
+    "max": 24,
+    "step": 1
+  },
+  "message_font_size": {
+    "group": "رسائل التطبيق",
+    "label": "حجم خط الرسائل",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 20,
+    "step": 1
+  },
+  "checkout_side_padding": {
+    "group": "إتمام الطلب",
+    "label": "المسافة الجانبية لإتمام الطلب",
+    "type": "number",
+    "default": null,
+    "min": 8,
+    "max": 28,
+    "step": 1
+  },
+  "checkout_field_radius": {
+    "group": "إتمام الطلب",
+    "label": "استدارة حقول العنوان",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 24,
+    "step": 1
+  },
+  "checkout_field_padding": {
+    "group": "إتمام الطلب",
+    "label": "المسافة الرأسية داخل حقول العنوان",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 24,
+    "step": 1
+  },
+  "checkout_heading_size": {
+    "group": "إتمام الطلب",
+    "label": "حجم عناوين أقسام إتمام الطلب",
+    "type": "number",
+    "default": null,
+    "min": 16,
+    "max": 26,
+    "step": 1
+  },
+  "checkout_section_gap": {
+    "group": "إتمام الطلب",
+    "label": "المسافة بعد عنوان القسم",
+    "type": "number",
+    "default": null,
+    "min": 8,
+    "max": 24,
+    "step": 1
+  },
+  "checkout_button_height": {
+    "group": "إتمام الطلب",
+    "label": "ارتفاع زر إتمام الطلب",
+    "type": "number",
+    "default": null,
+    "min": 44,
+    "max": 64,
+    "step": 1
+  },
+  "checkout_button_radius": {
+    "group": "إتمام الطلب",
+    "label": "استدارة زر إتمام الطلب",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 32,
+    "step": 1
+  },
+  "checkout_button_font_size": {
+    "group": "إتمام الطلب",
+    "label": "حجم خط زر إتمام الطلب",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 22,
+    "step": 1
+  },
+  "checkout_address_width": {
+    "group": "إتمام الطلب",
+    "label": "عرض كارت العنوان المحفوظ",
+    "type": "number",
+    "default": null,
+    "min": 180,
+    "max": 280,
+    "step": 1
+  },
+  "checkout_address_height": {
+    "group": "إتمام الطلب",
+    "label": "ارتفاع كارت العنوان المحفوظ",
+    "type": "number",
+    "default": null,
+    "min": 112,
+    "max": 160,
+    "step": 1
+  },
+  "checkout_address_tint": {
+    "group": "إتمام الطلب",
+    "label": "قوة تلوين العنوان المحدد",
+    "type": "number",
+    "default": null,
+    "min": 0.04,
+    "max": 0.18,
+    "step": 0.01
+  },
+  "checkout_address_radius": {
+    "group": "إتمام الطلب",
+    "label": "استدارة كارت العنوان المحفوظ",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 28,
+    "step": 1
+  },
+  "orders_list_image_size": {
+    "group": "الطلبات",
+    "label": "حجم صورة المنتج في قائمة الطلبات",
+    "type": "number",
+    "default": null,
+    "min": 32,
+    "max": 64,
+    "step": 1
+  },
+  "orders_detail_image_size": {
+    "group": "الطلبات",
+    "label": "حجم صورة المنتج في تفاصيل الطلب",
+    "type": "number",
+    "default": null,
+    "min": 40,
+    "max": 88,
+    "step": 1
+  },
+  "orders_image_radius": {
+    "group": "الطلبات",
+    "label": "استدارة صور منتجات الطلب",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 24,
+    "step": 1
+  },
+  "auth_google_button_height": {
+    "group": "تسجيل الدخول",
+    "label": "ارتفاع زر تسجيل الدخول بجوجل",
+    "type": "number",
+    "default": null,
+    "min": 44,
+    "max": 64,
+    "step": 1
+  },
+  "auth_identifier_hint_ar": {
+    "group": "تسجيل الدخول",
+    "label": "مثال رقم الموبايل أو البريد — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 80
+  },
+  "auth_identifier_hint_en": {
+    "group": "تسجيل الدخول",
+    "label": "مثال رقم الموبايل أو البريد — English",
+    "type": "text",
+    "default": "",
+    "max_length": 80
   }
 }

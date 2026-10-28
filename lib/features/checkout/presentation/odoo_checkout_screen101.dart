@@ -7,6 +7,7 @@ import '../../cart/presentation/providers/cart_state_providers.dart';
 import '../data/odoo/odoo_checkout101.dart';
 import '../domain/entities/checkout_presentation.dart';
 import 'checkout_presentation_provider.dart';
+import 'checkout_appearance.dart';
 
 final odooCheckout101Provider = FutureProvider.autoDispose<OdooCheckoutApi101>((
   ref,
@@ -297,130 +298,150 @@ class _OdooCheckoutForm101State extends State<OdooCheckoutForm101> {
   Widget build(BuildContext context) {
     final form = _form;
     final shipping = _shipping;
-    return Scaffold(
-      key: const Key('odoo-native-checkout'),
-      appBar: AppBar(title: Text(_label(context, 'إتمام الطلب', 'Checkout'))),
-      body: ListView(
-        padding: EdgeInsets.all(
-          widget.design == CheckoutDesign.compact ? 12 : 16,
+    final appearance = CheckoutAppearance.of(context);
+    return Theme(
+      data: Theme.of(context).copyWith(
+        inputDecorationTheme: appearance.fields(
+          Theme.of(context).inputDecorationTheme,
         ),
-        children: [
-          if (_busy) const LinearProgressIndicator(),
-          if (form != null && shipping == null) ...[
-            Text(
-              _label(
-                context,
-                form.addressType == 'billing'
-                    ? 'بيانات الفاتورة'
-                    : 'عنوان الشحن',
-                form.addressType == 'billing'
-                    ? 'Billing address'
-                    : 'Shipping address',
-              ),
-              style: Theme.of(context).textTheme.titleLarge,
+      ),
+      child: Scaffold(
+        key: const Key('odoo-native-checkout'),
+        appBar: AppBar(title: Text(_label(context, 'إتمام الطلب', 'Checkout'))),
+        body: ListView(
+          padding: EdgeInsets.all(
+            appearance.number(
+              'side_padding',
+              widget.design == CheckoutDesign.compact ? 12 : 16,
             ),
-            const SizedBox(height: 16),
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  for (final field in form.fields)
-                    Padding(
-                      padding: EdgeInsets.only(
-                        bottom: widget.design == CheckoutDesign.compact
-                            ? 8
-                            : 12,
-                      ),
-                      child: _field(field),
-                    ),
-                ],
-              ),
-            ),
-            if (form.addressType == 'billing' && form.separateShippingAllowed)
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: Text(
-                  _label(
-                    context,
-                    'استخدام نفس العنوان للشحن',
-                    'Use this address for shipping',
-                  ),
-                ),
-                value: _sameAddress,
-                onChanged: _busy
-                    ? null
-                    : (v) => setState(() {
-                        _sameAddress = v;
-                      }),
-              ),
-            FilledButton(
-              onPressed: _busy ? null : _save,
-              child: Text(_label(context, 'حفظ ومتابعة', 'Save and continue')),
-            ),
-          ],
-          if (shipping != null) ...[
-            if (widget.design == CheckoutDesign.summaryFirst) _total(shipping),
-            TextButton(
-              onPressed: _busy ? null : () => _load(),
-              child: Text(_label(context, 'تعديل العنوان', 'Edit address')),
-            ),
-            if (shipping.cart.cart.needsShipping) ...[
+          ),
+          children: [
+            if (_busy) const LinearProgressIndicator(),
+            if (form != null && shipping == null) ...[
               Text(
-                _label(context, 'طريقة الشحن', 'Shipping method'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              if (shipping.rates.isEmpty)
-                Text(
-                  _label(
-                    context,
-                    'لا توجد طريقة شحن متاحة لهذا العنوان.',
-                    'No shipping method is available for this address.',
-                  ),
-                ),
-              for (final rate in shipping.rates)
-                ListTile(
-                  key: ValueKey('carrier-${rate.id}'),
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                    rate.selected
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                  ),
-                  title: Text(rate.name),
-                  trailing: Text(_money(rate.amount, shipping.cart)),
-                  onTap: _busy ? null : () => _select(rate.id),
-                ),
-            ],
-            const Divider(),
-            if (widget.design != CheckoutDesign.summaryFirst) _total(shipping),
-            // Payment is deliberately unavailable until the merchant payment
-            // adapter has passed verification. Never submit a website handoff.
-            Text(
-              _label(
-                context,
-                'إتمام الدفع غير متاح في التطبيق لهذا المتجر حاليًا. لم يتم إنشاء طلب.',
-                'Payment is currently unavailable in the app for this store. No order has been placed.',
-              ),
-            ),
-          ],
-          if (_failed)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Text(
                 _label(
                   context,
-                  'تعذر تحديث بيانات الطلب. راجع البيانات وحاول مرة أخرى.',
-                  'Unable to update checkout. Review your details and retry.',
+                  form.addressType == 'billing'
+                      ? 'بيانات الفاتورة'
+                      : 'عنوان الشحن',
+                  form.addressType == 'billing'
+                      ? 'Billing address'
+                      : 'Shipping address',
                 ),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontSize: appearance.optional('heading_size'),
+                ),
               ),
-            ),
-          if (_failed && form == null)
-            TextButton(
-              onPressed: _busy ? null : () => _load(),
-              child: Text(_label(context, 'إعادة المحاولة', 'Retry')),
-            ),
-        ],
+              SizedBox(height: appearance.number('section_gap', 16)),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    for (final field in form.fields)
+                      Padding(
+                        padding: EdgeInsets.only(
+                          bottom: widget.design == CheckoutDesign.compact
+                              ? 8
+                              : 12,
+                        ),
+                        child: _field(field),
+                      ),
+                  ],
+                ),
+              ),
+              if (form.addressType == 'billing' && form.separateShippingAllowed)
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    _label(
+                      context,
+                      'استخدام نفس العنوان للشحن',
+                      'Use this address for shipping',
+                    ),
+                  ),
+                  value: _sameAddress,
+                  onChanged: _busy
+                      ? null
+                      : (v) => setState(() {
+                          _sameAddress = v;
+                        }),
+                ),
+              FilledButton(
+                style: appearance.buttonStyle(),
+                onPressed: _busy ? null : _save,
+                child: Text(
+                  _label(context, 'حفظ ومتابعة', 'Save and continue'),
+                ),
+              ),
+            ],
+            if (shipping != null) ...[
+              if (widget.design == CheckoutDesign.summaryFirst)
+                _total(shipping),
+              TextButton(
+                onPressed: _busy ? null : () => _load(),
+                child: Text(_label(context, 'تعديل العنوان', 'Edit address')),
+              ),
+              if (shipping.cart.cart.needsShipping) ...[
+                Text(
+                  _label(context, 'طريقة الشحن', 'Shipping method'),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: appearance.optional('heading_size'),
+                  ),
+                ),
+                if (shipping.rates.isEmpty)
+                  Text(
+                    _label(
+                      context,
+                      'لا توجد طريقة شحن متاحة لهذا العنوان.',
+                      'No shipping method is available for this address.',
+                    ),
+                  ),
+                for (final rate in shipping.rates)
+                  ListTile(
+                    key: ValueKey('carrier-${rate.id}'),
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      rate.selected
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                    ),
+                    title: Text(rate.name),
+                    trailing: Text(_money(rate.amount, shipping.cart)),
+                    onTap: _busy ? null : () => _select(rate.id),
+                  ),
+              ],
+              const Divider(),
+              if (widget.design != CheckoutDesign.summaryFirst)
+                _total(shipping),
+              // Payment is deliberately unavailable until the merchant payment
+              // adapter has passed verification. Never submit a website handoff.
+              Text(
+                _label(
+                  context,
+                  'إتمام الدفع غير متاح في التطبيق لهذا المتجر حاليًا. لم يتم إنشاء طلب.',
+                  'Payment is currently unavailable in the app for this store. No order has been placed.',
+                ),
+              ),
+            ],
+            if (_failed)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  _label(
+                    context,
+                    'تعذر تحديث بيانات الطلب. راجع البيانات وحاول مرة أخرى.',
+                    'Unable to update checkout. Review your details and retry.',
+                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            if (_failed && form == null)
+              TextButton(
+                onPressed: _busy ? null : () => _load(),
+                child: Text(_label(context, 'إعادة المحاولة', 'Retry')),
+              ),
+          ],
+        ),
       ),
     );
   }

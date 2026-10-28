@@ -1,9 +1,9 @@
 (function (scope) {
   'use strict';
   const pageKeys = (screen, schema) => Object.keys(schema).filter(key =>
-    screen === 'account-builder' ? /^(auth_|logout_|support_)/.test(key) :
-    screen === 'home-builder' ? key.startsWith('cart_pulse_') :
-    screen === 'checkout-builder' ? key.startsWith('cart_') && !key.startsWith('cart_pulse_') : false);
+    screen === 'account-builder' ? /^(auth_|logout_|support_|orders_)/.test(key) :
+    screen === 'home-builder' ? /^(cart_pulse_|message_)/.test(key) :
+    screen === 'checkout-builder' ? /^(cart_|checkout_)/.test(key) && !key.startsWith('cart_pulse_') : false);
   const valueOf = (data, key) => data.values[key] ?? data.schema[key].default;
   function setSavedInput(input, spec, value) {
     if (spec.type === 'boolean') { input.defaultChecked = input.checked = value; return; }
@@ -125,16 +125,23 @@
       const support = card(doc, 'بيانات خدمة العملاء');
       support.dataset.wmControlsGroup = 'support';
       auth.insertAdjacentElement('afterend', support); containers.support = support;
+      const orders = card(doc, 'صور منتجات الطلبات');
+      orders.dataset.wmControlsGroup = 'orders';
+      support.insertAdjacentElement('afterend', orders); containers.orders = orders;
     } else if (screen === 'home-builder') {
       const body = form.querySelector('[data-chrome-part="header"] > .mobishop-page-card__body');
       if (!body) return null;
       const pulse = card(doc, 'حركة عدّاد السلة');
       pulse.dataset.wmControlsGroup = 'pulse'; body.prepend(pulse); containers.pulse = pulse;
+      const messages = card(doc, 'رسائل التطبيق');
+      messages.dataset.wmControlsGroup = 'messages'; pulse.insertAdjacentElement('afterend', messages); containers.messages = messages;
     } else {
       const design = form.querySelector('.mobishop-checkout-design-panel');
       if (!design) return null;
       const cart = card(doc, 'السلة');
       cart.dataset.wmControlsGroup = 'cart'; design.insertAdjacentElement('afterend', cart); containers.cart = cart;
+      const checkout = card(doc, 'مظهر إتمام الطلب والعناوين');
+      checkout.dataset.wmControlsGroup = 'checkout'; cart.insertAdjacentElement('afterend', checkout); containers.checkout = checkout;
       const previews = make(doc, 'div', '', cart, 'wm-page-controls-grid');
       for (const [page, title] of [['cart', 'معاينة السلة'], ['checkout', 'معاينة إتمام الطلب']]) {
         const button = make(doc, 'button', title, previews);
@@ -148,7 +155,7 @@
     }
     return containers;
   }
-  function group(key) { return key.startsWith('support_') ? 'support' : key.startsWith('auth_') ? 'auth' : key.startsWith('logout_') ? 'logout' : key.startsWith('cart_pulse_') ? 'pulse' : 'cart'; }
+  function group(key) { return key.startsWith('support_') ? 'support' : key.startsWith('auth_') ? 'auth' : key.startsWith('logout_') ? 'logout' : key.startsWith('orders_') ? 'orders' : key.startsWith('message_') ? 'messages' : key.startsWith('checkout_') ? 'checkout' : key.startsWith('cart_pulse_') ? 'pulse' : 'cart'; }
   async function mount(frame) {
     const screen = frame.dataset.screen;
     if (!supported.has(screen)) return null;

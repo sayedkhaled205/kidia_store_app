@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 
 import '../../features/home/data/home_read_session.dart';
 import '../../features/catalog/domain/entities/catalog_category.dart';
@@ -182,7 +183,8 @@ Future<HomeBlock> _hydrateCatalogBlock58(
 ) async {
   if (block is CategoryGridBlock) {
     validateCatalogQuery58(query, categories: true);
-    final result = await limiter.schedule(
+    final result = await limiter.shared(
+      'categories:${jsonEncode(SplayTreeMap<String, dynamic>.from(query))}',
       () => repository.getCategories(
         CatalogCategoryQuery(
           perPage: query['limit'] as int,
@@ -221,7 +223,7 @@ Future<HomeBlock> _hydrateCatalogBlock58(
     // regardless of which read resolves first.
     products = await Future.wait(
       ids.map(
-        (id) => limiter.schedule(() async {
+        (id) => limiter.shared('product:$id', () async {
           final product = await repository.getProduct(id);
           if (product.id != id) {
             throw const FormatException(
@@ -233,7 +235,8 @@ Future<HomeBlock> _hydrateCatalogBlock58(
       ),
     );
   } else {
-    final result = await limiter.schedule(
+    final result = await limiter.shared(
+      'products:${jsonEncode(SplayTreeMap<String, dynamic>.from(query))}',
       () => repository.getProducts(
         CatalogProductQuery(
           perPage: query['limit'] as int,
@@ -279,6 +282,12 @@ class _CatalogReadLimiter {
   bool _stopped = false;
   Object? _failure;
   StackTrace? _failureStack;
+  // One hydration owns this cache: no stale results across refresh, merchant,
+  // locale, login or publication changes. Repeated sections share one read.
+  final _reads = <String, Future<Object?>>{};
+
+  Future<T> shared<T>(String key, Future<T> Function() task) async =>
+      (await _reads.putIfAbsent(key, () => schedule<T>(task))) as T;
 
   void stop(Object error, StackTrace stackTrace) {
     if (_stopped) return;

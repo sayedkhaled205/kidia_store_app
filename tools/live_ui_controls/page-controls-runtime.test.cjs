@@ -58,9 +58,14 @@ async function fixture(store, draft, screen='account-builder') {
   assert.equal(cart.input('cart_layout').tagName,'SELECT');
   assert.equal(cart.input('cart_layout').value,'theme');
   assert.equal(cart.input('cart_item_image_radius').value,'');
+  assert.equal(cart.input('checkout_address_radius').value,'');
+  assert.equal(f.input('orders_detail_image_size').value,'');
+  assert.equal(f.input('auth_identifier_hint_en').value,'');
   await cart.w.MobiShopPageControls.save(cart.frame);
   assert.equal(cart.writes(),0,'Inherited sizes must not become edits');
   cart.input('cart_item_image_radius').value='0';
+  cart.input('checkout_address_radius').value='0';
+  cart.input('checkout_button_height').value='60';
   cart.input('cart_layout').value='compact';
   cart.input('cart_layout').dispatchEvent(new cart.w.Event('change',{bubbles:true}));
   const cartDraft=JSON.parse(cart.w.sessionStorage.getItem(draftKey('alpha','checkout-builder')));
@@ -70,6 +75,8 @@ async function fixture(store, draft, screen='account-builder') {
   await cartRestored.w.MobiShopPageControls.save(cartRestored.frame);
   assert.equal(cartRestored.values().cart_item_image_radius,0);
   assert.equal(cartRestored.values().cart_layout,'compact');
+  assert.equal(cartRestored.values().checkout_address_radius,0);
+  assert.equal(cartRestored.values().checkout_button_height,60);
   cartRestored.input('cart_layout').value='classic';
   cartRestored.frame.contentDocument.querySelector('form').reset();
   assert.equal(cartRestored.input('cart_layout').value,'compact','Reset restores the saved choice');
