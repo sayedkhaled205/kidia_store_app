@@ -275,8 +275,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Future<void> _submit() async {
     if (_payingInline ||
         _controller.isSubmitting ||
-        _controller.hasActiveSubmission)
+        _controller.hasActiveSubmission) {
       return;
+    }
     if (widget.isPreview) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_CheckoutCopy.of(context).previewOnly)),
