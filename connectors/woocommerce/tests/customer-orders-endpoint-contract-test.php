@@ -117,6 +117,8 @@ final class MobiShop_Test_Order {
 	public function get_order_key(): string { return 'wc_order_fixture' . $this->id; }
 	public function get_checkout_payment_url(): string { return $GLOBALS['mobishop_payment_url'] ?? ('https://shop.example/store/checkout/order-pay/' . $this->id . '/?pay_for_order=true&key=' . $this->get_order_key()); }
 
+	public function get_payment_method_title(): string { return 'Cash on delivery'; }
+	public function get_shipping_method(): string { return 'Standard delivery'; }
 	public function get_total(): string {
 		return $this->total;
 	}
@@ -296,6 +298,8 @@ mobishop_orders_assert( 7 === $GLOBALS['mobishop_order_query']['customer'], 'Woo
 mobishop_orders_assert( true === $GLOBALS['mobishop_order_query']['paginate'], 'Order history must use WooCommerce pagination.' );
 mobishop_orders_assert( 1 === count( $response->data['orders'] ), 'Only the current customer order may be returned.' );
 $order = $response->data['orders'][0];
+mobishop_orders_assert( 'Cash on delivery' === $order['payment_method_title'], 'The receipt must use the saved payment method title.' );
+mobishop_orders_assert( 'Standard delivery' === $order['shipping_method'], 'The receipt must use the saved delivery method.' );
 mobishop_orders_assert( 101 === $order['id'], 'The owned order must be serialized.' );
 mobishop_orders_assert( 'Processing' === $order['status_name'], 'WooCommerce status labels must be preserved.' );
 mobishop_orders_assert( str_starts_with( $order['date_created'], '2026-07-16T20:30:00' ), 'Order creation time must be included.' );

@@ -15,6 +15,7 @@ import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_or
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_presentation.dart';
 import 'package:mobishop_store_app/features/checkout/domain/repositories/checkout_repository.dart';
 import 'checkout_payment_continuation298.dart';
+import 'checkout_order_receipt.dart';
 import 'providers/checkout_inline_payment95.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -23,6 +24,8 @@ class CheckoutScreen extends ConsumerStatefulWidget {
     super.key,
     this.customerEmail = '',
     this.onOrderSuccess,
+    this.onContinueShopping,
+    this.onViewOrderDetails,
     this.onBackToCart,
     this.onReviewOrders,
     this.design = CheckoutDesign.classic,
@@ -32,6 +35,8 @@ class CheckoutScreen extends ConsumerStatefulWidget {
   final CheckoutRepository repository;
   final String customerEmail;
   final ValueChanged<CheckoutOrderResult>? onOrderSuccess;
+  final VoidCallback? onContinueShopping;
+  final ValueChanged<int>? onViewOrderDetails;
   final VoidCallback? onBackToCart;
   final VoidCallback? onReviewOrders;
   final CheckoutDesign design;
@@ -174,7 +179,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Widget _buildBody(_CheckoutCopy copy) {
     if (_paidResult != null) {
-      return _CheckoutSuccess(result: _paidResult!, copy: copy);
+      return _receipt(_paidResult!);
     }
     // Keep the SDK-owned fields mounted while preparing the protected order.
     // The normal pending-order continuation is only a recovery path, never an
@@ -199,10 +204,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             result.paymentStatus != 'success') {
           return CheckoutPaymentContinuation298(
             orderId: result.orderId,
+            onContinueShopping: widget.onContinueShopping,
+            onViewDetails: widget.onViewOrderDetails == null
+                ? null
+                : () => widget.onViewOrderDetails!(result.orderId),
             onReviewOrders: widget.onReviewOrders,
           );
         }
-        return _CheckoutSuccess(result: _controller.orderResult!, copy: copy);
+        return _receipt(_controller.orderResult!);
       case CheckoutStatus.ready:
       case CheckoutStatus.submitting:
         final Cart? cart = _controller.cart;
@@ -220,6 +229,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
   }
 
+  Widget _receipt(CheckoutOrderResult result) => CheckoutReceiptLoader(
+    orderId: result.orderId,
+    onContinueShopping: widget.onContinueShopping,
+    onViewDetails: widget.onViewOrderDetails == null
+        ? null
+        : () => widget.onViewOrderDetails!(result.orderId),
+  );
   Widget _ready(_CheckoutCopy copy) => Stack(
     children: [
       AbsorbPointer(
@@ -257,7 +273,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   );
 
   Future<void> _submit() async {
-    if (_payingInline || _controller.isSubmitting || _controller.hasActiveSubmission) return;
+    if (_payingInline ||
+        _controller.isSubmitting ||
+        _controller.hasActiveSubmission)
+      return;
     if (widget.isPreview) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_CheckoutCopy.of(context).previewOnly)),
@@ -532,23 +551,33 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(children: [
-            Expanded(child: Text(
-              ar ? 'عناوينك المحفوظة' : 'Your saved addresses',
-              style: Theme.of(context).textTheme.titleMedium,
-            )),
-            TextButton.icon(
-              key: const Key('checkout-new-address'),
-              onPressed: controller.isSubmitting ? null : controller.enterNewAddress,
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(ar ? 'عنوان جديد' : 'New address'),
-            ),
-          ]),
-          if (controller.selectedSavedAddressId != null && !controller.showBillingEditor)
-            Align(alignment: AlignmentDirectional.centerEnd,
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  ar ? 'عناوينك المحفوظة' : 'Your saved addresses',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+              TextButton.icon(
+                key: const Key('checkout-new-address'),
+                onPressed: controller.isSubmitting
+                    ? null
+                    : controller.enterNewAddress,
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(ar ? 'عنوان جديد' : 'New address'),
+              ),
+            ],
+          ),
+          if (controller.selectedSavedAddressId != null &&
+              !controller.showBillingEditor)
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
               child: TextButton.icon(
                 key: const Key('checkout-edit-address'),
-                onPressed: controller.isSubmitting ? null : controller.editSavedAddress,
+                onPressed: controller.isSubmitting
+                    ? null
+                    : controller.editSavedAddress,
                 icon: const Icon(Icons.edit_outlined, size: 18),
                 label: Text(ar ? 'تعديل العنوان' : 'Edit address'),
               ),
@@ -563,7 +592,8 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
               separatorBuilder: (_, _) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final address = controller.savedAddresses[index];
-                final selected = controller.selectedSavedAddressId == address.id;
+                final selected =
+                    controller.selectedSavedAddressId == address.id;
                 return SizedBox(
                   width: 240,
                   child: OutlinedButton(
@@ -573,26 +603,44 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
                       foregroundColor: Theme.of(context).colorScheme.onSurface,
                       backgroundColor: selected
                           ? Color.alphaBlend(
-                              Theme.of(context).colorScheme.primary.withValues(alpha: 0.10),
+                              Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.10),
                               Theme.of(context).colorScheme.surface,
                             )
                           : Theme.of(context).colorScheme.surface,
                     ),
                     onPressed: controller.isSubmitting
                         ? null
-                        : () => controller.selectSavedAddress(address.values, addressId: address.id),
+                        : () => controller.selectSavedAddress(
+                            address.values,
+                            addressId: address.id,
+                          ),
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(children: [
-                            Expanded(child: Text(address.label,
-                              maxLines: 1, overflow: TextOverflow.ellipsis)),
-                            if (selected) Icon(Icons.check_circle,
-                              key: ValueKey('checkout-address-selected-${address.id}'), size: 20),
-                          ]),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  address.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (selected)
+                                Icon(
+                                  Icons.check_circle,
+                                  key: ValueKey(
+                                    'checkout-address-selected-${address.id}',
+                                  ),
+                                  size: 20,
+                                ),
+                            ],
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             [
@@ -644,20 +692,20 @@ class _CheckoutForm extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         if (controller.showBillingEditor)
-        _CheckoutSection(
-          title: copy.billingAddress,
-          icon: Icons.receipt_long_outlined,
-          child: _AddressFields(
-            keyPrefix: 'billing',
-            address: controller.billingAddress,
-            enabled: enabled,
-            requiresEmail: false,
-            requiresPhone: true,
-            copy: copy,
-            errorFor: controller.errorFor,
-            onChanged: controller.updateBillingAddress,
+          _CheckoutSection(
+            title: copy.billingAddress,
+            icon: Icons.receipt_long_outlined,
+            child: _AddressFields(
+              keyPrefix: 'billing',
+              address: controller.billingAddress,
+              enabled: enabled,
+              requiresEmail: false,
+              requiresPhone: true,
+              copy: copy,
+              errorFor: controller.errorFor,
+              onChanged: controller.updateBillingAddress,
+            ),
           ),
-        ),
         if (controller.allowDifferentShippingAddress) ...<Widget>[
           const SizedBox(height: 16),
           SwitchListTile.adaptive(
@@ -1352,9 +1400,12 @@ class _OrderSummary extends StatelessWidget {
               value:
                   '-${_formatMinor(cart.totals.discountMinor, cart.totals.currency)}',
             ),
-          if ((BigInt.tryParse(cart.totals.feesMinor) ?? BigInt.zero) != BigInt.zero)
+          if ((BigInt.tryParse(cart.totals.feesMinor) ?? BigInt.zero) !=
+              BigInt.zero)
             _SummaryLine(
-              label: cart.totals.feesMinor.startsWith('-') ? copy.discount : copy.fees,
+              label: cart.totals.feesMinor.startsWith('-')
+                  ? copy.discount
+                  : copy.fees,
               value: _formatMinor(cart.totals.feesMinor, cart.totals.currency),
             ),
           _SummaryLine(
@@ -1756,43 +1807,6 @@ class _RecoverOrderButton extends StatelessWidget {
         : const Icon(Icons.manage_search_outlined),
     label: Text(recovering ? copy.recoveringOrder : copy.recoverOrder),
   );
-}
-
-class _CheckoutSuccess extends StatelessWidget {
-  const _CheckoutSuccess({required this.result, required this.copy});
-
-  final CheckoutOrderResult result;
-  final _CheckoutCopy copy;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              Icons.check_circle_rounded,
-              size: 84,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              copy.orderReceived,
-              key: const Key('checkout-success'),
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(height: 8),
-            Text(copy.orderNumber(result.orderId)),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 String? _localizedError(_CheckoutCopy copy, String field, String? rawError) {

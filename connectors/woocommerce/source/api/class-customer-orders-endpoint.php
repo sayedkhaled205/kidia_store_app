@@ -297,6 +297,8 @@ final class MobiShop_Customer_Orders_Endpoint {
 			'is_paid'       => $is_paid,
 			'needs_payment' => $needs_payment,
 			'payment_method' => is_callable( array( $order, 'get_payment_method' ) ) ? sanitize_key( (string) $order->get_payment_method() ) : '',
+			'payment_method_title' => is_callable( array( $order, 'get_payment_method_title' ) ) ? sanitize_text_field( (string) $order->get_payment_method_title() ) : '',
+			'shipping_method' => is_callable( array( $order, 'get_shipping_method' ) ) ? sanitize_text_field( (string) $order->get_shipping_method() ) : '',
 			'payment_url'   => $payment_url,
 			'payment_endpoint_path' => '' !== $payment_url ? (string) wp_parse_url( $payment_url, PHP_URL_PATH ) : '',
 		);
