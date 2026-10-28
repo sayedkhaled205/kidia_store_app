@@ -35,59 +35,71 @@ class MobiShopApp extends ConsumerWidget {
     final Locale configuredLocale = ref.watch(appLocaleProvider);
     final bool rightToLeft = configuredLocale.languageCode == 'ar';
 
-    return NativePaymentHost92(
-      child: MaterialApp.router(
-        scrollBehavior: AppConfig.isCmsPreview
-            ? const CmsPreviewScrollBehavior()
-            : null,
-        debugShowCheckedModeBanner: false,
-        title: identity?['app_name'] as String? ?? AppConfig.storeName,
-        routerConfig: routerConfig,
-        locale: configuredLocale,
-        supportedLocales: supportedAppLocales,
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        // Flutter Web otherwise inherits the desktop browser platform. That
-        // changes Material metrics and interaction defaults even though the
-        // preview is rendered inside a phone-sized viewport. The CMS preview is
-        // an Android application preview, so make it use the same platform
-        // defaults as the installed app without changing native builds.
-        theme: AppConfig.isCmsPreview
-            ? previewIdentityTheme(MobiShopTheme.light, identity)
-            : identity == null
-            ? MobiShopTheme.light
-            : applicationIdentityTheme(MobiShopTheme.light, identity),
-        builder: (context, child) {
-          final Widget app = Directionality(
-            textDirection: rightToLeft ? TextDirection.rtl : TextDirection.ltr,
-            child: AppUiControlsScope(
-              controls: uiControls,
-              child: child ?? const SizedBox.shrink(),
-            ),
-          );
-          if (!AppConfig.isCmsPreview) {
-            return NativePushActionsHost(
-              router: routerConfig,
-              child: LiveAppDesignHost(
-                router: routerConfig,
-                child: NativeLiveUpdatesHost(child: app),
+    return MaterialApp.router(
+      scrollBehavior: AppConfig.isCmsPreview
+          ? const CmsPreviewScrollBehavior()
+          : null,
+      debugShowCheckedModeBanner: false,
+      title: identity?['app_name'] as String? ?? AppConfig.storeName,
+      routerConfig: routerConfig,
+      locale: configuredLocale,
+      supportedLocales: supportedAppLocales,
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      // Flutter Web otherwise inherits the desktop browser platform. That
+      // changes Material metrics and interaction defaults even though the
+      // preview is rendered inside a phone-sized viewport. The CMS preview is
+      // an Android application preview, so make it use the same platform
+      // defaults as the installed app without changing native builds.
+      theme: AppConfig.isCmsPreview
+          ? previewIdentityTheme(MobiShopTheme.light, identity)
+          : identity == null
+          ? MobiShopTheme.light
+          : applicationIdentityTheme(MobiShopTheme.light, identity),
+      builder: (context, child) {
+        // Protect every route and overlay, including the payment SDK's
+        // separate host. Page SafeAreas consume the remaining insets without
+        // adding the navigation gap twice. App bars still own the status-bar
+        // inset and Scaffold can resize using the unchanged keyboard insets.
+        final Widget app = ColoredBox(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          child: SafeArea(
+            top: false,
+            child: NativePaymentHost92(
+              child: Directionality(
+                textDirection: rightToLeft
+                    ? TextDirection.rtl
+                    : TextDirection.ltr,
+                child: AppUiControlsScope(
+                  controls: uiControls,
+                  child: child ?? const SizedBox.shrink(),
+                ),
               ),
-            );
-          }
-
-          // WordPress inherits the desktop accessibility/text environment. Do
-          // not let that environment resize only the embedded preview; the
-          // phone and the preview must calculate the same header/footer slots.
-          final MediaQueryData media = MediaQuery.of(context);
-          return MediaQuery(
-            data: media.copyWith(
-              textScaler: TextScaler.noScaling,
-              boldText: false,
-              navigationMode: NavigationMode.traditional,
             ),
-            child: app,
+          ),
+        );
+        if (!AppConfig.isCmsPreview) {
+          return NativePushActionsHost(
+            router: routerConfig,
+            child: LiveAppDesignHost(
+              router: routerConfig,
+              child: NativeLiveUpdatesHost(child: app),
+            ),
           );
-        },
-      ),
+        }
+
+        // WordPress inherits the desktop accessibility/text environment. Do
+        // not let that environment resize only the embedded preview; the
+        // phone and the preview must calculate the same header/footer slots.
+        final MediaQueryData media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: TextScaler.noScaling,
+            boldText: false,
+            navigationMode: NavigationMode.traditional,
+          ),
+          child: app,
+        );
+      },
     );
   }
 }
