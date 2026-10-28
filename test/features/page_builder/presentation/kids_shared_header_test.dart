@@ -10,7 +10,7 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 
 void main() {
   testWidgets(
-    'Kids compact Home, Categories and Wishlist share bag and content frames',
+    'Kids headers share bag frames and Wishlist title centers on the screen',
     (tester) async {
       final preset = jsonDecode(
         File(
@@ -36,9 +36,10 @@ void main() {
                   supportedLocales: const [Locale('en'), Locale('ar')],
                   localizationsDelegates: GlobalMaterialLocalizations.delegates,
                   home: MediaQuery(
-                    data: const MediaQueryData(
-                      padding: EdgeInsets.only(top: 24, bottom: 24),
-                      textScaler: TextScaler.linear(1.3),
+                    data: MediaQueryData(
+                      size: Size(width, 844),
+                      padding: const EdgeInsets.only(top: 24, bottom: 24),
+                      textScaler: const TextScaler.linear(1.3),
                     ),
                     child: Scaffold(
                       appBar: CmsPageAppBar(
@@ -70,7 +71,7 @@ void main() {
             );
             if (cartRect != null) {
               expect(cart, cartRect, reason: '$page $language $width');
-              expect(content, contentRect);
+              if (page != 'wishlist') expect(content, contentRect);
               expect(header, headerRect);
               expect(badge, badgeRect);
             }
@@ -82,6 +83,11 @@ void main() {
             await tester.tap(find.byTooltip('Bag'));
             expect(taps, 1);
             if (page == 'wishlist') {
+              final title = tester.getRect(
+                find.byKey(const Key('commerce-app-bar-title')),
+              );
+              expect(title.center.dx, closeTo(width / 2, .01));
+              expect(content.center.dx, closeTo(width / 2, .01));
               expect(
                 find.byKey(const Key('commerce-app-bar-title')),
                 findsOneWidget,
