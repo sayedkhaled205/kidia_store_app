@@ -4,6 +4,19 @@ import 'package:mobishop_store_app/features/orders/data/repositories/customer_or
 import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
 
 void main() {
+  test('optional images keep legacy orders readable and reject invalid URLs', () async {
+    for (final value in [null, '', 'https://cdn.example/variation.png', 'http://store.example/parent.jpg', 'javascript:bad', 'https://secret@example.com/a', {}, '/relative.jpg']) {
+      final repository=CustomerOrdersRepositoryImpl(_FakeOrdersTransport({
+        'orders':[{'id':1,'number':'1','status':'completed','item_count':1,
+          'items':[{'name':'Product','quantity':1,'image_url':value}]}],
+        'page':1,'per_page':20,'total':1,'total_pages':1,
+      }));
+      final result=await repository.getOrders(page:1,perPage:20);
+      expect(result.items.single.items.single.imageUrl,
+        value=='https://cdn.example/variation.png'||value=='http://store.example/parent.jpg'?value:'');
+    }
+  });
+
   for (final type in <String>['cancel', 'request']) {
     test('preserves the server-authorized $type action', () async {
       final repository = CustomerOrdersRepositoryImpl(_FakeOrdersTransport({

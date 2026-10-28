@@ -680,9 +680,16 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final List<Map<String, dynamic>> compactRows = _compactLayoutRows();
     final Set<String> regularItems = _rowItems(regularRows);
     final Set<String> compactItems = _rowItems(compactRows);
+    final bool aligned = _header.boolean('align_compact_cart', false);
+    final String primaryItem =
+        aligned &&
+            regularItems.contains('title') &&
+            compactItems.contains('title')
+        ? 'title'
+        : 'search_bar';
     final bool morphSearch =
-        regularItems.contains('search_bar') &&
-        compactItems.contains('search_bar');
+        regularItems.contains(primaryItem) &&
+        compactItems.contains(primaryItem);
     if (!morphSearch) {
       return Stack(
         key: const Key('cms-page-app-bar-scroll-transition'),
@@ -717,7 +724,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     final Set<String> persistentActions = regularItems
         .where(fixedActionItems.contains)
         .toSet();
-    final Set<String> removed = <String>{'search_bar', ...persistentActions};
+    final Set<String> removed = <String>{primaryItem, ...persistentActions};
     final List<Map<String, dynamic>> fadingRegular = _rowsWithoutItems(
       regularRows,
       removed,
@@ -735,7 +742,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         100;
     final double regularSearchFraction = _itemWidthFraction(
       regularRows,
-      'search_bar',
+      primaryItem,
       fallback: 1,
     );
     final double searchFraction = _lerp(
@@ -758,14 +765,23 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         final double availableWidth = width
             .clamp(1, constraints.maxWidth)
             .toDouble();
-        final double startTop = _itemTopInRows(
-          regularRows,
-          'search_bar',
-        ).clamp(0, regularContentHeight - searchHeight).toDouble();
+        final double startTop = aligned && regularRows.length == 1
+            ? (regularContentHeight - searchHeight) / 2
+            : _itemTopInRows(
+                regularRows,
+                primaryItem,
+              ).clamp(0, regularContentHeight - searchHeight).toDouble();
         final double endTop = ((constraints.maxHeight - searchHeight) / 2)
             .clamp(0, double.infinity)
             .toDouble();
-        final double regularActionTop = persistentActions.isEmpty
+        final double regularActionTop = aligned
+            ? ((_header.boolean('collapse_on_scroll', false)
+                          ? _compactHeaderHeight(_header)
+                          : _regularHeaderHeight(_header)) -
+                      _header.number('vertical_padding', 8).clamp(0, 24) * 2 -
+                      48) /
+                  2
+            : persistentActions.isEmpty
             ? 0
             : persistentActions
                   .map((String item) => _itemTopInRows(regularRows, item))
@@ -810,12 +826,14 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: KeyedSubtree(
                 key: const Key('cms-page-morphing-search'),
                 child: _positionedItem(
-                  'search_bar',
-                  _searchBar(
-                    context,
-                    _resolvedAction(context, 'search'),
-                    color,
-                  ),
+                  primaryItem,
+                  primaryItem == 'title'
+                      ? Center(child: _rawItem(context, 'title', color))
+                      : _searchBar(
+                          context,
+                          _resolvedAction(context, 'search'),
+                          color,
+                        ),
                 ),
               ),
             ),
@@ -1271,12 +1289,13 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
         _header.string('title', defaultTitle),
         defaultTitle,
         const {
-          'account': ['Account', 'My account', 'حسابي'],
-          'category': ['Categories', 'الأقسام', 'التصنيفات'],
-          'catalog': ['Products', 'المنتجات'],
-          'wishlist': ['Wishlist', 'المفضلة'],
-          'product': ['Description', 'الوصف'],
-        }[layout.page] ?? const <String>[],
+              'account': ['Account', 'My account', 'حسابي'],
+              'category': ['Categories', 'الأقسام', 'التصنيفات'],
+              'catalog': ['Products', 'المنتجات'],
+              'wishlist': ['Wishlist', 'المفضلة'],
+              'product': ['Description', 'الوصف'],
+            }[layout.page] ??
+            const <String>[],
       );
       final String transform = _header.string('title_transform', 'none');
       if (transform == 'uppercase') {
@@ -1442,7 +1461,11 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
                 Localizations.localeOf(context).languageCode == 'ar'
                     ? 'ابحث عن المنتجات'
                     : 'Search products',
-                const ['Search products', 'ابحث عن المنتجات', 'البحث عن المنتجات'],
+                const [
+                  'Search products',
+                  'ابحث عن المنتجات',
+                  'البحث عن المنتجات',
+                ],
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1563,6 +1586,9 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       tooltip: action.tooltip,
       onPressed: action.onPressed,
       style: IconButton.styleFrom(
+        minimumSize: _header.boolean('align_compact_cart', false)
+            ? const Size(48, 48)
+            : null,
         backgroundColor: style == 'circle' || style == 'filled'
             ? background
             : Colors.transparent,

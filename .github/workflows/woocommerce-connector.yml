@@ -54,6 +54,7 @@ jobs:
           php connectors/woocommerce/tests/native-checkout-safety50-contract-test.php
           php connectors/woocommerce/tests/native-checkout-safety50-contract-test.php --missing-installation-key
           php connectors/woocommerce/tests/customer-orders-endpoint-contract-test.php
+          php connectors/woocommerce/tests/customer-order-images-test.php
           php connectors/woocommerce/tests/merchant-payment-labels-contract-test.php
           php connectors/woocommerce/tests/merchant-schema96-test.php
           php connectors/woocommerce/tests/address-book-adapter-contract-test.php

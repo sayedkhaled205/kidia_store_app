@@ -1,8 +1,13 @@
 class CustomerOrderItem {
-  const CustomerOrderItem({required this.name, required this.quantity});
+  const CustomerOrderItem({
+    required this.name,
+    required this.quantity,
+    this.imageUrl = '',
+  });
 
   final String name;
   final int quantity;
+  final String imageUrl;
 }
 
 enum CustomerOrderCancellationType { none, cancel, request }

@@ -8,6 +8,15 @@ and outline. Product footer spacing matches category navigation; the collapsed
 home search uses a 51px header to align with the fixed cart action.
 Merchant identity and live catalog data are supplied by the existing Setup flow.
 
+Kids enables `align_compact_cart` in Home, Categories and Wishlist. The three
+compact headers share a 51px height, 38px content slot and 48px cart touch target;
+Wishlist puts its localized title in the search slot. Cart artwork is 26.6px,
+offset 1px right and 1px up from the shared center. Expanded Home keeps the
+cart fixed while its logo/search transition. Other presets retain their layout.
+This renderer and order thumbnails require a new app build; publishing settings
+alone cannot add support to an older installed binary. Connector 1.46.111 adds
+optional order item image URLs for WooCommerce, preserving older responses.
+
 To update a package, load the **currently active** theme snapshot and replace
 only its `kids_baby` entry with this file. Preserve every other theme. Do not
 reuse a complete old package or a compiled mobile design as editable form state.
