@@ -158,6 +158,7 @@ final class MobiShop_Category_Page_Endpoint {
 				'font_color'       => $general['font_color'],
 				'name_highlight_enabled' => $general['name_highlight_enabled'],
 				'name_highlight_color' => $general['name_highlight_color'],
+				'name_vertical_padding' => $general['name_vertical_padding'],
 				'font_weight'      => $general['font_weight'],
 				'text_align'       => $general['text_align'],
 				'text_max_lines'   => $general['text_max_lines'],

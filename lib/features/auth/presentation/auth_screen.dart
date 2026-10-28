@@ -411,6 +411,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           _textField(
             key: const Key('auth-email'),
             controller: _identifier,
+            hint: config.supportsPhone ? config.phoneHint : null,
             label: config.supportsPhone
                 ? (config.allows('email_password')
                       ? copy.identifier

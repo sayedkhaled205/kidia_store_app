@@ -50,8 +50,9 @@ mobishop_category_assert( 120 === $saved['general']['image_size'] && 30 === $sav
 mobishop_category_assert( '#FDF4E7' === $saved['general']['element_background_color'], 'The Category element background must save independently from page and card backgrounds.' );
 mobishop_category_assert( 76 === $saved['general']['card_width_percent'] && 144 === $saved['general']['card_height'], 'Category card width and height must save independently.' );
 
-$store->save_settings( array( 'general' => array( 'name_highlight_enabled' => '1', 'name_highlight_color' => '#e0f2ed' ) ) );
+$store->save_settings( array( 'general' => array( 'name_highlight_enabled' => '1', 'name_highlight_color' => '#e0f2ed', 'name_vertical_padding' => '4' ) ) );
 $highlight = $store->get_settings();
+mobishop_category_assert( 4 === $highlight['general']['name_vertical_padding'], 'Name strip spacing must survive save and reload.' );
 mobishop_category_assert( true === $highlight['general']['name_highlight_enabled'] && '#E0F2ED' === $highlight['general']['name_highlight_color'], 'Name highlight and its color must survive save and reload.' );
 $disabled = $store->save_settings( array( 'general' => array( 'name_highlight_enabled' => '0', 'name_highlight_color' => '#e0f2ed' ) ) );
 mobishop_category_assert( false === $disabled['general']['name_highlight_enabled'] && '#E0F2ED' === $disabled['general']['name_highlight_color'], 'Turning highlight off must retain its chosen color.' );

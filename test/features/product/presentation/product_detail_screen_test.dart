@@ -584,6 +584,24 @@ void main() {
     expect(tester.takeException(),isNull);
   });
 
+  testWidgets('product purchase button is vertically centered without adding footer height', (tester) async {
+    _useTallSurface(tester);
+    await tester.pumpWidget(_testApp(ProductDetailScreen(
+      productId: simpleProduct.id, repository: ProductFakeCatalogRepository(),
+      onAddToCart: (selection) async {},
+    ), productLayout: _liveStyleProductLayout(footerSettings: {
+      'height': 50, 'button_height': 45.59, 'icon_size': 22,
+      'font_size': 11, 'icon_label_gap': 0,
+    })));
+    await tester.pumpAndSettle();
+    final row = find.byKey(const Key('product-footer-size'));
+    final footer = find.ancestor(of: row, matching: find.byType(Material)).first;
+    final button = find.byKey(const Key('product-add-to-cart-size'));
+    expect(tester.getSize(footer).height, tester.getSize(row).height + 6);
+    expect(tester.getCenter(button).dy, closeTo(tester.getCenter(footer).dy, .01));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('centers the configured button width inside its footer column', (
     WidgetTester tester,
   ) async {

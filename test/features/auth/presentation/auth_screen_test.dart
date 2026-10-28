@@ -22,6 +22,19 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets('first identifier field shows the local phone example in gray without restricting email', (tester) async {
+    final fixture = _Fixture();
+    await fixture.pump(tester);
+    final field = tester.widget<TextField>(find.descendant(
+      of: find.byKey(const Key('auth-email')), matching: find.byType(TextField)));
+    expect(field.decoration!.hintText, '01XXXXXXXXX');
+    expect(field.decoration!.hintStyle!.color, const Color(0xFF9E9E9E));
+    expect(field.decoration!.floatingLabelBehavior, FloatingLabelBehavior.always);
+    await tester.enterText(find.byKey(const Key('auth-email')), 'customer@example.com');
+    await _tap(tester, 'auth-continue');
+    expect(fixture.actions.identifiers, ['customer@example.com']);
+  });
+
   testWidgets('Google sign-in keeps a bundled full-color mark without tinting', (
     tester,
   ) async {
