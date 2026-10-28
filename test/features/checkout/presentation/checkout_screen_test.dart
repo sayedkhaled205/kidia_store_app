@@ -37,12 +37,32 @@ void main() {
       const SavedCheckoutAddress92(id:'home',label:'Home',values:{'first_name':'Ada','last_name':'Test','phone':'5550100','country':'US','state':'CA','city':'First city','address_1':'First street','address_2':'Suite 4'}),
       const SavedCheckoutAddress92(id:'work',label:'Work',values:{'first_name':'Ada','last_name':'Test','phone':'5550101','country':'US','state':'CA','city':'Second city','address_1':'Second street'}),
     ]));
-    await tester.pumpWidget(_testApp(CheckoutScreen(repository:repo)));
+    await tester.pumpWidget(MaterialApp(
+      theme: ThemeData(colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF4EA999),
+      ).copyWith(primary: const Color(0xFF4EA999), surface: Colors.white)),
+      home: CheckoutScreen(repository: repo),
+    ));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('checkout-address-home')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('checkout-billing-address1')), findsNothing);
     expect(find.byKey(const Key('checkout-address-selected-home')), findsOneWidget);
+    // Read rendered colors, including inherited text styles. Brand-colored
+    // button text on a brand-colored address card was difficult to read.
+    for (final id in ['home', 'work']) {
+      final card = find.byKey(Key('checkout-address-$id'));
+      final material = tester.widget<Material>(find.descendant(
+        of: card, matching: find.byType(Material),
+      ).first);
+      final label = find.descendant(of: card, matching: find.byType(Text)).first;
+      final foreground = DefaultTextStyle.of(tester.element(label)).style.color!;
+      final background = material.color!;
+      expect(background.computeLuminance(), greaterThan(0.85));
+      expect(foreground.computeLuminance(), lessThan(0.04));
+      expect((background.computeLuminance() + 0.05) /
+          (foreground.computeLuminance() + 0.05), greaterThanOrEqualTo(7));
+    }
     expect(find.byKey(const Key('checkout-customer-note')), findsOneWidget);
     expect(find.byKey(const Key('checkout-different-shipping-toggle')), findsOneWidget);
     await tester.tap(find.byKey(const Key('checkout-edit-address')));
