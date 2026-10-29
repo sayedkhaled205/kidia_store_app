@@ -23,7 +23,7 @@ if '--activate' in sys.argv or '--rollback' in sys.argv:
     print(json.dumps({'activated':not rollback,'backup':str(backup),'bundle':m['bundle']}));sys.exit()
 assert not backup.exists(),'Review existing stage'
 php='/opt/cpanel/ea-php83/root/usr/bin/php'
-for test in ['connectors/woocommerce/tests/push-analytics-test.php','tool/builder-assets/push-analytics-contract.php']:
+for test in ['connectors/woocommerce/tests/push-analytics-test.php','tool/builder-assets/push-analytics-contract.php','tool/builder-assets/test-catalog-filters.php']:
     subprocess.run([php,str(repo/test)],check=True)
 index=(root/'index.html').read_text(); central=re.search(r'assets/original-central[^"?\s]+\.js',index).group()
 parent=(root/central).read_text(); frame=re.search(r'screen-frame[^"?\s]+\.html',parent).group()
@@ -37,6 +37,10 @@ for live,source in [(api/'app/Services/BuilderPushAnalytics.php','tool/builder-a
     before=subprocess.check_output(['git','-c','safe.directory='+str(repo),'-C',str(repo),'show',base+':'+source]).decode().replace('\r\n','\n')
     assert live.read_text()==before,'Concurrent source change: '+str(live)
     changes[live]=(repo/source).read_bytes()
+live=api/'app/Services/BuilderCatalogFilters.php';source='tool/builder-assets/BuilderCatalogFilters.php'
+before=subprocess.check_output(['git','-c','safe.directory='+str(repo),'-C',str(repo),'show',base+':'+source]).decode().replace('\r\n','\n')
+assert live.read_text()==before,'Concurrent catalog helper change'
+changes[live]=(repo/source).read_bytes()
 downloads=Path('/home/woomobile/public_html/downloads'); release=json.loads((downloads/'connector-release.json').read_text())
 assert release['version']=='1.46.116' and current(downloads/'mobi2app-connector.zip')==release['sha256'],'Review connector download drift'
 subprocess.run(['python3',str(repo/'tool/build_woocommerce_connector.py')],check=True)

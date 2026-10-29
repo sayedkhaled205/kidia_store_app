@@ -15,18 +15,20 @@ final class BuilderCatalogFilters
     }
     public function forStore($store): array
     {
-        $empty = ['tags' => [], 'sizes' => [], 'colors' => []];
+        $empty = ['tags' => [], 'sizes' => [], 'colors' => [], 'brands' => []];
         if ($store->isShopify() || $store->isOdoo()) {
             return ['filter_options' => $empty];
         }
         try {
             $base = rtrim((string) $store->site_url, '/');
-            $key = 'builder:filters:v2:'.hash('sha256', $store->public_id.'|'.$base);
+            $key = 'builder:filters:v3:'.hash('sha256', $store->public_id.'|'.$base);
             $options = Cache::remember($key, 300, fn () => self::read(
                 function (string $path, array $query, float $seconds) use ($base): array {
                     $response = Http::acceptJson()->withoutRedirecting()
                         ->connectTimeout(min(3, $seconds))->timeout($seconds)
-                        ->get($base.$path, $query)->throw();
+                        ->get($base.$path, $query);
+                    if ($path === '/wp-json/mobishop/v1/brands' && in_array($response->status(), [404, 501], true)) return ['items'=>[], 'pages'=>1];
+                    $response->throw();
                     return ['items' => $response->json(), 'pages' => $response->header('X-WP-TotalPages')];
                 }
             ));
@@ -60,7 +62,7 @@ final class BuilderCatalogFilters
             throw new \RuntimeException('Filter pagination limit exceeded');
         };
         $root = '/wp-json/wc/store/v1/products';
-        $options = ['tags' => [], 'sizes' => [], 'colors' => []];
+        $options = ['tags' => [], 'sizes' => [], 'colors' => [], 'brands' => []];
         foreach ($terms($root.'/tags') as $tag) {
             $label = self::label($tag['name'] ?? '');
             if ($label !== '') $options['tags'][] = ['id' => (int) $tag['id'], 'label' => $label];
@@ -76,6 +78,11 @@ final class BuilderCatalogFilters
                 if (empty($term['slug']) || $label === '') continue;
                 $options[$target][] = ['taxonomy' => $taxonomy, 'term' => (string) $term['slug'], 'label' => $label];
             }
+        }
+        foreach ($terms('/wp-json/mobishop/v1/brands') as $brand) {
+            $name = self::label($brand['name'] ?? '');
+            if ($name === '' || empty($brand['slug'])) continue;
+            $options['brands'][] = ['id' => (int) $brand['id'], 'name' => $name, 'slug' => (string) $brand['slug'], 'count' => max(0, (int) ($brand['count'] ?? 0))];
         }
         return $options;
     }

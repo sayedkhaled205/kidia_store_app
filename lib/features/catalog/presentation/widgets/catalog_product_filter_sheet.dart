@@ -229,6 +229,10 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
     final CatalogCopy copy = CatalogCopy.of(context);
     final ThemeData theme = Theme.of(context);
     final ui = AppUiControlsScope.of(context);
+    final brands = {
+      for (final brand in [...widget.brands, ..._options.brands])
+        brand.id: brand,
+    }.values.toList();
     final String minimumAvailable = _minorToDecimal(
       widget.minimumAvailableMinor,
       widget.currencyMinorUnit,
@@ -270,14 +274,12 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                     _onSaleOnly = value;
                   }),
                 ),
-              if (widget.showBrand && widget.brands.isNotEmpty) ...<Widget>[
+              if (widget.showBrand && brands.isNotEmpty) ...<Widget>[
                 const SizedBox(height: 8),
                 DropdownButtonFormField<int?>(
                   key: const Key('catalog-brand-filter'),
                   initialValue:
-                      widget.brands.any(
-                        (StoreBrand brand) => brand.id == _brandId,
-                      )
+                      brands.any((StoreBrand brand) => brand.id == _brandId)
                       ? _brandId
                       : null,
                   isExpanded: true,
@@ -290,7 +292,7 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                       value: null,
                       child: Text(copy.allBrands),
                     ),
-                    ...widget.brands.map(
+                    ...brands.map(
                       (StoreBrand brand) => DropdownMenuItem<int?>(
                         value: brand.id,
                         child: Text(
