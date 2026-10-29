@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
@@ -323,7 +324,7 @@ class _ProductQuickAddSheetState extends ConsumerState<_ProductQuickAddSheet> {
             ),
           ),
           if (wishlistFooter)
-            ProductQuickAddFooter(
+            PreviewEditRegion(page: 'product', target: 'footer', child: ProductQuickAddFooter(
               productId: product.id,
               settings: footer!,
               adding: _controller.isAdding,
@@ -331,7 +332,7 @@ class _ProductQuickAddSheetState extends ConsumerState<_ProductQuickAddSheet> {
                   ? (product.isPurchasable ? _addToCart : null)
                   : (_controller.canAddToCart ? _addToCart : null),
               hosted: usesHostedOdooCart297,
-            )
+            ))
           else
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),

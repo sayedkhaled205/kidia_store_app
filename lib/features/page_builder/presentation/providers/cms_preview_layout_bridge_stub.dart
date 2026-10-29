@@ -3,6 +3,8 @@ class CmsPreviewLayoutBridge {
   static bool useDemoCatalog = false;
   static bool useLiveCatalog = false;
 
+  static void editElement(String page, String target, String? item) {}
+
   static Map<String, dynamic>? get currentHomeLayout => null;
   static Future<Map<String, dynamic>> fetchAuthConfiguration() =>
       Future.error(UnsupportedError('Authentication preview is web-only.'));

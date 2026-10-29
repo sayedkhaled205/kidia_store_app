@@ -85,6 +85,7 @@ jobs:
       - name: Check shared preview scrolling and element selection
         run: |
           node tool/builder-assets/preview-interactions.test.cjs
+          node tool/builder-assets/preview-inspector.test.cjs
           node tool/builder-assets/category-designer.test.cjs
           node tool/builder-assets/push-analytics.test.cjs
           php tool/builder-assets/push-analytics-contract.php
@@ -105,7 +106,7 @@ jobs:
       - run: flutter analyze
       - run: flutter test
       - name: Verify desktop preview gestures and idle selection
-        run: flutter test --dart-define=CMS_PREVIEW=true test/features/home/presentation/widgets/preview_interaction_test.dart test/app/app_locale_test.dart
+        run: flutter test --dart-define=CMS_PREVIEW=true test/features/home/presentation/widgets/preview_interaction_test.dart test/features/page_builder/preview_edit_inspector_test.dart test/app/app_locale_test.dart
       - name: Build embedded CMS Flutter Web preview
         run: bash tool/build_cms_flutter_preview.sh
       - name: Upload CMS Flutter Web preview

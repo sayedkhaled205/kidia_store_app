@@ -45,6 +45,7 @@ jobs:
           node tool/builder-assets/preview-auth-config.test.cjs
           node tool/builder-assets/preview-commerce-config.test.cjs
           node tool/builder-assets/preview-interactions.test.cjs
+          node tool/builder-assets/preview-inspector.test.cjs
           node tool/builder-assets/category-designer.test.cjs
       - uses: actions/upload-artifact@v4
         if: always()

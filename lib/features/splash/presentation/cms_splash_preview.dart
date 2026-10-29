@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'package:flutter/material.dart';
 
 import '../../page_builder/presentation/providers/cms_preview_layout_bridge.dart';
@@ -42,7 +43,7 @@ class _CmsSplashPreviewState extends State<CmsSplashPreview> {
           ),
         );
       }
-      return SplashScreen(config: config);
+      return PreviewEditRegion(page: 'splash', target: 'splash', child: SplashScreen(config: config));
     },
   );
 }

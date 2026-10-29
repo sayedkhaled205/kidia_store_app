@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -266,7 +267,7 @@ class _MainShellState extends ConsumerState<MainShell>
                 (page == 'product' &&
                     footer.string('style', 'navigation') == 'product_action')
             ? null
-            : SafeArea(
+            : PreviewEditRegion(page: page, target: 'footer', child: SafeArea(
                 top: false,
                 bottom:
                     !AppConfig.isCmsPreview ||
@@ -398,7 +399,7 @@ class _MainShellState extends ConsumerState<MainShell>
                     ),
                   ),
                 ),
-              ),
+              )),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
@@ -48,7 +49,7 @@ class HomeBlockRenderer extends StatelessWidget {
     Widget buildBlock(HomeBlock block) {
       return KeyedSubtree(
         key: keyForBlock?.call(block.id) ?? ValueKey<String>(block.id),
-        child: HomeBlockFrame(
+        child: PreviewEditRegion(page: 'home', target: block.id, child: HomeBlockFrame(
           block: block,
           child: AppConfig.isCmsPreview && _emptyProductSection(block)
               ? _PreviewEmptyProducts(block: block)
@@ -61,7 +62,7 @@ class HomeBlockRenderer extends StatelessWidget {
                   onAction: onAction,
                 )
               : HomeBlockFactory.create(block: block, onAction: onAction),
-        ),
+        )),
       );
     }
 

@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'package:flutter/material.dart';
 import 'category_grid_metrics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -105,7 +106,7 @@ class CategoriesScreen extends ConsumerWidget {
                     );
                   }
 
-                  return _CategoryLayoutView(
+                  return PreviewEditRegion(page: 'category', target: 'category', child: _CategoryLayoutView(
                     key: ValueKey(entryRevision),
                     tree:
                         presentationSettings != null && categorySettings != null
@@ -115,7 +116,7 @@ class CategoriesScreen extends ConsumerWidget {
                     onRefresh: () => ref
                         .refresh(catalogCategoryTreeProvider.future)
                         .then<void>((CatalogCategoryTree _) {}),
-                  );
+                  ));
                 },
               ),
       ),
@@ -744,7 +745,7 @@ class CategoryProductsCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (categories.isEmpty) return const SizedBox.shrink();
-    return Padding(
+    return PreviewEditRegion(page: 'category', target: 'category', child: Padding(
       key: const Key('category-products-rail'),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: LayoutBuilder(
@@ -826,7 +827,7 @@ class CategoryProductsCards extends StatelessWidget {
           );
         },
       ),
-    );
+    ));
   }
 }
 

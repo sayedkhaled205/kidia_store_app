@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_count_pulse.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/features/search/presentation/catalog_search_launcher.dart';
@@ -131,7 +132,7 @@ class CmsElementFrame extends StatelessWidget {
         .number('margin_bottom', 0)
         .clamp(0, 80)
         .toDouble();
-    return Transform.translate(
+    return PreviewEditRegion(target: component.id, child: Transform.translate(
       offset: Offset(0, mergeDown - mergeUp),
       child: Material(
         color: background,
@@ -155,7 +156,7 @@ class CmsElementFrame extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 }
 
@@ -357,7 +358,7 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
             'slow' => const Duration(milliseconds: 420),
             _ => const Duration(milliseconds: 260),
           };
-    return Theme(
+    return PreviewEditScope(page: widget.layout.page, child: Theme(
       data: pageTheme,
       child: TweenAnimationBuilder<double>(
         tween: Tween<double>(end: targetHeight),
@@ -390,10 +391,10 @@ class _CmsPageScaffoldState extends State<CmsPageScaffold> {
                 onNotification: _handleScroll,
                 child: widget.body,
               ),
-              bottomNavigationBar: widget.bottomNavigationBar,
+              bottomNavigationBar: widget.bottomNavigationBar == null ? null : PreviewEditRegion(page: widget.layout.page, target: 'footer', child: widget.bottomNavigationBar!),
             ),
       ),
-    );
+    ));
   }
 }
 
@@ -536,7 +537,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
       _header.number('compact_border_width', 0),
       progress,
     );
-    return Padding(
+    return PreviewEditRegion(page: layout.page, target: 'header', child: Padding(
       padding: EdgeInsets.fromLTRB(
         sideMargin,
         _header.number('margin_top', 0).clamp(0, 80) +
@@ -627,7 +628,7 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 
   double _lerp(num start, num end, double progress) =>
@@ -1283,7 +1284,9 @@ class CmsPageAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  Widget _rawItem(BuildContext context, String item, Color color) {
+  Widget _rawItem(BuildContext context, String item, Color color) => PreviewEditRegion(page: layout.page, target: 'header', item: item, child: _rawEditableItem(context, item, color));
+
+  Widget _rawEditableItem(BuildContext context, String item, Color color) {
     if (item == 'title') {
       String title = cmsFooterLabel(
         _header.string('title', defaultTitle),
