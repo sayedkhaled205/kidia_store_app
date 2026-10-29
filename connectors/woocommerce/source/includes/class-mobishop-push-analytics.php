@@ -167,10 +167,15 @@ final class MobiShop_Push_Analytics {
 		if ( self::VERSION !== get_option( self::OPTION ) ) return array( 'status' => 'unavailable' );
 		global $wpdb; $events = self::table( 'events' ); $orders = self::table( 'orders' );
 		$campaigns = self::table( 'campaigns' );
-		$records = $wpdb->get_results( "SELECT * FROM {$campaigns} ORDER BY created_at DESC LIMIT 1000", ARRAY_A );
+		$records = $wpdb->get_results( "SELECT * FROM {$campaigns} ORDER BY created_at DESC,id DESC LIMIT 1001", ARRAY_A );
 		if ( ! is_array( $records ) ) return array( 'status' => 'unavailable' );
+		$meta = array( 'status' => 'ready', 'version' => 2, 'started_at' => (int) get_option( 'mobishop_push_analytics_started_at', 0 ),
+			'conversion_supported' => true, 'attribution_days' => 7, 'receipt_coverage' => 'foreground_and_open', 'truncated' => count( $records ) > 1000 );
+		$records = array_slice( $records, 0, 1000 );
+		if ( ! $records ) return array_merge( $meta, array( 'campaigns' => array() ) );
 		$rows = array_column( $records, null, 'id' );
-		$counts = $wpdb->get_results( "SELECT campaign,event,platform,COUNT(*) AS total FROM {$events} GROUP BY campaign,event,platform", ARRAY_A );
+		$campaign_scope = $wpdb->prepare( 'campaign IN ('.implode( ',', array_fill( 0, count( $rows ), '%s' ) ).')', ...array_keys( $rows ) );
+		$counts = $wpdb->get_results( "SELECT campaign,event,platform,COUNT(*) AS total FROM {$events} WHERE {$campaign_scope} GROUP BY campaign,event,platform", ARRAY_A );
 		if ( ! is_array( $counts ) ) return array( 'status' => 'unavailable' );
 		foreach ( $rows as &$row ) { foreach ( array( 'sent', 'failed', 'created_at' ) as $key ) $row[ $key ] = (int) $row[ $key ]; $row['targeted'] = 0; $row['received'] = 0; $row['opened'] = 0; $row['orders'] = 0; $row['buyers'] = 0; $row['paid_orders'] = 0; $row['revenue'] = array(); $row['platforms'] = array(); } unset( $row );
 		foreach ( (array) $counts as $count ) {
@@ -180,18 +185,16 @@ final class MobiShop_Push_Analytics {
 			$rows[ $id ][ $key ] += (int) $count['total'];
 			$rows[ $id ]['platforms'][ $count['platform'] ][ $key ] = (int) $count['total'];
 		}
-		$commerce = $wpdb->get_results( "SELECT campaign,currency,COUNT(*) AS orders,COUNT(DISTINCT buyer_hash) AS buyers,SUM(paid) AS paid_orders,SUM(amount) AS revenue FROM {$orders} WHERE status IN ('processing','completed','on-hold') GROUP BY campaign,currency", ARRAY_A );
+		$commerce = $wpdb->get_results( "SELECT campaign,currency,COUNT(*) AS orders,COUNT(DISTINCT buyer_hash) AS buyers,SUM(paid) AS paid_orders,SUM(amount) AS revenue FROM {$orders} WHERE {$campaign_scope} AND status IN ('processing','completed','on-hold') GROUP BY campaign,currency", ARRAY_A );
 		if ( ! is_array( $commerce ) ) return array( 'status' => 'unavailable' );
 		foreach ( (array) $commerce as $item ) {
 			$id = $item['campaign']; if ( ! isset( $rows[ $id ] ) ) continue;
 			foreach ( array( 'orders', 'paid_orders' ) as $key ) $rows[ $id ][ $key ] += (int) $item[ $key ];
 			$rows[ $id ]['revenue'][ $item['currency'] ] = (string) $item['revenue'];
 		}
-		$buyers = $wpdb->get_results( "SELECT campaign,COUNT(DISTINCT buyer_hash) AS buyers FROM {$orders} WHERE status IN ('processing','completed','on-hold') GROUP BY campaign", ARRAY_A );
+		$buyers = $wpdb->get_results( "SELECT campaign,COUNT(DISTINCT buyer_hash) AS buyers FROM {$orders} WHERE {$campaign_scope} AND status IN ('processing','completed','on-hold') GROUP BY campaign", ARRAY_A );
 		if ( ! is_array( $buyers ) ) return array( 'status' => 'unavailable' );
 		foreach ( (array) $buyers as $item ) if ( isset( $rows[ $item['campaign'] ] ) ) $rows[ $item['campaign'] ]['buyers'] = (int) $item['buyers'];
-		return array( 'status' => 'ready', 'version' => 2, 'started_at' => (int) get_option( 'mobishop_push_analytics_started_at', 0 ),
-			'conversion_supported' => true, 'attribution_days' => 7, 'receipt_coverage' => 'foreground_and_open',
-			'campaigns' => array_values( $rows ) );
+		return array_merge( $meta, array( 'campaigns' => array_values( $rows ) ) );
 	}
 }

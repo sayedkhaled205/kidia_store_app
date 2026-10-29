@@ -16,4 +16,8 @@ verify(BuilderPushAnalytics::normalize(['status'=>'ready','version'=>1])===['sta
 verify(BuilderPushAnalytics::normalize(null)===['status'=>'unavailable'],'Upstream failure stays unavailable');
 $input['conversion_supported']=false;
 verify(BuilderPushAnalytics::normalize($input)['conversion_supported']===false,'Unsupported purchase tracking stays unsupported');
+$input['truncated']=true;
+verify(BuilderPushAnalytics::normalize($input)['truncated']===true,'Reporting window limit reaches the UI');
+$input['truncated']='true';
+verify(BuilderPushAnalytics::normalize($input)['truncated']===false,'Reporting window flag must be boolean');
 echo "Push aggregate boundary contracts passed.\n";

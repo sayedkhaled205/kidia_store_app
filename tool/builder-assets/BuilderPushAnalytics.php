@@ -24,6 +24,6 @@ final class BuilderPushAnalytics
         }
         return ['status'=>'ready','version'=>2,'started_at'=>max(0,(int)($input['started_at']??0)),
             'conversion_supported'=>($input['conversion_supported']??false)===true,'attribution_days'=>7,
-            'receipt_coverage'=>'foreground_and_open','campaigns'=>$rows];
+            'receipt_coverage'=>'foreground_and_open','truncated'=>($input['truncated']??false)===true || count(is_array($input['campaigns']??null)?$input['campaigns']:[])>1000,'campaigns'=>$rows];
     }
 }
