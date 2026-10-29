@@ -27,6 +27,15 @@ StoreApiResponse response(List data, {int? pages}) => StoreApiResponse(
 
 void main() {
   test(
+    'malformed imported markup is omitted and readable labels stay intact',
+    () {
+      expect(catalogFilterLabel('i/>'), '');
+      expect(catalogFilterLabel('i class="fa fa-lock">'), '');
+      expect(catalogFilterLabel('<b>Kids &amp; Baby</b>'), 'Kids & Baby');
+      expect(catalogFilterLabel('0–3m'), '0–3m');
+    },
+  );
+  test(
     'fetches every tag page and exact Arabic size taxonomy and slugs',
     () async {
       final client = _Client((path, query) async {

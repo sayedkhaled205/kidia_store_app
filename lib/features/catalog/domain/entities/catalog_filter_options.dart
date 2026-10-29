@@ -1,3 +1,18 @@
+/// Keep imported HTML fragments out of customer-facing filter choices.
+String catalogFilterLabel(Object? source) {
+  var label = '${source ?? ''}'
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#039;', "'")
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&amp;', '&');
+  if (RegExp(r'class\s*=|^/?i\s*/>', caseSensitive: false).hasMatch(label))
+    return '';
+  label = label.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+  return label;
+}
+
 class CatalogSizeOption {
   const CatalogSizeOption({
     required this.taxonomy,

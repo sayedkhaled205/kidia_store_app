@@ -21,4 +21,6 @@ foreach ([fn()=>['items'=>['bad'=>'data']], fn()=>['items'=>[['id'=>1]],'pages'=
 }
 $thrown=false; try {BuilderCatalogFilters::read(fn()=>[],0);} catch(RuntimeException $e) {$thrown=true;}
 check($thrown,'total deadline');
+$clean=BuilderCatalogFilters::read(fn($p,$q,$t)=>['items'=>str_ends_with($p,'/tags')?[['id'=>1,'name'=>'i/>'],['id'=>2,'name'=>'i class="broken">'],['id'=>3,'name'=>'<b>Kids &amp; Baby</b>']]:[]]);
+check($clean['tags']===[['id'=>3,'label'=>'Kids & Baby']],'imported markup excluded without changing source terms');
 echo "Catalog filter backend contracts: passed\n";

@@ -35,13 +35,10 @@ class StoreApiFilterOptions implements CatalogFilterOptionsSource {
       final target = isSize ? sizes : colors;
       for (final term in terms) {
         final slug = '${term['slug'] ?? ''}';
-        if (slug.isNotEmpty) {
+        final label = catalogFilterLabel(term['name'] ?? slug);
+        if (slug.isNotEmpty && label.isNotEmpty) {
           target.add(
-            CatalogSizeOption(
-              taxonomy: taxonomy,
-              term: slug,
-              label: '${term['name'] ?? slug}',
-            ),
+            CatalogSizeOption(taxonomy: taxonomy, term: slug, label: label),
           );
         }
       }
@@ -49,10 +46,11 @@ class StoreApiFilterOptions implements CatalogFilterOptionsSource {
     return CatalogFilterOptions(
       tags: [
         for (final tag in values[0])
-          if ((int.tryParse('${tag['id']}') ?? 0) > 0)
+          if ((int.tryParse('${tag['id']}') ?? 0) > 0 &&
+              catalogFilterLabel(tag['name']).isNotEmpty)
             CatalogTagOption(
               id: int.parse('${tag['id']}'),
-              label: '${tag['name'] ?? ''}',
+              label: catalogFilterLabel(tag['name']),
             ),
       ],
       sizes: sizes,

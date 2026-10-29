@@ -34,17 +34,19 @@ frame_html=(root/frame).read_text()
 script=re.search(r'assets/(?:screen-frame|customize-screen-frame)[^"?\s]+\.js',frame_html).group()
 child=(root/script).read_text()
 old_bundle=re.search(r'assets/flutter-preview-[\w-]+/',parent).group()
-assert old_bundle=='assets/flutter-preview-shared-product-cards-20e13f6db012/','Review concurrently published preview'
+assert old_bundle in ['assets/flutter-preview-shared-product-cards-20e13f6db012/', 'assets/flutter-preview-catalog-filters-8616737740dc/'],'Review concurrently published preview'
 parent_anchor="per_page:Number(data.per_page) || 20, error:data.items_error || ''"
 child_anchor="error: storeData.items_error || ''"
 assert parent.count(parent_anchor)==1 and child.count(child_anchor)==1
-parent=parent.replace(parent_anchor,"filter_options:data.filter_options || null, "+parent_anchor)
-child=child.replace(child_anchor,"filter_options: storeData.filter_options || null, "+child_anchor)
+if 'filter_options:data.filter_options || null' not in parent:parent=parent.replace(parent_anchor,'filter_options:data.filter_options || null, '+parent_anchor)
+if 'filter_options: storeData.filter_options || null' not in child:child=child.replace(child_anchor,'filter_options: storeData.filter_options || null, '+child_anchor)
 controller=api/'app/Http/Controllers/Portal/DashboardController.php'
 source=controller.read_text()
 anchor='    private function builderStoreData($store, int $page = 1, array $dataQuery = []): array\n    {\n'
-assert source.count(anchor)==1 and 'BuilderCatalogFilters' not in source
-source=source.replace(anchor,anchor+"        if (($dataQuery['catalog_resource'] ?? null) === 'filter_options') {\n            return app(\\App\\Services\\BuilderCatalogFilters::class)->forStore($store);\n        }\n")
+assert source.count(anchor)==1
+hook="        if (($dataQuery['catalog_resource'] ?? null) === 'filter_options') {\n            return app(\\App\\Services\\BuilderCatalogFilters::class)->forStore($store);\n        }\n"
+if 'BuilderCatalogFilters' in source:assert source.count(anchor+hook)==1
+else:source=source.replace(anchor,anchor+hook)
 backup.mkdir(mode=0o700)
 bundle='assets/flutter-preview-catalog-filters-'+version+'/'
 m={'bundle':bundle,'changes':{},'checks':{str(root/p):current(root/p) for p in [central,frame,script]},'staged':{}}
