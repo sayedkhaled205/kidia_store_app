@@ -7,7 +7,9 @@
   const buttons='.mobishop-select-hero-block-image,.kidia-page-media-choose,.kidia-select-banner-image,.kidia-select-media,.kidia-select-app-header-logo,.mobishop-page-media-choose,.mobishop-select-banner-image,.mobishop-select-media,.mobishop-select-app-header-logo';
   const previews='img.mobishop-media-preview,img.kidia-media-preview,img.mobishop-page-media-preview,img.kidia-page-media-preview,img.mobishop-banner-image-preview,img.kidia-banner-image-preview,img.mobishop-hero-block-image-preview';
   const style=document.createElement('style');style.textContent=`
-    .wm-image-value{display:none!important}
+    .wm-image-value,.wm-image-label{display:none!important}
+    .mobishop-hero-block-item__header,.kidia-hero-block-item__header{height:auto!important;min-height:0!important;padding-bottom:10px!important;box-sizing:border-box}
+    .mobishop-repeatable-item-actions .button,.kidia-repeatable-item-actions .button{height:32px!important;min-height:32px!important;padding:0 11px!important;font-size:12px!important;line-height:1.2!important;box-sizing:border-box}
     .wm-image-row{display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:12px!important;min-width:0;width:100%;margin:4px 0!important}
     .wm-image-row .wm-image-thumb{display:block!important;width:80px!important;height:64px!important;min-width:80px!important;max-width:80px!important;object-fit:contain!important;background:#f3f7f5;border:1px solid #cbded8;border-radius:9px;padding:4px;box-sizing:border-box;margin:0!important}
     .wm-image-row button{display:inline-flex!important;align-items:center;justify-content:center;white-space:nowrap;flex:0 1 auto;margin:0!important;min-height:40px}
@@ -23,6 +25,12 @@
     if(url)record.image.src=url;else record.image.removeAttribute('src');
   }
   function enhance(){
+    document.querySelectorAll('.mobishop-hero-block-item__header,.kidia-hero-block-item__header').forEach(header=>{
+      for(const [key,value]of Object.entries({'height':'auto','min-height':'0','padding-bottom':'10px','box-sizing':'border-box'}))header.style.setProperty(key,value,'important');
+    });
+    document.querySelectorAll('.mobishop-repeatable-item-actions .button,.kidia-repeatable-item-actions .button').forEach(button=>{
+      for(const [key,value]of Object.entries({'height':'32px','min-height':'32px','padding':'0 11px','font-size':'12px','line-height':'1.2','box-sizing':'border-box'}))button.style.setProperty(key,value,'important');
+    });
     document.querySelectorAll(inputs).forEach(input=>{
       if(records.has(input)||input.type==='hidden')return;
       const field=input.closest(fields)||input.parentElement;
@@ -39,7 +47,7 @@
       const row=field.querySelector(':scope > .wm-image-row')||document.createElement('div');row.className='wm-image-row';
       button.textContent='Select Image';
       input.classList.add('wm-image-value');input.tabIndex=-1;
-      const label=field.querySelector('label');if(label&&/^(image url|logo url|poster image url)$/i.test(label.textContent.trim()))label.textContent=label.textContent.replace(/\s+URL$/i,'');
+      const label=field.querySelector('label');if(label&&/^(image(?: url)?|logo url|poster image url)$/i.test(label.textContent.trim())){label.classList.add('wm-image-label');row.setAttribute('aria-label',label.textContent.replace(/\s+URL$/i,''));}
       row.replaceChildren(image,empty,button);field.append(row);
       if(old!==field&&!old.contains(input)&&!old.textContent.trim()&&!old.querySelector('input,button,select,textarea,img'))old.hidden=true;
       const record={image,empty,value:null};records.set(input,record);
