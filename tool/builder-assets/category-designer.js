@@ -123,6 +123,11 @@
     installNameHighlight(root);
     installNamePadding(root);
     installViewAll(root);
+    const navigation=q(root,'[name="category_general[navigation_mode]"]');
+    if(navigation&&!Array.from(navigation.options).some(option=>option.value==='products_with_children')){
+      const option=el(root.ownerDocument,'option','','Subcategories above products');
+      option.value='products_with_children';navigation.append(option);
+    }
     const select=q(root,'[name="category_general[category_layout]"]');if(!select||q(root,'.kidia-category-designs'))return;
     const doc=root.ownerDocument;const current=select.value;
     select.replaceChildren(...designs.map(d=>{const option=el(doc,'option','',d.title);option.value=d.id;return option;}));select.value=current||'default';

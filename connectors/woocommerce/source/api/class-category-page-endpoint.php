@@ -125,6 +125,7 @@ final class MobiShop_Category_Page_Endpoint {
 			'permalink'   => is_wp_error( $link ) ? '' : $link,
 			'presentation' => array(
 				'category_layout'  => $general['category_layout'],
+				'navigation_mode' => $general['navigation_mode'],
 				'root_view_all_mode' => $general['root_view_all_mode'],
 				'view_all_style' => $general['view_all_style'],
 				'grid_columns'     => $general['grid_columns'],

@@ -325,4 +325,11 @@ mobishop_page_assert( 'no-store, no-cache, must-revalidate, max-age=0' === $resp
 mobishop_page_assert( 'ar' === $response->data['locale'], 'The requested locale must be returned.' );
 mobishop_page_assert( $endpoint->get_layout( new WP_REST_Request( array( 'page' => 'unknown' ) ) ) instanceof WP_Error, 'Unknown page builders must return 404 errors.' );
 
+$quick_add = $store->get_layout( 'product' );
+$quick_add['footer']['settings']['quick_add_layout'] = 'wishlist_button';
+$store->save_layout( 'product', $quick_add );
+mobishop_page_assert( 'wishlist_button' === $store->get_layout( 'product' )['footer']['settings']['quick_add_layout'], 'Quick-add footer choice must survive save and reload.' );
+$quick_add['footer']['settings']['quick_add_layout'] = 'invalid';
+$store->save_layout( 'product', $quick_add );
+mobishop_page_assert( 'button' === $store->get_layout( 'product' )['footer']['settings']['quick_add_layout'], 'Invalid quick-add footer choice must use the existing default.' );
 fwrite( STDOUT, "Page-layout contract test passed for all application pages.\n" );

@@ -36,6 +36,8 @@ $saved = $store->save_settings(
 mobishop_category_assert( 'expand_inline' === $saved['general']['navigation_mode'], 'Category navigation must expand inside the current page by default.' );
 $separate = $store->save_settings( array( 'enabled' => '1', 'general' => array( 'navigation_mode' => 'separate_page' ) ) );
 mobishop_category_assert( 'separate_page' === $separate['general']['navigation_mode'], 'Category navigation must save the separate-page mode.' );
+$products_mode = $store->save_settings( array( 'general' => array( 'navigation_mode' => 'products_with_children' ) ) );
+mobishop_category_assert( 'products_with_children' === $store->get_settings()['general']['navigation_mode'], 'Compact children above products must survive save and reload.' );
 mobishop_category_assert( 5 === $saved['version'], 'The Category element must save the current schema version.' );
 mobishop_category_assert( 'App name' === $saved['categories'][22]['name'], 'The app-only display name must save.' );
 mobishop_category_assert( array( 'order', 'hidden', 'image_id', 'name' ) === array_keys( $saved['categories'][22] ), 'Each category must only save order, visibility, image and name.' );

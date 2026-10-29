@@ -27,6 +27,111 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 
 void main() {
   for (final direction in TextDirection.values) {
+    testWidgets('Kids children share the products page $direction', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        _app(
+          _ScreenCatalogRepository(
+            categoryLayout: 'visual_grid',
+            gridColumns: 2,
+            deepTree: true,
+            navigationMode: 'products_with_children',
+            nameHighlightEnabled: true,
+          ),
+          const CategoriesScreen(),
+          direction: direction,
+          scale: 1.5,
+          realCatalog: true,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Women').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Dresses'), findsOneWidget);
+      expect(find.byKey(const Key('category-products-rail')), findsNothing);
+      await tester.tap(find.text('Dresses'));
+      await tester.pumpAndSettle();
+      final rail = find.byKey(const Key('category-products-rail'));
+      expect(rail, findsOneWidget);
+      expect(find.text('Shirt'), findsOneWidget);
+      expect(
+        tester.getBottomLeft(rail).dy,
+        lessThanOrEqualTo(
+          tester.getTopLeft(find.byKey(const Key('catalog-sort-button'))).dy,
+        ),
+      );
+      await tester.tap(find.text('Summer dresses'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<CatalogProductListScreen>(
+              find.byType(CatalogProductListScreen),
+            )
+            .request
+            .categoryId,
+        4,
+      );
+      expect(rail, findsNothing);
+      expect(find.text('Shirt'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
+  for (final count in [3, 4, 7]) {
+    testWidgets('compact category row handles $count cards and large text', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(320, 600);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      int? chosen;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: MediaQuery(
+              data: const MediaQueryData(textScaler: TextScaler.linear(1.8)),
+              child: CategoryProductsCards(
+                categories: List.generate(
+                  count,
+                  (i) => CatalogCategory(
+                    id: i + 1,
+                    name: 'Long category name $i',
+                    slug: '$i',
+                    nameHighlightEnabled: true,
+                  ),
+                ),
+                onSelected: (category) => chosen = category.id,
+              ),
+            ),
+          ),
+        ),
+      );
+      final first = find.byKey(const Key('category-products-card-1'));
+      final expected =
+          (296 - 10 * ((count == 3 ? 3 : 4) - 1)) / (count == 3 ? 3 : 4);
+      expect(tester.getSize(first).width, closeTo(expected, 0.1));
+      await tester.tap(first);
+      expect(chosen, 1);
+      if (count > 4) {
+        await tester.drag(
+          find.byKey(const Key('category-products-rail')),
+          const Offset(-500, 0),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(Key('category-products-card-$count')),
+          findsOneWidget,
+        );
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+  for (final direction in TextDirection.values) {
     testWidgets(
       'Kids view all opens the correct catalog at each level $direction',
       (tester) async {
@@ -933,6 +1038,7 @@ Widget _app(
   bool shell = false,
   TextDirection? direction,
   double scale = 1,
+  bool realCatalog = false,
 }) {
   return ProviderScope(
     overrides: [
@@ -1035,9 +1141,16 @@ Widget _app(
           ),
           GoRoute(
             path: '/categories/:id',
-            builder: (context, state) => Scaffold(
-              body: Text('Products in ${state.pathParameters['id']}'),
-            ),
+            builder: (context, state) => realCatalog
+                ? CatalogProductListScreen(
+                    request: CatalogProductListRequest(
+                      categoryId: int.parse(state.pathParameters['id']!),
+                      title: state.uri.queryParameters['name'] ?? '',
+                    ),
+                  )
+                : Scaffold(
+                    body: Text('Products in ${state.pathParameters['id']}'),
+                  ),
           ),
         ],
       ),

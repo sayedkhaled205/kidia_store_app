@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_button.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_appearance.dart';
 import 'package:mobishop_store_app/app/hosted_commerce_screen297.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/features/cart/domain/entities/cart_item.dart';
@@ -22,7 +26,7 @@ class ProductQuickAddButton extends StatelessWidget {
     this.showBackground = true,
     this.backgroundColor,
     this.backgroundRadius = 24,
-	this.backgroundSize = 40,
+    this.backgroundSize = 40,
     this.appearance,
     super.key,
   });
@@ -59,75 +63,75 @@ class ProductQuickAddButton extends StatelessWidget {
     if (productId <= 0 || !enabled) {
       return const SizedBox.shrink();
     }
-	final double resolvedSize = (appearance?.backgroundSize ?? backgroundSize)
-		.clamp(10, 64)
-		.toDouble();
+    final double resolvedSize = (appearance?.backgroundSize ?? backgroundSize)
+        .clamp(10, 64)
+        .toDouble();
     return SizedBox.square(
-	  key: Key('quick-add-shell-$productId'),
-	  dimension: resolvedSize,
-	  child: Material(
-      color: (appearance?.showBackground ?? showBackground)
-          ? appearance?.backgroundColor ?? backgroundColor ??
-                Theme.of(context).colorScheme.surface.withValues(alpha: 0.94)
-          : Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(
-          (appearance?.backgroundRadius ?? backgroundRadius)
-              .clamp(0, 40)
-              .toDouble(),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: IconButton(
-        key: Key('quick-add-product-$productId'),
-        tooltip: Localizations.localeOf(context).languageCode == 'ar'
-            ? 'إضافة سريعة للسلة'
-            : 'Quick add to cart',
-        onPressed: () => showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          useSafeArea: true,
-          backgroundColor: Colors.transparent,
-          builder: (BuildContext context) => _ProductQuickAddSheet(
-            productId: productId,
+      key: Key('quick-add-shell-$productId'),
+      dimension: resolvedSize,
+      child: Material(
+        color: (appearance?.showBackground ?? showBackground)
+            ? appearance?.backgroundColor ??
+                  backgroundColor ??
+                  Theme.of(context).colorScheme.surface.withValues(alpha: 0.94)
+            : Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(
+            (appearance?.backgroundRadius ?? backgroundRadius)
+                .clamp(0, 40)
+                .toDouble(),
           ),
         ),
-        iconSize: (appearance?.iconSize ?? iconSize)
-            .clamp(10, 36)
-            .toDouble(),
-        color:
-            appearance?.iconColor ??
-            iconColor ??
-            Theme.of(context).colorScheme.onSurface,
-		padding: EdgeInsets.zero,
-		constraints: const BoxConstraints(),
-		icon: _buildIcon(),
+        clipBehavior: Clip.antiAlias,
+        child: IconButton(
+          key: Key('quick-add-product-$productId'),
+          tooltip: Localizations.localeOf(context).languageCode == 'ar'
+              ? 'إضافة سريعة للسلة'
+              : 'Quick add to cart',
+          onPressed: () => showModalBottomSheet<void>(
+            context: context,
+            isScrollControlled: true,
+            useSafeArea: true,
+            backgroundColor: Colors.transparent,
+            builder: (BuildContext context) =>
+                _ProductQuickAddSheet(productId: productId),
+          ),
+          iconSize: (appearance?.iconSize ?? iconSize).clamp(10, 36).toDouble(),
+          color:
+              appearance?.iconColor ??
+              iconColor ??
+              Theme.of(context).colorScheme.onSurface,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          icon: _buildIcon(),
+        ),
       ),
-	  ),
     );
   }
 
-	Widget _buildIcon() {
-	  final double size = (appearance?.iconSize ?? iconSize).clamp(10, 36).toDouble();
-	  final String variant = appearance?.iconVariant ?? iconVariant;
-	  if (variant != 'bag') {
-		return Icon(_icon);
-	  }
-	  return SizedBox.square(
-		dimension: size,
-		child: Stack(
-		  clipBehavior: Clip.none,
-		  children: <Widget>[
-			Positioned.fill(child: Icon(_icon, size: size)),
-			PositionedDirectional(
-			  end: -1,
-			  bottom: -1,
-			  child: Icon(Icons.add_rounded, size: size * 0.46),
-			),
-		  ],
-		),
-	  );
-	}
+  Widget _buildIcon() {
+    final double size = (appearance?.iconSize ?? iconSize)
+        .clamp(10, 36)
+        .toDouble();
+    final String variant = appearance?.iconVariant ?? iconVariant;
+    if (variant != 'bag') {
+      return Icon(_icon);
+    }
+    return SizedBox.square(
+      dimension: size,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: <Widget>[
+          Positioned.fill(child: Icon(_icon, size: size)),
+          PositionedDirectional(
+            end: -1,
+            bottom: -1,
+            child: Icon(Icons.add_rounded, size: size * 0.46),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ProductQuickAddSheet extends ConsumerStatefulWidget {
@@ -140,8 +144,7 @@ class _ProductQuickAddSheet extends ConsumerStatefulWidget {
       _ProductQuickAddSheetState();
 }
 
-class _ProductQuickAddSheetState
-    extends ConsumerState<_ProductQuickAddSheet> {
+class _ProductQuickAddSheetState extends ConsumerState<_ProductQuickAddSheet> {
   late final ProductDetailController _controller;
 
   @override
@@ -200,6 +203,9 @@ class _ProductQuickAddSheetState
 
   Widget _content(BuildContext context, CatalogProduct product) {
     final ColorScheme colors = Theme.of(context).colorScheme;
+    final footer = ref.watch(cmsPageLayoutProvider('product')).value?.footer;
+    final wishlistFooter =
+        footer?.string('quick_add_layout', 'button') == 'wishlist_button';
     final displayedPrice = _controller.displayedPrice;
     final String price =
         displayedPrice?.displayAmount(displayedPrice.priceMinor) ?? '';
@@ -262,11 +268,15 @@ class _ProductQuickAddSheetState
                   ),
                   const Divider(height: 32),
                   if (usesHostedOdooCart297)
-                    Text(Localizations.localeOf(context).languageCode == 'ar'
-                        ? 'اختار المقاس والكمية وكمّل الشراء في صفحة المنتج بالمتجر.'
-                        : 'Choose options and quantity, then complete your purchase on the store product page.'),
+                    Text(
+                      Localizations.localeOf(context).languageCode == 'ar'
+                          ? 'اختار المقاس والكمية وكمّل الشراء في صفحة المنتج بالمتجر.'
+                          : 'Choose options and quantity, then complete your purchase on the store product page.',
+                    ),
                   for (final ProductOptionGroup group
-                      in usesHostedOdooCart297 ? const <ProductOptionGroup>[] : _controller.optionGroups) ...<Widget>[
+                      in usesHostedOdooCart297
+                          ? const <ProductOptionGroup>[]
+                          : _controller.optionGroups) ...<Widget>[
                     Text(
                       group.label,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -277,25 +287,25 @@ class _ProductQuickAddSheetState
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: group.values.map((ProductOptionValue option) {
-                        final bool selected =
-                            _controller.selectedAttributes[group.key] ==
-                            option.value;
-                        final bool available = _controller.isOptionAvailable(
-                          group.key,
-                          option.value,
-                        );
-                        return ChoiceChip(
-                          selected: selected,
-                          label: Text(option.label),
-                          onSelected: available
-                              ? (_) => _controller.selectOption(
-                                  group.key,
-                                  option.value,
-                                )
-                              : null,
-                        );
-                      }).toList(growable: false),
+                      children: group.values
+                          .map((ProductOptionValue option) {
+                            final bool selected =
+                                _controller.selectedAttributes[group.key] ==
+                                option.value;
+                            final bool available = _controller
+                                .isOptionAvailable(group.key, option.value);
+                            return ChoiceChip(
+                              selected: selected,
+                              label: Text(option.label),
+                              onSelected: available
+                                  ? (_) => _controller.selectOption(
+                                      group.key,
+                                      option.value,
+                                    )
+                                  : null,
+                            );
+                          })
+                          .toList(growable: false),
                     ),
                     const SizedBox(height: 18),
                   ],
@@ -311,28 +321,45 @@ class _ProductQuickAddSheetState
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-            child: SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: FilledButton.icon(
-                key: const Key('product-quick-add-submit'),
-                onPressed: usesHostedOdooCart297
-                    ? (_controller.product?.isPurchasable == true ? _addToCart : null)
-                    : (_controller.canAddToCart ? _addToCart : null),
-                icon: _controller.isAdding
-                    ? const SizedBox.square(
-                        dimension: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.shopping_bag_outlined),
-                label: Text(usesHostedOdooCart297
-                    ? (Localizations.localeOf(context).languageCode == 'ar' ? 'متابعة في المتجر' : 'Continue on store')
-                    : 'أضف إلى السلة'),
+          if (wishlistFooter)
+            ProductQuickAddFooter(
+              productId: product.id,
+              settings: footer!,
+              adding: _controller.isAdding,
+              onAdd: usesHostedOdooCart297
+                  ? (product.isPurchasable ? _addToCart : null)
+                  : (_controller.canAddToCart ? _addToCart : null),
+              hosted: usesHostedOdooCart297,
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton.icon(
+                  key: const Key('product-quick-add-submit'),
+                  onPressed: usesHostedOdooCart297
+                      ? (_controller.product?.isPurchasable == true
+                            ? _addToCart
+                            : null)
+                      : (_controller.canAddToCart ? _addToCart : null),
+                  icon: _controller.isAdding
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.shopping_bag_outlined),
+                  label: Text(
+                    usesHostedOdooCart297
+                        ? (Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'متابعة في المتجر'
+                              : 'Continue on store')
+                        : 'أضف إلى السلة',
+                  ),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -344,31 +371,126 @@ class _ProductQuickAddSheetState
       return;
     }
     final addSelection = ref.read(addProductPurchaseSelectionProvider);
-    final bool added = await _controller.addToCart(
-      (ProductPurchaseSelection selection) async {
-        final result = await addSelection(
-          cart_selection.ProductPurchaseSelection(
-            productId: selection.variationId ?? selection.productId,
-            catalogProductId: selection.productId,
-            variantId: selection.variationId,
-            quantity: selection.quantity,
-            variation: selection.selectedAttributes.entries
-                .map(
-                  (MapEntry<String, String> entry) => CartItemVariation(
-                    attribute: entry.key,
-                    value: entry.value,
-                  ),
-                )
-                .toList(growable: false),
-          ),
-        );
-        if (!result.succeeded) {
-          throw StateError(result.message ?? 'تعذر إضافة المنتج إلى السلة.');
-        }
-      },
-    );
+    final bool added = await _controller.addToCart((
+      ProductPurchaseSelection selection,
+    ) async {
+      final result = await addSelection(
+        cart_selection.ProductPurchaseSelection(
+          productId: selection.variationId ?? selection.productId,
+          catalogProductId: selection.productId,
+          variantId: selection.variationId,
+          quantity: selection.quantity,
+          variation: selection.selectedAttributes.entries
+              .map(
+                (MapEntry<String, String> entry) =>
+                    CartItemVariation(attribute: entry.key, value: entry.value),
+              )
+              .toList(growable: false),
+        ),
+      );
+      if (!result.succeeded) {
+        throw StateError(result.message ?? 'تعذر إضافة المنتج إلى السلة.');
+      }
+    });
     if (added && mounted) {
       Navigator.of(context).pop();
     }
+  }
+}
+
+/// Quick add changes only its action row; the gallery and option picker stay shared.
+class ProductQuickAddFooter extends StatelessWidget {
+  const ProductQuickAddFooter({
+    required this.productId,
+    required this.settings,
+    required this.onAdd,
+    this.adding = false,
+    this.hosted = false,
+    super.key,
+  });
+  final int productId;
+  final CmsPageComponent settings;
+  final VoidCallback? onAdd;
+  final bool adding;
+  final bool hosted;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final arabic = Localizations.localeOf(context).languageCode == 'ar';
+    Color color(String key, Color fallback) {
+      final hex = settings.string(key, '').replaceFirst('#', '');
+      return hex.length == 6 && int.tryParse(hex, radix: 16) != null
+          ? Color(0xff000000 | int.parse(hex, radix: 16))
+          : fallback;
+    }
+
+    return DecoratedBox(
+      key: const Key('quick-add-wishlist-footer'),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        border: Border(
+          top: BorderSide(color: colors.outlineVariant, width: 0.5),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 68,
+              child: ProductWishlistButton(
+                productId: productId,
+                label: arabic ? 'المفضلة' : 'Wishlist',
+                appearance: ProductWishlistAppearance(
+                  enabled: true,
+                  showBackground: false,
+                  backgroundSize: 40,
+                  iconSize: 26,
+                  iconColor: color('like_color', colors.onSurface),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: settings.number('button_height', 52).clamp(48, 80),
+                ),
+                child: FilledButton(
+                  key: const Key('product-quick-add-submit'),
+                  onPressed: adding ? null : onAdd,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: color('button_color', colors.primary),
+                    foregroundColor: color(
+                      'button_text_color',
+                      colors.onPrimary,
+                    ),
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: adding
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          hosted
+                              ? (arabic
+                                    ? 'متابعة في المتجر'
+                                    : 'Continue on store')
+                              : (arabic ? 'أضف إلى السلة' : 'Add to cart'),
+                          textAlign: TextAlign.center,
+                        ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

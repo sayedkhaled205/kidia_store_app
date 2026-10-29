@@ -11,11 +11,13 @@ class ProductWishlistButton extends ConsumerStatefulWidget {
   const ProductWishlistButton({
     required this.productId,
     required this.appearance,
+    this.label,
     super.key,
   });
 
   final int productId;
   final ProductWishlistAppearance appearance;
+  final String? label;
 
   @override
   ConsumerState<ProductWishlistButton> createState() =>
@@ -124,7 +126,7 @@ class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
     final double shell = widget.appearance.backgroundSize
         .clamp(20, 64)
         .toDouble();
-    return SizedBox.square(
+    final button = SizedBox.square(
       dimension: shell,
       child: Material(
         color: widget.appearance.showBackground
@@ -137,6 +139,7 @@ class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
         clipBehavior: Clip.antiAlias,
         child: IconButton(
           key: Key('product-card-wishlist-${widget.productId}'),
+          tooltip: widget.label,
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints(),
           onPressed: _busy || _loading || authLoading ? null : _toggle,
@@ -149,6 +152,19 @@ class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
           ),
         ),
       ),
+    );
+    if (widget.label == null) return button;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        button,
+        Text(
+          widget.label!,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+      ],
     );
   }
 }

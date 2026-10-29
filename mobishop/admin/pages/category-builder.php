@@ -124,6 +124,7 @@ $render_level = static function ( int $parent_id ) use ( &$render_level, $by_par
 								</select></label>
 								<label><?php esc_html_e( 'Open categories', 'mobishop' ); ?><select name="category_general[navigation_mode]">
 									<option value="expand_inline" <?php selected( $category_general['navigation_mode'], 'expand_inline' ); ?>><?php esc_html_e( 'Expand in the same page', 'mobishop' ); ?></option>
+									<option value="products_with_children" <?php selected( $category_general['navigation_mode'], 'products_with_children' ); ?>><?php esc_html_e( 'Subcategories above products', 'mobishop' ); ?></option>
 									<option value="separate_page" <?php selected( $category_general['navigation_mode'], 'separate_page' ); ?>><?php esc_html_e( 'Open in a new page', 'mobishop' ); ?></option>
 								</select></label>
 								<label><?php esc_html_e( 'Grid columns', 'mobishop' ); ?><select name="category_general[grid_columns]"><?php foreach ( array( 2, 3, 4 ) as $value ) : ?><option value="<?php echo esc_attr( (string) $value ); ?>" <?php selected( $category_general['grid_columns'], $value ); ?>><?php echo esc_html( (string) $value ); ?></option><?php endforeach; ?></select></label>

@@ -163,7 +163,7 @@ final class MobiShop_Category_Page_Store {
 		$defaults = self::general_defaults();
 		return array(
 			'category_layout'  => self::choice( $settings['category_layout'] ?? '', array( 'default', 'visual_grid', 'circular_grid', 'compact_grid', 'sidebar', 'image_banner', 'top_tabs', 'split_rows', 'grouped_shelves', 'text_directory' ), $defaults['category_layout'] ),
-			'navigation_mode'  => self::choice( $settings['navigation_mode'] ?? '', array( 'expand_inline', 'separate_page' ), $defaults['navigation_mode'] ),
+			'navigation_mode'  => self::choice( $settings['navigation_mode'] ?? '', array( 'expand_inline', 'separate_page', 'products_with_children' ), $defaults['navigation_mode'] ),
 			'root_view_all_mode' => self::choice( $settings['root_view_all_mode'] ?? '', array( 'hidden', 'visible' ), $defaults['root_view_all_mode'] ),
 			'view_all_style' => self::choice( $settings['view_all_style'] ?? '', array( 'outline', 'soft' ), $defaults['view_all_style'] ),
 			'grid_columns'     => min( 4, max( 2, absint( $settings['grid_columns'] ?? $defaults['grid_columns'] ) ) ),

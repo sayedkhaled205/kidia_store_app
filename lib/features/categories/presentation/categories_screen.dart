@@ -650,6 +650,13 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
   }
 
   void _openNode(CatalogCategoryNode node, {CatalogCategoryNode? ancestor}) {
+    if (_settings.navigationMode == 'products_with_children' &&
+        (_categoryPath.isNotEmpty ||
+            ancestor != null ||
+            _settings.categoryLayout == 'top_tabs')) {
+      _openCategoryProducts(context, node.category);
+      return;
+    }
     if (_settings.navigationMode == 'expand_inline' &&
         node.children.isNotEmpty) {
       setState(() {
@@ -669,6 +676,141 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       return;
     }
     _openCategoryProducts(context, node.category);
+  }
+}
+
+/// The same category artwork and surfaces, compacted above the product filters.
+class CategoryProductsRail extends ConsumerWidget {
+  const CategoryProductsRail({required this.categoryId, super.key});
+  final int categoryId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tree = ref.watch(catalogCategoryTreeProvider).value;
+    final layout = ref.watch(cmsPageLayoutProvider('category')).value;
+    final raw =
+        ref.watch(cmsPreviewCategorySettingsProvider).value ??
+        layout?.settings['category_general'];
+    if (tree == null || raw is! Map) return const SizedBox.shrink();
+    final settings = CatalogCategoryModel.fromJson({
+      'id': 1,
+      'name': 'Categories',
+      'slug': 'categories',
+      'presentation': Map<String, dynamic>.from(raw),
+    });
+    if (settings.navigationMode != 'products_with_children') {
+      return const SizedBox.shrink();
+    }
+    CatalogCategoryNode? find(List<CatalogCategoryNode> nodes) {
+      for (final node in nodes) {
+        if (node.category.id == categoryId) return node;
+        final match = find(node.children);
+        if (match != null) return match;
+      }
+      return null;
+    }
+
+    final children =
+        find(tree.roots)?.children ?? const <CatalogCategoryNode>[];
+    if (children.isEmpty) return const SizedBox.shrink();
+    return CategoryProductsCards(
+      categories: children
+          .map((node) => node.category.withPresentation(settings))
+          .toList(),
+      onSelected: (category) => _openCategoryProducts(context, category),
+    );
+  }
+}
+
+class CategoryProductsCards extends StatelessWidget {
+  const CategoryProductsCards({
+    required this.categories,
+    required this.onSelected,
+    super.key,
+  });
+  final List<CatalogCategory> categories;
+  final ValueChanged<CatalogCategory> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    if (categories.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      key: const Key('category-products-rail'),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = categories.length <= 3 ? 3 : 4;
+          const gap = 10.0;
+          final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+          final textHeight = MediaQuery.textScalerOf(context).scale(13) * 2.6;
+          return SizedBox(
+            height: width + textHeight + 14,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: categories.length,
+              separatorBuilder: (_, _) => const SizedBox(width: gap),
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                return SizedBox(
+                  key: Key('category-products-card-${category.id}'),
+                  width: width,
+                  child: _CategoryCardSurface(
+                    category: category,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => onSelected(category),
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: width,
+                              child: Center(
+                                child: _CategoryArtwork(
+                                  category: category,
+                                  maximumSize: width,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: _CategoryNameHighlight(
+                                category: category,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 4,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    category.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      height: 1.2,
+                                      color: _categoryColor(
+                                        category.fontColor,
+                                        Theme.of(context).colorScheme.onSurface,
+                                      ),
+                                      fontWeight: _categoryFontWeight(
+                                        category.fontWeight,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
   }
 }
 
