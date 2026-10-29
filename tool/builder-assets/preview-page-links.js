@@ -23,8 +23,9 @@
   if(scope.__previewPageLinks)return;scope.__previewPageLinks=true;
   let storeUrl='',loading=false;
   const button=document.createElement('button');button.type='button';button.id='mobishop-copy-page-link';
-  button.textContent='Copy page link';button.title='Copy this app page and its filters for a push notification';
-  button.style.cssText='position:fixed;z-index:1200;height:34px;border:1px solid #b9d8cf;border-radius:9px;background:white;color:#207c68;font:600 13px system-ui;cursor:pointer;box-shadow:0 2px 8px #173c3010;';
+  button.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/></svg><span>Copy page link</span>';button.title='Copy this app page and its filters for a push notification';
+  button.style.cssText='position:fixed;z-index:1200;height:28px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid #c9ded7;border-radius:14px;background:#fff;color:#287f6d;font:600 12px system-ui;cursor:pointer;box-shadow:0 2px 5px #173c3008;';
+  const copyStyle=document.createElement('style');copyStyle.textContent='#mobishop-copy-page-link[hidden]{display:none!important}#mobishop-copy-page-link:hover{background:#eaf5f1!important}#mobishop-copy-page-link:focus-visible{outline:2px solid #287f6d;outline-offset:3px}#kidia-shared-mobile{translate:0 18px}';document.head.append(copyStyle);
   button.hidden=true;document.body.append(button);
   const status=document.createElement('div');status.setAttribute('role','status');
   status.style.cssText='position:fixed;z-index:2000;bottom:22px;left:50%;transform:translateX(-50%);background:#174d40;color:white;border-radius:12px;padding:12px 20px;max-width:80vw;';status.hidden=true;document.body.append(status);
@@ -63,7 +64,10 @@
     const host=document.getElementById('kidia-shared-mobile');
     if(!host||host.hidden||!host.getBoundingClientRect().width){button.hidden=true;return;}
     const r=host.getBoundingClientRect();button.hidden=false;
-    Object.assign(button.style,{left:r.left+'px',top:Math.max(6,r.top-40)+'px',width:r.width+'px'});
+    const width=Math.min(156,r.width),top=r.top-48;
+    const stageTop=host.parentElement.getBoundingClientRect().top;
+    button.hidden=top<Math.max(0,stageTop)+4;
+    Object.assign(button.style,{left:(r.left+(r.width-width)/2)+'px',top:top+'px',width:width+'px'});
     button.disabled=!storeUrl;button.style.opacity=storeUrl?'1':'.55';
   }
   loadStore();setInterval(position,250);addEventListener('focus',()=>{if(!storeUrl)loadStore();});
