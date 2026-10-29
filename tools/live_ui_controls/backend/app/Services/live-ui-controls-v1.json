@@ -610,5 +610,343 @@
     "type": "text",
     "default": "",
     "max_length": 80
+  },
+  "filters_width_fraction": {
+    "group": "الفلاتر",
+    "label": "نسبة عرض الفلاتر الجانبية",
+    "type": "number",
+    "default": null,
+    "min": 0.65,
+    "max": 1,
+    "step": 0.05
+  },
+  "filters_side_padding": {
+    "group": "الفلاتر",
+    "label": "المسافة داخل الفلاتر",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 32,
+    "step": 1
+  },
+  "filters_panel_radius": {
+    "group": "الفلاتر",
+    "label": "استدارة لوحة الفلاتر",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 32,
+    "step": 1
+  },
+  "filters_title_size": {
+    "group": "الفلاتر",
+    "label": "حجم عنوان الفلاتر",
+    "type": "number",
+    "default": null,
+    "min": 16,
+    "max": 26,
+    "step": 1
+  },
+  "filters_option_size": {
+    "group": "الفلاتر",
+    "label": "حجم نص اختيارات الفلاتر",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 20,
+    "step": 1
+  },
+  "filters_chip_radius": {
+    "group": "الفلاتر",
+    "label": "استدارة اختيارات الفلاتر",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 24,
+    "step": 1
+  },
+  "filters_chip_gap": {
+    "group": "الفلاتر",
+    "label": "المسافة بين الاختيارات",
+    "type": "number",
+    "default": null,
+    "min": 2,
+    "max": 16,
+    "step": 1
+  },
+  "filters_button_height": {
+    "group": "الفلاتر",
+    "label": "ارتفاع زر تطبيق الفلاتر",
+    "type": "number",
+    "default": null,
+    "min": 44,
+    "max": 64,
+    "step": 1
+  },
+  "filters_button_radius": {
+    "group": "الفلاتر",
+    "label": "استدارة زر تطبيق الفلاتر",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 36,
+    "step": 1
+  },
+  "filters_button_font_size": {
+    "group": "الفلاتر",
+    "label": "حجم نص زر تطبيق الفلاتر",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 20,
+    "step": 1
+  },
+  "quickadd_side_padding": {
+    "group": "فوتر الإضافة السريعة",
+    "label": "المسافة الجانبية لفوتر الإضافة",
+    "type": "number",
+    "default": null,
+    "min": 8,
+    "max": 24,
+    "step": 1
+  },
+  "quickadd_vertical_padding": {
+    "group": "فوتر الإضافة السريعة",
+    "label": "المسافة الرأسية لفوتر الإضافة",
+    "type": "number",
+    "default": null,
+    "min": 4,
+    "max": 16,
+    "step": 1
+  },
+  "quickadd_gap": {
+    "group": "فوتر الإضافة السريعة",
+    "label": "المسافة بين المفضلة وزر الإضافة",
+    "type": "number",
+    "default": null,
+    "min": 6,
+    "max": 20,
+    "step": 1
+  },
+  "quickadd_button_height": {
+    "group": "فوتر الإضافة السريعة",
+    "label": "ارتفاع زر الإضافة السريعة",
+    "type": "number",
+    "default": null,
+    "min": 48,
+    "max": 72,
+    "step": 1
+  },
+  "quickadd_button_radius": {
+    "group": "فوتر الإضافة السريعة",
+    "label": "استدارة زر الإضافة السريعة",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 36,
+    "step": 1
+  },
+  "quickadd_button_font_size": {
+    "group": "فوتر الإضافة السريعة",
+    "label": "حجم نص زر الإضافة السريعة",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 20,
+    "step": 1
+  },
+  "quickadd_wishlist_width": {
+    "group": "فوتر الإضافة السريعة",
+    "label": "عرض مساحة المفضلة",
+    "type": "number",
+    "default": null,
+    "min": 56,
+    "max": 80,
+    "step": 1
+  },
+  "quickadd_wishlist_icon_size": {
+    "group": "فوتر الإضافة السريعة",
+    "label": "حجم أيقونة المفضلة",
+    "type": "number",
+    "default": null,
+    "min": 20,
+    "max": 30,
+    "step": 1
+  },
+  "receipt_logo_width": {
+    "group": "تأكيد الطلب",
+    "label": "عرض لوجو تأكيد الطلب",
+    "type": "number",
+    "default": null,
+    "min": 100,
+    "max": 240,
+    "step": 1
+  },
+  "receipt_logo_height": {
+    "group": "تأكيد الطلب",
+    "label": "ارتفاع لوجو تأكيد الطلب",
+    "type": "number",
+    "default": null,
+    "min": 40,
+    "max": 100,
+    "step": 1
+  },
+  "receipt_icon_size": {
+    "group": "تأكيد الطلب",
+    "label": "حجم علامة تأكيد الطلب",
+    "type": "number",
+    "default": null,
+    "min": 48,
+    "max": 96,
+    "step": 1
+  },
+  "receipt_title_size": {
+    "group": "تأكيد الطلب",
+    "label": "حجم عنوان تأكيد الطلب",
+    "type": "number",
+    "default": null,
+    "min": 18,
+    "max": 30,
+    "step": 1
+  },
+  "receipt_section_gap": {
+    "group": "تأكيد الطلب",
+    "label": "المسافة بين أقسام تأكيد الطلب",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 32,
+    "step": 1
+  },
+  "receipt_section_padding": {
+    "group": "تأكيد الطلب",
+    "label": "المسافة داخل ملخص الطلب",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 28,
+    "step": 1
+  },
+  "receipt_section_radius": {
+    "group": "تأكيد الطلب",
+    "label": "استدارة ملخص الطلب",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 28,
+    "step": 1
+  },
+  "receipt_section_border_width": {
+    "group": "تأكيد الطلب",
+    "label": "سمك إطار ملخص الطلب",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 2,
+    "step": 0.25
+  },
+  "receipt_section_title_size": {
+    "group": "تأكيد الطلب",
+    "label": "حجم عنوان ملخص الطلب",
+    "type": "number",
+    "default": null,
+    "min": 14,
+    "max": 22,
+    "step": 1
+  },
+  "receipt_row_font_size": {
+    "group": "تأكيد الطلب",
+    "label": "حجم تفاصيل ملخص الطلب",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 20,
+    "step": 1
+  },
+  "receipt_button_height": {
+    "group": "تأكيد الطلب",
+    "label": "ارتفاع أزرار تأكيد الطلب",
+    "type": "number",
+    "default": null,
+    "min": 44,
+    "max": 64,
+    "step": 1
+  },
+  "receipt_button_radius": {
+    "group": "تأكيد الطلب",
+    "label": "استدارة أزرار تأكيد الطلب",
+    "type": "number",
+    "default": null,
+    "min": 0,
+    "max": 36,
+    "step": 1
+  },
+  "receipt_button_font_size": {
+    "group": "تأكيد الطلب",
+    "label": "حجم نص أزرار تأكيد الطلب",
+    "type": "number",
+    "default": null,
+    "min": 12,
+    "max": 20,
+    "step": 1
+  },
+  "receipt_show_logo": {
+    "group": "تأكيد الطلب",
+    "label": "إظهار اللوجو في تأكيد الطلب",
+    "type": "boolean",
+    "default": true
+  },
+  "receipt_card_style": {
+    "group": "تأكيد الطلب",
+    "label": "مظهر ملخص الطلب",
+    "type": "choice",
+    "default": "theme",
+    "options": {
+      "theme": "إطار الثيم",
+      "soft": "خلفية هادئة",
+      "plain": "بدون إطار"
+    }
+  },
+  "receipt_thanks_ar": {
+    "group": "تأكيد الطلب",
+    "label": "رسالة الشكر — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 100
+  },
+  "receipt_thanks_en": {
+    "group": "تأكيد الطلب",
+    "label": "رسالة الشكر — English",
+    "type": "text",
+    "default": "",
+    "max_length": 100
+  },
+  "receipt_continue_ar": {
+    "group": "تأكيد الطلب",
+    "label": "زر متابعة التسوق — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 100
+  },
+  "receipt_continue_en": {
+    "group": "تأكيد الطلب",
+    "label": "زر متابعة التسوق — English",
+    "type": "text",
+    "default": "",
+    "max_length": 100
+  },
+  "receipt_details_ar": {
+    "group": "تأكيد الطلب",
+    "label": "زر تفاصيل الطلب — عربي",
+    "type": "text",
+    "default": "",
+    "max_length": 100
+  },
+  "receipt_details_en": {
+    "group": "تأكيد الطلب",
+    "label": "زر تفاصيل الطلب — English",
+    "type": "text",
+    "default": "",
+    "max_length": 100
   }
 }

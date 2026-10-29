@@ -1,6 +1,6 @@
 # Published page UI controls
 
-The 73 fields in `schema.json` extend the existing live-design release. They are
+The 112 fields in `schema.json` extend the existing live-design release. They are
 stored in the authenticated Builder draft at `builder.ui_controls_v1`, and are
 only exposed publicly after the owner publishes a release. Saving is separate
 from publishing. Each save checks a digest under a store row lock so an old tab
@@ -37,7 +37,9 @@ Controls now live in their existing editor pages rather than a toolbar dialog:
 
 - Account: sign-in, existing Logout Button and public support and order-thumbnail cards (31 controls).
 - Home: Fixed Header / cart counter animation and messages (7 controls).
-- Checkout: cart text and appearance cards (35 controls).
+- Checkout: cart, checkout and receipt appearance (56 controls).
+- Catalog: filter panel, choices and action dimensions (10 controls).
+- Product: quick-add footer spacing, wishlist and action dimensions (8 controls).
 
 The 15 cart appearance controls select the existing theme/classic/compact layout,
 side padding, item gap, image dimensions/radius, name font size/line count,
@@ -51,7 +53,7 @@ The normal Save Page Layout / Save Home Layout / Save Checkout action calls
 `await window.MobiShopPageControls.save(sender)` before the existing page save.
 `sender` is the already authenticated/validated active editor iframe in the
 central `kidia:save` handler. A missing controls module must stop this save on
-those three pages, rather than silently reporting success without saving them.
+those five pages, rather than silently reporting success without saving them.
 Do not call the helper from theme application or other bulk state writes.
 
 Inputs have no form names, keeping the existing layout serialization and save

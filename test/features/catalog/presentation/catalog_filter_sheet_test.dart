@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_filter_sheet.dart';
 
@@ -25,6 +26,7 @@ Future<void> open(
   CatalogProductFilters initial = const CatalogProductFilters(),
   Future<CatalogFilterOptions> Function()? load,
   ValueChanged<CatalogProductFilters?>? result,
+  ValueNotifier<Map<String, dynamic>>? controls,
 }) async {
   tester.view.physicalSize = const Size(320, 850);
   tester.view.devicePixelRatio = 1;
@@ -39,7 +41,15 @@ Future<void> open(
         data: MediaQuery.of(
           context,
         ).copyWith(textScaler: TextScaler.linear(scale)),
-        child: child!,
+        child: controls == null
+            ? child!
+            : ValueListenableBuilder<Map<String, dynamic>>(
+                valueListenable: controls,
+                builder: (context, values, _) => AppUiControlsScope(
+                  controls: AppUiControls.fromJson(values),
+                  child: child!,
+                ),
+              ),
       ),
       home: Scaffold(
         body: Builder(
@@ -75,6 +85,65 @@ Future<void> tap(WidgetTester tester, Finder finder) async {
 }
 
 void main() {
+  testWidgets(
+    'published filter appearance and rollback retain entered prices and choices',
+    (tester) async {
+      final controls = ValueNotifier<Map<String, dynamic>>({});
+      addTearDown(controls.dispose);
+      await open(tester, controls: controls);
+      await tap(tester, find.text('Size'));
+      await tap(tester, find.widgetWithText(FilterChip, '4Y'));
+      await tester.ensureVisible(
+        find.byKey(const Key('catalog-minimum-price')),
+      );
+      await tester.enterText(
+        find.byKey(const Key('catalog-minimum-price')),
+        '15',
+      );
+      controls.value = {
+        'filters_width_fraction': .85,
+        'filters_side_padding': 24,
+        'filters_chip_radius': 0,
+        'filters_button_height': 60,
+      };
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSize(find.byType(CatalogProductFilterSheet)).width,
+        closeTo(272, .1),
+      );
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.byKey(const Key('catalog-minimum-price')),
+            )
+            .controller!
+            .text,
+        '15',
+      );
+      expect(
+        tester
+            .widget<FilterChip>(find.widgetWithText(FilterChip, '4Y'))
+            .selected,
+        true,
+      );
+      controls.value = {};
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSize(find.byType(CatalogProductFilterSheet)).width,
+        closeTo(240, .1),
+      );
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.byKey(const Key('catalog-minimum-price')),
+            )
+            .controller!
+            .text,
+        '15',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
   for (final language in ['en', 'ar']) {
     testWidgets(
       'narrow $language filters show full price labels at large text',

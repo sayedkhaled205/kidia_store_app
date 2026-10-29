@@ -63,6 +63,10 @@ class AppUiControls {
   dynamic _value(String key) =>
       values[key] ?? appUiControlSchema[key]['default'];
   double number(String key) => (_value(key) as num).toDouble();
+  double? optionalNumber(String key) => (values[key] as num?)?.toDouble();
+  double numberOr(String key, double fallback) =>
+      optionalNumber(key) ?? fallback;
+  String choice(String key) => _value(key) as String;
   bool boolean(String key) => _value(key) as bool;
   Color color(String key) => Color(
     0xff000000 | int.parse((_value(key) as String).substring(1), radix: 16),

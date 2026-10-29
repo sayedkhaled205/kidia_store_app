@@ -1,12 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:mobishop_store_app/core/identity/customer_display_email.dart';
 import 'package:mobishop_store_app/features/checkout/presentation/checkout_order_receipt.dart';
 import 'package:mobishop_store_app/features/orders/domain/entities/customer_order.dart';
 import 'package:mobishop_store_app/features/orders/presentation/customer_orders_screen.dart';
 
 void main() {
+  testWidgets(
+    'receipt publication changes copy and appearance while preserving owned totals and actions',
+    (tester) async {
+      final controls = ValueNotifier<Map<String, dynamic>>({});
+      addTearDown(controls.dispose);
+      var continued = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ValueListenableBuilder<Map<String, dynamic>>(
+              valueListenable: controls,
+              builder: (context, values, _) => AppUiControlsScope(
+                controls: AppUiControls.fromJson(values),
+                child: SingleChildScrollView(
+                  child: CheckoutOrderReceipt(
+                    orderId: 73,
+                    title: 'Order received',
+                    onContinueShopping: () => continued++,
+                    order: const CustomerOrder(
+                      id: 73,
+                      number: 'WEB-73',
+                      status: 'processing',
+                      statusName: 'Processing',
+                      totalDisplay: 'EGP 510',
+                      itemCount: 0,
+                      items: [],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      controls.value = {
+        'receipt_thanks_en': 'Thanks for shopping',
+        'receipt_continue_en': 'Shop more',
+        'receipt_card_style': 'soft',
+        'receipt_section_padding': 24,
+        'receipt_button_height': 60,
+      };
+      await tester.pumpAndSettle();
+      expect(find.text('Thanks for shopping'), findsOneWidget);
+      expect(find.text('EGP 510'), findsOneWidget);
+      expect(find.text('WEB-73'), findsOneWidget);
+      final button = find.byKey(const Key('receipt-continue-shopping'));
+      expect(tester.getSize(button).height, greaterThanOrEqualTo(60));
+      await tester.tap(button);
+      expect(continued, 1);
+      controls.value = {};
+      await tester.pumpAndSettle();
+      expect(find.text('Thanks for shopping'), findsNothing);
+      expect(find.text('Thank you for your order!'), findsOneWidget);
+      expect(find.text('EGP 510'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
   test(
     'only a real email is displayed; authentication identifiers are unchanged',
     () {

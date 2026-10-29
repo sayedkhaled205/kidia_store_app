@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_button.dart';
@@ -417,6 +418,7 @@ class ProductQuickAddFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final ui = AppUiControlsScope.of(context);
     final arabic = Localizations.localeOf(context).languageCode == 'ar';
     Color color(String key, Color fallback) {
       final hex = settings.string(key, '').replaceFirst('#', '');
@@ -434,11 +436,14 @@ class ProductQuickAddFooter extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: ui.numberOr('quickadd_side_padding', 16),
+          vertical: ui.numberOr('quickadd_vertical_padding', 10),
+        ),
         child: Row(
           children: [
             SizedBox(
-              width: 68,
+              width: ui.numberOr('quickadd_wishlist_width', 68),
               child: ProductWishlistButton(
                 productId: productId,
                 label: arabic ? 'المفضلة' : 'Wishlist',
@@ -446,16 +451,19 @@ class ProductQuickAddFooter extends StatelessWidget {
                   enabled: true,
                   showBackground: false,
                   backgroundSize: 40,
-                  iconSize: 26,
+                  iconSize: ui.numberOr('quickadd_wishlist_icon_size', 26),
                   iconColor: color('like_color', colors.onSurface),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: ui.numberOr('quickadd_gap', 12)),
             Expanded(
               child: ConstrainedBox(
                 constraints: BoxConstraints(
-                  minHeight: settings.number('button_height', 52).clamp(48, 80),
+                  minHeight: ui.numberOr(
+                    'quickadd_button_height',
+                    settings.number('button_height', 52).clamp(48, 80),
+                  ),
                 ),
                 child: FilledButton(
                   key: const Key('product-quick-add-submit'),
@@ -466,7 +474,16 @@ class ProductQuickAddFooter extends StatelessWidget {
                       'button_text_color',
                       colors.onPrimary,
                     ),
-                    shape: const StadiumBorder(),
+                    shape: ui.optionalNumber('quickadd_button_radius') == null
+                        ? const StadiumBorder()
+                        : RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                              ui.optionalNumber('quickadd_button_radius')!,
+                            ),
+                          ),
+                    textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      fontSize: ui.optionalNumber('quickadd_button_font_size'),
+                    ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 12,

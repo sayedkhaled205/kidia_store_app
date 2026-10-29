@@ -3,7 +3,9 @@
   const pageKeys = (screen, schema) => Object.keys(schema).filter(key =>
     screen === 'account-builder' ? /^(auth_|logout_|support_|orders_)/.test(key) :
     screen === 'home-builder' ? /^(cart_pulse_|message_)/.test(key) :
-    screen === 'checkout-builder' ? /^(cart_|checkout_)/.test(key) && !key.startsWith('cart_pulse_') : false);
+    screen === 'checkout-builder' ? /^(cart_|checkout_|receipt_)/.test(key) && !key.startsWith('cart_pulse_') :
+    screen === 'catalog-builder' ? key.startsWith('filters_') :
+    screen === 'product-builder' ? key.startsWith('quickadd_') : false);
   const valueOf = (data, key) => data.values[key] ?? data.schema[key].default;
   function setSavedInput(input, spec, value) {
     if (spec.type === 'boolean') { input.defaultChecked = input.checked = value; return; }
@@ -42,7 +44,7 @@
   let loaded, previewData;
   const store = new URL(location.href).searchParams.get('store') || '';
   const endpoint = '/account/builder/live-design/controls';
-  const supported = new Set(['home-builder', 'account-builder', 'checkout-builder']);
+  const supported = new Set(['home-builder', 'account-builder', 'checkout-builder','catalog-builder','product-builder']);
   async function request(url, body, csrf) {
     const response = await fetch(url, {
       method: body ? 'POST' : 'GET', credentials: 'same-origin',
@@ -135,6 +137,12 @@
       pulse.dataset.wmControlsGroup = 'pulse'; body.prepend(pulse); containers.pulse = pulse;
       const messages = card(doc, 'رسائل التطبيق');
       messages.dataset.wmControlsGroup = 'messages'; pulse.insertAdjacentElement('afterend', messages); containers.messages = messages;
+    } else if (screen==='catalog-builder'||screen==='product-builder') {
+      const settings=form.querySelector('.mobishop-page-settings-card');
+      if (!settings) return null;
+      const key=screen==='catalog-builder'?'filters':'quickadd';
+      const section=card(doc,key==='filters'?'مظهر الفلاتر':'فوتر الإضافة السريعة');
+      section.dataset.wmControlsGroup=key;settings.insertAdjacentElement('afterend',section);containers[key]=section;
     } else {
       const design = form.querySelector('.mobishop-checkout-design-panel');
       if (!design) return null;
@@ -142,6 +150,7 @@
       cart.dataset.wmControlsGroup = 'cart'; design.insertAdjacentElement('afterend', cart); containers.cart = cart;
       const checkout = card(doc, 'مظهر إتمام الطلب والعناوين');
       checkout.dataset.wmControlsGroup = 'checkout'; cart.insertAdjacentElement('afterend', checkout); containers.checkout = checkout;
+      const receipt=card(doc,'تأكيد الطلب');receipt.dataset.wmControlsGroup='receipt';checkout.insertAdjacentElement('afterend',receipt);containers.receipt=receipt;
       const previews = make(doc, 'div', '', cart, 'wm-page-controls-grid');
       for (const [page, title] of [['cart', 'معاينة السلة'], ['checkout', 'معاينة إتمام الطلب']]) {
         const button = make(doc, 'button', title, previews);
@@ -155,7 +164,7 @@
     }
     return containers;
   }
-  function group(key) { return key.startsWith('support_') ? 'support' : key.startsWith('auth_') ? 'auth' : key.startsWith('logout_') ? 'logout' : key.startsWith('orders_') ? 'orders' : key.startsWith('message_') ? 'messages' : key.startsWith('checkout_') ? 'checkout' : key.startsWith('cart_pulse_') ? 'pulse' : 'cart'; }
+  function group(key) { return key.startsWith('filters_')?'filters':key.startsWith('quickadd_')?'quickadd':key.startsWith('receipt_')?'receipt':key.startsWith('support_') ? 'support' : key.startsWith('auth_') ? 'auth' : key.startsWith('logout_') ? 'logout' : key.startsWith('orders_') ? 'orders' : key.startsWith('message_') ? 'messages' : key.startsWith('checkout_') ? 'checkout' : key.startsWith('cart_pulse_') ? 'pulse' : 'cart'; }
   async function mount(frame) {
     const screen = frame.dataset.screen;
     if (!supported.has(screen)) return null;
