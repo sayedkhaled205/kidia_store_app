@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
@@ -13,6 +14,84 @@ import 'package:mobishop_store_app/features/catalog/presentation/controllers/cat
 
 void main() {
   group('CatalogProductListController', () {
+    test(
+      'child selection retains filters and sort across paging and reset',
+      () async {
+        final repository = _FakeCatalogRepository(
+          products: (q) async => _page(
+            q,
+            items: [_product(q.categoryIds.single * 10 + q.page)],
+            totalItems: 3,
+            totalPages: 3,
+          ),
+        );
+        final controller = CatalogProductListController(
+          repository,
+          request: const CatalogProductListRequest(categoryId: 7, pageSize: 1),
+        );
+        addTearDown(controller.dispose);
+        await controller.applyFilters(
+          const CatalogProductFilters(onSaleOnly: true),
+        );
+        await controller.changeSort(CatalogSort.priceLowToHigh);
+        await controller.selectChildCategory(8);
+        expect(controller.state.selectedChildCategoryId, 8);
+        expect(controller.state.page, 1);
+        expect(repository.productQueries.last.categoryIds, [8]);
+        expect(repository.productQueries.last.onSale, true);
+        expect(repository.productQueries.last.sort, CatalogSort.priceLowToHigh);
+        await controller.loadMore();
+        expect(controller.state.items.map((p) => p.id), [81, 82]);
+        await controller.selectChildCategory(9);
+        expect(controller.state.items.map((p) => p.id), [91]);
+        expect(controller.state.page, 1);
+        await controller.selectChildCategory(null);
+        expect(controller.state.selectedChildCategoryId, isNull);
+        expect(controller.state.items.map((p) => p.id), [71]);
+        expect(controller.state.filters.onSaleOnly, true);
+      },
+    );
+    test(
+      'rapid child changes ignore older responses and allow retry',
+      () async {
+        final pending = <int, Completer<CatalogPage<CatalogProduct>>>{};
+        final repository = _FakeCatalogRepository(
+          products: (q) => (pending[q.categoryIds.single] = Completer()).future,
+        );
+        final controller = CatalogProductListController(
+          repository,
+          request: const CatalogProductListRequest(categoryId: 7),
+        );
+        addTearDown(controller.dispose);
+        final first = controller.selectChildCategory(8);
+        final second = controller.selectChildCategory(9);
+        pending[9]!.completeError(StateError('temporary failure'));
+        await second;
+        expect(controller.state.error, isNotNull);
+        final retry = controller.loadInitial();
+        pending[9]!.complete(
+          _page(
+            repository.productQueries.last,
+            items: [_product(9)],
+            totalItems: 1,
+            totalPages: 1,
+          ),
+        );
+        await retry;
+        pending[8]!.complete(
+          _page(
+            repository.productQueries.first,
+            items: [_product(8)],
+            totalItems: 1,
+            totalPages: 1,
+          ),
+        );
+        await first;
+        expect(controller.state.selectedChildCategoryId, 9);
+        expect(controller.state.items.single.id, 9);
+        expect(controller.state.error, isNull);
+      },
+    );
     test('tag filters retain the category and attribute selections', () async {
       final repository = _FakeCatalogRepository(
         products: (query) async =>

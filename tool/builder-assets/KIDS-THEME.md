@@ -8,6 +8,13 @@ and outline. Product footer spacing matches category navigation; the collapsed
 home search uses a 51px header to align with the fixed cart action.
 Merchant identity and live catalog data are supplied by the existing Setup flow.
 
+Kids' `category.general.navigation_mode = products_with_children` keeps the
+child category cards above the products. Selecting a card filters this same
+page and gives the active card a light tint from the theme primary color.
+The parent title, sibling cards, sorting and filters stay in place; selecting
+the active card again restores all products in the parent category. This shared
+renderer applies to existing Kids settings and future Setup applications.
+
 Kids enables `align_compact_cart` in Home, Categories and Wishlist. The three
 compact headers share a 51px height, 38px content slot and 48px cart touch target;
 Wishlist centers its localized title across the full header width; its cart

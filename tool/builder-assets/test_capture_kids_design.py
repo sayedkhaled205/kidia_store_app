@@ -10,6 +10,10 @@ spec.loader.exec_module(capture)
 
 
 class AppearanceTests(unittest.TestCase):
+    def test_kids_preset_keeps_children_with_products(self):
+        preset = json.loads(Path(__file__).with_name('kids-appearance-20261027.json').read_text(encoding='utf-8'))
+        self.assertEqual(preset['category']['general']['navigation_mode'], 'products_with_children')
+
     def test_capture_preserves_order_tabs_identity_and_other_themes(self):
         kids = {'identity': {}, 'splash': {'image_url': 'old-logo', 'store_name': 'Old'}, 'category': {'general': {}}, 'pages': {'product': {'header': {'settings': {'logo_url': 'old-logo'}}, 'footer': {'settings': {}}, 'elements': [{'id': 'tabs', 'settings': {'after_summary': True}}]}}, 'home': [{'id': 'second', 'settings': {}}, {'id': 'first', 'settings': {}}]}
         home = [{'id': 'first', 'settings': {}, 'order': 0}, {'id': 'second', 'settings': {}, 'order': 1}]

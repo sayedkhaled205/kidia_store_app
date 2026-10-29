@@ -681,8 +681,15 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
 
 /// The same category artwork and surfaces, compacted above the product filters.
 class CategoryProductsRail extends ConsumerWidget {
-  const CategoryProductsRail({required this.categoryId, super.key});
+  const CategoryProductsRail({
+    required this.categoryId,
+    required this.onSelected,
+    this.selectedCategoryId,
+    super.key,
+  });
   final int categoryId;
+  final int? selectedCategoryId;
+  final ValueChanged<CatalogCategory> onSelected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -717,7 +724,8 @@ class CategoryProductsRail extends ConsumerWidget {
       categories: children
           .map((node) => node.category.withPresentation(settings))
           .toList(),
-      onSelected: (category) => _openCategoryProducts(context, category),
+      selectedCategoryId: selectedCategoryId,
+      onSelected: onSelected,
     );
   }
 }
@@ -726,9 +734,11 @@ class CategoryProductsCards extends StatelessWidget {
   const CategoryProductsCards({
     required this.categories,
     required this.onSelected,
+    this.selectedCategoryId,
     super.key,
   });
   final List<CatalogCategory> categories;
+  final int? selectedCategoryId;
   final ValueChanged<CatalogCategory> onSelected;
 
   @override
@@ -754,52 +764,58 @@ class CategoryProductsCards extends StatelessWidget {
                 return SizedBox(
                   key: Key('category-products-card-${category.id}'),
                   width: width,
-                  child: _CategoryCardSurface(
-                    category: category,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => onSelected(category),
-                        child: Column(
-                          children: [
-                            SizedBox(
-                              height: width,
-                              child: Center(
-                                child: _CategoryArtwork(
-                                  category: category,
-                                  maximumSize: width,
+                  child: Semantics(
+                    selected: category.id == selectedCategoryId,
+                    child: _CategoryCardSurface(
+                      category: category,
+                      selected: category.id == selectedCategoryId,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => onSelected(category),
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                height: width,
+                                child: Center(
+                                  child: _CategoryArtwork(
+                                    category: category,
+                                    maximumSize: width,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Expanded(
-                              child: _CategoryNameHighlight(
-                                category: category,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 4,
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    category.name,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      height: 1.2,
-                                      color: _categoryColor(
-                                        category.fontColor,
-                                        Theme.of(context).colorScheme.onSurface,
-                                      ),
-                                      fontWeight: _categoryFontWeight(
-                                        category.fontWeight,
+                              Expanded(
+                                child: _CategoryNameHighlight(
+                                  category: category,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 4,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      category.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        height: 1.2,
+                                        color: _categoryColor(
+                                          category.fontColor,
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                        ),
+                                        fontWeight: _categoryFontWeight(
+                                          category.fontWeight,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -1724,11 +1740,13 @@ class _CategoryCardSurface extends StatelessWidget {
     required this.category,
     required this.child,
     this.forceMinimal = false,
+    this.selected = false,
   });
 
   final CatalogCategory category;
   final Widget child;
   final bool forceMinimal;
+  final bool selected;
 
   @override
   Widget build(BuildContext context) {
@@ -1756,6 +1774,16 @@ class _CategoryCardSurface extends StatelessWidget {
               ]
             : null,
       ),
+      foregroundDecoration: selected
+          ? BoxDecoration(
+              color: colors.primary.withValues(alpha: 0.08),
+              borderRadius: radius,
+              border: Border.all(
+                color: colors.primary.withValues(alpha: 0.55),
+                width: 1.25,
+              ),
+            )
+          : null,
       child: ClipRRect(borderRadius: radius, child: child),
     );
   }

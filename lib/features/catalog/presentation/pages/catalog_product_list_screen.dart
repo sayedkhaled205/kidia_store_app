@@ -8,6 +8,7 @@ import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
 import 'package:mobishop_store_app/features/brands/presentation/providers/brands_providers.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
@@ -194,6 +195,22 @@ class _CatalogProductListViewState
             }
             controller.submitSearch(query);
           },
+          onCategorySelected: (category) {
+            final selected =
+                controller.state.selectedChildCategoryId == category.id
+                ? null
+                : category.id;
+            controller.selectChildCategory(selected);
+            ref
+                .read(mobileAnalyticsProvider)
+                .trackInBackground(
+                  'view_category',
+                  objectId: selected ?? widget.request.categoryId!,
+                  label: selected == null
+                      ? widget.request.title
+                      : category.name,
+                );
+          },
         );
       },
     );
@@ -208,6 +225,7 @@ class _ProductListContent extends StatelessWidget {
     required this.showSearchField,
     required this.pageLayout,
     required this.onSearchSubmitted,
+    required this.onCategorySelected,
   });
 
   final CatalogProductListController controller;
@@ -216,6 +234,7 @@ class _ProductListContent extends StatelessWidget {
   final bool showSearchField;
   final CmsPageLayout pageLayout;
   final ValueChanged<String> onSearchSubmitted;
+  final ValueChanged<CatalogCategory> onCategorySelected;
 
   @override
   Widget build(BuildContext context) {
@@ -233,6 +252,8 @@ class _ProductListContent extends StatelessWidget {
             SliverToBoxAdapter(
               child: CategoryProductsRail(
                 categoryId: controller.request.categoryId!,
+                selectedCategoryId: state.selectedChildCategoryId,
+                onSelected: onCategorySelected,
               ),
             ),
           if (pageLayout.header.enabled &&
