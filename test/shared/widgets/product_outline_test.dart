@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobishop_store_app/shared/widgets/product/shared_product_card_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/shared/widgets/product/product_card.dart';
 import 'package:mobishop_store_app/features/home/data/models/home_block_model.dart';
@@ -17,13 +19,13 @@ void main() {
   });
   testWidgets('catalog and wishlist cards render configured outline thickness', (tester) async {
     for (final width in [0.0, .5, 2.5, 6.0]) {
-      await tester.pumpWidget(MaterialApp(home: Scaffold(body: SizedBox(
+      await tester.pumpWidget(ProviderScope(overrides: [sharedProductCardProvider.overrideWithValue(null)], child: MaterialApp(home: Scaffold(body: SizedBox(
         width: 180, height: 340,
         child: CatalogProductCard(product: simpleProduct, onTap: () {},
           settings: CmsPageComponent(id: 'grid', type: 'product_grid', enabled: true,
             settings: {'card_style': 'outlined', 'card_outline_width': width}),
         ),
-      ))));
+      )))));
       final material = tester.widget<Material>(find.descendant(of: find.byType(CatalogProductCard), matching: find.byType(Material)).first);
       final side = (material.shape! as RoundedRectangleBorder).side;
       expect(side.width, width == 0 ? BorderSide.none.width : width);

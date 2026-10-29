@@ -1083,7 +1083,9 @@ function runPageBuilderTest() {
   assert.doesNotMatch(wishlistSource, /_previewWishlistProducts/, "The preview must not restore invented wishlist recommendations.");
   assert.match(wishlistSource, /settings\.boolean\('quick_add_enabled', true\)/, "Wishlist must consume its own Quick Add setting.");
   assert.match(wishlistSource, /quick_add_icon_variant/, "Wishlist must consume Quick Add appearance settings.");
-  const catalogCardSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "catalog", "presentation", "widgets", "catalog_product_card.dart"), "utf8");
+  const catalogWrapperSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "features", "catalog", "presentation", "widgets", "catalog_product_card.dart"), "utf8");
+  assert.match(catalogWrapperSource, /settings: shared \?\? settings/, "Catalog preserves local settings unless shared appearance is enabled.");
+  const catalogCardSource = fs.readFileSync(path.join(pluginRoot, "..", "lib", "shared", "widgets", "product", "store_product_card.dart"), "utf8");
   assert.match(catalogCardSource, /settings\?\.boolean\('quick_add_enabled', true\)/, "Catalog Product Grid must consume its own Quick Add setting.");
   assert.match(catalogCardSource, /quick_add_background_color/, "Catalog Product Grid must consume Quick Add appearance settings.");
   assert.match(catalogCardSource, /quick_add_background_size/, "Catalog Product Grid must consume the independent Quick Add background size.");

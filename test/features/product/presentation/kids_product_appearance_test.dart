@@ -175,8 +175,8 @@ void main() {
           find.descendant(of: card, matching: find.byType(Material)).first,
         );
         final shape = material.shape! as RoundedRectangleBorder;
-        expect(shape.side.color, const Color(0xffD3EAE6));
-        expect(shape.side.width, .5);
+        expect(shape.side.color, const Color(0xffA1CCC4));
+        expect(shape.side.width, .75);
         final catalog = _layout('catalog').element('product_grid');
         expect(
           shape.borderRadius,

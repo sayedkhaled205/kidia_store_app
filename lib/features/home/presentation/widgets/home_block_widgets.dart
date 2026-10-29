@@ -1,3 +1,6 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobishop_store_app/shared/widgets/product/shared_product_card_provider.dart';
+import 'shared_home_product_collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:mobishop_store_app/features/search/presentation/voice_search_dialog.dart';
 import 'dart:async';
@@ -290,10 +293,23 @@ class AppHeaderBlockWidget extends StatelessWidget {
                             if (block.showVoiceSearch)
                               IconButton(
                                 key: const Key('home-voice-search-button'),
-                                tooltip: Localizations.localeOf(context).languageCode == 'ar' ? 'البحث بالصوت' : 'Voice search',
-                                onPressed: () => showVoiceCatalogSearch(context),
-                                icon: Icon(Icons.mic_none_rounded, size: 20 * responsive,
-                                  color: _parseHexColor(block.searchIconColor, fallback: iconColor)),
+                                tooltip:
+                                    Localizations.localeOf(
+                                          context,
+                                        ).languageCode ==
+                                        'ar'
+                                    ? 'البحث بالصوت'
+                                    : 'Voice search',
+                                onPressed: () =>
+                                    showVoiceCatalogSearch(context),
+                                icon: Icon(
+                                  Icons.mic_none_rounded,
+                                  size: 20 * responsive,
+                                  color: _parseHexColor(
+                                    block.searchIconColor,
+                                    fallback: iconColor,
+                                  ),
+                                ),
                               ),
                             if (block.showVoiceSearch)
                               SizedBox(width: 10 * responsive),
@@ -414,9 +430,15 @@ class _HeroSliderBlockWidgetState extends State<HeroSliderBlockWidget> {
                 fit: StackFit.expand,
                 children: <Widget>[
                   PageView.builder(
-          scrollBehavior: const MaterialScrollBehavior().copyWith(
-            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse, PointerDeviceKind.stylus, PointerDeviceKind.invertedStylus, PointerDeviceKind.trackpad},
-          ),
+                    scrollBehavior: const MaterialScrollBehavior().copyWith(
+                      dragDevices: {
+                        PointerDeviceKind.touch,
+                        PointerDeviceKind.mouse,
+                        PointerDeviceKind.stylus,
+                        PointerDeviceKind.invertedStylus,
+                        PointerDeviceKind.trackpad,
+                      },
+                    ),
                     controller: _pageController,
                     itemCount: widget.block.items.length,
                     onPageChanged: (int page) {
@@ -754,9 +776,15 @@ class CategoryGridBlockWidget extends StatelessWidget {
                     spacing: spacing,
                     runSpacing: compact ? block.rowGap / 2 : block.rowGap,
                     alignment: switch (block.itemsAlignment) {
-                      'left' => Directionality.of(context) == TextDirection.rtl ? WrapAlignment.end : WrapAlignment.start,
+                      'left' =>
+                        Directionality.of(context) == TextDirection.rtl
+                            ? WrapAlignment.end
+                            : WrapAlignment.start,
                       'center' => WrapAlignment.center,
-                      _ => Directionality.of(context) == TextDirection.rtl ? WrapAlignment.start : WrapAlignment.end,
+                      _ =>
+                        Directionality.of(context) == TextDirection.rtl
+                            ? WrapAlignment.start
+                            : WrapAlignment.end,
                     },
                     textDirection: Directionality.of(context),
                     children: block.items
@@ -1034,7 +1062,8 @@ class _CategoryBlockCard extends StatelessWidget {
                 fallback: Theme.of(context).colorScheme.onSurface,
               ),
               fontSize: block.labelSize,
-              fontWeight: FontWeight.values[(block.labelWeight ~/ 100 - 1).clamp(3, 6)],
+              fontWeight:
+                  FontWeight.values[(block.labelWeight ~/ 100 - 1).clamp(3, 6)],
             ),
           ),
         ],
@@ -1218,7 +1247,8 @@ class _QuickLinkCard extends StatelessWidget {
                 style: TextStyle(
                   color: labelColor,
                   fontSize: block.labelSize,
-                  fontWeight: FontWeight.values[(block.labelWeight ~/ 100 - 1).clamp(3, 6)],
+                  fontWeight: FontWeight
+                      .values[(block.labelWeight ~/ 100 - 1).clamp(3, 6)],
                 ),
               ),
               if (item.subtitle != null)
@@ -1666,7 +1696,7 @@ class ImageBannerBlockWidget extends StatelessWidget {
   }
 }
 
-class ProductCarouselBlockWidget extends StatelessWidget {
+class ProductCarouselBlockWidget extends ConsumerWidget {
   const ProductCarouselBlockWidget({
     required this.block,
     required this.onAction,
@@ -1677,7 +1707,21 @@ class ProductCarouselBlockWidget extends StatelessWidget {
   final ValueChanged<HomeAction> onAction;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shared = ref.watch(sharedProductCardProvider);
+    if (shared != null) {
+      return SharedHomeProductCollection(
+        items: block.items,
+        settings: shared,
+        onAction: onAction,
+        title: block.title,
+        subtitle: block.subtitle,
+        showViewAll: block.showViewAll,
+        viewAllAction: block.viewAllAction,
+        viewAllLabel: block.viewAllLabel,
+        itemWidth: block.itemWidth,
+      );
+    }
     return Padding(
       padding: EdgeInsets.symmetric(
         vertical: !block.showName && !block.showRating ? 8 : 10,
@@ -1760,7 +1804,7 @@ class ProductCarouselBlockWidget extends StatelessWidget {
   }
 }
 
-class ProductGridBlockWidget extends StatelessWidget {
+class ProductGridBlockWidget extends ConsumerWidget {
   const ProductGridBlockWidget({
     required this.block,
     required this.onAction,
@@ -1771,7 +1815,21 @@ class ProductGridBlockWidget extends StatelessWidget {
   final ValueChanged<HomeAction> onAction;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shared = ref.watch(sharedProductCardProvider);
+    if (shared != null) {
+      return SharedHomeProductCollection(
+        items: block.items,
+        settings: shared,
+        onAction: onAction,
+        title: block.title,
+        subtitle: block.subtitle,
+        showViewAll: block.showViewAll,
+        viewAllAction: block.viewAllAction,
+        viewAllLabel: block.viewAllLabel,
+        columns: block.columns,
+      );
+    }
     final int columns = block.columns.clamp(1, 4).toInt();
 
     return Padding(
@@ -1842,7 +1900,7 @@ class ProductGridBlockWidget extends StatelessWidget {
                       onAction: onAction,
                       cardStyle: block.cardStyle,
                       cardOutlineColor: block.cardOutlineColor,
-                    cardOutlineWidth: block.cardOutlineWidth,
+                      cardOutlineWidth: block.cardOutlineWidth,
                       imageRatio: block.imageRatio,
                       cardRadius: block.cardRadius,
                       showName: block.showName,
