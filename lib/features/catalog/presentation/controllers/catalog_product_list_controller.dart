@@ -1,3 +1,5 @@
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_options.dart';
+export 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_options.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -62,6 +64,7 @@ class CatalogProductFilters {
     this.maximumPriceMinor = '',
     this.brandId,
     this.brandLabel = '',
+    List<CatalogTagOption> tags = const [],
     String sizeTaxonomy = '',
     String sizeTerm = '',
     String sizeLabel = '',
@@ -72,7 +75,9 @@ class CatalogProductFilters {
     List<CatalogSizeOption>? colors,
     // Public selection arguments remain compatible with legacy single-value filters.
     // ignore: prefer_initializing_formals
-  }) : _sizes = sizes,
+  }) : _tags = tags,
+       // ignore: prefer_initializing_formals
+       _sizes = sizes,
        // ignore: prefer_initializing_formals
        _colors = colors,
        _legacySize = (taxonomy: sizeTaxonomy, term: sizeTerm, label: sizeLabel),
@@ -81,6 +86,15 @@ class CatalogProductFilters {
          term: colorTerm,
          label: colorLabel,
        );
+
+  final List<CatalogTagOption> _tags;
+  List<CatalogTagOption> get tags {
+    final entries = {
+      for (final tag in _tags)
+        if (tag.id > 0) tag.id: tag,
+    }.values.toList()..sort((a, b) => a.id.compareTo(b.id));
+    return List.unmodifiable(entries);
+  }
 
   final bool onSaleOnly;
   final String minimumPriceMinor;
@@ -130,7 +144,8 @@ class CatalogProductFilters {
       (onSaleOnly ? 1 : 0) +
       (minimumPriceMinor.isNotEmpty ? 1 : 0) +
       (maximumPriceMinor.isNotEmpty ? 1 : 0) +
-      (hasBrand ? 1 : 0);
+      (hasBrand ? 1 : 0) +
+      tags.length;
   int get activeCount => generalActiveCount + sizes.length + colors.length;
   bool get isEmpty => activeCount == 0;
 
@@ -143,6 +158,7 @@ class CatalogProductFilters {
     maximumPriceMinor: maximumPriceMinor,
     brandId: brandId,
     brandLabel: brandLabel,
+    tags: tags,
     sizes: List.unmodifiable(sizes ?? this.sizes),
     colors: List.unmodifiable(colors ?? this.colors),
   );
@@ -155,6 +171,7 @@ class CatalogProductFilters {
       other.maximumPriceMinor == maximumPriceMinor &&
       other.brandId == brandId &&
       other.brandLabel == brandLabel &&
+      listEquals(other.tags, tags) &&
       listEquals(other.sizes, sizes) &&
       listEquals(other.colors, colors);
 
@@ -165,26 +182,10 @@ class CatalogProductFilters {
     maximumPriceMinor,
     brandId,
     brandLabel,
+    Object.hashAll(tags),
     Object.hashAll(sizes),
     Object.hashAll(colors),
   );
-}
-
-class CatalogSizeOption {
-  const CatalogSizeOption({
-    required this.taxonomy,
-    required this.term,
-    required this.label,
-  });
-  final String taxonomy;
-  final String term;
-  final String label;
-  String get key => '$taxonomy|$term';
-  @override
-  bool operator ==(Object other) =>
-      other is CatalogSizeOption && other.key == key;
-  @override
-  int get hashCode => key.hashCode;
 }
 
 class CatalogProductListState {
@@ -305,6 +306,12 @@ class CatalogProductListController extends ChangeNotifier {
   StreamSubscription<int>? _catalogSubscription;
 
   CatalogProductListState get state => _state;
+  Future<CatalogFilterOptions> loadFilterOptions() {
+    final source = _repository;
+    return source is CatalogFilterOptionsSource
+        ? (source as CatalogFilterOptionsSource).getFilterOptions()
+        : Future.value(const CatalogFilterOptions());
+  }
 
   bool get isAwaitingSearch {
     return request.searchOnly && _state.search.trim().isEmpty;
@@ -672,6 +679,7 @@ class CatalogProductListController extends ChangeNotifier {
           : filters.hasBrand
           ? <int>[filters.brandId!]
           : const <int>[],
+      tagIds: filters.tags.map((tag) => tag.id),
       minimumPriceMinor: filters.minimumPriceMinor,
       maximumPriceMinor: filters.maximumPriceMinor,
       attributes: _attributeFilters([...filters.sizes, ...filters.colors]),

@@ -13,6 +13,11 @@ class CatalogProductFilterSheet extends StatefulWidget {
     required this.showPrice,
     required this.showSale,
     required this.showBrand,
+    this.showSizes = true,
+    this.showColors = true,
+    this.availableSizes = const [],
+    this.availableColors = const [],
+    this.loadOptions,
     super.key,
   });
 
@@ -24,6 +29,9 @@ class CatalogProductFilterSheet extends StatefulWidget {
   final bool showPrice;
   final bool showSale;
   final bool showBrand;
+  final bool showSizes, showColors;
+  final List<CatalogSizeOption> availableSizes, availableColors;
+  final Future<CatalogFilterOptions> Function()? loadOptions;
 
   static Future<CatalogProductFilters?> show(
     BuildContext context, {
@@ -36,6 +44,11 @@ class CatalogProductFilterSheet extends StatefulWidget {
     bool showSale = true,
     bool showBrand = true,
     bool sidePanel = false,
+    bool showSizes = true,
+    bool showColors = true,
+    List<CatalogSizeOption> availableSizes = const [],
+    List<CatalogSizeOption> availableColors = const [],
+    Future<CatalogFilterOptions> Function()? loadOptions,
   }) {
     if (sidePanel) {
       return showGeneralDialog<CatalogProductFilters>(
@@ -79,6 +92,11 @@ class CatalogProductFilterSheet extends StatefulWidget {
                         showPrice: showPrice,
                         showSale: showSale,
                         showBrand: showBrand,
+                        showSizes: showSizes,
+                        showColors: showColors,
+                        availableSizes: availableSizes,
+                        availableColors: availableColors,
+                        loadOptions: loadOptions,
                       ),
                     ),
                   ],
@@ -103,6 +121,11 @@ class CatalogProductFilterSheet extends StatefulWidget {
         showPrice: showPrice,
         showSale: showSale,
         showBrand: showBrand,
+        showSizes: showSizes,
+        showColors: showColors,
+        availableSizes: availableSizes,
+        availableColors: availableColors,
+        loadOptions: loadOptions,
       ),
     );
   }
@@ -119,6 +142,33 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
   late bool _onSaleOnly;
   int? _brandId;
   String? _rangeError;
+  late List<CatalogSizeOption> _sizes, _colors;
+  late List<CatalogTagOption> _tags;
+  CatalogFilterOptions _options = const CatalogFilterOptions();
+  bool _loading = false, _optionsFailed = false;
+  Future<void> _loadOptions() async {
+    if (widget.loadOptions == null) return;
+    setState(() {
+      _loading = true;
+      _optionsFailed = false;
+    });
+    try {
+      final options = await widget.loadOptions!();
+      if (mounted) {
+        setState(() {
+          _options = options;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _optionsFailed = true;
+        });
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -137,6 +187,10 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
     );
     _onSaleOnly = widget.initialFilters.onSaleOnly;
     _brandId = widget.initialFilters.brandId;
+    _sizes = [...widget.initialFilters.sizes];
+    _colors = [...widget.initialFilters.colors];
+    _tags = [...widget.initialFilters.tags];
+    _loadOptions();
   }
 
   @override
@@ -226,46 +280,72 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                   }),
                 ),
               ],
-              if (widget.showPrice) const Divider(height: 20),
-              if (widget.showPrice)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Expanded(
-                      child: TextFormField(
-                        controller: _minimumController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: copy.minimumPrice,
-                          hintText: minimumAvailable.isEmpty
-                              ? null
-                              : minimumAvailable,
-                        ),
-                        validator: (String? value) =>
-                            _priceValidator(value, copy),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _maximumController,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: copy.maximumPrice,
-                          hintText: maximumAvailable.isEmpty
-                              ? null
-                              : maximumAvailable,
-                        ),
-                        validator: (String? value) =>
-                            _priceValidator(value, copy),
-                      ),
-                    ),
-                  ],
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: LinearProgressIndicator(),
                 ),
+              if (_optionsFailed)
+                TextButton.icon(
+                  onPressed: _loadOptions,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(copy.retry),
+                ),
+              if (widget.showSizes)
+                _choices<CatalogSizeOption>(
+                  copy.size,
+                  [...widget.availableSizes, ..._options.sizes, ..._sizes],
+                  _sizes,
+                  (v) => v.label,
+                  (v) => setState(() => _sizes = v),
+                ),
+              if (widget.showColors)
+                _choices<CatalogSizeOption>(
+                  copy.color,
+                  [...widget.availableColors, ..._options.colors, ..._colors],
+                  _colors,
+                  (v) => v.label,
+                  (v) => setState(() => _colors = v),
+                ),
+              _choices<CatalogTagOption>(
+                copy.productTags,
+                [..._options.tags, ..._tags],
+                _tags,
+                (v) => v.label,
+                (v) => setState(() => _tags = v),
+              ),
+              if (widget.showPrice) const Divider(height: 20),
+              if (widget.showPrice) ...[
+                TextFormField(
+                  key: const Key('catalog-minimum-price'),
+                  controller: _minimumController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: copy.minimumPrice,
+                    hintText: minimumAvailable.isEmpty
+                        ? null
+                        : minimumAvailable,
+                  ),
+                  validator: (value) => _priceValidator(value, copy),
+                ),
+                const SizedBox(height: 14),
+                TextFormField(
+                  key: const Key('catalog-maximum-price'),
+                  controller: _maximumController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: copy.maximumPrice,
+                    hintText: maximumAvailable.isEmpty
+                        ? null
+                        : maximumAvailable,
+                  ),
+                  validator: (value) => _priceValidator(value, copy),
+                ),
+              ],
               if (_rangeError != null) ...<Widget>[
                 const SizedBox(height: 8),
                 Text(
@@ -282,18 +362,33 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(
-                  CatalogProductFilters(
-                    sizes: widget.initialFilters.sizes,
-                    colors: widget.initialFilters.colors,
-                  ),
-                ),
+                onPressed: () =>
+                    Navigator.of(context).pop(const CatalogProductFilters()),
                 child: Text(copy.reset),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _choices<T>(
+    String title,
+    List<T> values,
+    List<T> selected,
+    String Function(T) label,
+    ValueChanged<List<T>> onChange,
+  ) {
+    final options = values.toSet().toList();
+    if (options.isEmpty) return const SizedBox.shrink();
+    return _FilterChoiceSection<T>(
+      key: ValueKey(title),
+      title: title,
+      options: options,
+      selected: selected,
+      label: label,
+      onChange: onChange,
     );
   }
 
@@ -346,8 +441,9 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
         maximumPriceMinor: maximum,
         brandId: _brandId,
         brandLabel: _selectedBrandLabel(),
-        sizes: widget.initialFilters.sizes,
-        colors: widget.initialFilters.colors,
+        sizes: _sizes,
+        colors: _colors,
+        tags: _tags,
       ),
     );
   }
@@ -402,4 +498,83 @@ int _safeMinorUnit(int value) {
     return 0;
   }
   return value > 12 ? 12 : value;
+}
+
+class _FilterChoiceSection<T> extends StatefulWidget {
+  const _FilterChoiceSection({
+    super.key,
+    required this.title,
+    required this.options,
+    required this.selected,
+    required this.label,
+    required this.onChange,
+  });
+  final String title;
+  final List<T> options, selected;
+  final String Function(T) label;
+  final ValueChanged<List<T>> onChange;
+  @override
+  State<_FilterChoiceSection<T>> createState() =>
+      _FilterChoiceSectionState<T>();
+}
+
+class _FilterChoiceSectionState<T> extends State<_FilterChoiceSection<T>> {
+  String search = '';
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final options = widget.options.where(
+      (option) =>
+          widget.label(option).toLowerCase().contains(search.toLowerCase()),
+    );
+    return ExpansionTile(
+      tilePadding: EdgeInsets.zero,
+      title: Text(widget.title),
+      subtitle: widget.selected.isEmpty
+          ? null
+          : Text(
+              widget.selected.map(widget.label).join(', '),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+      children: [
+        if (widget.options.length > 12)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: CatalogCopy.of(context).search,
+                prefixIcon: const Icon(Icons.search),
+              ),
+              onChanged: (value) => setState(() => search = value),
+            ),
+          ),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              for (final option in options)
+                FilterChip(
+                  label: Text(widget.label(option)),
+                  selected: widget.selected.contains(option),
+                  selectedColor: colors.primary.withValues(alpha: .12),
+                  labelStyle: TextStyle(color: colors.onSurface),
+                  side: BorderSide(color: colors.primary.withValues(alpha: .3)),
+                  onSelected: (selected) => widget.onChange(
+                    selected
+                        ? [...widget.selected, option]
+                        : widget.selected
+                              .where((value) => value != option)
+                              .toList(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
 }

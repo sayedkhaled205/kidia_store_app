@@ -1,3 +1,5 @@
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_options.dart';
+import 'store_api_filter_options.dart';
 import 'package:mobishop_store_app/core/network/store_api_client.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_category_model.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_filter_data_model.dart';
@@ -27,7 +29,8 @@ abstract interface class CatalogRemoteDataSource {
   });
 }
 
-class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
+class StoreApiCatalogRemoteDataSource
+    implements CatalogRemoteDataSource, CatalogFilterOptionsSource {
   const StoreApiCatalogRemoteDataSource(this._client);
 
   static const String _productsPath = '/wp-json/wc/store/v1/products';
@@ -39,6 +42,10 @@ class StoreApiCatalogRemoteDataSource implements CatalogRemoteDataSource {
   static const String _variationBridgePath = '/wp-json/mobishop/v1/products';
 
   final StoreApiClient _client;
+
+  @override
+  Future<CatalogFilterOptions> getFilterOptions() =>
+      StoreApiFilterOptions(_client).getFilterOptions();
 
   @override
   Future<CatalogPage<CatalogProductModel>> fetchProducts(

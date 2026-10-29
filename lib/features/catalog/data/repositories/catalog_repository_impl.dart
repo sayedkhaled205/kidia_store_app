@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_options.dart';
 import 'dart:async';
 
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
@@ -12,7 +13,11 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_change_source.dart';
 
-class CatalogRepositoryImpl implements CatalogRepository, CatalogChangeSource {
+class CatalogRepositoryImpl
+    implements
+        CatalogRepository,
+        CatalogChangeSource,
+        CatalogFilterOptionsSource {
   CatalogRepositoryImpl(
     this._remoteDataSource, {
     Stream<int>? changes,
@@ -27,6 +32,32 @@ class CatalogRepositoryImpl implements CatalogRepository, CatalogChangeSource {
   final Stream<int>? _changes;
   StreamSubscription<int>? _changeSubscription;
   int _revision = 0;
+  Future<CatalogFilterOptions>? _filterOptions;
+  DateTime? _filterOptionsExpire;
+  @override
+  Future<CatalogFilterOptions> getFilterOptions() async {
+    final source = _remoteDataSource;
+    if (source is! CatalogFilterOptionsSource) {
+      return const CatalogFilterOptions();
+    }
+    if (_filterOptions != null &&
+        _filterOptionsExpire != null &&
+        _now().isBefore(_filterOptionsExpire!)) {
+      return _filterOptions!;
+    }
+    final request = (source as CatalogFilterOptionsSource)
+        .getFilterOptions()
+        .timeout(const Duration(seconds: 15));
+    _filterOptions = request;
+    _filterOptionsExpire = _now().add(const Duration(minutes: 5));
+    try {
+      return await request;
+    } catch (_) {
+      if (identical(_filterOptions, request)) _filterOptions = null;
+      rethrow;
+    }
+  }
+
   static const _productReadLifetime = Duration(seconds: 20);
   static const _maxProductReads = 96;
   final _products = <int, _RecentProductRead<CatalogProduct>>{};
@@ -39,6 +70,8 @@ class CatalogRepositoryImpl implements CatalogRepository, CatalogChangeSource {
 
   void _clearProductReads() {
     _revision++;
+    _filterOptions = null;
+    _filterOptionsExpire = null;
     _products.clear();
     _variations.clear();
     _productRequests.clear();

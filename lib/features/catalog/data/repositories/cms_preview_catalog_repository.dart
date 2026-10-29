@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_options.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
@@ -16,7 +17,10 @@ import 'package:mobishop_store_app/features/catalog/data/models/catalog_product_
 /// Native preview catalog: theme fixtures in demo mode, connected store data
 /// through the authenticated parent bridge in live editor mode.
 class CmsPreviewCatalogRepository
-    implements CatalogRepository, CatalogChangeSource {
+    implements
+        CatalogRepository,
+        CatalogChangeSource,
+        CatalogFilterOptionsSource {
   CmsPreviewCatalogRepository({
     Future<Map<String, dynamic>> Function()? catalog,
     Future<Map<String, dynamic>> Function(Map<String, dynamic>)? fetchPage,
@@ -54,6 +58,18 @@ class CmsPreviewCatalogRepository
   }
 
   bool get _usesLiveCatalog => _live ?? CmsPreviewLayoutBridge.useLiveCatalog;
+  @override
+  Future<CatalogFilterOptions> getFilterOptions() async {
+    if (!_usesLiveCatalog) return const CatalogFilterOptions();
+    final response = await _fetchPage({'catalog_resource': 'filter_options'});
+    if ('${response['error'] ?? ''}'.isNotEmpty) {
+      throw StateError('${response['error']}');
+    }
+    return CatalogFilterOptions.fromJson(
+      Map<String, dynamic>.from(response['filter_options'] as Map? ?? {}),
+    );
+  }
+
   Future<Map<String, dynamic>> _fetchPage(Map<String, dynamic> query) =>
       (_pageLoader ?? CmsPreviewLayoutBridge.fetchCatalogPage)(query);
   final Map<int, CatalogProduct> _loadedProducts = <int, CatalogProduct>{};
