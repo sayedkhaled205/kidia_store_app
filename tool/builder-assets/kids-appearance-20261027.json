@@ -1775,7 +1775,7 @@
             "show_sku": false,
             "show_stock": false,
             "show_badge": false,
-            "show_selected_color": true,
+            "show_selected_color": false,
             "price_size": 22,
             "name_size": 13,
             "margin_top": 0,
