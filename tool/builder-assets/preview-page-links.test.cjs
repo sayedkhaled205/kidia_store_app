@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');
+const {pageLink}=require('./preview-page-links');
+const link=new URL(pageLink('https://shop.example/shop/','/categories/42?name=سالوبت','test-state'));
+const route=new URL(link.searchParams.get('mobishop_page'),'https://preview.invalid');
+assert.equal(link.host,'shop.example');assert.equal(route.pathname,'/categories/42');
+assert.equal(route.searchParams.get('name'),'سالوبت');assert.equal(route.searchParams.get('view'),'test-state');
+assert.equal(new URL(pageLink('https://shop.example','/cms-preview/checkout')).searchParams.get('mobishop_page'),'/checkout');
+for(const page of ['/orders/3','/cms-preview/splash','//evil.test','/account/edit'])assert.throws(()=>pageLink('https://shop.example',page));
+assert(!pageLink('https://shop.example?token=secret','/account?token=secret').includes('secret'));
+assert.throws(()=>pageLink('https://shop.example','/products','x'.repeat(2000)));
+console.log('PASS: route allowlist, store identity, filter state, private query stripping, link size');

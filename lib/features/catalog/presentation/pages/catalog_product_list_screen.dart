@@ -5,6 +5,7 @@ import 'package:mobishop_store_app/features/categories/presentation/categories_s
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobishop_store_app/core/push/preview_page_state.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
 import 'package:mobishop_store_app/features/brands/presentation/providers/brands_providers.dart';
@@ -35,6 +36,10 @@ class CatalogProductListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final request = CatalogPageState.restore(
+      GoRouterState.of(context).uri.queryParameters['view'],
+      this.request,
+    );
     final CatalogCopy copy = CatalogCopy.of(context);
     final String title = request.title.trim().isEmpty
         ? copy.products
@@ -50,6 +55,8 @@ class CatalogProductListScreen extends StatelessWidget {
               brandId: request.brandId,
               collection: request.collection,
               searchOnly: request.searchOnly,
+              initialFilters: request.initialFilters,
+              initialSort: request.initialSort,
               pageSize: layout
                   .element('product_grid')
                   .number('products_per_page', request.pageSize.toDouble())
@@ -181,6 +188,10 @@ class _CatalogProductListViewState
     return ListenableBuilder(
       listenable: controller,
       builder: (BuildContext context, Widget? child) {
+        reportPreviewCatalog(
+          GoRouterState.of(context).uri.toString(),
+          CatalogPageState.encode(controller),
+        );
         return _ProductListContent(
           controller: controller,
           scrollController: _scrollController,
@@ -437,7 +448,8 @@ class _CatalogToolbar extends ConsumerWidget {
     final sizes = {...state.availableSizes, ...state.filters.sizes}.toList();
     final colors = {...state.availableColors, ...state.filters.colors}.toList();
     final showSize = settings.boolean('filter_size', true) && sizes.isNotEmpty;
-    final showColor = settings.boolean('filter_color', false) && colors.isNotEmpty;
+    final showColor =
+        settings.boolean('filter_color', false) && colors.isNotEmpty;
     final double gap = settings.number('button_gap', 8).clamp(0, 24).toDouble();
     final double iconSize = settings
         .number('icon_size', 22)
@@ -635,30 +647,31 @@ class _CatalogToolbar extends ConsumerWidget {
                         final int minorUnit = state.items.isEmpty
                             ? 2
                             : state.items.first.prices.currencyMinorUnit;
-                        final CatalogProductFilters?
-                        filters = await CatalogProductFilterSheet.show(
-                          context,
-                          initialFilters: state.filters,
-                          currencyMinorUnit: minorUnit,
-                          minimumAvailableMinor:
-                              state.filterData?.minimumPriceMinor ?? '',
-                          maximumAvailableMinor:
-                              state.filterData?.maximumPriceMinor ?? '',
-                          brands: brands,
-                          availableSizes: settings.boolean('filter_size', true)
-                              ? state.availableSizes
-                              : const [],
-                          availableColors:
-                              settings.boolean('filter_color', true)
-                              ? state.availableColors
-                              : const [],
-                          loadOptions: controller.loadFilterOptions,
-                          showSizes: false,
-                          showColors: false,
-                          showPrice: settings.boolean('filter_price', true),
-                          showSale: settings.boolean('filter_sale', true),
-                          showBrand: settings.boolean('filter_brand', true),
-                        );
+                        final CatalogProductFilters? filters =
+                            await CatalogProductFilterSheet.show(
+                              context,
+                              initialFilters: state.filters,
+                              currencyMinorUnit: minorUnit,
+                              minimumAvailableMinor:
+                                  state.filterData?.minimumPriceMinor ?? '',
+                              maximumAvailableMinor:
+                                  state.filterData?.maximumPriceMinor ?? '',
+                              brands: brands,
+                              availableSizes:
+                                  settings.boolean('filter_size', true)
+                                  ? state.availableSizes
+                                  : const [],
+                              availableColors:
+                                  settings.boolean('filter_color', true)
+                                  ? state.availableColors
+                                  : const [],
+                              loadOptions: controller.loadFilterOptions,
+                              showSizes: false,
+                              showColors: false,
+                              showPrice: settings.boolean('filter_price', true),
+                              showSale: settings.boolean('filter_sale', true),
+                              showBrand: settings.boolean('filter_brand', true),
+                            );
                         if (filters != null) {
                           await controller.applyFilters(filters);
                         }
@@ -666,8 +679,7 @@ class _CatalogToolbar extends ConsumerWidget {
                     ),
                   ),
                 ),
-              if (settings.boolean('show_filter', true) &&
-                  showSize)
+              if (settings.boolean('show_filter', true) && showSize)
                 SizedBox(width: gap),
               if (showSize)
                 Expanded(
@@ -697,8 +709,7 @@ class _CatalogToolbar extends ConsumerWidget {
                   ),
                 ),
               if (showColor) ...<Widget>[
-                if (settings.boolean('show_filter', true) ||
-                    showSize)
+                if (settings.boolean('show_filter', true) || showSize)
                   SizedBox(width: gap),
                 Expanded(
                   child: Badge(
@@ -970,17 +981,21 @@ class _CatalogProductGrid extends StatelessWidget {
                       if (column > 0) SizedBox(width: gap),
                       Expanded(
                         child: rowIndex * columns + column < items.length
-                            ? PreviewEditRegion(page: 'catalog', target: settings.id, child: CatalogProductCard(
-                                key: ValueKey<int>(
-                                  items[rowIndex * columns + column].id,
+                            ? PreviewEditRegion(
+                                page: 'catalog',
+                                target: settings.id,
+                                child: CatalogProductCard(
+                                  key: ValueKey<int>(
+                                    items[rowIndex * columns + column].id,
+                                  ),
+                                  product: items[rowIndex * columns + column],
+                                  settings: settings,
+                                  fitImageRatio: true,
+                                  onTap: () => context.push(
+                                    '/product/${items[rowIndex * columns + column].id}',
+                                  ),
                                 ),
-                                product: items[rowIndex * columns + column],
-                                settings: settings,
-                                fitImageRatio: true,
-                                onTap: () => context.push(
-                                  '/product/${items[rowIndex * columns + column].id}',
-                                ),
-                              ))
+                              )
                             : const SizedBox.shrink(),
                       ),
                     ],

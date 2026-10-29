@@ -70,6 +70,10 @@ void main() {
   );
   void reportRoute() {
     web.document.documentElement?.setAttribute(
+      'data-preview-location',
+      router.routeInformationProvider.value.uri.toString(),
+    );
+    web.document.documentElement?.setAttribute(
       'data-preview-route',
       router.routeInformationProvider.value.uri.path,
     );
