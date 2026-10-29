@@ -71,7 +71,10 @@ class AppNetworkImage extends StatelessWidget {
               height: height,
               fit: fit,
               alignment: alignment,
-              webHtmlElementStrategy: WebHtmlElementStrategy.fallback,
+              // Public merchant images may not allow cross-origin byte reads.
+              // Load the HTML image directly instead of waiting for a failed
+              // CORS fetch before displaying the same image in the preview.
+              webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
               loadingBuilder: (context, child, progress) => progress == null
                   ? child
                   : (placeholder ??
