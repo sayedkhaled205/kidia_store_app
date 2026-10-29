@@ -84,6 +84,7 @@ class _PreviewEditInspectorState extends State<PreviewEditInspector> {
   _EditRenderBox? _target;
   Offset? _pointer;
   Rect? _rect;
+  Rect? _buttonRect;
   bool _refreshPending = false;
   bool _buttonHovered = false;
 
@@ -93,14 +94,8 @@ class _PreviewEditInspectorState extends State<PreviewEditInspector> {
         _surfaceKey.currentContext?.findRenderObject() as RenderBox?;
     // A fast jump from the pencil can arrive before its mouse-exit callback.
     // Freeze selection only while the pointer is actually over the pencil.
-    if (_buttonHovered && _rect != null && surface != null) {
-      final buttonRect = Rect.fromLTWH(
-        (_rect!.right - 28).clamp(_rect!.left, _rect!.right),
-        _rect!.top,
-        28,
-        28,
-      );
-      if (buttonRect.contains(surface.globalToLocal(globalPosition))) return;
+    if (_buttonHovered && _buttonRect != null && surface != null) {
+      if (_buttonRect!.contains(surface.globalToLocal(globalPosition))) return;
       _buttonHovered = false;
     }
     final result = HitTestResult();
@@ -128,8 +123,40 @@ class _PreviewEditInspectorState extends State<PreviewEditInspector> {
       setState(() {
         _target = target;
         _rect = rect;
+        _buttonRect = rect == null || surface == null
+            ? null
+            : _placeButton(rect, surface.size);
       });
     }
+  }
+
+  // A pencil must never cover the normal tap at the center of a small icon.
+  // Keep large-section pencils in the corner; put small-item pencils just
+  // outside the item, clamped to the preview viewport.
+  Rect _placeButton(Rect rect, Size viewport) {
+    Rect fit(Offset point) => Rect.fromLTWH(
+      point.dx.clamp(0, (viewport.width - 28).clamp(0, double.infinity)),
+      point.dy.clamp(0, (viewport.height - 28).clamp(0, double.infinity)),
+      28,
+      28,
+    );
+    final candidates = [
+      Offset(rect.right - 28, rect.top),
+      Offset(rect.right - 14, rect.top - 14),
+      Offset(rect.center.dx - 14, rect.top - 28),
+      Offset(rect.left - 28, rect.center.dy - 14),
+      Offset(rect.right, rect.center.dy - 14),
+      Offset(rect.center.dx - 14, rect.bottom),
+    ].map(fit);
+    final tapCenter = Rect.fromCenter(
+      center: rect.center,
+      width: 16,
+      height: 16,
+    );
+    return candidates.firstWhere(
+      (candidate) => !candidate.overlaps(tapCenter),
+      orElse: () => candidates.first,
+    );
   }
 
   void _refresh() {
@@ -150,6 +177,7 @@ class _PreviewEditInspectorState extends State<PreviewEditInspector> {
       _pointer = null;
       _target = null;
       _rect = null;
+      _buttonRect = null;
       _buttonHovered = false;
     });
   }
@@ -193,9 +221,9 @@ class _PreviewEditInspectorState extends State<PreviewEditInspector> {
                   ),
                 ),
                 Positioned(
-                  top: rect.top,
+                  top: _buttonRect!.top,
                   right: null,
-                  left: (rect.right - 28).clamp(rect.left, rect.right),
+                  left: _buttonRect!.left,
                   child: MouseRegion(
                     onEnter: (_) => _buttonHovered = true,
                     onExit: (_) => _buttonHovered = false,

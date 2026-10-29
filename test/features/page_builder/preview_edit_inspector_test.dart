@@ -6,6 +6,74 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/pr
 
 void main() {
   testWidgets(
+    'small header icons keep their center tap, even at viewport edges',
+    (tester) async {
+      if (!AppConfig.isCmsPreview) return;
+      for (final alignment in [
+        Alignment.topLeft,
+        Alignment.topRight,
+        Alignment.bottomLeft,
+        Alignment.bottomRight,
+        Alignment.center,
+      ]) {
+        for (final size in [28.0, 40.0, 50.0]) {
+          var taps = 0;
+          final edits = <PreviewEditSelection>[];
+          await tester.pumpWidget(
+            MaterialApp(
+              home: PreviewEditInspector(
+                key: UniqueKey(),
+                onEdit: edits.add,
+                child: Align(
+                  alignment: alignment,
+                  child: PreviewEditRegion(
+                    page: 'product',
+                    target: 'header',
+                    item: 'back',
+                    child: SizedBox(
+                      width: size,
+                      height: size,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => taps++,
+                        child: const Icon(Icons.arrow_back),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+          final mouse = await tester.createGesture(
+            kind: PointerDeviceKind.mouse,
+          );
+          final center = tester.getCenter(find.byIcon(Icons.arrow_back));
+          await mouse.addPointer(location: center);
+          await mouse.moveTo(center);
+          await tester.pump();
+          final button = find.byKey(const Key('preview-edit-button'));
+          expect(tester.getRect(button).contains(center), isFalse);
+          await mouse.down(center);
+          await mouse.up();
+          await tester.pump();
+          expect(taps, 1);
+          expect(edits, isEmpty);
+          final corner = tester.getCenter(button);
+          await mouse.moveTo(corner);
+          await tester.pump();
+          await mouse.down(corner);
+          await mouse.up();
+          await tester.pump();
+          expect(edits.single.item, 'back');
+          expect(taps, 1);
+          await mouse.removePointer();
+          expect(tester.takeException(), isNull);
+        }
+      }
+    },
+  );
+
+  testWidgets(
     'fast movement from a pencil selects the next section immediately',
     (tester) async {
       if (!AppConfig.isCmsPreview) return;
