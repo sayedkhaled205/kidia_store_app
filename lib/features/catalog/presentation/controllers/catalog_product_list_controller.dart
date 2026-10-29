@@ -194,6 +194,7 @@ class CatalogProductListState {
     this.items = const <CatalogProduct>[],
     this.sort = CatalogSort.relevance,
     this.filters = const CatalogProductFilters(),
+    this.selectedChildCategoryId,
     this.page = 0,
     this.totalItems = 0,
     this.totalPages = 0,
@@ -214,6 +215,7 @@ class CatalogProductListState {
   final List<CatalogProduct> items;
   final CatalogSort sort;
   final CatalogProductFilters filters;
+  final int? selectedChildCategoryId;
   final int page;
   final int? totalItems;
   final int? totalPages;
@@ -240,6 +242,7 @@ class CatalogProductListState {
     List<CatalogProduct>? items,
     CatalogSort? sort,
     CatalogProductFilters? filters,
+    Object? selectedChildCategoryId = _notProvided,
     int? page,
     Object? totalItems = _notProvided,
     Object? totalPages = _notProvided,
@@ -260,6 +263,9 @@ class CatalogProductListState {
       items: items ?? this.items,
       sort: sort ?? this.sort,
       filters: filters ?? this.filters,
+      selectedChildCategoryId: identical(selectedChildCategoryId, _notProvided)
+          ? this.selectedChildCategoryId
+          : selectedChildCategoryId as int?,
       page: page ?? this.page,
       totalItems: identical(totalItems, _notProvided)
           ? this.totalItems
@@ -306,6 +312,38 @@ class CatalogProductListController extends ChangeNotifier {
   StreamSubscription<int>? _catalogSubscription;
 
   CatalogProductListState get state => _state;
+  int? get effectiveCategoryId =>
+      _state.selectedChildCategoryId ?? request.categoryId;
+
+  /// Filter within the current category page, keeping its rail and filters.
+  Future<void> selectChildCategory(int? categoryId) async {
+    if (_disposed || (categoryId != null && categoryId <= 0)) return;
+    final selected = categoryId == request.categoryId ? null : categoryId;
+    if (_state.selectedChildCategoryId == selected) return;
+    ++_operation;
+    _replace(
+      _state.copyWith(
+        selectedChildCategoryId: selected,
+        items: const [],
+        page: 0,
+        totalItems: 0,
+        totalPages: 0,
+        cursorPagination: false,
+        cursorHasNextPage: false,
+        cursorHasPreviousPage: false,
+        isInitialLoading: true,
+        isRefreshing: false,
+        isLoadingMore: false,
+        error: null,
+        loadMoreError: null,
+        filterData: null,
+        availableSizes: const [],
+        availableColors: const [],
+      ),
+    );
+    await loadInitial();
+  }
+
   Future<CatalogFilterOptions> loadFilterOptions() {
     final source = _repository;
     return source is CatalogFilterOptionsSource
@@ -671,8 +709,8 @@ class CatalogProductListController extends ChangeNotifier {
       perPage: perPage ?? request.pageSize,
       search: _state.search,
       sort: collectionIsNewest ? CatalogSort.newest : _state.sort,
-      categoryIds: request.categoryId != null
-          ? <int>[request.categoryId!]
+      categoryIds: effectiveCategoryId != null
+          ? <int>[effectiveCategoryId!]
           : const <int>[],
       brandIds: request.brandId != null
           ? <int>[request.brandId!]

@@ -34,15 +34,17 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
+      final repository = _ScreenCatalogRepository(
+        categoryLayout: 'visual_grid',
+        gridColumns: 2,
+        deepTree: true,
+        inlineSiblings: true,
+        navigationMode: 'products_with_children',
+        nameHighlightEnabled: true,
+      );
       await tester.pumpWidget(
         _app(
-          _ScreenCatalogRepository(
-            categoryLayout: 'visual_grid',
-            gridColumns: 2,
-            deepTree: true,
-            navigationMode: 'products_with_children',
-            nameHighlightEnabled: true,
-          ),
+          repository,
           const CategoriesScreen(),
           direction: direction,
           scale: 1.5,
@@ -65,6 +67,10 @@ void main() {
           tester.getTopLeft(find.byKey(const Key('catalog-sort-button'))).dy,
         ),
       );
+      final screen = find.byType(CatalogProductListScreen);
+      final originalRoute = GoRouter.of(
+        tester.element(screen),
+      ).routerDelegate.currentConfiguration.uri;
       await tester.tap(find.text('Summer dresses'));
       await tester.pumpAndSettle();
       expect(
@@ -74,10 +80,64 @@ void main() {
             )
             .request
             .categoryId,
+        2,
+      );
+      expect(rail, findsOneWidget);
+      expect(repository.productQueries.last.categoryIds, [4]);
+      expect(
+        GoRouter.of(
+          tester.element(screen),
+        ).routerDelegate.currentConfiguration.uri,
+        originalRoute,
+      );
+      final card = find.byKey(const Key('category-products-card-4'));
+      final surface = tester
+          .widgetList<Container>(
+            find.descendant(of: card, matching: find.byType(Container)),
+          )
+          .firstWhere((widget) => widget.foregroundDecoration != null);
+      expect(
+        (surface.foregroundDecoration as BoxDecoration).color!.a,
+        closeTo(0.08, 0.001),
+      );
+      expect(find.byType(CategoryProductsCards), findsOneWidget);
+      expect(
+        tester
+            .widget<CategoryProductsCards>(find.byType(CategoryProductsCards))
+            .categories
+            .length,
         4,
       );
+      await tester.tap(find.text('Winter dresses'));
+      await tester.pumpAndSettle();
+      expect(repository.productQueries.last.categoryIds, [6]);
+      expect(
+        tester
+            .widget<CategoryProductsCards>(find.byType(CategoryProductsCards))
+            .selectedCategoryId,
+        6,
+      );
+      expect(
+        GoRouter.of(
+          tester.element(screen),
+        ).routerDelegate.currentConfiguration.uri,
+        originalRoute,
+      );
+      await tester.tap(find.text('Winter dresses'));
+      await tester.pumpAndSettle();
+      expect(repository.productQueries.last.categoryIds, [2]);
+      expect(rail, findsOneWidget);
+      expect(
+        GoRouter.of(
+          tester.element(screen),
+        ).routerDelegate.currentConfiguration.uri,
+        originalRoute,
+      );
+      // One Back returns to the original category page, without child routes.
+      GoRouter.of(tester.element(screen)).pop();
+      await tester.pumpAndSettle();
+      expect(find.text('Dresses'), findsOneWidget);
       expect(rail, findsNothing);
-      expect(find.text('Shirt'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
@@ -1167,6 +1227,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
     this.viewAllStyle = 'outline',
     this.gridColumns = 4,
     this.deepTree = false,
+    this.inlineSiblings = false,
     this.nameHighlightEnabled,
     this.nameVerticalPadding = 7,
     this.cursor = false,
@@ -1181,6 +1242,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
   final String viewAllStyle;
   final int gridColumns;
   final bool deepTree;
+  final bool inlineSiblings;
   final bool? nameHighlightEnabled;
   final double nameVerticalPadding;
   final bool cursor;
@@ -1308,10 +1370,30 @@ class _ScreenCatalogRepository implements CatalogRepository {
             slug: 'summer',
             parentId: 2,
           ),
+        if (inlineSiblings) ...[
+          const CatalogCategory(
+            id: 6,
+            name: 'Winter dresses',
+            slug: 'winter',
+            parentId: 2,
+          ),
+          const CatalogCategory(
+            id: 7,
+            name: 'Autumn dresses',
+            slug: 'autumn',
+            parentId: 2,
+          ),
+          const CatalogCategory(
+            id: 8,
+            name: 'Trousers',
+            slug: 'trousers',
+            parentId: 2,
+          ),
+        ],
       ],
       page: query.page,
       perPage: query.perPage,
-      totalItems: deepTree ? 4 : 3,
+      totalItems: (deepTree ? 4 : 3) + (inlineSiblings ? 3 : 0),
       totalPages: 1,
     );
   }
