@@ -71,7 +71,6 @@ mapping = {
  'includes/class-mobishop-push-service.php':'connectors/woocommerce/source/includes/class-mobishop-push-service.php',
  'includes/central/store-notifications.php':'connectors/woocommerce/source/includes/central/store-notifications.php',
  'includes/central/kidia-push-actions.php':'connectors/woocommerce/source/includes/central/kidia-push-actions.php',
- 'admin/class-mobishop-admin.php':'mobishop/admin/class-mobishop-admin.php',
 }
 import difflib
 with tempfile.TemporaryDirectory() as folder:
@@ -84,13 +83,34 @@ with tempfile.TemporaryDirectory() as folder:
         subprocess.run(['patch','--batch','--fuzz=0','-p1'],input=patch.encode(),cwd=folder,check=True,stdout=subprocess.PIPE)
         changes[plugin/relative]=candidate.read_bytes()
 
+# Verify the previously published package before replacing the install download.
+import zipfile
+downloads = Path('/home/woomobile/public_html/downloads')
+release = downloads/'connector-release.json'
+alias = downloads/'mobi2app-connector.zip'
+old_manifest = json.loads(subprocess.check_output(['git','show',base+':connectors/woocommerce/source-manifest.json'],cwd=repo))
+metadata = json.loads(release.read_text())
+assert metadata['version'] == old_manifest['version'] == '1.46.118'
+assert sha(alias.read_bytes()) == metadata['sha256']
+with zipfile.ZipFile(alias) as package:
+    for name, record in old_manifest['files'].items():
+        assert sha(package.read('mobi2app-connector/'+name)) == record['sha256'], name
+subprocess.run(['python3',str(repo/'tool/build_woocommerce_connector.py')],check=True,stdout=subprocess.PIPE)
+new_metadata=json.loads((repo/'build/woocommerce/connector-release.json').read_text())
+archive=(repo/'build/woocommerce'/new_metadata['file']).read_bytes()
+assert new_metadata['version']=='1.46.119' and sha(archive)==new_metadata['sha256']
+changes[downloads/new_metadata['file']]=archive
+changes[alias]=archive
+changes[release]=(json.dumps(new_metadata,indent=2)+'\n').encode()
+
 backup.mkdir(mode=0o700)
 records=[]
 for i,(path,data) in enumerate(changes.items()):
     old=path.read_bytes() if path.exists() else None
     if old is not None: (backup/(str(i)+'.old')).write_bytes(old)
     candidate=backup/(str(i)+'.new');candidate.write_bytes(data)
-    subprocess.run([php,'-l',str(candidate)],check=True,stdout=subprocess.PIPE)
+    if path.suffix == '.php':
+        subprocess.run([php,'-l',str(candidate)],check=True,stdout=subprocess.PIPE)
     records.append({'path':str(path),'before':sha(old) if old is not None else None,'after':sha(data)})
 (backup/'manifest.json').write_text(json.dumps(records,indent=2))
 print(json.dumps({'staged':True,'files':len(records),'backup':str(backup)}))

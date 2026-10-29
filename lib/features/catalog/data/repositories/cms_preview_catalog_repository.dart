@@ -201,8 +201,9 @@ class CmsPreviewCatalogRepository
     try {
       return await request;
     } catch (_) {
-      if (identical(_variationReads[productId], request))
+      if (identical(_variationReads[productId], request)) {
         _variationReads.remove(productId);
+      }
       rethrow;
     }
   }
