@@ -6,6 +6,53 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/pr
 
 void main() {
   testWidgets(
+    'fast movement from a pencil selects the next section immediately',
+    (tester) async {
+      if (!AppConfig.isCmsPreview) return;
+      final edits = <PreviewEditSelection>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) =>
+              PreviewEditInspector(onEdit: edits.add, child: child!),
+          home: Scaffold(
+            body: Column(
+              children: [
+                for (final id in ['first', 'second', 'third'])
+                  PreviewEditRegion(
+                    page: 'home',
+                    target: id,
+                    child: SizedBox(
+                      width: 250,
+                      height: 150,
+                      child: Center(child: Text(id)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      for (final id in ['first', 'second', 'third', 'first']) {
+        await mouse.moveTo(tester.getCenter(find.text(id)));
+        await tester.pump();
+        final button = tester.getCenter(
+          find.byKey(const Key('preview-edit-button')),
+        );
+        await mouse.moveTo(button);
+        await tester.pump(const Duration(seconds: 1));
+        await mouse.down(button);
+        await mouse.up();
+        await tester.pump();
+        expect(edits.last.target, id);
+        expect(tester.takeException(), isNull);
+      }
+      await mouse.removePointer();
+    },
+  );
+
+  testWidgets(
     'hover outlines exact region; center taps operate, corner edits',
     (tester) async {
       var taps = 0;

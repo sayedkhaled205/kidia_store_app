@@ -89,7 +89,20 @@ class _PreviewEditInspectorState extends State<PreviewEditInspector> {
 
   void _inspect(Offset globalPosition) {
     _pointer = globalPosition;
-    if (_buttonHovered) return;
+    final surface =
+        _surfaceKey.currentContext?.findRenderObject() as RenderBox?;
+    // A fast jump from the pencil can arrive before its mouse-exit callback.
+    // Freeze selection only while the pointer is actually over the pencil.
+    if (_buttonHovered && _rect != null && surface != null) {
+      final buttonRect = Rect.fromLTWH(
+        (_rect!.right - 28).clamp(_rect!.left, _rect!.right),
+        _rect!.top,
+        28,
+        28,
+      );
+      if (buttonRect.contains(surface.globalToLocal(globalPosition))) return;
+      _buttonHovered = false;
+    }
     final result = HitTestResult();
     RendererBinding.instance.hitTestInView(
       result,
@@ -103,8 +116,6 @@ class _PreviewEditInspectorState extends State<PreviewEditInspector> {
         break;
       }
     }
-    final surface =
-        _surfaceKey.currentContext?.findRenderObject() as RenderBox?;
     Rect? rect;
     if (target != null && target.attached && surface != null) {
       rect = MatrixUtils.transformRect(
@@ -192,6 +203,7 @@ class _PreviewEditInspectorState extends State<PreviewEditInspector> {
                       color: accent,
                       borderRadius: BorderRadius.circular(4),
                       child: Semantics(
+                        container: true,
                         label: arabic
                             ? 'تعديل إعدادات العنصر'
                             : 'Edit element settings',

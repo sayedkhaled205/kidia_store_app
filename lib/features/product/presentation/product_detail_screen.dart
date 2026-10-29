@@ -24,6 +24,7 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/domain/cms_footer_label.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:mobishop_store_app/shared/widgets/product/product_badge.dart';
 import 'package:share_plus/share_plus.dart';
@@ -408,10 +409,14 @@ class _ProductContentState extends State<_ProductContent> {
       slivers: <Widget>[
         if (pageLayout.element('image_gallery').enabled)
           SliverToBoxAdapter(
-            child: _ProductGallery(
+            child: PreviewEditRegion(
+              page: 'product',
+              target: pageLayout.element('image_gallery').id,
+              child: _ProductGallery(
               images: images,
               productName: product.name,
               settings: pageLayout.element('image_gallery'),
+              ),
             ),
           ),
         if (summaryBeforeTabs && pageLayout.element('product_summary').enabled)
@@ -581,11 +586,15 @@ class _ProductTabsDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return _ProductTabsBar(
+    return PreviewEditRegion(
+      page: 'product',
+      target: settings.id,
+      child: _ProductTabsBar(
       settings: settings,
       tabs: tabs,
       onSelected: onSelected,
       elevated: overlapsContent,
+      ),
     );
   }
 
