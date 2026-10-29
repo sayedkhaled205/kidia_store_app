@@ -433,6 +433,11 @@ class _CatalogToolbar extends ConsumerWidget {
           loading: () => const <StoreBrand>[],
           error: (Object error, StackTrace stackTrace) => const <StoreBrand>[],
         );
+    // Keep an active selection reachable for reset, even after an empty result.
+    final sizes = {...state.availableSizes, ...state.filters.sizes}.toList();
+    final colors = {...state.availableColors, ...state.filters.colors}.toList();
+    final showSize = settings.boolean('filter_size', true) && sizes.isNotEmpty;
+    final showColor = settings.boolean('filter_color', false) && colors.isNotEmpty;
     final double gap = settings.number('button_gap', 8).clamp(0, 24).toDouble();
     final double iconSize = settings
         .number('icon_size', 22)
@@ -468,7 +473,7 @@ class _CatalogToolbar extends ConsumerWidget {
     Future<void> openSize() async {
       final CatalogSizeSelection? selection = await CatalogSizeSheet.show(
         context,
-        options: state.availableSizes,
+        options: sizes,
         selectedFilters: state.filters,
         belowToolbar: settings.string('button_style', 'outlined') == 'flat',
       );
@@ -479,7 +484,7 @@ class _CatalogToolbar extends ConsumerWidget {
       if (settings.string('button_style', 'outlined') == 'flat') {
         final selection = await CatalogSizeSheet.show(
           context,
-          options: state.availableColors,
+          options: colors,
           selectedFilters: state.filters,
           belowToolbar: true,
           colors: true,
@@ -489,7 +494,7 @@ class _CatalogToolbar extends ConsumerWidget {
       }
       final CatalogColorSelection? selection = await CatalogColorSheet.show(
         context,
-        options: state.availableColors,
+        options: colors,
         selectedFilters: state.filters,
       );
       if (selection != null) await controller.applyColors(selection.options);
@@ -514,8 +519,8 @@ class _CatalogToolbar extends ConsumerWidget {
                 ? state.availableColors
                 : const [],
             loadOptions: controller.loadFilterOptions,
-            showSizes: settings.boolean('filter_size', true),
-            showColors: settings.boolean('filter_color', false),
+            showSizes: false,
+            showColors: false,
             showPrice: settings.boolean('filter_price', true),
             showSale: settings.boolean('filter_sale', true),
             showBrand: settings.boolean('filter_brand', true),
@@ -536,7 +541,7 @@ class _CatalogToolbar extends ConsumerWidget {
             radius: buttonRadius,
             onPressed: openSort,
           ),
-        if (settings.boolean('filter_size', true))
+        if (showSize)
           _FlatToolbarButton(
             key: const Key('catalog-size-button'),
             label: copy.size,
@@ -547,7 +552,7 @@ class _CatalogToolbar extends ConsumerWidget {
             selected: state.filters.hasSize,
             onPressed: openSize,
           ),
-        if (settings.boolean('filter_color', false))
+        if (showColor)
           _FlatToolbarButton(
             key: const Key('catalog-color-button'),
             label: copy.color,
@@ -648,8 +653,8 @@ class _CatalogToolbar extends ConsumerWidget {
                               ? state.availableColors
                               : const [],
                           loadOptions: controller.loadFilterOptions,
-                          showSizes: settings.boolean('filter_size', true),
-                          showColors: settings.boolean('filter_color', false),
+                          showSizes: false,
+                          showColors: false,
                           showPrice: settings.boolean('filter_price', true),
                           showSale: settings.boolean('filter_sale', true),
                           showBrand: settings.boolean('filter_brand', true),
@@ -662,9 +667,9 @@ class _CatalogToolbar extends ConsumerWidget {
                   ),
                 ),
               if (settings.boolean('show_filter', true) &&
-                  settings.boolean('filter_size', true))
+                  showSize)
                 SizedBox(width: gap),
-              if (settings.boolean('filter_size', true))
+              if (showSize)
                 Expanded(
                   child: Badge(
                     isLabelVisible: state.filters.hasSize,
@@ -681,7 +686,7 @@ class _CatalogToolbar extends ConsumerWidget {
                         final CatalogSizeSelection? selection =
                             await CatalogSizeSheet.show(
                               context,
-                              options: state.availableSizes,
+                              options: sizes,
                               selectedFilters: state.filters,
                             );
                         if (selection != null) {
@@ -691,9 +696,9 @@ class _CatalogToolbar extends ConsumerWidget {
                     ),
                   ),
                 ),
-              if (settings.boolean('filter_color', false)) ...<Widget>[
+              if (showColor) ...<Widget>[
                 if (settings.boolean('show_filter', true) ||
-                    settings.boolean('filter_size', true))
+                    showSize)
                   SizedBox(width: gap),
                 Expanded(
                   child: Badge(
@@ -712,8 +717,8 @@ class _CatalogToolbar extends ConsumerWidget {
                   ),
                 ),
               ],
-              if ((settings.boolean('filter_size', true) ||
-                      settings.boolean('filter_color', false) ||
+              if ((showSize ||
+                      showColor ||
                       settings.boolean('show_filter', true)) &&
                   settings.boolean('show_sort', true))
                 SizedBox(width: gap),

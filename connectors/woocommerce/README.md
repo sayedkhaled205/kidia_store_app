@@ -4,6 +4,9 @@ This is the canonical source of **Mobi2App Connector for WooCommerce** distribut
 to new WooMobile stores. The `mobishop/` directory and `mobishop.zip` are the older
 CMS plugin; do not use those packages as replacements for this connector.
 
+Version 1.46.118 adds a publishable product selector style with variation photos
+and compact rectangular sizes. Existing chip and dropdown styles are retained.
+
 Version 1.46.105 adds FlyCart Discount Rules display-price integration and an
 authorized, read-only merchant rule summary alongside WooCommerce coupons.
 Cart discounts and automatic gifts remain calculated by the installed FlyCart

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -15,6 +17,35 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/product_test_data.dart';
 
 void main() {
+  for (final count in [6, 7]) {
+    testWidgets('compact sizes keep Brand close after $count sizes', (tester) async {
+      tester.view.physicalSize = const Size(390, 2000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final product = CatalogProduct(id: 88, name: 'Baby set', slug: 'baby', type: 'variable',
+        prices: testMoney, isInStock: true, brands: simpleProduct.brands,
+        attributes: [CatalogProductAttribute(id: 1, name: 'Size', taxonomy: 'pa_size', hasVariations: true,
+          terms: [for(var i=1;i<=count;i++) CatalogAttributeTerm(id:i,name:'${i}Y',slug:'${i}y')])]);
+      final base = CmsPageLayout.fallback('product');
+      final layout = CmsPageLayout(page: base.page, header: base.header, footer: base.footer,
+        elements: base.elements.map((e) => CmsPageComponent(id:e.id,type:e.type,enabled:e.enabled,
+          settings:{...e.settings, if(e.type=='variations') ...{'style':'tiles','chip_height':52,'chip_radius':8},
+            if(e.type=='purchase_bar') 'show_quantity':false})).toList());
+      await tester.pumpWidget(_testApp(ProductDetailScreen(productId:88,
+        repository: ProductFakeCatalogRepository(product:product,
+          variations:[for(var i=1;i<=count;i++) CatalogVariation(id:i,attributes:[CatalogVariationAttribute(name:'Size',value:'${i}Y')])])),productLayout:layout));
+      await tester.pumpAndSettle();
+      final first=find.byKey(const Key('product-option-pa_size-1y'));
+      final last=find.byKey(Key('product-option-pa_size-${count}y'));
+      if(count==6) expect(tester.getTopLeft(last).dy,tester.getTopLeft(first).dy);
+      else expect(tester.getTopLeft(last).dy,greaterThan(tester.getTopLeft(first).dy));
+      final gap=tester.getTopLeft(find.byKey(const Key('product-brand-section'))).dy-tester.getBottomLeft(last).dy;
+      expect(gap,inInclusiveRange(12,32));
+      expect(tester.takeException(),isNull);
+    });
+  }
+
   for (final customLabel in [false, true]) {
     testWidgets('disabled reviews hide their navigation target (custom: $customLabel)', (tester) async {
       _useTallSurface(tester);

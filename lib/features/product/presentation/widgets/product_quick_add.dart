@@ -1,5 +1,6 @@
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'package:flutter/material.dart';
+import 'product_option_tiles.dart';
 import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
@@ -206,6 +207,7 @@ class _ProductQuickAddSheetState extends ConsumerState<_ProductQuickAddSheet> {
   Widget _content(BuildContext context, CatalogProduct product) {
     final ColorScheme colors = Theme.of(context).colorScheme;
     final footer = ref.watch(cmsPageLayoutProvider('product')).value?.footer;
+    final variations = ref.watch(cmsPageLayoutProvider('product')).value?.element('variations');
     final wishlistFooter =
         footer?.string('quick_add_layout', 'button') == 'wishlist_button';
     final displayedPrice = _controller.displayedPrice;
@@ -286,7 +288,14 @@ class _ProductQuickAddSheetState extends ConsumerState<_ProductQuickAddSheet> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Wrap(
+                    if (variations?.string('style', 'chips') == 'tiles')
+                      ProductOptionTiles(
+                        controller: _controller,
+                        group: group,
+                        height: variations!.number('chip_height', 52).clamp(44, 56),
+                        radius: variations.number('chip_radius', 8).clamp(0, 32),
+                      )
+                    else Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: group.values
