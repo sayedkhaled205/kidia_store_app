@@ -38,8 +38,11 @@ void main() {
       await tester.pumpAndSettle();
       final first=find.byKey(const Key('product-option-pa_size-1y'));
       final last=find.byKey(Key('product-option-pa_size-${count}y'));
-      if(count==6) expect(tester.getTopLeft(last).dy,tester.getTopLeft(first).dy);
-      else expect(tester.getTopLeft(last).dy,greaterThan(tester.getTopLeft(first).dy));
+      if(count==6) {
+        expect(tester.getTopLeft(last).dy,tester.getTopLeft(first).dy);
+      } else {
+        expect(tester.getTopLeft(last).dy,greaterThan(tester.getTopLeft(first).dy));
+      }
       final gap=tester.getTopLeft(find.byKey(const Key('product-brand-section'))).dy-tester.getBottomLeft(last).dy;
       expect(gap,inInclusiveRange(12,32));
       expect(tester.takeException(),isNull);
