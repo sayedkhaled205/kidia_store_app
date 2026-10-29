@@ -142,6 +142,14 @@ GoRouter createAppRouter({
                   child: HomePage(),
                 ),
                 routes: [
+                  // Keep search and its product destination on the same shell
+                  // stack so opening a result does not duplicate its Page key.
+                  GoRoute(
+                    path: 'search',
+                    builder: (context, state) => SearchScreen(
+                      initialQuery: state.uri.queryParameters['q'] ?? '',
+                    ),
+                  ),
                   GoRoute(
                     path: 'bundle/:bundleId',
                     builder: (context, state) {
@@ -547,11 +555,6 @@ GoRouter createAppRouter({
           code: state.uri.queryParameters['code'] ?? '',
           state: state.uri.queryParameters['state'] ?? '',
         ),
-      ),
-      GoRoute(
-        path: '/search',
-        builder: (context, state) =>
-            SearchScreen(initialQuery: state.uri.queryParameters['q'] ?? ''),
       ),
       GoRoute(
         path: '/cart',

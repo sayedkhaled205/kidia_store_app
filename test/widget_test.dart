@@ -32,6 +32,7 @@ import 'package:mobishop_store_app/features/cart/presentation/adapters/product_p
     as cart_selection;
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/features/product/presentation/product_detail_screen.dart';
+import 'package:mobishop_store_app/features/search/presentation/search_screen.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
@@ -39,6 +40,30 @@ import 'features/product/support/product_test_data.dart';
 import 'features/auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  for (final origin in ['/', '/categories', '/wishlist']) {
+    testWidgets('search from $origin opens a product and returns to the same query', (tester) async {
+      final router = createAppRouter(initialLocation: origin);
+      await _pumpStartedApp(tester, router: router);
+      router.push('/search?q=LOTSO');
+      await tester.pumpAndSettle();
+      router.push('/product/42');
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(ProductDetailScreen), findsOneWidget);
+      expect(await router.routerDelegate.popRoute(), isTrue);
+      await tester.pumpAndSettle();
+      expect(find.byType(ProductDetailScreen), findsNothing);
+      expect(tester.widget<SearchScreen>(find.byType(SearchScreen)).initialQuery, 'LOTSO');
+      expect(await router.routerDelegate.popRoute(), isTrue);
+      // The restored Home has a continuously animated carousel.
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(find.byType(SearchScreen), findsNothing);
+      await _disposeApp(tester, router);
+    });
+  }
+
   for (final path in ['/categories', '/wishlist', '/account']) {
     testWidgets('system back returns $path to Home before exiting', (tester) async {
       final router = createAppRouter(initialLocation: path);
