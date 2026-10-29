@@ -37,9 +37,10 @@
       section.append(el('p',tr('Analytics is unavailable. Reload to try again. Unavailable data is not counted as zero.','التحليلات غير متاحة حاليًا. أعد تحميل الصفحة للمحاولة. البيانات غير المتاحة لا تُحسب صفرًا.'))); return;
     }
     const controls = el('div',undefined,'wm-push-controls');
+    if (data.truncated === true) section.append(el('p',tr('This report and CSV include the latest 1,000 campaigns only. Older campaigns are outside these totals.','التقرير وملف CSV يشملوا أحدث ١٠٠٠ حملة فقط. الحملات الأقدم خارج الأرقام المعروضة.'),'wm-push-limit'));
     const label = el('label',tr('Campaign period','فترة الحملات'));
     const range = el('select'); range.setAttribute('aria-label',tr('Campaign period','فترة الحملات'));
-    [[30,tr('Last 30 days','آخر ٣٠ يوم')],[7,tr('Last 7 days','آخر ٧ أيام')],[90,tr('Last 90 days','آخر ٩٠ يوم')],[0,tr('All tracked campaigns','كل الحملات المتتبعة')]].forEach(([value,text]) => { const option=el('option',text);option.value=String(value);range.append(option); });
+    [[30,tr('Last 30 days','آخر ٣٠ يوم')],[7,tr('Last 7 days','آخر ٧ أيام')],[90,tr('Last 90 days','آخر ٩٠ يوم')],[0,data.truncated === true ? tr('All shown campaigns','كل الحملات المعروضة') : tr('All tracked campaigns','كل الحملات المتتبعة')]].forEach(([value,text]) => { const option=el('option',text);option.value=String(value);range.append(option); });
     label.append(range); controls.append(label);
     const exportButton = el('button',tr('Export CSV','تنزيل CSV'),'wm-push-export'); exportButton.type='button'; controls.append(exportButton); section.append(controls);
     section.append(el('p',tr('Sending is provider acceptance, not delivery. Confirmed receipt includes foreground receipt or an open; background delivery can be unreported. Each device is counted once per campaign.','الإرسال يعني قبول مزود الخدمة، مش تأكيد الوصول. الوصول المؤكد يشمل الاستلام والتطبيق مفتوح أو فتح الإشعار؛ الوصول في الخلفية قد لا يتم تسجيله. الجهاز يُحسب مرة واحدة لكل حملة.'),'wm-push-note'));

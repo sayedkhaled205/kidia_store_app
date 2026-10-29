@@ -1,3 +1,5 @@
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
+
 /// Keep imported HTML fragments out of customer-facing filter choices.
 String catalogFilterLabel(Object? source) {
   var label = '${source ?? ''}'
@@ -44,9 +46,11 @@ class CatalogFilterOptions {
     this.tags = const [],
     this.sizes = const [],
     this.colors = const [],
+    this.brands = const [],
   });
   final List<CatalogTagOption> tags;
   final List<CatalogSizeOption> sizes, colors;
+  final List<StoreBrand> brands;
   factory CatalogFilterOptions.fromJson(Map<String, dynamic> json) {
     List<CatalogSizeOption> options(String key) => [
       for (final item in json[key] is List ? json[key] : [])
@@ -70,6 +74,19 @@ class CatalogFilterOptions {
       ],
       sizes: options('sizes'),
       colors: options('colors'),
+      brands: [
+        for (final item in json['brands'] is List ? json['brands'] : [])
+          if (item is Map &&
+              (int.tryParse('${item['id']}') ?? 0) > 0 &&
+              catalogFilterLabel(item['name']).isNotEmpty &&
+              '${item['slug'] ?? ''}'.isNotEmpty)
+            StoreBrand(
+              id: int.parse('${item['id']}'),
+              name: catalogFilterLabel(item['name']),
+              slug: '${item['slug']}',
+              count: (int.tryParse('${item['count']}') ?? 0).clamp(0, 1 << 31),
+            ),
+      ],
     );
   }
 }

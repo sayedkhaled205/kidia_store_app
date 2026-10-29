@@ -86,6 +86,31 @@ Future<void> tap(WidgetTester tester, Finder finder) async {
 
 void main() {
   testWidgets(
+    'late filter metadata exposes selectable brand and keeps its exact id',
+    (tester) async {
+      CatalogProductFilters? submitted;
+      await open(
+        tester,
+        load: () async => CatalogFilterOptions.fromJson({
+          'brands': [
+            {'id': 17, 'name': 'Kids brand', 'slug': 'kids'},
+          ],
+        }),
+        result: (value) => submitted = value,
+      );
+      await tester.tap(find.byKey(const Key('catalog-brand-filter')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kids brand').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Apply'));
+      await tester.tap(find.text('Apply'));
+      await tester.pumpAndSettle();
+      expect(submitted?.brandId, 17);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'published filter appearance and rollback retain entered prices and choices',
     (tester) async {
       final controls = ValueNotifier<Map<String, dynamic>>({});

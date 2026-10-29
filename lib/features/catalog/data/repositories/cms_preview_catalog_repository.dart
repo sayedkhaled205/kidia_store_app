@@ -13,6 +13,7 @@ import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_change_source.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_product_model.dart';
+import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
 
 /// Native preview catalog: theme fixtures in demo mode, connected store data
 /// through the authenticated parent bridge in live editor mode.
@@ -61,13 +62,34 @@ class CmsPreviewCatalogRepository
   @override
   Future<CatalogFilterOptions> getFilterOptions() async {
     if (!_usesLiveCatalog) return const CatalogFilterOptions();
+    return CatalogFilterOptions.fromJson(await _filterOptions());
+  }
+
+  Future<List<StoreBrand>> getFilterBrands() async =>
+      (await getFilterOptions()).brands;
+
+  Future<Map<String, dynamic>>? _optionsRequest;
+  int _optionsRevision = -1;
+  Future<Map<String, dynamic>> _filterOptions() async {
+    if (_optionsRevision != _currentRevision) {
+      _optionsRevision = _currentRevision;
+      _optionsRequest = null;
+    }
+    final pending = _optionsRequest ??= _readFilterOptions();
+    try {
+      return await pending;
+    } catch (_) {
+      if (identical(_optionsRequest, pending)) _optionsRequest = null;
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> _readFilterOptions() async {
     final response = await _fetchPage({'catalog_resource': 'filter_options'});
     if ('${response['error'] ?? ''}'.isNotEmpty) {
       throw StateError('${response['error']}');
     }
-    return CatalogFilterOptions.fromJson(
-      Map<String, dynamic>.from(response['filter_options'] as Map? ?? {}),
-    );
+    return Map<String, dynamic>.from(response['filter_options'] as Map? ?? {});
   }
 
   Future<Map<String, dynamic>> _fetchPage(Map<String, dynamic> query) =>

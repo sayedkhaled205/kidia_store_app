@@ -24,6 +24,9 @@ for(const lang of ['en','ar']) {
   const select=root.querySelector('select');select.value='7';select.dispatchEvent(new dom.window.Event('change'));assert.equal(root.querySelectorAll('.wm-push-campaign').length,1);
   api.mount(root,{status:'ready',version:2,campaigns:[{...row,created_at:1}]});assert.equal(root.querySelectorAll('.wm-push-campaign').length,0);
   api.mount(root,null);assert.equal(root.querySelectorAll('.wm-push-metrics').length,0);
+  api.mount(root,{status:'ready',version:2,truncated:true,campaigns:[row]});
+  assert(root.querySelector('.wm-push-limit'));assert.match(root.textContent,lang==='en'?/latest 1,000 campaigns only/:/أحدث ١٠٠٠ حملة فقط/);
+  api.mount(root,{status:'ready',version:2,truncated:false,campaigns:[row]});assert.equal(root.querySelector('.wm-push-limit'),null);
   dom.window.close();
 }
 console.log('Push analytics rendering, precision, isolation and state contracts passed (English/Arabic).');

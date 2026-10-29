@@ -21,6 +21,8 @@ import 'features/checkout/data/repositories/cms_preview_checkout_repository.dart
 import 'features/checkout/domain/entities/checkout_presentation.dart';
 import 'features/checkout/presentation/checkout_screen.dart';
 import 'features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
+import 'features/page_builder/presentation/cms_preview_navigation.dart';
+import 'features/brands/presentation/providers/brands_providers.dart';
 import 'features/splash/presentation/cms_splash_preview.dart';
 import 'features/wishlist/data/cms_preview_wishlist_repository.dart';
 
@@ -110,12 +112,15 @@ void main() {
         'cart' => '/cart',
         _ => null,
       };
-      if (path != null) router.go(path);
+      if (path != null) navigateCmsPreview(router, path);
     }).toJS,
   );
   runApp(
     ProviderScope(
       overrides: [
+        catalogFilterBrandsProvider.overrideWith(
+          (ref) => previewCatalog.getFilterBrands(),
+        ),
         nativeAuthActionsProvider.overrideWith(
           (ref) => CmsPreviewAuthActions(
             CmsPreviewLayoutBridge.fetchAuthConfiguration,

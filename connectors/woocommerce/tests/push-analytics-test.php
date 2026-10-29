@@ -11,13 +11,13 @@ class WP_REST_Request {
  public function get_header($key){return $this->headers[$key]??'';}
 }
 class PushTestDb {
- public $prefix='test_'; public PDO $db;
+ public $prefix='test_'; public PDO $db; public array $reads=[];
  public function __construct(){ $this->db=new PDO('sqlite::memory:');$this->db->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION); }
  public function prepare($query,...$args){$i=0;return preg_replace_callback('/%[sd]/',function($m)use(&$i,$args){$v=$args[$i++];return $m[0]==='%d'?(string)(int)$v:$this->db->quote((string)$v);},$query);}
  public function query($sql){return $this->db->exec(str_replace('INSERT IGNORE','INSERT OR IGNORE',$sql));}
  public function get_row($sql,$mode=null){return $this->db->query($sql)->fetch(PDO::FETCH_ASSOC)?:null;}
  public function get_var($sql){return $this->db->query($sql)->fetchColumn();}
- public function get_results($sql,$mode=null){return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);}
+ public function get_results($sql,$mode=null){$this->reads[]=$sql;return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);}
  public function update($table,$data,$where){$sets=[];$filters=[];foreach($data as $k=>$v)$sets[]="$k=".$this->db->quote((string)$v);foreach($where as $k=>$v)$filters[]="$k=".$this->db->quote((string)$v);return $this->query("UPDATE $table SET ".implode(',',$sets).' WHERE '.implode(' AND ',$filters));}
  public function replace($table,$data){return $this->query("INSERT OR REPLACE INTO $table (".implode(',',array_keys($data)).') VALUES ('.implode(',',array_map(fn($v)=>$this->db->quote((string)$v),$data)).')');}
 }
@@ -63,4 +63,14 @@ $wpdb->query("UPDATE test_mobishop_push_events_v2 SET occurred_at='2000-01-01 00
 $expired=new WC_Order(12);MobiShop_Push_Analytics::attribute_order($expired,$request);check(!$expired->get_meta('_mobishop_push_campaign'),'Expired click not attributed');
 $website=new WC_Order(13);$website->meta=[];MobiShop_Push_Analytics::attribute_order($website,$request);check(!$website->get_meta('_mobishop_push_campaign'),'Website order not misclassified');
 check(!str_contains(json_encode(MobiShop_Push_Analytics::report()),hash('sha256','device-test-123')),'No device hashes exposed');
+$wpdb->db->beginTransaction();
+for($i=0;$i<1001;$i++)$wpdb->query($wpdb->prepare("INSERT INTO test_mobishop_push_campaigns_v2 (id,title,message,status,audience,created_at) VALUES (%s,'Window fixture','','sent','test',%d)",'window-campaign-'.$i,time()+10));
+$wpdb->db->commit();$wpdb->reads=[];
+$window=MobiShop_Push_Analytics::report();
+check($window['truncated']===true&&count($window['campaigns'])===1000,'Large history explicitly reports bounded window');
+check(!in_array('campaign-test-1',array_column($window['campaigns'],'id'),true),'Old campaign is outside reported totals');
+check(array_sum(array_column($window['campaigns'],'opened'))===0,'Old campaign receipts do not leak into displayed history');
+foreach(array_slice($wpdb->reads,1) as $sql)check(str_contains($sql,'WHERE campaign IN ('),'Aggregations must read only selected campaigns');
+$wpdb->query('DELETE FROM test_mobishop_push_campaigns_v2');$wpdb->reads=[];
+check(MobiShop_Push_Analytics::report()['campaigns']===[]&&count($wpdb->reads)===1,'Empty history avoids scanning receipt/order tables');
 echo "Push analytics SQL contracts passed: deduplication, audience isolation, verified orders, refunds, currencies and expiry.\n";
