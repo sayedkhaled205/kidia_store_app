@@ -42,9 +42,9 @@ class SharedHomeProductCollection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Column(
         children: [
-          if (title != null)
+          if (title != null || showViewAll)
             HomeBlockTitle(
-              title: title!,
+              title: title ?? '',
               showAction: showViewAll,
               actionLabel:
                   viewAllLabel ??

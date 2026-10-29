@@ -48,5 +48,12 @@ $site='https://cloned.example';
 check(MobiShop_Store_Notifications::connection()===[],'copied database cannot reuse another origin binding');
 $site='https://shop.example';$response=['status'=>200,'body'=>'{"project_info":{"project_id":"test-project"}}'];
 check(is_string(MobiShop_Store_Notifications::request('project/android-config','GET',[],true)),'native config uses verified store transport');
+$response=['status'=>410,'body'=>'{"ok":false,"code":"fcm_token_unregistered","message":"private provider detail"}'];
+$expired=MobiShop_Store_Notifications::request('messages','POST');
+check($expired->code==='push_token_unregistered' && !str_contains($expired->message,'private'), 'explicit expired token is classified without leaking provider response');
+foreach ([400,500,503] as $status) {
+ $response=['status'=>$status,'body'=>'{"code":"INVALID_ARGUMENT"}'];
+ check(MobiShop_Store_Notifications::request('messages','POST')->code!=='push_token_unregistered','transient or invalid payload cannot disable a device');
+}
 $license=file_get_contents($root.'/includes/class-mobishop-license-manager.php');
 check(substr_count($license,'MobiShop_Store_Notifications::request')===2,'both existing Firebase entry points use store transport');

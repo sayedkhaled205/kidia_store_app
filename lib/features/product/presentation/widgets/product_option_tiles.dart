@@ -90,48 +90,74 @@ class ProductOptionTiles extends StatelessWidget {
                       child: SizedBox(
                         key: Key('product-option-${group.key}-${option.value}'),
                         width: width,
-                        height: tileHeight,
-                        child: Material(
-                          color: active
-                              ? colors.primary.withValues(alpha: .10)
-                              : colors.surface,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(radius),
-                            side: BorderSide(
-                              color: active
-                                  ? colors.primary
-                                  : colors.outlineVariant,
-                              width: active ? 1.5 : .8,
-                            ),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: available
-                                ? () => controller.selectOption(
-                                    group.key,
-                                    option.value,
-                                  )
-                                : null,
-                            child: ExcludeSemantics(
-                              child: image == null
-                                  ? label
-                                  : Opacity(
-                                      opacity: available ? 1 : .35,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(3),
-                                        child: AppNetworkImage(
-                                          imageUrl: image.source.toString(),
-                                          fit: BoxFit.cover,
-                                          borderRadius: BorderRadius.circular(
-                                            math.max(0, radius - 3),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (colorGroup)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 5),
+                                child: label,
+                              ),
+                            SizedBox(
+                              height: tileHeight,
+                              width: width,
+                              child: Material(
+                                color: active
+                                    ? colors.primary.withValues(alpha: .10)
+                                    : colors.surface,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(radius),
+                                  side: BorderSide(
+                                    color: active
+                                        ? colors.primary
+                                        : colors.outlineVariant,
+                                    width: active ? 1.5 : .8,
+                                  ),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: available
+                                      ? () => controller.selectOption(
+                                          group.key,
+                                          option.value,
+                                        )
+                                      : null,
+                                  child: ExcludeSemantics(
+                                    child: image == null
+                                        ? (colorGroup
+                                              ? const Icon(
+                                                  Icons.image_outlined,
+                                                  size: 20,
+                                                )
+                                              : label)
+                                        : Opacity(
+                                            opacity: available ? 1 : .35,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(3),
+                                              child: AppNetworkImage(
+                                                imageUrl:
+                                                    (image.thumbnail ??
+                                                            image.source)
+                                                        .toString(),
+                                                fit: BoxFit.cover,
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      math.max(0, radius - 3),
+                                                    ),
+                                                errorWidget: const Icon(
+                                                  Icons.image_outlined,
+                                                  size: 20,
+                                                ),
+                                                placeholder:
+                                                    const SizedBox.shrink(),
+                                              ),
+                                            ),
                                           ),
-                                          errorWidget: label,
-                                          placeholder: label,
-                                        ),
-                                      ),
-                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
                     ),

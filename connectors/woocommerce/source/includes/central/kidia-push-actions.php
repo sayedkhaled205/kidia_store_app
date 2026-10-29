@@ -95,7 +95,7 @@ final class MobiShop_Central_Push_Actions {
 			'sound'      => ! empty( $input['push_sound'] ),
 			'badge'      => absint( $input['push_badge'] ?? 0 ),
 			'expiry_hours' => max( 1, min( 168, absint( $input['push_expiry_hours'] ?? 24 ) ) ),
-			'destination' => in_array( sanitize_key( wp_unslash( $input['push_destination'] ?? 'home' ) ), array( 'home', 'product', 'category', 'subcategory', 'collection', 'cart', 'checkout', 'wishlist', 'order', 'account', 'offers', 'search', 'custom', 'external' ), true )
+			'destination' => in_array( sanitize_key( wp_unslash( $input['push_destination'] ?? 'home' ) ), array( 'home', 'categories', 'product', 'category', 'subcategory', 'collection', 'cart', 'checkout', 'wishlist', 'order', 'account', 'offers', 'search', 'custom', 'external' ), true )
 				? sanitize_key( wp_unslash( $input['push_destination'] ?? 'home' ) )
 				: 'home',
 			'destination_id' => sanitize_text_field( wp_unslash( $input['push_destination_id'] ?? '' ) ),

@@ -279,11 +279,20 @@ final class MobiShop_Push_Service {
 		$platform = in_array( $platform, array( 'android', 'ios', 'web' ), true ) ? $platform : 'android';
 		$devices = self::devices();
 		$key = hash( 'sha256', $token );
+		$client_id = sanitize_text_field( (string) $request->get_param( 'client_id' ) );
+		// Keep historical registrations, but target only the latest token per installation.
+		foreach ( $devices as $old_key => &$old_device ) {
+			if ( '' !== $client_id && $old_key !== $key && $client_id === ( $old_device['client_id'] ?? '' ) && $platform === ( $old_device['platform'] ?? '' ) ) {
+				$old_device['enabled'] = false;
+				$old_device['disabled_reason'] = 'token_rotated';
+			}
+		}
+		unset( $old_device );
 		$devices[ $key ] = array(
 			'token'       => $token,
 			'platform'    => $platform,
 			'user_id'     => get_current_user_id(),
-			'client_id'   => sanitize_text_field( (string) $request->get_param( 'client_id' ) ),
+			'client_id'   => $client_id,
 			'locale'      => sanitize_key( (string) $request->get_param( 'locale' ) ),
 			'enabled'     => true,
 			'test'        => rest_sanitize_boolean( $request->get_param( 'test' ) ),
@@ -528,6 +537,18 @@ final class MobiShop_Push_Service {
 		return is_array( $devices ) ? $devices : array();
 	}
 
+	/** Soft-disable only the token Firebase explicitly rejected, preserving history. */
+	public static function retire_expired_token( string $token ): void {
+		if ( '' === $token ) return;
+		$devices = self::devices();
+		$key = hash( 'sha256', $token );
+		if ( ! isset( $devices[ $key ] ) || ( $devices[ $key ]['token'] ?? '' ) !== $token ) return;
+		$devices[ $key ]['enabled'] = false;
+		$devices[ $key ]['disabled_reason'] = 'token_unregistered';
+		$devices[ $key ]['disabled_at'] = time();
+		update_option( self::DEVICES_OPTION, $devices, false );
+	}
+
 	/** @return array<string,mixed> */
 	private static function dispatch_managed( array $payload, array $devices ): array {
 		$sent = 0;
@@ -547,6 +568,9 @@ final class MobiShop_Push_Service {
 				), self::delivery_options( $payload ) )
 			);
 			if ( is_wp_error( $response ) ) {
+				if ( 'push_token_unregistered' === $response->get_error_code() ) {
+					self::retire_expired_token( (string) ( $device['token'] ?? '' ) );
+				}
 				if ( count( $errors ) < 5 ) {
 					$errors[] = $response->get_error_message();
 				}

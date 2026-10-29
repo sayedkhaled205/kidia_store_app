@@ -24,7 +24,7 @@ class HomeReadSession {
           final previous = _saved[locale];
           if (previous != null &&
               DateTime.now().difference(previous.$2) <
-                  const Duration(minutes: 10)) {
+                  const Duration(days: 7)) {
             return previous.$1;
           }
           return layout;
@@ -45,8 +45,7 @@ class HomeReadSession {
         }
         final previous = _saved[locale];
         if (previous != null &&
-            DateTime.now().difference(previous.$2) <
-                const Duration(minutes: 10)) {
+            DateTime.now().difference(previous.$2) < const Duration(days: 7)) {
           _stale.add(locale);
           return previous.$1;
         }

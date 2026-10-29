@@ -83,7 +83,7 @@ final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>
             .load(locale, () => design.hydrateHome(catalog, locale: locale));
       } finally {
         if (ref.mounted) {
-          directRefresh = Timer(const Duration(seconds: 15), () {
+          directRefresh = Timer(const Duration(minutes: 1), () {
             if (ref.mounted) ref.invalidateSelf();
           });
         }
@@ -117,7 +117,7 @@ final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>
       // A slow initial read must be allowed to finish. Start the next refresh
       // interval only after this request settles, not while it is in flight.
       if (ref.mounted) {
-        refreshTimer = Timer(const Duration(seconds: 15), () {
+        refreshTimer = Timer(const Duration(minutes: 1), () {
           if (ref.mounted) ref.invalidateSelf();
         });
       }
