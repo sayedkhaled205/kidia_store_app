@@ -1,3 +1,6 @@
+import '../config/app_config.dart';
+import 'app_page_link.dart';
+
 /// Resolve the builder notification contract without permitting arbitrary schemes.
 final class PushActionDestination {
   const PushActionDestination({this.location, this.externalUrl});
@@ -24,7 +27,9 @@ final class PushActionDestination {
       case 'account':
         return const PushActionDestination(location: '/account');
       case 'order':
-        return positiveId() ? PushActionDestination(location: '/orders/$id') : null;
+        return positiveId()
+            ? PushActionDestination(location: '/orders/$id')
+            : null;
       case 'product':
         return positiveId()
             ? PushActionDestination(location: '/product/$id')
@@ -56,6 +61,10 @@ final class PushActionDestination {
             uri.host.isEmpty ||
             uri.userInfo.isNotEmpty) {
           return null;
+        }
+        final page = AppPageLink.location(uri, AppConfig.apiBaseUrl);
+        if (uri.queryParameters.containsKey('mobishop_page')) {
+          return page == null ? null : PushActionDestination(location: page);
         }
         return PushActionDestination(externalUrl: uri);
       default:

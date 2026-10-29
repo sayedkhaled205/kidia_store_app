@@ -1,6 +1,7 @@
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_options.dart';
 export 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_options.dart';
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
@@ -20,6 +21,8 @@ class CatalogProductListRequest {
     this.collection = '',
     this.searchOnly = false,
     this.pageSize = 20,
+    this.initialFilters = const CatalogProductFilters(),
+    this.initialSort = CatalogSort.relevance,
   });
 
   final String title;
@@ -32,6 +35,8 @@ class CatalogProductListRequest {
   /// catalog request is sent until the customer submits a term.
   final bool searchOnly;
   final int pageSize;
+  final CatalogProductFilters initialFilters;
+  final CatalogSort initialSort;
 
   @override
   bool operator ==(Object other) {
@@ -42,7 +47,9 @@ class CatalogProductListRequest {
         other.brandId == brandId &&
         other.collection == collection &&
         other.searchOnly == searchOnly &&
-        other.pageSize == pageSize;
+        other.pageSize == pageSize &&
+        other.initialFilters == initialFilters &&
+        other.initialSort == initialSort;
   }
 
   @override
@@ -54,7 +61,112 @@ class CatalogProductListRequest {
     collection,
     searchOnly,
     pageSize,
+    initialFilters,
+    initialSort,
   );
+}
+
+/// Versioned public catalog state. No cart, account, checkout or session data.
+final class CatalogPageState {
+  static String encode(CatalogProductListController controller) {
+    final r = controller.request, s = controller.state, f = s.filters;
+    List<List<String>> options(List<CatalogSizeOption> values) => [
+      for (final value in values) [value.taxonomy, value.term, value.label],
+    ];
+    return base64Url
+        .encode(
+          utf8.encode(
+            jsonEncode({
+              'v': 1,
+              'q': s.search,
+              'c': controller.effectiveCategoryId,
+              'b': r.brandId,
+              'l': r.collection,
+              't': r.title,
+              's': s.sort.name,
+              'f': {
+                'sale': f.onSaleOnly,
+                'min': f.minimumPriceMinor,
+                'max': f.maximumPriceMinor,
+                'brand': f.brandId,
+                'label': f.brandLabel,
+                'tags': [
+                  for (final tag in f.tags) [tag.id, tag.label],
+                ],
+                'sizes': options(f.sizes),
+                'colors': options(f.colors),
+              },
+            }),
+          ),
+        )
+        .replaceAll('=', '');
+  }
+
+  static CatalogProductListRequest restore(
+    String? encoded,
+    CatalogProductListRequest fallback,
+  ) {
+    if (encoded == null || encoded.isEmpty || encoded.length > 1600) {
+      return fallback;
+    }
+    try {
+      final d = jsonDecode(
+        utf8.decode(base64Url.decode(base64Url.normalize(encoded))),
+      );
+      if (d is! Map || d['v'] != 1 || d['f'] is! Map) return fallback;
+      final f = d['f'] as Map;
+      String text(Object? v) => v is String && v.length <= 200 ? v : '';
+      int? id(Object? v) =>
+          v is int && v > 0 && v < 9007199254740991 ? v : null;
+      String amount(Object? v) =>
+          RegExp(r'^\d{1,12}$').hasMatch(text(v)) ? text(v) : '';
+      List<CatalogSizeOption> options(Object? v) => v is List && v.length <= 20
+          ? [
+              for (final row in v)
+                if (row is List &&
+                    row.length == 3 &&
+                    text(row[0]).isNotEmpty &&
+                    text(row[1]).isNotEmpty)
+                  CatalogSizeOption(
+                    taxonomy: text(row[0]),
+                    term: text(row[1]),
+                    label: text(row[2]),
+                  ),
+            ]
+          : [];
+      final tags = f['tags'];
+      return CatalogProductListRequest(
+        title: text(d['t']),
+        search: text(d['q']),
+        categoryId: id(d['c']),
+        brandId: id(d['b']),
+        collection: text(d['l']),
+        pageSize: fallback.pageSize,
+        searchOnly: fallback.searchOnly,
+        initialSort:
+            CatalogSort.values.where((s) => s.name == d['s']).firstOrNull ??
+            CatalogSort.relevance,
+        initialFilters: CatalogProductFilters(
+          onSaleOnly: f['sale'] == true,
+          minimumPriceMinor: amount(f['min']),
+          maximumPriceMinor: amount(f['max']),
+          brandId: id(f['brand']),
+          brandLabel: text(f['label']),
+          sizes: options(f['sizes']),
+          colors: options(f['colors']),
+          tags: tags is List && tags.length <= 20
+              ? [
+                  for (final row in tags)
+                    if (row is List && row.length == 2 && id(row[0]) != null)
+                      CatalogTagOption(id: id(row[0])!, label: text(row[1])),
+                ]
+              : [],
+        ),
+      );
+    } on Object {
+      return fallback;
+    }
+  }
 }
 
 class CatalogProductFilters {
@@ -297,7 +409,11 @@ const Object _notProvided = Object();
 
 class CatalogProductListController extends ChangeNotifier {
   CatalogProductListController(this._repository, {required this.request})
-    : _state = CatalogProductListState(search: request.search.trim()) {
+    : _state = CatalogProductListState(
+        search: request.search.trim(),
+        filters: request.initialFilters,
+        sort: request.initialSort,
+      ) {
     if (_repository is CatalogChangeSource) {
       _catalogSubscription = (_repository as CatalogChangeSource).catalogChanges
           .listen((_) => unawaited(refreshSourceData()));

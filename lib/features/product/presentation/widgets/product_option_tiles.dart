@@ -40,12 +40,10 @@ class ProductOptionTiles extends StatelessWidget {
         final columns = ((constraints.maxWidth + gap) / (minimum + gap))
             .floor()
             .clamp(1, 6);
-        final width = colorGroup
-            ? 56.0
-            : math.min(
-                48.0 * scale.clamp(1, 1.6),
-                (constraints.maxWidth - gap * (columns - 1)) / columns,
-              );
+        final sizeWidth = math.min(
+          48.0 * scale.clamp(1, 1.6),
+          (constraints.maxWidth - gap * (columns - 1)) / columns,
+        );
         final tileHeight = colorGroup ? 72.0 : height * scale.clamp(1, 1.8);
         return Wrap(
           spacing: gap,
@@ -62,22 +60,44 @@ class ProductOptionTiles extends StatelessWidget {
                   final image = colorGroup
                       ? controller.imageForOption(group.key, option.value)
                       : null;
+                  final labelStyle = DefaultTextStyle.of(context).style.merge(
+                    TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: available
+                          ? colors.onSurface
+                          : colors.onSurface.withValues(alpha: .35),
+                    ),
+                  );
+                  final measure = TextPainter(
+                    text: TextSpan(text: option.label, style: labelStyle),
+                    textDirection: Directionality.of(context),
+                    textScaler: MediaQuery.textScalerOf(context),
+                    maxLines: 1,
+                  )..layout();
+                  final width = colorGroup
+                      ? math.min(
+                          constraints.maxWidth,
+                          math.max(72.0, measure.width.ceilToDouble() + 8),
+                        )
+                      : sizeWidth;
+                  measure.dispose();
+                  final text = Text(
+                    option.label,
+                    textAlign: TextAlign.center,
+                    maxLines: colorGroup ? 1 : 2,
+                    softWrap: !colorGroup,
+                    overflow: colorGroup
+                        ? TextOverflow.visible
+                        : TextOverflow.ellipsis,
+                    style: labelStyle,
+                  );
                   final label = Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 3),
-                      child: Text(
-                        option.label,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: available
-                              ? colors.onSurface
-                              : colors.onSurface.withValues(alpha: .35),
-                        ),
-                      ),
+                      child: colorGroup
+                          ? FittedBox(fit: BoxFit.scaleDown, child: text)
+                          : text,
                     ),
                   );
                   return Semantics(
