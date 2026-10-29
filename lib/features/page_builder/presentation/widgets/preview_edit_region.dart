@@ -191,35 +191,37 @@ class _PreviewEditInspectorState extends State<PreviewEditInspector> {
                     child: Material(
                       color: accent,
                       borderRadius: BorderRadius.circular(4),
-                      child: SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: IconButton(
-                          key: const Key('preview-edit-button'),
-                          tooltip: arabic
-                              ? 'تعديل إعدادات العنصر'
-                              : 'Edit element settings',
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          iconSize: 17,
-                          color: Colors.white,
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () {
-                            final selection = _target?.selection;
-                            if (selection == null ||
-                                _target?.attached != true) {
-                              return;
-                            }
-                            if (widget.onEdit != null) {
-                              widget.onEdit!(selection);
-                            } else {
-                              CmsPreviewLayoutBridge.editElement(
-                                selection.page,
-                                selection.target,
-                                selection.item,
-                              );
-                            }
-                          },
+                      child: Semantics(
+                        label: arabic
+                            ? 'تعديل إعدادات العنصر'
+                            : 'Edit element settings',
+                        child: SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: IconButton(
+                            key: const Key('preview-edit-button'),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            iconSize: 17,
+                            color: Colors.white,
+                            icon: const Icon(Icons.edit_outlined),
+                            onPressed: () {
+                              final selection = _target?.selection;
+                              if (selection == null ||
+                                  _target?.attached != true) {
+                                return;
+                              }
+                              if (widget.onEdit != null) {
+                                widget.onEdit!(selection);
+                              } else {
+                                CmsPreviewLayoutBridge.editElement(
+                                  selection.page,
+                                  selection.target,
+                                  selection.item,
+                                );
+                              }
+                            },
+                          ),
                         ),
                       ),
                     ),

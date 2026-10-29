@@ -12,21 +12,20 @@ void main() {
       final edits = <PreviewEditSelection>[];
       await tester.pumpWidget(
         MaterialApp(
-          home: PreviewEditInspector(
-            onEdit: edits.add,
-            child: Scaffold(
-              body: Center(
-                child: PreviewEditRegion(
-                  page: 'home',
-                  target: 'new-arrivals-19',
-                  child: SizedBox(
-                    width: 250,
-                    height: 160,
-                    child: GestureDetector(
-                      onTap: () => taps++,
-                      behavior: HitTestBehavior.opaque,
-                      child: const Center(child: Text('Open product')),
-                    ),
+          builder: (context, child) =>
+              PreviewEditInspector(onEdit: edits.add, child: child!),
+          home: Scaffold(
+            body: Center(
+              child: PreviewEditRegion(
+                page: 'home',
+                target: 'new-arrivals-19',
+                child: SizedBox(
+                  width: 250,
+                  height: 160,
+                  child: GestureDetector(
+                    onTap: () => taps++,
+                    behavior: HitTestBehavior.opaque,
+                    child: const Center(child: Text('Open product')),
                   ),
                 ),
               ),
@@ -56,7 +55,8 @@ void main() {
         find.byKey(const Key('preview-edit-button')),
       );
       await mouse.moveTo(button);
-      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      expect(tester.takeException(), isNull);
       await mouse.down(button);
       await mouse.up();
       await tester.pump();
