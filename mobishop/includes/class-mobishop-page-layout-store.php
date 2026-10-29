@@ -238,6 +238,7 @@ final class MobiShop_Page_Layout_Store {
 			self::field( 'button_width_percent', __( 'Button width (% of footer)', 'mobishop' ), 'number', 58, array(), 20, 95 ),
 			self::field( 'button_height', __( 'Button height', 'mobishop' ), 'number', 52, array(), 36, 80, 0.01 ),
 			self::field( 'button_style', __( 'Button style', 'mobishop' ), 'select', 'filled', array( 'filled' => __( 'Filled', 'mobishop' ), 'outline' => __( 'Outline', 'mobishop' ), 'soft' => __( 'Soft', 'mobishop' ) ) ),
+			self::field( 'quick_add_layout', __( 'Quick add footer', 'mobishop' ), 'select', 'button', array( 'button' => __( 'Add button only', 'mobishop' ), 'wishlist_button' => __( 'Wishlist beside rounded add button', 'mobishop' ) ) ),
 			self::field( 'button_shape', __( 'Button shape', 'mobishop' ), 'select', 'custom', array( 'custom' => __( 'Custom radius', 'mobishop' ), 'rectangle' => __( 'Rectangle', 'mobishop' ), 'rounded' => __( 'Rounded', 'mobishop' ), 'pill' => __( 'Pill', 'mobishop' ) ) ),
 			self::field( 'button_radius', __( 'Button radius', 'mobishop' ), 'number', 28, array(), 0, 40 ),
 			self::field( 'button_border_color', __( 'Button border color', 'mobishop' ), 'color', '#1F2933' ),

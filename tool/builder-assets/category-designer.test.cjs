@@ -56,12 +56,15 @@ test('view all settings survive design choices and use ordinary form persistence
   const s=setup(); s.api.prepare(s.root); s.api.prepare(s.root);
   const root=s.root.querySelector('[name="category_general[root_view_all_mode]"]');
   const style=s.root.querySelector('[name="category_general[view_all_style]"]');
+  const navigation=s.root.querySelector('[name="category_general[navigation_mode]"]');
+  navigation.value='products_with_children';
   assert.equal(s.root.querySelectorAll('[name="category_general[root_view_all_mode]"]').length,1);
   assert.equal(root.value,'hidden'); assert.equal(style.value,'outline');
   root.value='visible'; style.value='soft';
   for(const button of s.root.querySelectorAll('.kidia-category-design'))button.click();
   const form=new s.w.FormData(s.root);
   assert.equal(form.get(root.name),'visible'); assert.equal(form.get(style.name),'soft');
+  assert.equal(form.get(navigation.name),'products_with_children');
   s.dom.window.close();
 });
 test('captured QA categories cannot leak into another connected merchant', () => {

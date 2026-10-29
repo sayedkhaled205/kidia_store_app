@@ -1,5 +1,6 @@
 import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_color_sheet.dart';
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/features/categories/presentation/categories_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
 import 'package:go_router/go_router.dart';
@@ -228,6 +229,12 @@ class _ProductListContent extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: <Widget>[
+          if ((controller.request.categoryId ?? 0) > 0)
+            SliverToBoxAdapter(
+              child: CategoryProductsRail(
+                categoryId: controller.request.categoryId!,
+              ),
+            ),
           if (pageLayout.header.enabled &&
               pageLayout.header.boolean('show_count', true) &&
               !controller.isAwaitingSearch &&

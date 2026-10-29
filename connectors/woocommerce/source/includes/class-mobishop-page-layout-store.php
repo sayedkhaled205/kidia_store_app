@@ -244,6 +244,7 @@ final class MobiShop_Page_Layout_Store {
 			self::field( 'button_width_percent', __( 'Button width (% of footer)', 'mobi2app-connector' ), 'number', 58, array(), 20, 95 ),
 			self::field( 'button_height', __( 'Button height', 'mobi2app-connector' ), 'number', 52, array(), 36, 80, 0.01 ),
 			self::field( 'button_style', __( 'Button style', 'mobi2app-connector' ), 'select', 'filled', array( 'filled' => __( 'Filled', 'mobi2app-connector' ), 'outline' => __( 'Outline', 'mobi2app-connector' ), 'soft' => __( 'Soft', 'mobi2app-connector' ) ) ),
+			self::field( 'quick_add_layout', __( 'Quick add footer', 'mobi2app-connector' ), 'select', 'button', array( 'button' => __( 'Add button only', 'mobi2app-connector' ), 'wishlist_button' => __( 'Wishlist beside rounded add button', 'mobi2app-connector' ) ) ),
 			self::field( 'button_shape', __( 'Button shape', 'mobi2app-connector' ), 'select', 'custom', array( 'custom' => __( 'Custom radius', 'mobi2app-connector' ), 'rectangle' => __( 'Rectangle', 'mobi2app-connector' ), 'rounded' => __( 'Rounded', 'mobi2app-connector' ), 'pill' => __( 'Pill', 'mobi2app-connector' ) ) ),
 			self::field( 'button_radius', __( 'Button radius', 'mobi2app-connector' ), 'number', 28, array(), 0, 40 ),
 			self::field( 'button_border_color', __( 'Button border color', 'mobi2app-connector' ), 'color', '#1F2933' ),

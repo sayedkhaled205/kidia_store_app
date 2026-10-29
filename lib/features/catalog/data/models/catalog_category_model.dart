@@ -89,6 +89,7 @@ class CatalogCategoryModel extends CatalogCategory {
         'drilldown',
         'expand_inline',
         'separate_page',
+        'products_with_children',
       }, 'drilldown'),
       rootViewAllMode: _choice(presentation['root_view_all_mode'], const {
         'hidden',
