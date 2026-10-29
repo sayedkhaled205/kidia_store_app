@@ -738,3 +738,21 @@ workflows:
       - build/ios/simulator-artifacts/launch-stdout.log
       - build/ios/simulator-artifacts/launch-stderr.log
       - build/ios/simulator-artifacts/launch-screen-text.json
+
+  mobishop-store-publish:
+    name: WooMobile store publication
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      xcode: latest
+    scripts:
+      - name: Prepare publishing tools
+        script: |
+          set -eu
+          python3 -m venv /tmp/woomobile-publisher-tools
+          /tmp/woomobile-publisher-tools/bin/pip install --quiet codemagic-cli-tools==0.58.2
+      - name: Validate application identity and publish requested edition
+        script: |
+          set -eu
+          export PATH="/tmp/woomobile-publisher-tools/bin:$PATH"
+          python3 tool/store-publishing/publish_runner.py
