@@ -1,0 +1,191 @@
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
+
+void main() {
+  testWidgets(
+    'hover outlines exact region; center taps operate, corner edits',
+    (tester) async {
+      var taps = 0;
+      final edits = <PreviewEditSelection>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PreviewEditInspector(
+            onEdit: edits.add,
+            child: Scaffold(
+              body: Center(
+                child: PreviewEditRegion(
+                  page: 'home',
+                  target: 'new-arrivals-19',
+                  child: SizedBox(
+                    width: 250,
+                    height: 160,
+                    child: GestureDetector(
+                      onTap: () => taps++,
+                      behavior: HitTestBehavior.opaque,
+                      child: const Center(child: Text('Open product')),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      if (!AppConfig.isCmsPreview) {
+        expect(find.byKey(const Key('preview-edit-button')), findsNothing);
+        return;
+      }
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(tester.getCenter(find.text('Open product')));
+      await tester.pump();
+      expect(find.byKey(const Key('preview-edit-outline')), findsOneWidget);
+      expect(
+        tester.getSize(find.byKey(const Key('preview-edit-outline'))),
+        const Size(250, 160),
+      );
+      await mouse.down(tester.getCenter(find.text('Open product')));
+      await mouse.up();
+      await tester.pump();
+      expect(taps, 1);
+      expect(edits, isEmpty);
+      final button = tester.getCenter(
+        find.byKey(const Key('preview-edit-button')),
+      );
+      await mouse.moveTo(button);
+      await tester.pump();
+      await mouse.down(button);
+      await mouse.up();
+      await tester.pump();
+      expect(taps, 1);
+      expect(edits.single.page, 'home');
+      expect(edits.single.target, 'new-arrivals-19');
+      await mouse.removePointer();
+      await tester.pump();
+      expect(find.byKey(const Key('preview-edit-outline')), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'nested header item selects its own controls and native rendering is unchanged',
+    (tester) async {
+      final edits = <PreviewEditSelection>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PreviewEditInspector(
+            onEdit: edits.add,
+            child: PreviewEditScope(
+              page: 'category',
+              child: Scaffold(
+                body: Center(
+                  child: PreviewEditRegion(
+                    target: 'header',
+                    child: SizedBox(
+                      width: 300,
+                      height: 70,
+                      child: Center(
+                        child: PreviewEditRegion(
+                          target: 'header',
+                          item: 'cart',
+                          child: SizedBox(
+                            width: 50,
+                            height: 50,
+                            child: IconButton(
+                              onPressed: () {},
+                              icon: const Icon(Icons.shopping_bag_outlined),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(
+        tester.getCenter(find.byIcon(Icons.shopping_bag_outlined)),
+      );
+      await tester.pump();
+      if (!AppConfig.isCmsPreview) {
+        expect(find.byKey(const Key('preview-edit-outline')), findsNothing);
+      } else {
+        expect(
+          tester.getSize(find.byKey(const Key('preview-edit-outline'))),
+          const Size(50, 50),
+        );
+        final button = tester.getCenter(
+          find.byKey(const Key('preview-edit-button')),
+        );
+        await mouse.moveTo(button);
+        await tester.pump();
+        await mouse.down(button);
+        await mouse.up();
+        await tester.pump();
+        expect(edits.single.page, 'category');
+        expect(edits.single.item, 'cart');
+      }
+      await mouse.removePointer();
+    },
+  );
+
+  testWidgets(
+    'long section has visible corner; scrolling updates hover and route removal is safe',
+    (tester) async {
+      final scroll = ScrollController();
+      addTearDown(scroll.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: PreviewEditInspector(
+            child: Scaffold(
+              body: ListView(
+                controller: scroll,
+                children: [
+                  PreviewEditRegion(
+                    page: 'home',
+                    target: 'long-feed',
+                    child: Container(height: 1500, color: Colors.white),
+                  ),
+                  PreviewEditRegion(
+                    page: 'home',
+                    target: 'second-feed',
+                    child: Container(height: 700, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(const Offset(200, 200));
+      await tester.pump();
+      if (AppConfig.isCmsPreview) {
+        expect(
+          tester.getRect(find.byKey(const Key('preview-edit-outline'))).bottom,
+          600,
+        );
+        scroll.jumpTo(1550);
+        await tester.pump();
+        await tester.pump();
+        expect(
+          tester.getRect(find.byKey(const Key('preview-edit-outline'))).top,
+          0,
+        );
+      }
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await mouse.removePointer();
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    },
+  );
+}

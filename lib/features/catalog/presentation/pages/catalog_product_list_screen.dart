@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_color_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/features/categories/presentation/categories_screen.dart';
@@ -964,7 +965,7 @@ class _CatalogProductGrid extends StatelessWidget {
                       if (column > 0) SizedBox(width: gap),
                       Expanded(
                         child: rowIndex * columns + column < items.length
-                            ? CatalogProductCard(
+                            ? PreviewEditRegion(page: 'catalog', target: settings.id, child: CatalogProductCard(
                                 key: ValueKey<int>(
                                   items[rowIndex * columns + column].id,
                                 ),
@@ -974,7 +975,7 @@ class _CatalogProductGrid extends StatelessWidget {
                                 onTap: () => context.push(
                                   '/product/${items[rowIndex * columns + column].id}',
                                 ),
-                              )
+                              ))
                             : const SizedBox.shrink(),
                       ),
                     ],

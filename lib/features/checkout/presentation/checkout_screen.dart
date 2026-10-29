@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -173,11 +174,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             surfaceTintColor: Colors.transparent,
             automaticallyImplyLeading: !_payingInline,
           ),
-          body: _InlineCheckoutCardScope(
+          body: PreviewEditRegion(page: 'checkout', target: 'checkout', child: _InlineCheckoutCardScope(
             card: _inlineCard,
             processing: _payingInline,
             child: _buildBody(copy),
-          ),
+          )),
         ),
       ),
     );
@@ -893,11 +894,11 @@ class _DynamicFieldList extends StatelessWidget {
     return Column(
       children: <Widget>[
         for (int index = 0; index < fields.length; index++) ...<Widget>[
-          _DynamicCheckoutField(
+          PreviewEditRegion(page: 'checkout', target: 'field:${fields[index].key}', child: _DynamicCheckoutField(
             field: fields[index],
             controller: controller,
             enabled: enabled,
-          ),
+          )),
           if (index != fields.length - 1) const SizedBox(height: 12),
         ],
       ],

@@ -17,6 +17,7 @@ import '../core/theme/preview_identity_theme.dart';
 import '../core/theme/published_message_theme.dart';
 import '../core/theme/cms_preview_scroll_behavior.dart';
 import 'app_router.dart';
+import '../features/page_builder/presentation/widgets/preview_edit_region.dart';
 export '../features/page_builder/presentation/providers/preview_identity_provider.dart';
 
 class MobiShopApp extends ConsumerWidget {
@@ -101,7 +102,7 @@ class MobiShopApp extends ConsumerWidget {
             boldText: false,
             navigationMode: NavigationMode.traditional,
           ),
-          child: app,
+          child: PreviewEditInspector(child: app),
         );
       },
     );

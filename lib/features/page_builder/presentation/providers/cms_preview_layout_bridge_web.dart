@@ -37,6 +37,18 @@ class CmsPreviewLayoutBridge {
   static bool useDemoCatalog = false;
   static bool useLiveCatalog = false;
 
+  static void editElement(String page, String target, String? item) {
+    web.window.parent?.postMessage(
+      jsonEncode({
+        'type': 'mobishop-preview-edit',
+        'page': page,
+        'target': target,
+        'item': ?item,
+      }).toJS,
+      web.window.location.origin.toJS,
+    );
+  }
+
   static Map<String, dynamic>? get currentHomeLayout => _home;
 
   static Future<Map<String, dynamic>> fetchCheckoutConfiguration() async {
