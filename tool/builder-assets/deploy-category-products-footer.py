@@ -1,6 +1,6 @@
 """Stage the category View all release; activate/rollback only unchanged files."""
 from pathlib import Path
-import difflib, hashlib, json, os, re, shutil, subprocess, sys, zipfile
+import difflib, hashlib, importlib.util, json, os, re, shutil, subprocess, sys, zipfile
 
 repo = Path(sys.argv[1]).resolve()
 root = Path('/home/woomobile/woomobile-api/public/mobishop-builder-v26')
@@ -87,6 +87,14 @@ def stage(path,data):
     (backup/(n+'.old')).write_bytes(old); (backup/(n+'.new')).write_bytes(data)
     m['changes'][str(path)]={'before':sha(old),'after':sha(data),'old':n+'.old','new':n+'.new'}
     if path.suffix=='.php': subprocess.run(['/opt/cpanel/ea-php83/root/usr/bin/php','-l',str(backup/(n+'.new'))],check=True)
+
+schema_path = root.parents[1] / 'app/Services/SavedBuilderNativeDesign.php'
+spec = importlib.util.spec_from_file_location('footer_schema', repo/'tool/builder-assets/patch-quick-add-footer-schema.py')
+patcher = importlib.util.module_from_spec(spec); spec.loader.exec_module(patcher)
+candidate = patcher.patch(schema_path.read_text())
+assert patcher.patch(candidate) == candidate
+stage(schema_path, candidate.encode())
+subprocess.run(['/opt/cpanel/ea-php83/root/usr/bin/php', str(repo/'tool/builder-assets/quick-add-footer-schema-test.php'), str(backup/m['changes'][str(schema_path)]['new'])], check=True)
 
 for rel in ['includes/class-mobishop-category-page-store.php','api/class-category-page-endpoint.php','includes/class-mobishop-page-layout-store.php']:
     path=Path('/home/kidiastore/public_html/wp-content/plugins/mobi2app-connector')/rel
