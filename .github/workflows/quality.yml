@@ -87,6 +87,7 @@ jobs:
           node tool/builder-assets/preview-interactions.test.cjs
           node tool/builder-assets/category-designer.test.cjs
           node tool/builder-assets/push-analytics.test.cjs
+          php tool/builder-assets/push-analytics-contract.php
       - name: Run PHP contract tests
         run: find mobishop/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
 
