@@ -44,6 +44,11 @@ class AppearanceTests(unittest.TestCase):
         second = first.copy(); capture.appearance(second, current)
         self.assertEqual(first, second)
 
+    def test_shared_card_choice_is_captured_as_appearance(self):
+        target = {'share_style_across_app': True}
+        capture.appearance(target, {'share_style_across_app': '0'})
+        self.assertFalse(target['share_style_across_app'])
+
 
 if __name__ == '__main__':
     unittest.main()

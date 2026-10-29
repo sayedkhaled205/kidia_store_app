@@ -223,15 +223,15 @@
         "columns": 2,
         "image_inset": 0,
         "image_radius": 0,
-        "content_horizontal_padding": 0,
-        "content_top_padding": 6,
-        "content_bottom_padding": 8,
-        "price_color": "#253A46",
+        "content_horizontal_padding": 12,
+        "content_top_padding": 10,
+        "content_bottom_padding": 12,
+        "price_color": "#4EA999",
         "price_size": 16,
         "empty_title": "Your collection is ready",
         "empty_message": "Add store items to replace the theme’s starter content.",
-        "card_outline_color": "#D3EAE6",
-        "card_outline_width": 0.5
+        "card_outline_color": "#A1CCC4",
+        "card_outline_width": 0.75
       }
     },
     {
@@ -434,15 +434,15 @@
         "columns": 2,
         "image_inset": 0,
         "image_radius": 0,
-        "content_horizontal_padding": 0,
-        "content_top_padding": 6,
-        "content_bottom_padding": 8,
-        "price_color": "#253A46",
+        "content_horizontal_padding": 12,
+        "content_top_padding": 10,
+        "content_bottom_padding": 12,
+        "price_color": "#4EA999",
         "price_size": 16,
         "empty_title": "Your collection is ready",
         "empty_message": "Add store items to replace the theme’s starter content.",
-        "card_outline_color": "#D3EAE6",
-        "card_outline_width": 0.5
+        "card_outline_color": "#A1CCC4",
+        "card_outline_width": 0.75
       }
     },
     {
@@ -541,15 +541,15 @@
         "columns": 2,
         "image_inset": 0,
         "image_radius": 0,
-        "content_horizontal_padding": 0,
-        "content_top_padding": 6,
-        "content_bottom_padding": 8,
-        "price_color": "#253A46",
+        "content_horizontal_padding": 12,
+        "content_top_padding": 10,
+        "content_bottom_padding": 12,
+        "price_color": "#4EA999",
         "price_size": 16,
         "empty_title": "Your collection is ready",
         "empty_message": "Add store items to replace the theme’s starter content.",
-        "card_outline_color": "#D3EAE6",
-        "card_outline_width": 0.5
+        "card_outline_color": "#A1CCC4",
+        "card_outline_width": 0.75
       }
     },
     {
@@ -677,15 +677,15 @@
         "border_radius": 0,
         "image_inset": 0,
         "image_radius": 0,
-        "content_horizontal_padding": 0,
-        "content_top_padding": 6,
-        "content_bottom_padding": 8,
-        "price_color": "#253A46",
+        "content_horizontal_padding": 12,
+        "content_top_padding": 10,
+        "content_bottom_padding": 12,
+        "price_color": "#4EA999",
         "price_size": 16,
         "empty_title": "Your collection is ready",
         "empty_message": "Add store items to replace the theme’s starter content.",
-        "card_outline_color": "#D3EAE6",
-        "card_outline_width": 0.5
+        "card_outline_color": "#A1CCC4",
+        "card_outline_width": 0.75
       }
     }
   ],
@@ -1425,12 +1425,12 @@
             "top_spacing": 20,
             "image_inset": 0,
             "image_radius": 0,
-            "content_horizontal_padding": 5,
-            "content_top_padding": 6,
-            "content_bottom_padding": 8,
+            "content_horizontal_padding": 12,
+            "content_top_padding": 10,
+            "content_bottom_padding": 12,
             "price_prefix": "",
-            "price_color": "#253a46",
-            "price_size": 14,
+            "price_color": "#4EA999",
+            "price_size": 16,
             "enable_image_swipe": true,
             "show_name": false,
             "show_price": true,
@@ -1454,8 +1454,9 @@
             "background_color": "#ffffff",
             "primary_color": "#4ea999",
             "text_color": "#253A46",
-            "card_outline_color": "#D3EAE6",
-            "card_outline_width": 0.5
+            "card_outline_color": "#A1CCC4",
+            "card_outline_width": 0.75,
+            "share_style_across_app": true
           }
         }
       ],
@@ -1908,14 +1909,14 @@
             "card_radius": 8,
             "image_inset": 0,
             "image_radius": 0,
-            "content_horizontal_padding": 5,
-            "content_top_padding": 6,
-            "content_bottom_padding": 8,
+            "content_horizontal_padding": 12,
+            "content_top_padding": 10,
+            "content_bottom_padding": 12,
             "show_name": false,
             "show_rating": false,
             "show_badge": false,
-            "price_color": "#253a46",
-            "price_size": 14,
+            "price_color": "#4EA999",
+            "price_size": 16,
             "quick_add_enabled": true,
             "quick_add_icon_variant": "bag",
             "quick_add_icon_style": "filled",
@@ -1938,8 +1939,8 @@
             "product_wishlist_position": "top_end",
             "price_prefix": "",
             "show_regular_price": true,
-            "card_outline_color": "#D3EAE6",
-            "card_outline_width": 0.5
+            "card_outline_color": "#A1CCC4",
+            "card_outline_width": 0.75
           }
         }
       ],
@@ -2660,12 +2661,12 @@
             "top_spacing": 0,
             "image_inset": 0,
             "image_radius": 0,
-            "content_horizontal_padding": 5,
-            "content_top_padding": 6,
-            "content_bottom_padding": 8,
+            "content_horizontal_padding": 12,
+            "content_top_padding": 10,
+            "content_bottom_padding": 12,
             "price_prefix": "",
-            "price_color": "#253a46",
-            "price_size": 14,
+            "price_color": "#4EA999",
+            "price_size": 16,
             "enable_image_swipe": true,
             "show_name": false,
             "show_price": true,
@@ -2681,8 +2682,8 @@
             "background_color": "#ffffff",
             "primary_color": "#4ea999",
             "text_color": "#253A46",
-            "card_outline_color": "#D3EAE6",
-            "card_outline_width": 0.5
+            "card_outline_color": "#A1CCC4",
+            "card_outline_width": 0.75
           }
         },
         {

@@ -53,7 +53,7 @@ def appearance(target, current):
                     assert set(column) <= {'width', 'align', 'items'}
                     assert all(isinstance(x, str) and re.fullmatch(r'[a-z_]+', x) for x in column.get('items', []))
             target[key] = json.dumps(layout, separators=(',', ':'), ensure_ascii=False)
-        elif not DENIED.search(key) and (STYLE.search(key) or key == 'after_summary' or key.endswith(('_enabled', '_mode', '_variant', '_spacing'))) and isinstance(value, (str, bool, int, float)):
+        elif not DENIED.search(key) and (STYLE.search(key) or key in {'after_summary', 'share_style_across_app'} or key.endswith(('_enabled', '_mode', '_variant', '_spacing'))) and isinstance(value, (str, bool, int, float)):
             target[key] = scalar(value, target.get(key))
 
 

@@ -1,3 +1,5 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobishop_store_app/shared/widgets/product/shared_product_card_provider.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -640,7 +642,7 @@ class _WishlistMessage extends StatelessWidget {
   }
 }
 
-class _WishlistRecommendations extends StatefulWidget {
+class _WishlistRecommendations extends ConsumerStatefulWidget {
   const _WishlistRecommendations({
     super.key,
     required this.repository,
@@ -655,11 +657,12 @@ class _WishlistRecommendations extends StatefulWidget {
   final ValueChanged<CatalogProduct>? onProductTap;
 
   @override
-  State<_WishlistRecommendations> createState() =>
+  ConsumerState<_WishlistRecommendations> createState() =>
       _WishlistRecommendationsState();
 }
 
-class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
+class _WishlistRecommendationsState
+    extends ConsumerState<_WishlistRecommendations> {
   late Future<List<CatalogProduct>> _products;
 
   @override
@@ -701,6 +704,7 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
   @override
   Widget build(BuildContext context) {
     final double padding = widget.horizontalPadding;
+    final shared = ref.watch(sharedProductCardProvider);
     return Padding(
       padding: EdgeInsets.fromLTRB(padding, 14, padding, 26),
       child: Column(
@@ -770,6 +774,54 @@ class _WishlistRecommendationsState extends State<_WishlistRecommendations> {
                       .number('gap', 8)
                       .clamp(0, 24)
                       .toDouble();
+                  if (shared != null) {
+                    Widget card(CatalogProduct product, double width) =>
+                        SizedBox(
+                          width: width,
+                          child: _WishlistRecommendationCard(
+                            product: product,
+                            settings: widget.settings,
+                            fitImageRatio: true,
+                            onTap: widget.onProductTap == null
+                                ? null
+                                : () => widget.onProductTap!(product),
+                          ),
+                        );
+                    if (layoutStyle == 'carousel') {
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (
+                              var index = 0;
+                              index < products.length;
+                              index++
+                            ) ...[
+                              if (index > 0) SizedBox(width: gap),
+                              card(products[index], 168),
+                            ],
+                          ],
+                        ),
+                      );
+                    }
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final count = layoutStyle == 'compact'
+                            ? (columns + 1).clamp(2, 3)
+                            : columns;
+                        final width =
+                            (constraints.maxWidth - gap * (count - 1)) / count;
+                        return Wrap(
+                          spacing: gap,
+                          runSpacing: gap,
+                          children: products
+                              .map((product) => card(product, width))
+                              .toList(),
+                        );
+                      },
+                    );
+                  }
                   if (layoutStyle == 'carousel') {
                     return SizedBox(
                       height: 250,
@@ -881,11 +933,13 @@ class _WishlistRecommendationCard extends StatelessWidget {
     required this.product,
     required this.settings,
     this.onTap,
+    this.fitImageRatio = false,
   });
 
   final CatalogProduct product;
   final CmsPageComponent settings;
   final VoidCallback? onTap;
+  final bool fitImageRatio;
 
   @override
   Widget build(BuildContext context) {
@@ -905,6 +959,7 @@ class _WishlistRecommendationCard extends StatelessWidget {
       product: product,
       settings: settings,
       onTap: configuredTap,
+      fitImageRatio: fitImageRatio,
     );
   }
 }
@@ -1035,7 +1090,7 @@ class _MutationErrorNotice extends StatelessWidget {
   }
 }
 
-class _WishlistGrid extends StatelessWidget {
+class _WishlistGrid extends ConsumerWidget {
   const _WishlistGrid({
     required this.instanceId,
     required this.products,
@@ -1057,7 +1112,61 @@ class _WishlistGrid extends StatelessWidget {
   final ValueChanged<CatalogProduct>? onProductTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final shared = ref.watch(sharedProductCardProvider);
+    if (shared != null) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = settings.number('columns', 2).round().clamp(1, 4);
+          final gap = settings.number('gap', 12).clamp(0, 32).toDouble();
+          final width =
+              (constraints.maxWidth -
+                  horizontalPadding * 2 -
+                  gap * (columns - 1)) /
+              columns;
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              horizontalPadding,
+              settings.number('top_spacing', 20).clamp(0, 48).toDouble(),
+              horizontalPadding,
+              28,
+            ),
+            child: Wrap(
+              key: const Key('wishlist-grid'),
+              spacing: gap,
+              runSpacing: gap,
+              children: products
+                  .map(
+                    (product) => SizedBox(
+                      width: width,
+                      child: AbsorbPointer(
+                        absorbing: isMutating,
+                        child: CatalogProductCard(
+                          key: Key('wishlist-product-${product.id}'),
+                          product: product,
+                          settings: shared,
+                          fitImageRatio: true,
+                          onTap: onProductTap == null
+                              ? null
+                              : () => onProductTap!(product),
+                          wishlistAction: WishlistRemoveButton(
+                            buttonKey: Key('wishlist-remove-${product.id}'),
+                            settings: shared,
+                            tooltip: copy.remove,
+                            onPressed: isMutating
+                                ? null
+                                : () => onRemove(product),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          );
+        },
+      );
+    }
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         final int columnCount = settings
