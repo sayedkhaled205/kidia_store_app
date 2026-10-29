@@ -61,7 +61,13 @@ final class MobiShop_Store_Notifications {
         if (is_wp_error($response)) return new WP_Error('notifications_unavailable', 'Could not reach store notifications.', ['status'=>503]);
         $status = wp_remote_retrieve_response_code($response);
         $contents = wp_remote_retrieve_body($response);
-        if ($status < 200 || $status >= 300) return new WP_Error('notifications_unconfirmed', 'The notification connection could not be verified.', ['status'=>503]);
+        if ($status < 200 || $status >= 300) {
+            $failure = json_decode($contents, true);
+            if ($path === 'messages' && $status === 410 && ($failure['code'] ?? '') === 'fcm_token_unregistered') {
+                return new WP_Error('push_token_unregistered', 'This device registration has expired. Open the app to register again.', ['status'=>410]);
+            }
+            return new WP_Error('notifications_unconfirmed', 'The notification connection could not be verified.', ['status'=>503]);
+        }
         if ($raw) return trim($contents) !== '' ? $contents : new WP_Error('notifications_config_empty', 'The application configuration is unavailable.', ['status'=>503]);
         $result = json_decode($contents, true);
         if (!is_array($result) || (isset($result['ok']) && $result['ok'] !== true)) {

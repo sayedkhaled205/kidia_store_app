@@ -64,9 +64,10 @@ def render_icons(data, root):
                 raise ValueError('The app icon must be at least 128 pixels on each side.')
             logo = ImageOps.exif_transpose(source).convert('RGBA')
 
-    def save(path, size):
+    def save(path, size, scale=.92):
         # Preserve the whole logo. iOS icons must be opaque; the OS applies its mask.
-        scaled = ImageOps.contain(logo, (size, size), Image.Resampling.LANCZOS)
+        inset_size = max(1, round(size * scale))
+        scaled = ImageOps.contain(logo, (inset_size, inset_size), Image.Resampling.LANCZOS)
         canvas = Image.new('RGBA', (size, size), 'white')
         canvas.alpha_composite(scaled, ((size - scaled.width) // 2, (size - scaled.height) // 2))
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -90,7 +91,7 @@ def render_icons(data, root):
     launch = root / 'ios/Runner/Assets.xcassets/LaunchImage.imageset'
     if launch.exists():
         for suffix, size in [('', 168), ('@2x', 336), ('@3x', 504)]:
-            save(launch / ('LaunchImage' + suffix + '.png'), size)
+            save(launch / ('LaunchImage' + suffix + '.png'), size, scale=1)
     print('Generated Android and iOS icons from the selected store logo.')
 
 

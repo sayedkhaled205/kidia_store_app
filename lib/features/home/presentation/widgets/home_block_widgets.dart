@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/shared/widgets/product/shared_product_card_provider.dart';
 import 'shared_home_product_collection.dart';
@@ -1712,7 +1713,16 @@ class ProductCarouselBlockWidget extends ConsumerWidget {
     if (shared != null) {
       return SharedHomeProductCollection(
         items: block.items,
-        settings: shared,
+        settings: CmsPageComponent(
+          id: shared.id, type: shared.type, enabled: shared.enabled,
+          settings: {...shared.settings,
+            'show_name': block.showName,
+            'show_price': block.showPrice,
+            'show_regular_price': block.showRegularPrice,
+            'show_rating': block.showRating,
+            'show_badge': block.showBadge,
+          },
+        ),
         onAction: onAction,
         title: block.title,
         subtitle: block.subtitle,
@@ -1728,9 +1738,9 @@ class ProductCarouselBlockWidget extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          if (block.title != null)
+          if (block.title != null || block.showViewAll)
             HomeBlockTitle(
-              title: block.title!,
+              title: block.title ?? '',
               showAction: block.showViewAll,
               actionLabel:
                   block.viewAllLabel ??
@@ -1820,7 +1830,16 @@ class ProductGridBlockWidget extends ConsumerWidget {
     if (shared != null) {
       return SharedHomeProductCollection(
         items: block.items,
-        settings: shared,
+        settings: CmsPageComponent(
+          id: shared.id, type: shared.type, enabled: shared.enabled,
+          settings: {...shared.settings,
+            'show_name': block.showName,
+            'show_price': block.showPrice,
+            'show_regular_price': block.showRegularPrice,
+            'show_rating': block.showRating,
+            'show_badge': block.showBadge,
+          },
+        ),
         onAction: onAction,
         title: block.title,
         subtitle: block.subtitle,
@@ -1838,9 +1857,9 @@ class ProductGridBlockWidget extends ConsumerWidget {
       ),
       child: Column(
         children: [
-          if (block.title != null)
+          if (block.title != null || block.showViewAll)
             HomeBlockTitle(
-              title: block.title!,
+              title: block.title ?? '',
               showAction: block.showViewAll,
               actionLabel:
                   block.viewAllLabel ??

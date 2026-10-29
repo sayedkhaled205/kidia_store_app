@@ -1176,7 +1176,7 @@ final class MobiShop_Admin {
 		$channel = sanitize_key( (string) wp_unslash( $_POST['ai_action_channel'] ?? $source ) );
 		$channel = in_array( $channel, array( 'all', 'website', 'mobile' ), true ) ? $channel : 'all';
 		$placement = sanitize_key( (string) wp_unslash( $_POST['ai_placement'] ?? $recommendation['recommended_placement'] ?? 'home' ) );
-		$placement = in_array( $placement, array( 'home', 'product', 'category', 'search', 'cart', 'checkout', 'confirmation' ), true ) ? $placement : 'home';
+		$placement = in_array( $placement, array( 'home', 'categories', 'product', 'category', 'search', 'cart', 'checkout', 'confirmation' ), true ) ? $placement : 'home';
 		$created_id = '';
 		if ( 'coupon' === $action_type && class_exists( 'WC_Coupon' ) ) {
 			$type = sanitize_key( (string) wp_unslash( $_POST['ai_discount_type'] ?? $recommendation['discount_type'] ?? 'percent' ) );
@@ -1620,7 +1620,7 @@ final class MobiShop_Admin {
 			'sound'      => ! empty( $_POST['push_sound'] ),
 			'badge'      => absint( $_POST['push_badge'] ?? 0 ),
 			'expiry_hours' => max( 1, min( 168, absint( $_POST['push_expiry_hours'] ?? 24 ) ) ),
-			'destination' => in_array( sanitize_key( wp_unslash( $_POST['push_destination'] ?? 'home' ) ), array( 'home', 'product', 'category', 'subcategory', 'collection', 'cart', 'checkout', 'wishlist', 'order', 'account', 'offers', 'search', 'custom', 'external' ), true )
+			'destination' => in_array( sanitize_key( wp_unslash( $_POST['push_destination'] ?? 'home' ) ), array( 'home', 'categories', 'product', 'category', 'subcategory', 'collection', 'cart', 'checkout', 'wishlist', 'order', 'account', 'offers', 'search', 'custom', 'external' ), true )
 				? sanitize_key( wp_unslash( $_POST['push_destination'] ?? 'home' ) )
 				: 'home',
 			'destination_id' => sanitize_text_field( wp_unslash( $_POST['push_destination_id'] ?? '' ) ),

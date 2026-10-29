@@ -13,6 +13,8 @@ final class PushActionDestination {
     switch (destination) {
       case 'home':
         return const PushActionDestination(location: '/');
+      case 'categories':
+        return const PushActionDestination(location: '/categories');
       case 'cart':
         return const PushActionDestination(location: '/cart');
       case 'checkout':

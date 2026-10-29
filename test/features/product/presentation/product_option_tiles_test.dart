@@ -126,6 +126,7 @@ void main() {
       );
       final redMedium = CatalogImage(
         source: Uri.parse('https://example.com/red-medium.jpg'),
+        thumbnail: Uri.parse('https://example.com/red-medium-small.jpg'),
       );
       final variants = [
         for (var i = 0; i < testVariations.length; i++)
@@ -168,7 +169,12 @@ void main() {
       );
       expect(
         tester.widget<AppNetworkImage>(find.byType(AppNetworkImage)).imageUrl,
-        redMedium.source.toString(),
+        redMedium.thumbnail.toString(),
+      );
+      expect(find.text('Red'), findsOneWidget);
+      expect(
+        tester.getBottomLeft(find.text('Red')).dy,
+        lessThan(tester.getTopLeft(find.byType(AppNetworkImage)).dy),
       );
       expect(find.text('Blue'), findsOneWidget);
       await tester.tap(find.byKey(const Key('product-option-pa_color-red')));

@@ -55,6 +55,7 @@ class CmsPreviewCatalogRepository
     final int revision = _currentRevision;
     if (_cacheRevision == revision) return;
     _loadedProducts.clear();
+    _variationReads.clear();
     _cacheRevision = revision;
   }
 
@@ -189,8 +190,25 @@ class CmsPreviewCatalogRepository
     );
   }
 
+  final _variationReads = <int, Future<List<CatalogVariation>>>{};
   @override
   Future<List<CatalogVariation>> getVariations(int productId) async {
+    _synchronizeProductCache();
+    final request = _variationReads.putIfAbsent(
+      productId,
+      () => _readVariations(productId),
+    );
+    try {
+      return await request;
+    } catch (_) {
+      if (identical(_variationReads[productId], request)) {
+        _variationReads.remove(productId);
+      }
+      rethrow;
+    }
+  }
+
+  Future<List<CatalogVariation>> _readVariations(int productId) async {
     final CatalogProduct product = await getProduct(productId);
     if (product.type != 'variable') return const <CatalogVariation>[];
     if (_usesLiveCatalog) {

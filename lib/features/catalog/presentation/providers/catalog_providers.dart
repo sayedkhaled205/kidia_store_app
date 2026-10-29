@@ -8,6 +8,7 @@ import 'package:mobishop_store_app/core/commerce/odoo_catalog_client.dart';
 import 'package:mobishop_store_app/core/commerce/shopify_storefront_client.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/core/network/store_api_client.dart';
+import 'package:mobishop_store_app/core/network/public_catalog_cache.dart';
 import 'package:mobishop_store_app/core/live_updates/store_change_bus.dart';
 import 'package:mobishop_store_app/features/catalog/data/datasources/catalog_remote_data_source.dart';
 import 'package:mobishop_store_app/features/catalog/data/repositories/catalog_repository_impl.dart';
@@ -35,9 +36,16 @@ final catalogDioProvider = Provider<Dio>((Ref ref) {
 });
 
 final catalogStoreApiClientProvider = Provider<StoreApiClient>((Ref ref) {
-  return DioStoreApiClient.forConfiguredStore(
-    dio: ref.watch(catalogDioProvider),
+  final cache = PublicCatalogCache(
+    DioStoreApiClient.forConfiguredStore(dio: ref.watch(catalogDioProvider)),
+    store: AppConfig.apiBaseUrl,
   );
+  final changes = ref
+      .watch(storeCatalogChangeBusProvider)
+      .catalogChanges
+      .listen((_) => cache.invalidate());
+  ref.onDispose(() => unawaited(changes.cancel()));
+  return cache;
 });
 
 final catalogRemoteDataSourceProvider = Provider<CatalogRemoteDataSource>(

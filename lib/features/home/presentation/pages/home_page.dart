@@ -142,24 +142,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               controller: _scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                if (homeLayoutAsync.hasValue &&
-                    ref.read(homeReadSessionProvider).isStale(locale))
-                  SliverToBoxAdapter(
-                    child: MaterialBanner(
-                      content: Text(
-                        arabic
-                            ? 'الاتصال متقطع. بنعرض آخر بيانات محملة لحد ما التحديث يكتمل.'
-                            : 'Connection interrupted. Showing recently loaded content while reconnecting.',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () =>
-                              ref.invalidate(homeLayoutProvider(locale)),
-                          child: Text(arabic ? 'تحديث' : 'Retry'),
-                        ),
-                      ],
-                    ),
-                  ),
                 homeLayoutAsync.when(
                   skipLoadingOnReload: true,
                   skipLoadingOnRefresh: true,
