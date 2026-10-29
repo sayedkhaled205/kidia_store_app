@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
@@ -97,16 +98,17 @@ class CheckoutOrderReceipt extends StatelessWidget {
   Widget build(BuildContext context) {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     final theme = Theme.of(context);
+    final ui = AppUiControlsScope.of(context);
     final value = order;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (logoUrl.isNotEmpty) ...[
+        if (logoUrl.isNotEmpty && ui.boolean('receipt_show_logo')) ...[
           Center(
             child: AppNetworkImage(
               imageUrl: logoUrl,
-              width: 150,
-              height: 56,
+              width: ui.numberOr('receipt_logo_width', 150),
+              height: ui.numberOr('receipt_logo_height', 56),
               fit: BoxFit.contain,
               trimTransparentPadding: true,
               placeholder: const SizedBox.shrink(),
@@ -117,7 +119,7 @@ class CheckoutOrderReceipt extends StatelessWidget {
         ],
         Icon(
           Icons.check_circle_outline_rounded,
-          size: 66,
+          size: ui.numberOr('receipt_icon_size', 66),
           color: theme.colorScheme.primary,
         ),
         const SizedBox(height: 16),
@@ -127,11 +129,16 @@ class CheckoutOrderReceipt extends StatelessWidget {
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w800,
+            fontSize: ui.optionalNumber('receipt_title_size'),
           ),
         ),
         const SizedBox(height: 8),
         Text(
-          ar ? 'شكرًا لطلبك!' : 'Thank you for your order!',
+          ui.text(
+            'receipt_thanks',
+            ar,
+            ar ? 'شكرًا لطلبك!' : 'Thank you for your order!',
+          ),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge,
         ),
@@ -140,10 +147,17 @@ class CheckoutOrderReceipt extends StatelessWidget {
           FilledButton(
             onPressed: onContinueShopping,
             key: const Key('receipt-continue-shopping'),
-            child: Text(ar ? 'متابعة التسوق' : 'Continue shopping'),
+            style: _receiptButtonStyle(context),
+            child: Text(
+              ui.text(
+                'receipt_continue',
+                ar,
+                ar ? 'متابعة التسوق' : 'Continue shopping',
+              ),
+            ),
           ),
         ],
-        const SizedBox(height: 24),
+        SizedBox(height: ui.numberOr('receipt_section_gap', 24)),
         _ReceiptSection(
           title: ar ? 'ملخص الطلب' : 'Order summary',
           children: [
@@ -173,7 +187,14 @@ class CheckoutOrderReceipt extends StatelessWidget {
               OutlinedButton(
                 key: const Key('receipt-view-details'),
                 onPressed: onViewDetails,
-                child: Text(ar ? 'عرض تفاصيل الطلب' : 'View order details'),
+                style: _receiptButtonStyle(context),
+                child: Text(
+                  ui.text(
+                    'receipt_details',
+                    ar,
+                    ar ? 'عرض تفاصيل الطلب' : 'View order details',
+                  ),
+                ),
               ),
             ],
           ],
@@ -198,7 +219,7 @@ class CheckoutOrderReceipt extends StatelessWidget {
           ),
         ],
         if (value != null && value.items.isNotEmpty) ...[
-          const SizedBox(height: 20),
+          SizedBox(height: ui.numberOr('receipt_section_gap', 20)),
           _ReceiptSection(
             title: ar ? 'منتجات الطلب' : 'Order items',
             children: [
@@ -231,26 +252,41 @@ class _ReceiptSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(
-      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+  Widget build(BuildContext context) {
+    final ui = AppUiControlsScope.of(context), theme = Theme.of(context);
+    final style = ui.choice('receipt_card_style');
+    return Container(
+      padding: EdgeInsets.all(ui.numberOr('receipt_section_padding', 18)),
+      decoration: BoxDecoration(
+        color: style == 'soft'
+            ? theme.colorScheme.primary.withValues(alpha: .07)
+            : null,
+        border: style == 'theme'
+            ? Border.all(
+                color: theme.colorScheme.outlineVariant,
+                width: ui.numberOr('receipt_section_border_width', 1),
+              )
+            : null,
+        borderRadius: BorderRadius.circular(
+          ui.numberOr('receipt_section_radius', 16),
         ),
-        const SizedBox(height: 16),
-        ...children,
-      ],
-    ),
-  );
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: ui.optionalNumber('receipt_section_title_size'),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
 }
 
 class _ReceiptRow extends StatelessWidget {
@@ -263,16 +299,47 @@ class _ReceiptRow extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(child: Text(label)),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: AppUiControlsScope.of(
+                context,
+              ).optionalNumber('receipt_row_font_size'),
+            ),
+          ),
+        ),
         const SizedBox(width: 16),
         Flexible(
           child: Text(
             value,
             textAlign: TextAlign.end,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: AppUiControlsScope.of(
+                context,
+              ).optionalNumber('receipt_row_font_size'),
+            ),
           ),
         ),
       ],
     ),
+  );
+}
+
+ButtonStyle? _receiptButtonStyle(BuildContext context) {
+  final ui = AppUiControlsScope.of(context);
+  final height = ui.optionalNumber('receipt_button_height'),
+      radius = ui.optionalNumber('receipt_button_radius'),
+      font = ui.optionalNumber('receipt_button_font_size');
+  if (height == null && radius == null && font == null) return null;
+  return FilledButton.styleFrom(
+    minimumSize: height == null ? null : Size(64, height),
+    textStyle: font == null
+        ? null
+        : Theme.of(context).textTheme.labelLarge?.copyWith(fontSize: font),
+    shape: radius == null
+        ? null
+        : RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
   );
 }

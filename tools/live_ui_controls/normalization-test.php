@@ -22,11 +22,14 @@ namespace {
         'cart_layout' => 'theme', 'cart_item_image_radius' => null,
         'cart_pulse_enabled' => true, 'logout_height' => 38,
     ]), []);
+    expectSame(LiveAppUiControls::normalize(['filters_width_fraction'=>.85,'quickadd_button_height'=>60,'receipt_card_style'=>'soft','receipt_show_logo'=>false,'receipt_section_radius'=>0]),
+        ['filters_width_fraction'=>.85,'quickadd_button_height'=>60,'receipt_card_style'=>'soft','receipt_section_radius'=>0,'receipt_show_logo'=>false]);
     foreach ([
         ['cart_layout' => 'other'], ['cart_layout' => null], ['cart_layout' => ['compact']],
         ['cart_summary_display' => 'javascript:alert(1)'], ['cart_item_image_width' => -1],
         ['cart_item_image_width' => '100'], ['cart_item_image_width' => INF],
         ['cart_checkout_button_height' => 65], ['unknown' => null], ['auth_button_height' => null],
+        ['filters_width_fraction'=>1.1],['quickadd_button_height'=>30],['receipt_card_style'=>'paid'],['receipt_thanks_en'=>'<script>'],['receipt_show_logo'=>'false'],
     ] as $invalid) {
         try { LiveAppUiControls::normalize($invalid); }
         catch (\Illuminate\Validation\ValidationException) { continue; }

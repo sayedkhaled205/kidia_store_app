@@ -20,7 +20,7 @@ async function fixture(store, draft, screen='account-builder') {
   w.eval(source);
   for(let i=0;i<10 && !doc.querySelector('[data-wm-ui-control]');i++) await new Promise(resolve=>setImmediate(resolve));
   const input=key=>doc.querySelector('[data-wm-ui-control="'+key+'"]');
-  assert.ok(input(screen==='checkout-builder'?'cart_layout':'auth_title_en'));
+  assert.ok(input({'checkout-builder':'cart_layout','catalog-builder':'filters_side_padding','product-builder':'quickadd_button_height'}[screen]||'auth_title_en'));
   const packet={page:'account',layouts:{home:{page:'home',settings:{existing:true}},account:{page:'account'}}};
   return {w,dom,frame,input,packet,writes:()=>writes,refreshes:()=>refreshes,values:()=>values};
 }
@@ -84,6 +84,16 @@ async function fixture(store, draft, screen='account-builder') {
   await cartRestored.w.MobiShopPageControls.save(cartRestored.frame);
   assert.equal(cartRestored.values().cart_item_image_radius,null,'Clear restores inheritance, not zero');
   assert.equal(cartRestored.input('cart_item_image_radius').value,'');
+  for(const [screen,key,value] of [['catalog-builder','filters_side_padding','24'],['product-builder','quickadd_button_height','60'],['checkout-builder','receipt_section_radius','0']]) {
+    const extra=await fixture('alpha',null,screen);
+    await extra.w.MobiShopPageControls.save(extra.frame);assert.equal(extra.writes(),0);
+    extra.input(key).value=value;extra.input(key).dispatchEvent(new extra.w.Event('input',{bubbles:true}));
+    assert.equal(extra.w.MobiShopPageControls.decoratePreview(extra.packet).layouts.home.settings.ui_controls_v1[key],Number(value));
+    assert.equal(extra.writes(),0,'New control preview must not publish/save');
+    await extra.w.MobiShopPageControls.save(extra.frame);assert.equal(extra.values()[key],Number(value));
+    extra.input(key).value='';await extra.w.MobiShopPageControls.save(extra.frame);assert.equal(extra.values()[key],null);
+    extra.dom.window.close();
+  }
   for(const x of [f,restored,other,cart,cartRestored]) x.dom.window.close();
   console.log('PASS live controls load, preview without writes, draft recovery, save cleanup, color normalization and merchant isolation');
 })().catch(error=>{console.error(error);process.exitCode=1;});

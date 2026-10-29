@@ -12,7 +12,7 @@ use App\Services\LiveAppDesign as Design;
 use App\Services\LiveAppUiControls as Controls;
 use Illuminate\Support\Facades\DB;
 function check($value, $message) { if (!$value) throw new RuntimeException($message); }
-check(count(Controls::schema()) === 73, '73 controls exposed');
+check(count(Controls::schema()) === 112, '112 controls exposed');
 foreach ([['unknown'=>true],['auth_title_size'=>999],['cart_pulse_enabled'=>'false'],['auth_title_en'=>'<script>'],['auth_title_en'=>str_repeat('x',121)],['support_contact_email'=>'https://buyer@example.com'],['support_whatsapp'=>'javascript:alert(1)']] as $bad) {
     try { Controls::normalize($bad); throw new RuntimeException('Unsafe value accepted'); }
     catch (Illuminate\Validation\ValidationException) {}
@@ -34,7 +34,8 @@ try {
          'cart_layout'=>'compact','cart_item_image_radius'=>0,
          'cart_item_image_width'=>null,'cart_summary_display'=>'expanded',
          'message_style'=>'soft','checkout_button_height'=>60,'checkout_address_radius'=>0,
-         'orders_detail_image_size'=>72,'auth_identifier_hint_en'=>'01XXXXXXXXX'], $status['controls_digest']);
+         'orders_detail_image_size'=>72,'auth_identifier_hint_en'=>'01XXXXXXXXX',
+         'filters_width_fraction'=>.85,'quickadd_button_radius'=>0,'receipt_card_style'=>'soft','receipt_thanks_en'=>'Thank you for shopping'], $status['controls_digest']);
     $store->refresh(); $after = $store->settings; unset($after['builder']['ui_controls_v1']); unset($settings['builder']['ui_controls_v1']);
     check($after === $settings, 'Other store and Builder settings preserved');
     check(Design::query($store)->orderByDesc('id')->first()->bundle === $original, 'Saving controls does not publish');
@@ -63,6 +64,7 @@ try {
     check($ui['checkout_address_radius'] === 0 && $ui['checkout_button_height'] === 60, 'Checkout appearance published');
     check($ui['message_style'] === 'soft' && $ui['orders_detail_image_size'] === 72 && $ui['auth_identifier_hint_en'] === '01XXXXXXXXX', 'Messages, order images and auth hints published');
     check(!array_key_exists('cart_item_image_width', $ui), 'Blank cart size inherits theme');
+    check($ui['filters_width_fraction']===.85 && $ui['quickadd_button_radius']===0 && $ui['receipt_card_style']==='soft' && $ui['receipt_thanks_en']==='Thank you for shopping','Filters, quick add and receipt reach the published release');
     check($bundle['pages']['home']['settings']['checkout_presentation_v1'] === ['design'=>'compact'], 'Saved checkout design published');
     $controller = new App\Http\Controllers\Portal\LiveAppDesignController();
     $etag = '"'.$release->id.'-'.$release->digest.'"';
@@ -79,5 +81,5 @@ try {
     check($changed->headers->get('ETag') === $etag, 'Body and ETag agree');
     Design::publish($store,(int)$store->user_id,$two['revision'],null,true);
     check(Design::query($store)->orderByDesc('id')->first()->bundle === $original, 'Rollback restores prior settings');
-    echo "PASS: 73 controls, bounds, default compatibility, draft isolation, owner scope, conflicts, publish, rollback\n";
+    echo "PASS: 112 controls, bounds, default compatibility, draft isolation, owner scope, conflicts, publish, rollback\n";
 } finally { DB::rollBack(); echo "All test data rolled back.\n"; }

@@ -21,7 +21,7 @@ code = source.read_text(encoding='utf-8')
 original_code = code
 needle = 'else result=await save(request.screen,event.data.state);'
 replacement = """else {
-          if (['home-builder','account-builder','checkout-builder'].includes(request.screen)) {
+          if (['home-builder','account-builder','checkout-builder','catalog-builder','product-builder'].includes(request.screen)) {
             if (!window.MobiShopPageControls) throw new Error('Page settings could not load. Refresh the builder before saving.');
             await window.MobiShopPageControls.save(sender);
           }
@@ -30,6 +30,12 @@ replacement = """else {
 if 'await window.MobiShopPageControls.save(sender);' not in code:
     assert code.count(needle) == 1, 'Builder save path changed; review before integration'
     code = code.replace(needle, replacement)
+else:
+    old_guard="['home-builder','account-builder','checkout-builder'].includes(request.screen)"
+    new_guard="['home-builder','account-builder','checkout-builder','catalog-builder','product-builder'].includes(request.screen)"
+    if new_guard not in code:
+        assert code.count(old_guard)==1, 'Controls save scope changed; review before integration'
+        code=code.replace(old_guard,new_guard)
 controls = Path(__file__).with_name('page-controls.js').read_bytes()
 if 'MobiShopPageControls.decoratePreview(packet)' not in code:
     needle = 'mobileFrame.contentWindow.postMessage(JSON.stringify(packet), location.origin);'

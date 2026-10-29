@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:mobishop_store_app/features/brands/domain/entities/store_brand.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/catalog_copy.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
@@ -61,12 +62,20 @@ class CatalogProductFilterSheet extends StatefulWidget {
         pageBuilder: (context, animation, secondaryAnimation) => Align(
           alignment: Alignment.centerRight,
           child: SizedBox(
-            width: MediaQuery.sizeOf(context).width * .75,
+            width:
+                MediaQuery.sizeOf(context).width *
+                AppUiControlsScope.of(
+                  context,
+                ).numberOr('filters_width_fraction', .75),
             height: double.infinity,
             child: Material(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: const BorderRadius.horizontal(
-                left: Radius.circular(16),
+              borderRadius: BorderRadius.horizontal(
+                left: Radius.circular(
+                  AppUiControlsScope.of(
+                    context,
+                  ).numberOr('filters_panel_radius', 16),
+                ),
               ),
               clipBehavior: Clip.antiAlias,
               child: SafeArea(
@@ -112,6 +121,21 @@ class CatalogProductFilterSheet extends StatefulWidget {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
+      shape:
+          AppUiControlsScope.of(
+                context,
+              ).optionalNumber('filters_panel_radius') ==
+              null
+          ? null
+          : RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(
+                  AppUiControlsScope.of(
+                    context,
+                  ).optionalNumber('filters_panel_radius')!,
+                ),
+              ),
+            ),
       builder: (BuildContext context) => CatalogProductFilterSheet(
         initialFilters: initialFilters,
         currencyMinorUnit: currencyMinorUnit,
@@ -204,6 +228,7 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
   Widget build(BuildContext context) {
     final CatalogCopy copy = CatalogCopy.of(context);
     final ThemeData theme = Theme.of(context);
+    final ui = AppUiControlsScope.of(context);
     final String minimumAvailable = _minorToDecimal(
       widget.minimumAvailableMinor,
       widget.currencyMinorUnit,
@@ -215,9 +240,9 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
 
     return Padding(
       padding: EdgeInsetsDirectional.fromSTEB(
-        20,
+        ui.numberOr('filters_side_padding', 20),
         0,
-        20,
+        ui.numberOr('filters_side_padding', 20),
         20 + MediaQuery.viewInsetsOf(context).bottom,
       ),
       child: Form(
@@ -230,6 +255,7 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
                 copy.filters,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
+                  fontSize: ui.optionalNumber('filters_title_size'),
                 ),
               ),
               const SizedBox(height: 10),
@@ -358,6 +384,22 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
               const SizedBox(height: 14),
               FilledButton(
                 onPressed: () => _submit(copy),
+                style: FilledButton.styleFrom(
+                  minimumSize:
+                      ui.optionalNumber('filters_button_height') == null
+                      ? null
+                      : Size(64, ui.optionalNumber('filters_button_height')!),
+                  shape: ui.optionalNumber('filters_button_radius') == null
+                      ? null
+                      : RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            ui.optionalNumber('filters_button_radius')!,
+                          ),
+                        ),
+                  textStyle: theme.textTheme.labelLarge?.copyWith(
+                    fontSize: ui.optionalNumber('filters_button_font_size'),
+                  ),
+                ),
                 child: Text(copy.apply),
               ),
               const SizedBox(height: 8),
@@ -523,6 +565,7 @@ class _FilterChoiceSectionState<T> extends State<_FilterChoiceSection<T>> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final ui = AppUiControlsScope.of(context);
     final options = widget.options.where(
       (option) =>
           widget.label(option).toLowerCase().contains(search.toLowerCase()),
@@ -552,15 +595,25 @@ class _FilterChoiceSectionState<T> extends State<_FilterChoiceSection<T>> {
         Align(
           alignment: AlignmentDirectional.centerStart,
           child: Wrap(
-            spacing: 6,
-            runSpacing: 4,
+            spacing: ui.numberOr('filters_chip_gap', 6),
+            runSpacing: ui.numberOr('filters_chip_gap', 4),
             children: [
               for (final option in options)
                 FilterChip(
                   label: Text(widget.label(option)),
                   selected: widget.selected.contains(option),
                   selectedColor: colors.primary.withValues(alpha: .12),
-                  labelStyle: TextStyle(color: colors.onSurface),
+                  labelStyle: TextStyle(
+                    color: colors.onSurface,
+                    fontSize: ui.optionalNumber('filters_option_size'),
+                  ),
+                  shape: ui.optionalNumber('filters_chip_radius') == null
+                      ? null
+                      : RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            ui.optionalNumber('filters_chip_radius')!,
+                          ),
+                        ),
                   side: BorderSide(color: colors.primary.withValues(alpha: .3)),
                   onSelected: (selected) => widget.onChange(
                     selected
