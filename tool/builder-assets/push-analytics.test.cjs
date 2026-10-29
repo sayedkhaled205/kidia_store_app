@@ -10,6 +10,8 @@ const row={id:'campaign-123',title:'<img onerror=alert(1)>',message:'Message',cr
 for(const lang of ['en','ar']) {
   const dom=page(lang),document=dom.window.document,api=dom.window.MobiShopPushReport,root=document.querySelector('main');
   api.mount(root,{status:'ready',version:2,conversion_supported:true,campaigns:[row,{...row,id:'campaign-456',revenue:{EGP:'0.200000'}}]});
+  const style=document.createElement('style');style.textContent='.mobishop-push-stats{display:grid}'+readFileSync(__dirname+'/push-analytics.css','utf8');document.head.append(style);
+  assert.equal(dom.window.getComputedStyle(root.querySelector('.mobishop-push-stats')).display,'none');
   assert.equal(root.querySelectorAll('.wm-push-campaign').length,2);
   assert.equal(root.querySelectorAll('img').length,0);
   assert.match(root.textContent,/EGP 0.30/);assert.match(root.textContent,/USD 2.99/);assert.match(root.textContent,/20.0%/);
