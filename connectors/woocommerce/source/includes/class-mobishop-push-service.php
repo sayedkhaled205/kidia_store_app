@@ -295,19 +295,7 @@ final class MobiShop_Push_Service {
 	}
 
 	public function record_event( WP_REST_Request $request ) {
-		$notification_id = sanitize_text_field( (string) $request->get_param( 'notification_id' ) );
-		$event = sanitize_key( (string) $request->get_param( 'event' ) );
-		if ( '' === $notification_id || ! in_array( $event, array( 'delivered', 'opened', 'converted' ), true ) ) {
-			return new WP_Error( 'mobishop_push_event_invalid', __( 'A valid notification event is required.', 'mobi2app-connector' ), array( 'status' => 400 ) );
-		}
-		$metrics = get_option( self::METRICS_OPTION, array() );
-		$metrics = is_array( $metrics ) ? $metrics : array();
-		$row = is_array( $metrics[ $notification_id ] ?? null ) ? $metrics[ $notification_id ] : array();
-		$row[ $event ] = absint( $row[ $event ] ?? 0 ) + 1;
-		$row['updated_at'] = time();
-		$metrics[ $notification_id ] = $row;
-		update_option( self::METRICS_OPTION, array_slice( $metrics, -1000, null, true ), false );
-		return rest_ensure_response( array( 'recorded' => true ) );
+		return MobiShop_Push_Analytics::record( $request );
 	}
 
 	/** @return array<string,mixed> */
@@ -333,9 +321,15 @@ final class MobiShop_Push_Service {
 			$payload['delivery'] = array( 'mode' => 'managed', 'sent' => 0, 'failed' => 0, 'errors' => array() );
 			return $payload;
 		}
+		if ( class_exists( 'MobiShop_Push_Analytics' ) ) {
+			try { MobiShop_Push_Analytics::begin( $payload, $devices ); } catch ( Throwable $error ) { /* Reporting is optional. */ }
+		}
 		$result = self::dispatch_managed( $payload, $devices );
 		$payload['delivery'] = $result;
 		$payload['status'] = $result['sent'] > 0 ? 'sent' : 'failed';
+		if ( class_exists( 'MobiShop_Push_Analytics' ) ) {
+			try { MobiShop_Push_Analytics::finish( $payload ); } catch ( Throwable $error ) { /* Preserve delivery outcome. */ }
+		}
 		$metrics = get_option( self::METRICS_OPTION, array() );
 		$metrics = is_array( $metrics ) ? $metrics : array();
 		$metrics[ (string) ( $payload['id'] ?? wp_generate_uuid4() ) ] = array(
