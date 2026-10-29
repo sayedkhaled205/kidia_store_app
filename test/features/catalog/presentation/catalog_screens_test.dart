@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_filter_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 import 'package:mobishop_store_app/app/main_shell.dart';
@@ -26,6 +27,26 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
+  testWidgets('empty category hides size and color; side panel does not duplicate toolbar filters', (tester) async {
+    for (final style in ['flat', 'outlined']) {
+    for (final empty in [true, false]) {
+      await tester.pumpWidget(_app(_ScreenCatalogRepository(emptyProducts: empty),
+        const CatalogProductListScreen(request: CatalogProductListRequest(title: 'Collection')),
+        catalogToolbarStyle: style));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('catalog-size-button')), empty ? findsNothing : findsOneWidget);
+      expect(find.byKey(const Key('catalog-color-button')), findsNothing);
+      await tester.tap(find.byKey(const Key('catalog-filter-button')));
+      await tester.pumpAndSettle();
+      expect(find.descendant(of: find.byType(CatalogProductFilterSheet), matching: find.text('Size')), findsNothing);
+      expect(find.descendant(of: find.byType(CatalogProductFilterSheet), matching: find.text('Color')), findsNothing);
+      expect(find.text('Apply'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   for (final direction in TextDirection.values) {
     testWidgets('Kids children share the products page $direction', (
       tester,
@@ -1099,6 +1120,7 @@ Widget _app(
   TextDirection? direction,
   double scale = 1,
   bool realCatalog = false,
+  String? catalogToolbarStyle,
 }) {
   return ProviderScope(
     overrides: [
@@ -1110,6 +1132,11 @@ Widget _app(
       portableAppDesign58Provider.overrideWithValue(null),
       cmsPageLayoutProvider.overrideWith((ref, page) async {
         final base = CmsPageLayout.fallback(page);
+        if (page == 'catalog' && catalogToolbarStyle != null) {
+          return CmsPageLayout(page: page, header: base.header, footer: base.footer,
+            elements: base.elements.map((e) => CmsPageComponent(id: e.id, type: e.type, enabled: e.enabled,
+              settings: {...e.settings, if(e.type=='filter_bar') ...{'button_style':catalogToolbarStyle,'filter_size':true,'filter_color':true}})).toList());
+        }
         if (repository is! _ScreenCatalogRepository ||
             repository.nameHighlightEnabled == null) {
           return base;
@@ -1221,6 +1248,7 @@ Widget _app(
 class _ScreenCatalogRepository implements CatalogRepository {
   _ScreenCatalogRepository({
     this.categoryLayout = 'default',
+    this.emptyProducts = false,
     this.rootName = 'Women',
     this.navigationMode = 'drilldown',
     this.rootViewAllMode = 'hidden',
@@ -1236,6 +1264,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
   });
 
   final String categoryLayout;
+  final bool emptyProducts;
   final String rootName;
   final String navigationMode;
   final String rootViewAllMode;
@@ -1307,7 +1336,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
       ),
     ];
     return CatalogPage<CatalogProduct>(
-      items: products,
+      items: emptyProducts ? [] : products,
       page: query.page,
       perPage: query.perPage,
       totalItems: products.length,

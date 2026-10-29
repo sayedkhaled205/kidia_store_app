@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.117",
+  "version": "1.46.118",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "68da0d0aff8f55b702daf5865eedecabe75e54f9ab9bdcf0ac629ba9eaba638b",
-      "sha256": "68da0d0aff8f55b702daf5865eedecabe75e54f9ab9bdcf0ac629ba9eaba638b"
+      "source_sha256": "e646bf5cbfa41d5a7461dc11a3b04a96d60dfffb8bf7cc26d5f702bc84aeec2f",
+      "sha256": "e646bf5cbfa41d5a7461dc11a3b04a96d60dfffb8bf7cc26d5f702bc84aeec2f"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2808,8 +2808,8 @@
     "includes/class-mobishop-page-layout-store.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-page-layout-store.php",
       "newline": "binary",
-      "source_sha256": "0eaf76e7f6ee955b492bfe2efbfe1ac064e83ab2d9420d399a8d12f6e3766f5e",
-      "sha256": "0eaf76e7f6ee955b492bfe2efbfe1ac064e83ab2d9420d399a8d12f6e3766f5e"
+      "source_sha256": "3a982994572d63b08a7ce5cc877b7f580e2302ee0d238bed96d5a39dd430bc44",
+      "sha256": "3a982994572d63b08a7ce5cc877b7f580e2302ee0d238bed96d5a39dd430bc44"
     },
     "includes/class-mobishop-product-channel-visibility.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-product-channel-visibility.php",
@@ -2988,8 +2988,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "732388af4cb6b66f23eea81c90e430c3137ddef3c53505f06038671c09e15eec",
-      "sha256": "732388af4cb6b66f23eea81c90e430c3137ddef3c53505f06038671c09e15eec"
+      "source_sha256": "47c449d63a57e2a762e5fea0171a087e0559e4faf515306b7701a9666c4f6d53",
+      "sha256": "47c449d63a57e2a762e5fea0171a087e0559e4faf515306b7701a9666c4f6d53"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -3024,8 +3024,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "d85788ce8b57b628c0e48febcd58164f576db713c5acbf0bf521fa1b3b8a7005",
-      "sha256": "d85788ce8b57b628c0e48febcd58164f576db713c5acbf0bf521fa1b3b8a7005"
+      "source_sha256": "d27c55d408c61905ec2af322ddc77c80cb6bf59a8cc15148a4cc4f34a6031eb7",
+      "sha256": "d27c55d408c61905ec2af322ddc77c80cb6bf59a8cc15148a4cc4f34a6031eb7"
     }
   },
   "baseline_release": {

@@ -136,6 +136,29 @@ class ProductDetailController extends ChangeNotifier {
 
   CatalogImage? get selectedImage => selectedVariation?.image;
 
+  /// Use the source variation image for this option, never another color's
+  /// product image. Prefer a match for the other currently selected options.
+  CatalogImage? imageForOption(String key, String value) {
+    final group = _findOptionGroup(_canonicalAttributeKey(key));
+    if (group == null) return null;
+    final option = <String, String>{group.key: value};
+    final selection = <String, String>{..._selectedAttributes, ...option};
+    CatalogImage? fallback;
+    for (final variation in _variations) {
+      final image = variation.image;
+      if (image == null || image.source.toString().isEmpty ||
+          !variation.attributes.any((attribute) =>
+            _variationAttributeKey(attribute) == group.key &&
+            attribute.value.trim().isNotEmpty &&
+            _attributeValuesMatch(group.key, value, attribute.value))) {
+        continue;
+      }
+      fallback ??= image;
+      if (_variationMatches(variation, selection)) return image;
+    }
+    return fallback;
+  }
+
   bool get canAddToCart {
     final CatalogProduct? currentProduct = _product;
     if (_status != ProductDetailStatus.success ||

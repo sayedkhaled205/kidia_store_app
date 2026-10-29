@@ -16,6 +16,7 @@ import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_imag
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
+import 'widgets/product_option_tiles.dart';
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
@@ -481,13 +482,14 @@ class _ProductContentState extends State<_ProductContent> {
                   ),
                 ),
               ],
-              const SizedBox(height: 18),
               if (!usesHostedOdooCart297 && pageLayout.element('purchase_bar').enabled &&
-                  pageLayout.element('purchase_bar').boolean('show_quantity', true))
+                  pageLayout.element('purchase_bar').boolean('show_quantity', true)) ...[
+                const SizedBox(height: 18),
                 CmsElementFrame(
                   component: pageLayout.element('purchase_bar'),
                   child: _QuantitySelector(controller: controller, copy: copy),
                 ),
+              ],
               if (product.hasVariations &&
                   controller.selectionComplete &&
                   controller.selectedVariation == null) ...<Widget>[
@@ -501,7 +503,7 @@ class _ProductContentState extends State<_ProductContent> {
                   ),
                 ),
               ],
-              const SizedBox(height: 28),
+              SizedBox(height: pageLayout.element('variations').string('style', 'chips') == 'tiles' ? 12 : 28),
               if (product.brands.isNotEmpty) ...<Widget>[
                 _BrandSection(product: product, copy: copy),
                 const SizedBox(height: 12),
@@ -1481,6 +1483,13 @@ class _ProductOptionPicker extends ConsumerWidget {
                 if (value != null) controller.selectOption(group.key, value);
               },
             )
+          else if (settings?.string('style', 'chips') == 'tiles')
+            ProductOptionTiles(
+              controller: controller,
+              group: group,
+              height: chipHeight,
+              radius: settings?.number('chip_radius', 8).clamp(0, 32) ?? 8,
+            )
           else
           Wrap(
             spacing: 6,
@@ -1521,7 +1530,7 @@ class _ProductOptionPicker extends ConsumerWidget {
   }
 }
 
-class _ProductOptionsSheet extends StatelessWidget {
+class _ProductOptionsSheet extends ConsumerWidget {
   const _ProductOptionsSheet({
     required this.controller,
     required this.copy,
@@ -1531,7 +1540,8 @@ class _ProductOptionsSheet extends StatelessWidget {
   final _ProductCopy copy;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(cmsPageLayoutProvider('product')).asData?.value.element('variations');
     return AnimatedBuilder(
       animation: controller,
       builder: (BuildContext context, Widget? child) {
@@ -1577,6 +1587,7 @@ class _ProductOptionsSheet extends StatelessWidget {
                     group: group,
                     controller: controller,
                     copy: copy,
+                    settings: settings,
                   ),
                 if (invalidSelection) ...<Widget>[
                   Text(
