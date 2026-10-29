@@ -7,8 +7,9 @@ String catalogFilterLabel(Object? source) {
       .replaceAll('&#039;', "'")
       .replaceAll('&nbsp;', ' ')
       .replaceAll('&amp;', '&');
-  if (RegExp(r'class\s*=|^/?i\s*/>', caseSensitive: false).hasMatch(label))
+  if (RegExp(r'class\s*=|^/?i\s*/>', caseSensitive: false).hasMatch(label)) {
     return '';
+  }
   label = label.replaceAll(RegExp(r'<[^>]*>'), '').trim();
   return label;
 }
