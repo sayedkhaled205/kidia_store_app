@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/features/home/data/models/home_block_model.dart';
 import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
 import 'package:mobishop_store_app/features/home/presentation/widgets/home_block_widgets.dart';
@@ -63,7 +64,7 @@ Future<void> _pump(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
-    MaterialApp(
+    ProviderScope(child: MaterialApp(
       theme: ThemeData(
         fontFamily: 'Poppins',
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4EA999)),
@@ -105,7 +106,7 @@ Future<void> _pump(
           ),
         ),
       ),
-    ),
+    )),
   );
   await tester.pump();
 }
