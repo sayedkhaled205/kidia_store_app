@@ -120,7 +120,8 @@ class _MainShellState extends ConsumerState<MainShell>
 
   @override
   Widget build(BuildContext context) {
-    final String page = _pageForPath(GoRouterState.of(context).uri.path);
+    final String routePath = GoRouterState.of(context).uri.path;
+    final String page = _pageForPath(routePath);
     final AsyncValue<CmsPageLayout> pageLayoutState = ref.watch(
       cmsPageLayoutProvider(page),
     );
@@ -262,6 +263,7 @@ class _MainShellState extends ConsumerState<MainShell>
         bottomNavigationBar:
             waitingForLayout ||
                 !footer.enabled ||
+                routePath == '/search' ||
                 (_footerHidden && footer.boolean('hide_on_scroll', false)) ||
                 visibleItems.isEmpty ||
                 (page == 'product' &&
