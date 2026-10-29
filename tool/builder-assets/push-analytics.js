@@ -31,7 +31,8 @@
     const section = el('section',undefined,'wm-push-analytics'); section.setAttribute('aria-label',tr('Push analytics','تحليلات الإشعارات'));
     section.append(el('h2',tr('Push analytics','تحليلات الإشعارات')));
     const anchor = root.querySelector('.mobishop-push-history'); if (anchor) anchor.before(section); else root.append(section);
-    root.querySelector('.mobishop-push-stats')?.setAttribute('hidden','');
+    const legacyStats=root.querySelector('.mobishop-push-stats');
+    if (legacyStats) { legacyStats.hidden=true; legacyStats.style.setProperty('display','none','important'); }
     if (!data || data.status !== 'ready' || data.version !== 2) {
       section.append(el('p',tr('Analytics is unavailable. Reload to try again. Unavailable data is not counted as zero.','التحليلات غير متاحة حاليًا. أعد تحميل الصفحة للمحاولة. البيانات غير المتاحة لا تُحسب صفرًا.'))); return;
     }
