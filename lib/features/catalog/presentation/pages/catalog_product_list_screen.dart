@@ -485,6 +485,15 @@ class _CatalogToolbar extends ConsumerWidget {
             minimumAvailableMinor: state.filterData?.minimumPriceMinor ?? '',
             maximumAvailableMinor: state.filterData?.maximumPriceMinor ?? '',
             brands: brands,
+            availableSizes: settings.boolean('filter_size', true)
+                ? state.availableSizes
+                : const [],
+            availableColors: settings.boolean('filter_color', true)
+                ? state.availableColors
+                : const [],
+            loadOptions: controller.loadFilterOptions,
+            showSizes: settings.boolean('filter_size', true),
+            showColors: settings.boolean('filter_color', false),
             showPrice: settings.boolean('filter_price', true),
             showSale: settings.boolean('filter_sale', true),
             showBrand: settings.boolean('filter_brand', true),
@@ -599,20 +608,30 @@ class _CatalogToolbar extends ConsumerWidget {
                         final int minorUnit = state.items.isEmpty
                             ? 2
                             : state.items.first.prices.currencyMinorUnit;
-                        final CatalogProductFilters? filters =
-                            await CatalogProductFilterSheet.show(
-                              context,
-                              initialFilters: state.filters,
-                              currencyMinorUnit: minorUnit,
-                              minimumAvailableMinor:
-                                  state.filterData?.minimumPriceMinor ?? '',
-                              maximumAvailableMinor:
-                                  state.filterData?.maximumPriceMinor ?? '',
-                              brands: brands,
-                              showPrice: settings.boolean('filter_price', true),
-                              showSale: settings.boolean('filter_sale', true),
-                              showBrand: settings.boolean('filter_brand', true),
-                            );
+                        final CatalogProductFilters?
+                        filters = await CatalogProductFilterSheet.show(
+                          context,
+                          initialFilters: state.filters,
+                          currencyMinorUnit: minorUnit,
+                          minimumAvailableMinor:
+                              state.filterData?.minimumPriceMinor ?? '',
+                          maximumAvailableMinor:
+                              state.filterData?.maximumPriceMinor ?? '',
+                          brands: brands,
+                          availableSizes: settings.boolean('filter_size', true)
+                              ? state.availableSizes
+                              : const [],
+                          availableColors:
+                              settings.boolean('filter_color', true)
+                              ? state.availableColors
+                              : const [],
+                          loadOptions: controller.loadFilterOptions,
+                          showSizes: settings.boolean('filter_size', true),
+                          showColors: settings.boolean('filter_color', false),
+                          showPrice: settings.boolean('filter_price', true),
+                          showSale: settings.boolean('filter_sale', true),
+                          showBrand: settings.boolean('filter_brand', true),
+                        );
                         if (filters != null) {
                           await controller.applyFilters(filters);
                         }

@@ -13,6 +13,38 @@ import 'package:mobishop_store_app/features/catalog/presentation/controllers/cat
 
 void main() {
   group('CatalogProductListController', () {
+    test('tag filters retain the category and attribute selections', () async {
+      final repository = _FakeCatalogRepository(
+        products: (query) async =>
+            _page(query, items: [_product(1)], totalItems: 1, totalPages: 1),
+      );
+      final controller = CatalogProductListController(
+        repository,
+        request: const CatalogProductListRequest(categoryId: 7),
+      );
+      addTearDown(controller.dispose);
+      await controller.applyFilters(
+        const CatalogProductFilters(
+          tags: [CatalogTagOption(id: 124, label: 'Trousers')],
+          sizes: [
+            CatalogSizeOption(taxonomy: 'pa_size', term: '4y', label: '4Y'),
+          ],
+          minimumPriceMinor: '1000',
+        ),
+      );
+      final query = repository.productQueries.last;
+      expect(query.toStoreApiQuery()['tag'], '124');
+      expect(query.categoryIds, [7]);
+      expect(query.attributes.single.terms, ['4y']);
+      expect(query.minimumPriceMinor, '1000');
+      await controller.applyColors(const [
+        CatalogSizeOption(taxonomy: 'pa_color', term: 'blue', label: 'Blue'),
+      ]);
+      expect(repository.productQueries.last.tagIds, [124]);
+      expect(repository.productQueries.last.attributes.length, 2);
+      // Optional metadata is not fabricated or sent to unsupported transports.
+      expect((await controller.loadFilterOptions()).tags, isEmpty);
+    });
     test(
       'notification offers destination requests only sale products',
       () async {
