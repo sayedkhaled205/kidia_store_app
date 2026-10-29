@@ -27,6 +27,8 @@ require_once MOBISHOP_PATH . 'includes/class-mobishop-product-channel-visibility
 require_once MOBISHOP_PATH . 'includes/class-mobishop-ai-offer-engine.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-ai-analysis-job.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-recovery-campaigns.php';
+require_once MOBISHOP_PATH . 'includes/class-mobishop-push-analytics.php';
+MobiShop_Push_Analytics::register();
 require_once MOBISHOP_PATH . 'includes/class-mobishop-push-service.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-app-exporter.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-coupon-channel.php';

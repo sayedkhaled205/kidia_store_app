@@ -11,6 +11,8 @@ import '../config/app_config.dart';
 import 'push_bootstrap_config.dart';
 import 'push_messaging_client.dart';
 import 'foreground_push_notice.dart';
+import 'push_checkout_attribution.dart';
+import 'push_event_outbox.dart';
 
 final class PushNotificationService with WidgetsBindingObserver {
   static const Duration _networkTimeout = Duration(seconds: 12);
@@ -79,6 +81,8 @@ final class PushNotificationService with WidgetsBindingObserver {
   Uri? _registrationUrl;
   Uri? _eventsUrl;
   Timer? _retryTimer;
+  Timer? _eventRetryTimer;
+  PushEventOutbox? _eventOutbox;
   Future<void>? _initializing;
   Future<String>? _clientId;
   String? _pendingToken;
@@ -140,6 +144,9 @@ final class PushNotificationService with WidgetsBindingObserver {
       if (_disposed) return;
       _registrationUrl = config.registrationUrl;
       _eventsUrl = config.eventsUrl;
+      if (_eventsUrl != null && _eventOutbox?.endpoint != _eventsUrl) {
+        _eventOutbox = PushEventOutbox(_dio, _eventsUrl!);
+      }
       _permissionDenied = !await _messaging.requestPermission();
       if (_disposed || _permissionDenied) return;
       _listen();
@@ -150,6 +157,7 @@ final class PushNotificationService with WidgetsBindingObserver {
       if (_pendingToken == token) _pendingToken = null;
       _ready = _pendingToken == null;
       if (_ready) _retryAttempt = 0;
+      unawaited(_flushEvents());
     } catch (_) {
       // Requests can contain device tokens: never log them on failure.
       debugPrint('MobiShop push is waiting to reconnect.');
@@ -170,6 +178,7 @@ final class PushNotificationService with WidgetsBindingObserver {
     _active = state == AppLifecycleState.resumed;
     if (!_active) {
       _retryTimer?.cancel();
+      _eventRetryTimer?.cancel();
       return;
     }
     _permissionDenied = false;
@@ -302,18 +311,29 @@ final class PushNotificationService with WidgetsBindingObserver {
     try {
       final clientId = await _getClientId();
       if (_disposed) return;
-      await _dio.postUri<dynamic>(
-        url,
-        data: <String, dynamic>{
-          'notification_id': notificationId,
-          'event': event,
-          'client_id': clientId,
-        },
-      );
+      if (event == 'opened') await PushCheckoutAttribution.opened(url);
+      final pending = await _eventOutbox?.enqueue(<String, dynamic>{
+        'notification_id': notificationId,
+        'event': event,
+        'client_id': clientId,
+      });
+      if (pending == true) _scheduleEventRetry();
     } catch (_) {
       // Optional analytics must not break notification navigation or the app.
       debugPrint('MobiShop push event could not be recorded.');
     }
+  }
+
+  void _scheduleEventRetry() {
+    if (_disposed || !_active || _eventRetryTimer?.isActive == true) return;
+    _eventRetryTimer = Timer(const Duration(seconds: 30), () {
+      unawaited(_flushEvents());
+    });
+  }
+
+  Future<void> _flushEvents() async {
+    if (_disposed || !_active) return;
+    if (await _eventOutbox?.flush() == true) _scheduleEventRetry();
   }
 
   @visibleForTesting
@@ -321,6 +341,7 @@ final class PushNotificationService with WidgetsBindingObserver {
     if (_disposed) return;
     _disposed = true;
     _retryTimer?.cancel();
+    _eventRetryTimer?.cancel();
     if (_observing) WidgetsBinding.instance.removeObserver(this);
     for (final subscription in _subscriptions) {
       await subscription.cancel();

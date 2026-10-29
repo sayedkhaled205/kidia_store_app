@@ -30,6 +30,7 @@ add_action('rest_api_init', static function (): void {
                 'opened' => max(0, (int) ($metrics['opened'] ?? 0)),
                 'converted' => max(0, (int) ($metrics['converted'] ?? 0)),
                 'history' => $history,
+                'analytics' => class_exists('MobiShop_Push_Analytics') ? MobiShop_Push_Analytics::report() : ['status' => 'unavailable'],
             ]);
         },
     ]);

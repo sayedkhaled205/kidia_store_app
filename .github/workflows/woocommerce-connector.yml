@@ -68,6 +68,7 @@ jobs:
           php connectors/woocommerce/tests/kids-branding301-contract-test.php
           php connectors/woocommerce/tests/kids-tail301-contract-test.php
           php connectors/woocommerce/tests/product-outline-contract-test.php
+          php connectors/woocommerce/tests/push-analytics-test.php
           php connectors/woocommerce/tests/discount-rules-prices-test.php
           php connectors/woocommerce/tests/discount_rules_summary_test.php
       - name: Validate connector release tag

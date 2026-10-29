@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/push/push_checkout_attribution.dart';
 
 class CheckoutApiResponse {
   const CheckoutApiResponse({required this.data, this.statusCode});
@@ -260,6 +261,12 @@ class StoreApiCheckoutTransport
       'Idempotency-Key': requestKey,
     }, authenticated: true);
     final String? requestSession = headers['X-MobiShop-Session'];
+    headers.addAll(
+      await PushCheckoutAttribution.headers(
+        requestUri,
+      ).timeout(const Duration(milliseconds: 300), onTimeout: () => const {}),
+    );
+    _assertCurrentSession(requestSession);
     try {
       final Response<dynamic> response = await _dio.postUri<dynamic>(
         requestUri,

@@ -172,6 +172,10 @@ void main() {
       );
       expect(h.events.single.data['event'], 'opened');
       expect(h.service.takePendingOpenedAction()?['product_id'], '23');
+      await tester.pump(const Duration(seconds: 30));
+      await _flush(tester);
+      expect(h.events, hasLength(2));
+      expect(h.events.last.data, h.events.first.data);
     },
   );
 
