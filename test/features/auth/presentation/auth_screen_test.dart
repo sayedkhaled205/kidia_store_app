@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -22,6 +23,7 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  viewportRotationTests('Sign in', (tester,size) => _Fixture().pump(tester,size:size));
   testWidgets('first identifier field shows the local phone example in gray without restricting email', (tester) async {
     final fixture = _Fixture();
     await fixture.pump(tester);
@@ -966,3 +968,4 @@ NativeAuthResult _authenticated() => NativeAuthResult(
     user: const AuthUser(id: 7, email: 'customer@example.com'),
   ),
 );
+

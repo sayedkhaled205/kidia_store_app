@@ -1,41 +1,74 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
-/// Opens directly below the catalog controls, retaining the page behind it.
+/// An anchored panel that stays usable when the viewport or keyboard changes.
 Future<T?> showCatalogToolbarPanel<T>(
   BuildContext context, {
   required WidgetBuilder builder,
 }) {
-  final RenderBox? anchor = context.findRenderObject() as RenderBox?;
-  final double top = anchor == null
-      ? MediaQuery.paddingOf(context).top
-      : anchor.localToGlobal(Offset(0, anchor.size.height)).dy;
+  final anchorContext = context;
   return showGeneralDialog<T>(
     context: context,
-    // Keep the overlay on the active branch so Android back dismisses it
-    // before the category/page underneath receives the navigation event.
     useRootNavigator: false,
     barrierDismissible: true,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: Colors.black45,
     transitionDuration: const Duration(milliseconds: 160),
-    pageBuilder: (context, animation, secondaryAnimation) => Align(
-      alignment: Alignment.topCenter,
-      child: Padding(
-        padding: EdgeInsets.only(top: top),
-        child: Material(
-          color: Theme.of(context).colorScheme.surface,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight:
-                  (MediaQuery.sizeOf(context).height -
-                          top -
-                          MediaQuery.paddingOf(context).bottom)
-                      .clamp(0, double.infinity),
+    pageBuilder: (context, animation, secondaryAnimation) => SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final media = MediaQuery.of(context);
+          final anchor = anchorContext.mounted
+              ? anchorContext.findRenderObject() as RenderBox?
+              : null;
+          final desiredTop = anchor != null && anchor.attached && anchor.hasSize
+              ? anchor.localToGlobal(Offset(0, anchor.size.height)).dy -
+                    media.padding.top
+              : 0.0;
+          final height = math.max(
+            0.0,
+            constraints.maxHeight - media.viewInsets.bottom,
+          );
+          // Preserve enough space for the close control, choices and actions.
+          final top = desiredTop.clamp(
+            0.0,
+            math.max(0.0, height - math.min(280.0, height)),
+          );
+          return Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: EdgeInsets.only(top: top.toDouble()),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: (height - top).toDouble(),
+                ),
+                child: Material(
+                  color: Theme.of(context).colorScheme.surface,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: IconButton(
+                          key: const Key('catalog-panel-close'),
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).closeButtonTooltip,
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                        ),
+                      ),
+                      Flexible(child: builder(context)),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            child: SingleChildScrollView(child: builder(context)),
-          ),
-        ),
+          );
+        },
       ),
     ),
   );
 }
+

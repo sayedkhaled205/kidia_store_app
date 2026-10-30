@@ -11,7 +11,7 @@ import '../support/product_test_data.dart';
 
 void main() {
   for (final direction in TextDirection.values) {
-    for (final width in [320.0, 360.0, 390.0]) {
+    for (final width in [320.0, 360.0, 390.0, 844.0, 768.0, 1024.0]) {
       for (final scale in [1.0, 1.8]) {
         testWidgets('compact sizes $width $scale $direction', (tester) async {
           tester.view.physicalSize = Size(width, 800);
@@ -94,13 +94,19 @@ void main() {
             tester.getSize(first).height,
             greaterThan(tester.getSize(first).width),
           );
-          if (width >= 360 && scale == 1) {
+          if ((width >= 360 && scale == 1) || width >= 768) {
             expect(tester.getTopLeft(first).dy, tester.getTopLeft(last).dy);
           } else {
             expect(
               tester.getTopLeft(last).dy,
               greaterThan(tester.getTopLeft(first).dy),
             );
+          }
+          for (final name in sizes) {
+            final text = tester.widget<Text>(find.text(name).first);
+            expect(text.maxLines, 1);
+            expect(text.softWrap, false);
+            expect(find.ancestor(of: find.text(name).first, matching: find.byType(FittedBox)), findsOneWidget);
           }
           await tester.tap(last);
           expect(controller.selectedAttributes, isEmpty);

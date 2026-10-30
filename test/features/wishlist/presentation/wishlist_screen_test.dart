@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_card.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
@@ -12,6 +13,7 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/wishlist_test_data.dart';
 
 void main() {
+  viewportRotationTests('Wishlist', (tester,size) => tester.pumpWidget(_testApp(WishlistScreen(repository:FakeWishlistRepository(),catalogRepository:FakeWishlistCatalogRepository()))));
   test('recommendations preserve every supported disabled quick-add value', () {
     final base = CmsPageLayout.fallback('wishlist');
     for (final disabled in <Object>[false, 0, '0', 'false']) {
@@ -407,3 +409,4 @@ Widget _testApp(Widget home) {
     child: MaterialApp(theme: ThemeData(useMaterial3: true), home: home),
   );
 }
+

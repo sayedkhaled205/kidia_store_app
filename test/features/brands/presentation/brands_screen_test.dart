@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,6 +9,7 @@ import 'package:mobishop_store_app/features/brands/presentation/brands_screen.da
 import 'package:mobishop_store_app/features/brands/presentation/providers/brands_providers.dart';
 
 void main() {
+  viewportRotationTests('Brands', (tester,size) => tester.pumpWidget(_testApp(_BrandsClient(), BrandsScreen(onBrandTap: (_) {}))));
   testWidgets('renders real response data and emits onBrandTap', (
     WidgetTester tester,
   ) async {
@@ -92,3 +94,4 @@ class _BrandsClient implements StoreApiClient {
     );
   }
 }
+

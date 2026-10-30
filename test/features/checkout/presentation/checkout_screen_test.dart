@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:async';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -13,6 +14,7 @@ import 'package:mobishop_store_app/features/checkout/presentation/checkout_scree
 import '../support/checkout_test_data.dart';
 
 void main() {
+  viewportRotationTests('Checkout', (tester,size) => tester.pumpWidget(_testApp(CheckoutScreen(repository:FakeCheckoutRepository()))));
   testWidgets('double confirmation during address sync reports one order once', (tester) async {
     _useTallSurface(tester);
     final sync = Completer<void>();
@@ -418,3 +420,4 @@ void _useTallSurface(WidgetTester tester) {
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 }
+

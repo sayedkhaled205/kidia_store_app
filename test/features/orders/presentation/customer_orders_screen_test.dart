@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,6 +11,7 @@ import 'package:mobishop_store_app/features/orders/presentation/customer_orders_
 import 'package:mobishop_store_app/features/orders/presentation/providers/customer_orders_providers.dart';
 
 void main() {
+  viewportRotationTests('Orders', (tester,size) => tester.pumpWidget(ProviderScope(overrides:[customerOrdersRepositoryProvider.overrideWithValue(const _ScreenOrdersRepository()),cartBadgeCountProvider.overrideWithValue(0)],child:const MaterialApp(home:CustomerOrdersScreen()))));
   testWidgets('order thumbnails use the item image with a stable fallback', (tester) async {
     for (final url in ['', 'https://store.example/item.jpg']) {
       await tester.pumpWidget(MaterialApp(home: Scaffold(body: CustomerOrderItemImage(item:CustomerOrderItem(name:'Product',quantity:1,imageUrl:url)))));
@@ -197,3 +199,4 @@ class _LookupOrdersRepository extends _EmptyOrdersRepository implements Customer
     return CustomerOrder(id:id,number:'$id',status:'completed',statusName:'Completed',totalDisplay:'EGP 10',itemCount:0,items:const []);
   }
 }
+

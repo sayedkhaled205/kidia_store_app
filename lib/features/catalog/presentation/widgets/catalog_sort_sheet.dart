@@ -23,7 +23,7 @@ abstract final class CatalogSortSheet {
     if (belowToolbar) {
       return showCatalogToolbarPanel<CatalogSort>(
         context,
-        builder: (context) => Padding(
+        builder: (context) => SingleChildScrollView(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -37,9 +37,11 @@ abstract final class CatalogSortSheet {
               ])
                 ListTile(
                   title: Text(copy.sortLabel(option)),
-                  leading: Icon(option == selected
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_off),
+                  leading: Icon(
+                    option == selected
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                  ),
                   onTap: () => Navigator.of(context).pop(option),
                 ),
             ],
@@ -62,26 +64,26 @@ abstract final class CatalogSortSheet {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 8, 8),
-              child: Text(
-                copy.sort,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 8, 8),
+                child: Text(
+                  copy.sort,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
-            ),
-            for (final CatalogSort option in options)
-              ListTile(
-                title: Text(copy.sortLabel(option)),
-                leading: Icon(
-                  option == selected
-                      ? Icons.radio_button_checked_rounded
-                      : Icons.radio_button_off_rounded,
+              for (final CatalogSort option in options)
+                ListTile(
+                  title: Text(copy.sortLabel(option)),
+                  leading: Icon(
+                    option == selected
+                        ? Icons.radio_button_checked_rounded
+                        : Icons.radio_button_off_rounded,
+                  ),
+                  selected: option == selected,
+                  onTap: () => Navigator.of(context).pop(option),
                 ),
-                selected: option == selected,
-                onTap: () => Navigator.of(context).pop(option),
-              ),
             ],
           ),
         ),
@@ -89,3 +91,4 @@ abstract final class CatalogSortSheet {
     );
   }
 }
+
