@@ -24,21 +24,23 @@ class AppLanguageTile extends ConsumerWidget {
                 context: context,
                 useSafeArea: true,
                 showDragHandle: true,
-                builder: (sheet) => Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (final language in AppLanguage.values)
-                      ListTile(
-                        key: Key('app-language-${language.name}'),
-                        title: Text(_label(language, arabic)),
-                        selected: current == language,
-                        trailing: current == language
-                            ? const Icon(Icons.check)
-                            : null,
-                        onTap: () => Navigator.of(sheet).pop(language),
-                      ),
-                    const SizedBox(height: 12),
-                  ],
+                builder: (sheet) => SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final language in AppLanguage.values)
+                        ListTile(
+                          key: Key('app-language-${language.name}'),
+                          title: Text(_label(language, arabic)),
+                          selected: current == language,
+                          trailing: current == language
+                              ? const Icon(Icons.check)
+                              : null,
+                          onTap: () => Navigator.of(sheet).pop(language),
+                        ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
                 ),
               );
               if (selected == null || !context.mounted) return;
@@ -68,3 +70,4 @@ class AppLanguageTile extends ConsumerWidget {
     AppLanguage.en => 'English',
   };
 }
+

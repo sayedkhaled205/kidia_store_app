@@ -41,7 +41,7 @@ class ProductOptionTiles extends StatelessWidget {
             .floor()
             .clamp(1, 6);
         final sizeWidth = math.min(
-          48.0 * scale.clamp(1, 1.6),
+          49.0 * scale.clamp(1, 1.6),
           (constraints.maxWidth - gap * (columns - 1)) / columns,
         );
         final tileHeight = colorGroup ? 72.0 : height * scale.clamp(1, 1.8);
@@ -62,7 +62,7 @@ class ProductOptionTiles extends StatelessWidget {
                       : null;
                   final labelStyle = DefaultTextStyle.of(context).style.merge(
                     TextStyle(
-                      fontSize: 13,
+                      fontSize: colorGroup ? 13 : 12.74,
                       fontWeight: FontWeight.w600,
                       color: available
                           ? colors.onSurface
@@ -85,8 +85,8 @@ class ProductOptionTiles extends StatelessWidget {
                   final text = Text(
                     option.label,
                     textAlign: TextAlign.center,
-                    maxLines: colorGroup ? 1 : 2,
-                    softWrap: !colorGroup,
+                    maxLines: 1,
+                    softWrap: false,
                     overflow: colorGroup
                         ? TextOverflow.visible
                         : TextOverflow.ellipsis,
@@ -95,9 +95,7 @@ class ProductOptionTiles extends StatelessWidget {
                   final label = Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 3),
-                      child: colorGroup
-                          ? FittedBox(fit: BoxFit.scaleDown, child: text)
-                          : text,
+                      child: FittedBox(fit: BoxFit.scaleDown, child: text),
                     ),
                   );
                   return Semantics(
@@ -190,3 +188,4 @@ class ProductOptionTiles extends StatelessWidget {
     );
   }
 }
+

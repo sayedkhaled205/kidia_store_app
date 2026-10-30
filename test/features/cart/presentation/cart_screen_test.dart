@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/compact_family_provider.dart';
 import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
@@ -18,6 +19,7 @@ import 'package:mobishop_store_app/features/cart/presentation/providers/cart_pro
 import '../data/cart_test_fixture.dart';
 
 void main() {
+  viewportRotationTests('Cart', (tester, size) => _pumpCart(tester, _WidgetCartRepository()));
   testWidgets(
     'published cart layout and sizes update mounted UI and preserve coupon input',
     (tester) async {
@@ -404,3 +406,4 @@ Cart _cart({
   }
   return CartModel.fromJson(json).toEntity();
 }
+

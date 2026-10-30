@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/splash/domain/splash_config.dart';
@@ -5,6 +6,7 @@ import 'package:mobishop_store_app/features/splash/presentation/splash_screen.da
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  viewportRotationTests('Splash', (tester,size) => tester.pumpWidget(const MaterialApp(home:SplashScreen(config:SplashConfig(showLoader:false)))));
   test('unset branding starts neutral while saved colors remain exact', () {
     final fallback = SplashConfig.fromJson({});
     expect(fallback.backgroundColor, Colors.white);
@@ -119,3 +121,4 @@ void main() {
     },
   );
 }
+

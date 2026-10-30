@@ -1,3 +1,8 @@
+import 'package:mobishop_store_app/features/home/presentation/pages/home_page.dart';
+import 'package:mobishop_store_app/features/home/presentation/providers/home_providers.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_layout.dart';
+import 'package:mobishop_store_app/features/home/data/models/home_block_model.dart';
+import '../../../support/viewport_rotation.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_filter_sheet.dart';
@@ -28,6 +33,11 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
+  viewportRotationTests('Home', (tester,size) => tester.pumpWidget(_app(_ScreenCatalogRepository(), const HomePage())));
+
+  viewportRotationTests('Categories', (tester, size) => tester.pumpWidget(_app(_ScreenCatalogRepository(categoryLayout:'visual_grid'), const CategoriesScreen())));
+  viewportRotationTests('Catalog', (tester, size) => tester.pumpWidget(_app(_ScreenCatalogRepository(), const CatalogProductListScreen(request:CatalogProductListRequest(title:'Products')))));
+  viewportRotationTests('Search', (tester, size) => tester.pumpWidget(_app(_ScreenCatalogRepository(), const SearchScreen())));
   testWidgets('category loading uses the saved square grid', (tester) async {
     final ready = Completer<void>();
     await tester.pumpWidget(_app(
@@ -1185,6 +1195,10 @@ Widget _app(
   return ProviderScope(
     overrides: [
       catalogRepositoryProvider.overrideWithValue(repository),
+      homeLayoutProvider.overrideWith((ref,locale) async => HomeLayout(version:1,page:'home',locale:locale,updatedAt:DateTime(2026),blocks:[
+        HomeBlockModel.fromJson({'id':'banner','type':'promo_strip','enabled':true,'data':{'text':'Welcome to our store','background_color':'#FFFFFF','text_color':'#111111'}}),
+        HomeBlockModel.fromJson({'id':'products','type':'product_grid','enabled':true,'data':{'title':'Products','columns':2,'limit':6,'quick_add_enabled':false,'show_wishlist':false,'items': [for(var i=1;i<=6;i++) {'id':i,'name':'Baby clothes','image_url':'','price':'320','currency_code':'EGP','currency_symbol':'EGP'}]}}),
+      ])),
       cartBadgeCountProvider.overrideWithValue(0),
       // These renderer fixtures carry presentation settings on their category
       // records. Do not require a compiled merchant design or a live CMS read.
@@ -1530,3 +1544,4 @@ class _ScreenCatalogRepository implements CatalogRepository {
     return const <CatalogVariation>[];
   }
 }
+

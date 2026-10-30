@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,7 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/native_a
 import '../../auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  viewportRotationTests('Account', (tester,size) => tester.pumpWidget(ProviderScope(overrides:[authRepositoryProvider.overrideWithValue(_SignedInRepository('customer@example.com'))],child:const MaterialApp(home:AccountScreen()))));
   for (final email in ['', 'guest-201000000000@no-email.invalid', 'real@gmail.com']) {
     testWidgets('account subtitle hides placeholder email: $email', (tester) async {
       await tester.pumpWidget(ProviderScope(overrides: [
@@ -322,3 +324,4 @@ class _SignedInRepository extends _SignedOutRepository {
     );
   }
 }
+

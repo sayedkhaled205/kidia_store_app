@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
@@ -17,6 +18,7 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/product_test_data.dart';
 
 void main() {
+  viewportRotationTests('Product', (tester, size) => tester.pumpWidget(_testApp(ProductDetailScreen(productId: simpleProduct.id, repository: ProductFakeCatalogRepository()))));
   for (final count in [6, 7]) {
     testWidgets('compact sizes keep Brand close after $count sizes', (tester) async {
       tester.view.physicalSize = const Size(390, 2000);
@@ -826,3 +828,4 @@ void _useTallSurface(WidgetTester tester) {
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 }
+

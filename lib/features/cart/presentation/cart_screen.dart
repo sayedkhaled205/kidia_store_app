@@ -970,18 +970,22 @@ class _SummaryRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          Text(
-            value,
-            textAlign: TextAlign.end,
-            style: isTotal
-                ? theme.textTheme.titleLarge?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.w900,
-                  )
-                : theme.textTheme.bodyMedium?.copyWith(
-                    color: emphasized ? colors.primary : null,
-                    fontWeight: emphasized ? FontWeight.w800 : FontWeight.w600,
-                  ),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: isTotal
+                  ? theme.textTheme.titleLarge?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w900,
+                    )
+                  : theme.textTheme.bodyMedium?.copyWith(
+                      color: emphasized ? colors.primary : null,
+                      fontWeight: emphasized
+                          ? FontWeight.w800
+                          : FontWeight.w600,
+                    ),
+            ),
           ),
         ],
       ),
@@ -1349,3 +1353,4 @@ class _OptionalCartDetails extends StatelessWidget {
         )
       : child;
 }
+

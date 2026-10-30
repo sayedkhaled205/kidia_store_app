@@ -1,3 +1,4 @@
+import '../../../support/viewport_rotation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,16 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/auth_pro
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
 
 void main() {
+  viewportRotationTests('Address editor', (tester,size) async {
+    await tester.pumpWidget(_app(const SavedAddressesScreen()));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.edit_outlined).first);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('close-address-editor')), findsOneWidget);
+  });
+  viewportRotationTests('Profile', (tester,size) => tester.pumpWidget(_app(const CustomerProfileScreen())));
+  viewportRotationTests('Addresses', (tester,size) => tester.pumpWidget(_app(const SavedAddressesScreen())));
+  viewportRotationTests('Support', (tester,size) => tester.pumpWidget(_app(const CustomerSupportScreen())));
   testWidgets('text country rejects malformed codes and saves uppercase', (
     tester,
   ) async {
@@ -373,3 +384,4 @@ class _FakeAuthRepository implements AuthRepository {
   dynamic noSuchMethod(Invocation invocation) =>
       throw StateError('Unexpected widget auth operation');
 }
+
