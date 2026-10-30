@@ -178,11 +178,18 @@ void main() {
       );
       expect(find.text('Blue'), findsOneWidget);
       await tester.tap(find.byKey(const Key('product-option-pa_color-red')));
-      expect(controller.selectedAttributes['pa_color'], isNull);
+      expect(controller.selectedAttributes['pa_color'], 'red');
+      expect(controller.selectedAttributes['pa_size'], isNull);
+      expect(controller.canAddToCart, isFalse);
       await tester.tap(find.byKey(const Key('product-option-pa_color-blue')));
+      expect(controller.selectedAttributes['pa_color'], 'blue');
+      expect(controller.selectedAttributes['pa_size'], isNull);
+      expect(controller.canAddToCart, isFalse);
+      controller.selectOption('pa_size', 'm');
       expect(controller.selectedVariation?.id, 103);
       await tester.pump();
       expect(tester.takeException(), isNull);
     },
   );
 }
+
