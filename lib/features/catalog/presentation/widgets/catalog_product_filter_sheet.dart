@@ -54,6 +54,7 @@ class CatalogProductFilterSheet extends StatefulWidget {
     if (sidePanel) {
       return showGeneralDialog<CatalogProductFilters>(
         context: context,
+        useRootNavigator: false,
         barrierDismissible: true,
         barrierLabel: MaterialLocalizations.of(
           context,
@@ -609,13 +610,9 @@ class _FilterChoiceSectionState<T> extends State<_FilterChoiceSection<T>> {
                     color: colors.onSurface,
                     fontSize: ui.optionalNumber('filters_option_size'),
                   ),
-                  shape: ui.optionalNumber('filters_chip_radius') == null
-                      ? null
-                      : RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            ui.optionalNumber('filters_chip_radius')!,
-                          ),
-                        ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                   side: BorderSide(color: colors.primary.withValues(alpha: .3)),
                   onSelected: (selected) => widget.onChange(
                     selected
