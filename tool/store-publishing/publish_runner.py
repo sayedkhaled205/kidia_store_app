@@ -10,7 +10,15 @@ def approved_download(url):
     host = p.hostname or ''
     if p.scheme != 'https' or p.username or p.password or p.port not in (None, 443):
         raise ValueError('Untrusted artifact origin')
-    if not (host == 'api.codemagic.io' or host.endswith('.codemagic.io') or host.endswith('.amazonaws.com')):
+    # Codemagic artifact links redirect to this Google Storage bucket. Keep the
+    # signed query untouched and allow only literal paths inside that bucket.
+    google_artifact = (
+        host == 'storage.googleapis.com'
+        and re.fullmatch(r'/codemagic-build-artifacts/[A-Za-z0-9_./-]+', p.path)
+        and all(part not in ('', '.', '..') for part in p.path.split('/')[2:])
+    )
+    if not (host == 'api.codemagic.io' or host.endswith('.codemagic.io')
+            or host.endswith('.amazonaws.com') or google_artifact):
         raise ValueError('Untrusted artifact origin')
     return url
 
