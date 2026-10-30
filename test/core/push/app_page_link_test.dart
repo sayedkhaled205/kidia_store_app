@@ -104,7 +104,8 @@ void main() {
   });
   test('malformed catalog state leaves ordinary navigation intact', () {
     const request = CatalogProductListRequest(categoryId: 5);
-    for (final value in ['bad!', 'e30', 'x' * 2000])
+    for (final value in ['bad!', 'e30', 'x' * 2000]) {
       expect(CatalogPageState.restore(value, request), same(request));
+    }
   });
 }
