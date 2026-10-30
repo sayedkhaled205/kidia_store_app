@@ -270,10 +270,7 @@ class _ProductListContent extends StatelessWidget {
             ),
           if (pageLayout.header.enabled &&
               pageLayout.header.boolean('show_count', true) &&
-              !controller.isAwaitingSearch &&
-              !state.isInitialLoading &&
-              state.error == null &&
-              state.totalItems != null)
+              !controller.isAwaitingSearch)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -281,7 +278,8 @@ class _ProductListContent extends StatelessWidget {
                   vertical: 4,
                 ),
                 child: Text(
-                  '${copy.products} (${state.totalItems})',
+                  !state.isInitialLoading && state.error == null && state.totalItems != null
+                      ? '${copy.products} (${state.totalItems})' : ' ',
                   key: const Key('catalog-page-count'),
                   textAlign: TextAlign.center,
                 ),
@@ -447,9 +445,8 @@ class _CatalogToolbar extends ConsumerWidget {
     // Keep an active selection reachable for reset, even after an empty result.
     final sizes = {...state.availableSizes, ...state.filters.sizes}.toList();
     final colors = {...state.availableColors, ...state.filters.colors}.toList();
-    final showSize = settings.boolean('filter_size', true) && sizes.isNotEmpty;
-    final showColor =
-        settings.boolean('filter_color', false) && colors.isNotEmpty;
+    final showSize = settings.boolean('filter_size', true);
+    final showColor = settings.boolean('filter_color', false);
     final double gap = settings.number('button_gap', 8).clamp(0, 24).toDouble();
     final double iconSize = settings
         .number('icon_size', 22)
@@ -562,7 +559,7 @@ class _CatalogToolbar extends ConsumerWidget {
             iconSize: iconSize,
             radius: buttonRadius,
             selected: state.filters.hasSize,
-            onPressed: openSize,
+            onPressed: sizes.isEmpty ? null : openSize,
           ),
         if (showColor)
           _FlatToolbarButton(
@@ -573,7 +570,7 @@ class _CatalogToolbar extends ConsumerWidget {
             iconSize: iconSize,
             radius: buttonRadius,
             selected: state.filters.hasColor,
-            onPressed: openColor,
+            onPressed: colors.isEmpty ? null : openColor,
           ),
         if (settings.boolean('show_filter', true))
           _FlatToolbarButton(
@@ -643,39 +640,7 @@ class _CatalogToolbar extends ConsumerWidget {
                       borderColor: borderColor,
                       radius: buttonRadius,
                       label: copy.filter,
-                      onPressed: () async {
-                        final int minorUnit = state.items.isEmpty
-                            ? 2
-                            : state.items.first.prices.currencyMinorUnit;
-                        final CatalogProductFilters? filters =
-                            await CatalogProductFilterSheet.show(
-                              context,
-                              initialFilters: state.filters,
-                              currencyMinorUnit: minorUnit,
-                              minimumAvailableMinor:
-                                  state.filterData?.minimumPriceMinor ?? '',
-                              maximumAvailableMinor:
-                                  state.filterData?.maximumPriceMinor ?? '',
-                              brands: brands,
-                              availableSizes:
-                                  settings.boolean('filter_size', true)
-                                  ? state.availableSizes
-                                  : const [],
-                              availableColors:
-                                  settings.boolean('filter_color', true)
-                                  ? state.availableColors
-                                  : const [],
-                              loadOptions: controller.loadFilterOptions,
-                              showSizes: false,
-                              showColors: false,
-                              showPrice: settings.boolean('filter_price', true),
-                              showSale: settings.boolean('filter_sale', true),
-                              showBrand: settings.boolean('filter_brand', true),
-                            );
-                        if (filters != null) {
-                          await controller.applyFilters(filters);
-                        }
-                      },
+                      onPressed: openFilters,
                     ),
                   ),
                 ),
@@ -694,17 +659,7 @@ class _CatalogToolbar extends ConsumerWidget {
                       borderColor: borderColor,
                       radius: buttonRadius,
                       label: copy.size,
-                      onPressed: () async {
-                        final CatalogSizeSelection? selection =
-                            await CatalogSizeSheet.show(
-                              context,
-                              options: sizes,
-                              selectedFilters: state.filters,
-                            );
-                        if (selection != null) {
-                          await controller.applySizes(selection.options);
-                        }
-                      },
+                      onPressed: sizes.isEmpty ? null : openSize,
                     ),
                   ),
                 ),
@@ -723,7 +678,7 @@ class _CatalogToolbar extends ConsumerWidget {
                       borderColor: borderColor,
                       radius: buttonRadius,
                       label: copy.color,
-                      onPressed: openColor,
+                      onPressed: colors.isEmpty ? null : openColor,
                     ),
                   ),
                 ),
@@ -819,7 +774,7 @@ class _ToolbarButton extends StatelessWidget {
 
   final IconData icon;
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final double iconSize;
   final Color iconColor;
   final Color borderColor;
@@ -864,7 +819,7 @@ class _FlatToolbarButton extends StatelessWidget {
   final String label;
   final IconData trailing;
   final Color color;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool selected;
   final double iconSize;
   final double radius;

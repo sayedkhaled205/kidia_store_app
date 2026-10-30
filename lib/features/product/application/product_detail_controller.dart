@@ -32,6 +32,15 @@ class ProductOptionGroup {
   final String key;
   final String label;
   final List<ProductOptionValue> values;
+
+  bool get isColor => RegExp(
+    r'(^|\s)(colou?rs?|لون|اللون|ألوان|الوان|الألوان|الالوان)(\s|$)',
+  ).hasMatch('$key $label'.toLowerCase().replaceAll(RegExp('[_-]'), ' '));
+
+  bool get isSize => RegExp(
+    r'size|مقاس|taille|talla',
+    caseSensitive: false,
+  ).hasMatch('$key $label');
 }
 
 @immutable
@@ -87,6 +96,7 @@ class ProductDetailController extends ChangeNotifier {
       List<CatalogVariation>.unmodifiable(_variations);
   Map<String, String> get selectedAttributes =>
       UnmodifiableMapView<String, String>(_selectedAttributes);
+
   /// Customer-facing labels, kept separate from the values used for purchasing.
   Map<String, String> get selectedAttributeLabels {
     final labels = <String, String>{..._selectedAttributes};
@@ -146,11 +156,14 @@ class ProductDetailController extends ChangeNotifier {
     CatalogImage? fallback;
     for (final variation in _variations) {
       final image = variation.image;
-      if (image == null || image.source.toString().isEmpty ||
-          !variation.attributes.any((attribute) =>
-            _variationAttributeKey(attribute) == group.key &&
-            attribute.value.trim().isNotEmpty &&
-            _attributeValuesMatch(group.key, value, attribute.value))) {
+      if (image == null ||
+          image.source.toString().isEmpty ||
+          !variation.attributes.any(
+            (attribute) =>
+                _variationAttributeKey(attribute) == group.key &&
+                attribute.value.trim().isNotEmpty &&
+                _attributeValuesMatch(group.key, value, attribute.value),
+          )) {
         continue;
       }
       fallback ??= image;
@@ -176,7 +189,10 @@ class ProductDetailController extends ChangeNotifier {
     return variation != null && variation.isPurchasable && variation.isInStock;
   }
 
-  Future<void> load({bool preserveSelection = false, bool preserveAddError = false}) async {
+  Future<void> load({
+    bool preserveSelection = false,
+    bool preserveAddError = false,
+  }) async {
     final int serial = ++_requestSerial;
     if (productId <= 0) {
       _status = ProductDetailStatus.empty;
@@ -274,6 +290,11 @@ class ProductDetailController extends ChangeNotifier {
       ..._selectedAttributes,
       group.key: value,
     };
+    if (group.isColor && _selectedAttributes[group.key] != value) {
+      for (final optionGroup in optionGroups) {
+        if (optionGroup.isSize) next.remove(optionGroup.key);
+      }
+    }
     if (mapEquals(next, _selectedAttributes)) {
       return;
     }
@@ -294,6 +315,12 @@ class ProductDetailController extends ChangeNotifier {
       ..._selectedAttributes,
       group.key: value,
     };
+    // A size selection must never prevent switching to another stocked color.
+    if (group.isColor) {
+      for (final optionGroup in optionGroups) {
+        if (optionGroup.isSize) proposed.remove(optionGroup.key);
+      }
+    }
     return _variations.any(
       (CatalogVariation variation) =>
           variation.isPurchasable &&
