@@ -34,11 +34,13 @@ void viewportRotationTests(
             .stateList<ScrollableState>(find.byType(Scrollable))
             .toList();
         for (final scrollable in scrollables) {
-          if (!scrollable.mounted || !scrollable.position.hasContentDimensions)
+          if (!scrollable.mounted || !scrollable.position.hasContentDimensions) {
             continue;
+          }
           final position = scrollable.position;
-          if (position.maxScrollExtent.isFinite)
+          if (position.maxScrollExtent.isFinite) {
             position.jumpTo(position.maxScrollExtent);
+          }
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
           if (scrollable.mounted) position.jumpTo(position.minScrollExtent);
