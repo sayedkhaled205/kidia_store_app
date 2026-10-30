@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/widgets/catalog_product_filter_sheet.dart';
 import 'package:flutter/services.dart';
@@ -27,25 +28,84 @@ import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 
 void main() {
-  testWidgets('empty category hides size and color; side panel does not duplicate toolbar filters', (tester) async {
-    for (final style in ['flat', 'outlined']) {
-    for (final empty in [true, false]) {
-      await tester.pumpWidget(_app(_ScreenCatalogRepository(emptyProducts: empty),
-        const CatalogProductListScreen(request: CatalogProductListRequest(title: 'Collection')),
-        catalogToolbarStyle: style));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('catalog-size-button')), empty ? findsNothing : findsOneWidget);
-      expect(find.byKey(const Key('catalog-color-button')), findsNothing);
-      await tester.tap(find.byKey(const Key('catalog-filter-button')));
-      await tester.pumpAndSettle();
-      expect(find.descendant(of: find.byType(CatalogProductFilterSheet), matching: find.text('Size')), findsNothing);
-      expect(find.descendant(of: find.byType(CatalogProductFilterSheet), matching: find.text('Color')), findsNothing);
-      expect(find.text('Apply'), findsOneWidget);
-      await tester.pumpWidget(const SizedBox.shrink());
-    }
-    }
+  testWidgets('category loading uses the saved square grid', (tester) async {
+    final ready = Completer<void>();
+    await tester.pumpWidget(_app(
+      _ScreenCatalogRepository(categoriesReady: ready.future, categoryLayout: 'visual_grid', gridColumns: 2, nameHighlightEnabled: true),
+      const CategoriesScreen(),
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    final grid = tester.widget<GridView>(find.byType(GridView));
+    final delegate = grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+    expect(delegate.crossAxisCount, 2);
+    expect(delegate.childAspectRatio, 1);
+    expect(delegate.mainAxisExtent, isNull);
+    ready.complete();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('category-layout-visual_grid')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('toolbar keeps all configured slots while products load', (tester) async {
+    final ready = Completer<void>();
+    await tester.pumpWidget(_app(
+      _ScreenCatalogRepository(productsReady: ready.future),
+      const CatalogProductListScreen(request: CatalogProductListRequest(title: 'Search', search: 'shirt')),
+      catalogToolbarStyle: 'flat',
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    for (final name in ['sort','size','color','filter']) {
+      expect(find.byKey(Key('catalog-$name-button')), findsOneWidget);
+    }
+    final before = tester.getTopLeft(find.byKey(const Key('catalog-filter-button')));
+    ready.complete();
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byKey(const Key('catalog-filter-button'))), before);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'configured toolbar slots stay visible; side panel does not duplicate filters',
+    (tester) async {
+      for (final style in ['flat', 'outlined']) {
+        for (final empty in [true, false]) {
+          await tester.pumpWidget(
+            _app(
+              _ScreenCatalogRepository(emptyProducts: empty),
+              const CatalogProductListScreen(
+                request: CatalogProductListRequest(title: 'Collection'),
+              ),
+              catalogToolbarStyle: style,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(find.byKey(const Key('catalog-size-button')), findsOneWidget);
+          expect(find.byKey(const Key('catalog-color-button')), findsOneWidget);
+          await tester.tap(find.byKey(const Key('catalog-filter-button')));
+          await tester.pumpAndSettle();
+          expect(
+            find.descendant(
+              of: find.byType(CatalogProductFilterSheet),
+              matching: find.text('Size'),
+            ),
+            findsNothing,
+          );
+          expect(
+            find.descendant(
+              of: find.byType(CatalogProductFilterSheet),
+              matching: find.text('Color'),
+            ),
+            findsNothing,
+          );
+          expect(find.text('Apply'), findsOneWidget);
+          await tester.pumpWidget(const SizedBox.shrink());
+        }
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   for (final direction in TextDirection.values) {
     testWidgets('Kids children share the products page $direction', (
@@ -1133,9 +1193,28 @@ Widget _app(
       cmsPageLayoutProvider.overrideWith((ref, page) async {
         final base = CmsPageLayout.fallback(page);
         if (page == 'catalog' && catalogToolbarStyle != null) {
-          return CmsPageLayout(page: page, header: base.header, footer: base.footer,
-            elements: base.elements.map((e) => CmsPageComponent(id: e.id, type: e.type, enabled: e.enabled,
-              settings: {...e.settings, if(e.type=='filter_bar') ...{'button_style':catalogToolbarStyle,'filter_size':true,'filter_color':true}})).toList());
+          return CmsPageLayout(
+            page: page,
+            header: base.header,
+            footer: base.footer,
+            elements: base.elements
+                .map(
+                  (e) => CmsPageComponent(
+                    id: e.id,
+                    type: e.type,
+                    enabled: e.enabled,
+                    settings: {
+                      ...e.settings,
+                      if (e.type == 'filter_bar') ...{
+                        'button_style': catalogToolbarStyle,
+                        'filter_size': true,
+                        'filter_color': true,
+                      },
+                    },
+                  ),
+                )
+                .toList(),
+          );
         }
         if (repository is! _ScreenCatalogRepository ||
             repository.nameHighlightEnabled == null) {
@@ -1247,6 +1326,8 @@ Widget _app(
 
 class _ScreenCatalogRepository implements CatalogRepository {
   _ScreenCatalogRepository({
+    this.productsReady,
+    this.categoriesReady,
     this.categoryLayout = 'default',
     this.emptyProducts = false,
     this.rootName = 'Women',
@@ -1263,6 +1344,8 @@ class _ScreenCatalogRepository implements CatalogRepository {
     this.imageScale = 1,
   });
 
+  final Future<void>? productsReady;
+  final Future<void>? categoriesReady;
   final String categoryLayout;
   final bool emptyProducts;
   final String rootName;
@@ -1283,6 +1366,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
   Future<CatalogPage<CatalogProduct>> getProducts(
     CatalogProductQuery query,
   ) async {
+    await productsReady;
     productQueries.add(query);
     if (cursor) {
       return CatalogPage<CatalogProduct>(
@@ -1348,6 +1432,7 @@ class _ScreenCatalogRepository implements CatalogRepository {
   Future<CatalogPage<CatalogCategory>> getCategories(
     CatalogCategoryQuery query,
   ) async {
+    await categoriesReady;
     return CatalogPage<CatalogCategory>(
       items: <CatalogCategory>[
         CatalogCategory(

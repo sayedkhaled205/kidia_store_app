@@ -10,6 +10,37 @@ import '../support/product_test_data.dart';
 
 void main() {
   group('ProductDetailController', () {
+    test(
+      'switching color ignores selected size and requires size selection again',
+      () async {
+        final controller = ProductDetailController(
+          repository: ProductFakeCatalogRepository(
+            product: variableProduct,
+            variations: testVariations,
+          ),
+          productId: variableProduct.id,
+        );
+        addTearDown(controller.dispose);
+        await controller.load();
+        controller.selectOption('pa_color', 'blue');
+        controller.selectOption('pa_size', 'm');
+        expect(controller.canAddToCart, isTrue);
+        expect(controller.isOptionAvailable('pa_color', 'red'), isTrue);
+        controller.selectOption('pa_color', 'red');
+        expect(controller.selectedAttributes['pa_color'], 'red');
+        expect(controller.selectedAttributes.containsKey('pa_size'), isFalse);
+        expect(controller.canAddToCart, isFalse);
+        expect(controller.isOptionAvailable('pa_size', 'm'), isFalse);
+        controller.selectOption('pa_size', 's');
+        expect(controller.canAddToCart, isTrue);
+        controller.selectOption('pa_color', 'blue');
+        expect(controller.selectedAttributes.containsKey('pa_size'), isFalse);
+        controller.selectOption('pa_size', 'm');
+        controller.selectOption('pa_color', 'blue');
+        expect(controller.selectedAttributes['pa_size'], 'm');
+      },
+    );
+
     test('loads a simple product and builds a purchase selection', () async {
       final ProductFakeCatalogRepository repository =
           ProductFakeCatalogRepository();
@@ -128,11 +159,11 @@ void main() {
           id: 58,
           name: 'Kids shoes',
           slug: 'kids-shoes',
-        type: 'variable',
-        isPurchasable: true,
-        isInStock: true,
-        prices: testMoney,
-        attributes: <CatalogProductAttribute>[
+          type: 'variable',
+          isPurchasable: true,
+          isInStock: true,
+          prices: testMoney,
+          attributes: <CatalogProductAttribute>[
             CatalogProductAttribute(
               id: 8,
               name: 'المقاس',

@@ -88,7 +88,7 @@ class CategoriesScreen extends ConsumerWidget {
         child: layout.settings['category_element_enabled'] == false
             ? const SizedBox.shrink()
             : tree.when(
-                loading: _CategoryLoadingList.new,
+                loading: () => _CategoryLoadingList(settings: categorySettings),
                 error: (Object error, StackTrace stackTrace) => _CategoryStatus(
                   icon: Icons.cloud_off_outlined,
                   title: copy.connectionError,
@@ -1942,25 +1942,43 @@ FontWeight _categoryFontWeight(int value) => switch (value) {
 };
 
 class _CategoryLoadingList extends StatelessWidget {
-  const _CategoryLoadingList();
+  const _CategoryLoadingList({this.settings});
+  final CatalogCategory? settings;
 
   @override
   Widget build(BuildContext context) {
-    final Color color = Theme.of(context).colorScheme.surfaceContainer;
-    return ListView.separated(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      itemCount: 7,
-      separatorBuilder: (BuildContext context, int index) =>
-          const SizedBox(height: 10),
-      itemBuilder: (BuildContext context, int index) => Container(
-        height: 82,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(17),
-        ),
+    final presentation = settings;
+    // Do not flash a guessed card layout before the saved design is available.
+    if (presentation == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    final color = Theme.of(context).colorScheme.surfaceContainer;
+    Widget placeholder(BuildContext context, int index) => DecoratedBox(
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(presentation.cardRadius),
       ),
     );
+    final layout = presentation.categoryLayout;
+    if (['visual_grid', 'circular_grid', 'compact_grid'].contains(layout)) {
+      return GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+        itemCount: 6,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: presentation.gridColumns.clamp(2, 4),
+          mainAxisSpacing: presentation.cardGap,
+          crossAxisSpacing: presentation.cardGap,
+          mainAxisExtent:
+              layout == 'visual_grid' && presentation.cardHeight <= 0
+              ? null
+              : categoryGridExtent(presentation, layout),
+          childAspectRatio: 1,
+        ),
+        itemBuilder: placeholder,
+      );
+    }
+    return const Center(child: CircularProgressIndicator());
   }
 }
 
