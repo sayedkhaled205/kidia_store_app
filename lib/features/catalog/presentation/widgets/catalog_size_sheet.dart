@@ -150,7 +150,9 @@ class _CatalogOptionPanelState extends State<_CatalogOptionPanel> {
                                 labelPadding: const EdgeInsets.symmetric(
                                   horizontal: 6,
                                 ),
-                                shape: const StadiumBorder(),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
                                 backgroundColor: theme.colorScheme.surface,
                                 selectedColor: theme.colorScheme.primary
                                     .withValues(alpha: .08),

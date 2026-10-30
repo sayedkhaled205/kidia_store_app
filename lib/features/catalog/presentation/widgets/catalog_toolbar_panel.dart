@@ -11,6 +11,9 @@ Future<T?> showCatalogToolbarPanel<T>(
       : anchor.localToGlobal(Offset(0, anchor.size.height)).dy;
   return showGeneralDialog<T>(
     context: context,
+    // Keep the overlay on the active branch so Android back dismisses it
+    // before the category/page underneath receives the navigation event.
+    useRootNavigator: false,
     barrierDismissible: true,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
     barrierColor: Colors.black45,
@@ -23,9 +26,11 @@ Future<T?> showCatalogToolbarPanel<T>(
           color: Theme.of(context).colorScheme.surface,
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              maxHeight: (MediaQuery.sizeOf(context).height - top -
-                      MediaQuery.paddingOf(context).bottom)
-                  .clamp(0, double.infinity),
+              maxHeight:
+                  (MediaQuery.sizeOf(context).height -
+                          top -
+                          MediaQuery.paddingOf(context).bottom)
+                      .clamp(0, double.infinity),
             ),
             child: SingleChildScrollView(child: builder(context)),
           ),
