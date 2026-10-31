@@ -35,6 +35,11 @@ check($registry->identity($foreign)===null,'managed workflow cannot be assigned 
 $variables=app(AndroidReleaseSigningIdentity::class)->variables($store,$row);
 check(!isset($variables['MOBISHOP_QA_KEYSTORE']) && strlen($variables['CM_KEYSTORE_PASSWORD'])>=32,'release credentials only');
 $previous=App\Models\ApkBuild::whereHas('activation.license',fn($q)=>$q->where('store_id',$store->id))->latest('requested_at')->firstOrFail();
+Http::fake(function() { throw new RuntimeException('A prepared build must not reconnect the website.'); });
+$prepared=app(App\Services\PortalNativeBuilds::class)->prepare($store);
+check($prepared['activation']->id===$project->license_activation_id,'prepared project reused without website reconnection');
+check(isset($prepared['snapshot']['build']['dartDefines']['APP_DESIGN_BUNDLE']),'actual saved design prepared offline');
+Http::swap(new \Illuminate\Http\Client\Factory());
 $snapshot=json_decode(Storage::disk('local')->get($previous->settings_archive_path),true,512,JSON_THROW_ON_ERROR);
 $snapshot['build_targets']=['android','ios'];
 $testPath='combined-build-test/'.Illuminate\Support\Str::uuid().'.json';
