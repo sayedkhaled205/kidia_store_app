@@ -34,6 +34,7 @@ workflows:
           test "${APPLE_TEAM_ID:?}" = AC7BML9GL6
           test -n "${BUILD_VERSION_NAME:?}"
           test -n "${BUILD_VERSION_CODE:?}"
+          python3 tool/test_verify_ios_signing.py
           python3 tool/verify_ios_signing.py --profile "${REGISTERED_IOS_PROFILE:?}"
           python3 tool/test_configure_ios_store.py
           python3 tool/configure_ios_store.py

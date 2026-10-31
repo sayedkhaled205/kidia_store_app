@@ -148,7 +148,9 @@ def verify_application(app, expected, name):
     validate_profile(decode_profile(app / "embedded.mobileprovision"), expected)
     with tempfile.TemporaryDirectory(prefix="mobishop-leaf-") as directory:
         prefix = str(Path(directory) / "certificate")
-        run(["codesign", "-d", "--extract-certificates", prefix, str(app)],
+        # codesign's optional prefix argument must use '='. A separate token is
+        # interpreted as another code object and makes a valid IPA fail checks.
+        run(["codesign", "-d", "--extract-certificates=" + prefix, str(app)],
             "The exported application's signing certificate could not be read.")
         certificate = Path(prefix + "0").read_bytes()
         if hashlib.sha256(certificate).hexdigest().upper() != expected["certificate"]:

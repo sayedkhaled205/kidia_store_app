@@ -1,9 +1,13 @@
 import copy
 from datetime import datetime, timedelta, timezone
 import hashlib
+from pathlib import Path
+import plistlib
+import tempfile
 import unittest
+from unittest.mock import patch
 
-from verify_ios_signing import SigningError, identity, validate_entitlements, validate_profile
+from verify_ios_signing import SigningError, identity, validate_entitlements, validate_profile, verify_application
 
 
 class SigningIsolationTest(unittest.TestCase):
@@ -103,6 +107,38 @@ class SigningIsolationTest(unittest.TestCase):
                            ("IOS_SIGNING_CERTIFICATE_SHA256", "not-a-fingerprint")):
             with self.subTest(key=key), self.assertRaises(SigningError):
                 identity(dict(self.env, **{key: value}))
+
+    def test_exported_application_certificate_is_checked_with_codesign_optional_argument(self):
+        # Model codesign's optional-argument grammar: the separated prefix is a
+        # second input, not the certificate output prefix (GNU getopt_long).
+        for leaf in (self.cert, b"wrong leaf certificate"):
+            with self.subTest(certificate_matches=leaf == self.cert), tempfile.TemporaryDirectory() as directory:
+                app = Path(directory) / "Store.app"
+                app.mkdir()
+                (app / "Info.plist").write_bytes(plistlib.dumps({
+                    "CFBundleIdentifier": self.expected["bundle"], "CFBundleDisplayName": "Store"}))
+
+                def codesign(arguments, failure):
+                    if arguments[1] == "--verify":
+                        return b""
+                    if "--entitlements" in arguments:
+                        return plistlib.dumps(self.profile["Entitlements"])
+                    extracts = [arg for arg in arguments if arg.startswith("--extract-certificates=")]
+                    if len(extracts) != 1 or arguments[-1] != str(app):
+                        raise SigningError(failure)
+                    Path(extracts[0].split("=", 1)[1] + "0").write_bytes(leaf)
+                    return b""
+
+                valid_profile = copy.deepcopy(self.profile)
+                valid_profile["ExpirationDate"] = datetime.now(timezone.utc) + timedelta(days=30)
+                with patch("verify_ios_signing.run", side_effect=codesign), patch(
+                    "verify_ios_signing.decode_profile", return_value=valid_profile
+                ):
+                    if leaf == self.cert:
+                        verify_application(app, self.expected, "Store")
+                    else:
+                        with self.assertRaisesRegex(SigningError, "another signing certificate"):
+                            verify_application(app, self.expected, "Store")
 
 
 if __name__ == "__main__":
