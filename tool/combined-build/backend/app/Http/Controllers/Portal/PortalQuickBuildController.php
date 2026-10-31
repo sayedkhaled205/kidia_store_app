@@ -58,6 +58,8 @@ final class PortalQuickBuildController extends Controller
                 return response()->json(['ok'=>true,'reused'=>$data['reused']??false,
                     'status_url'=>route('portal.quick-build.status',['store'=>$store->public_id])]);
             });
+        } catch (\Illuminate\Http\Client\ConnectionException | \Illuminate\Http\Client\RequestException $exception) {
+            return response()->json(['ok'=>false,'message'=>'The store connection is temporarily unavailable. Please try again shortly.'],422);
         } catch (RuntimeException $exception) {
             return response()->json(['ok'=>false,'message'=>$exception->getMessage()],422);
         }
