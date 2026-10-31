@@ -58,7 +58,17 @@ def identity(environment):
             raise SigningError("A release build must not receive a QA signing identity.")
         if not re.fullmatch(r"[a-f0-9]{64}", digest):
             raise SigningError("The registered Android upload certificate fingerprint is required.")
-        if not all(credentials) or sum(bool(value) for value in sources) != 1:
+        if all(sources):
+            # CI may re-inject the API secret after CM_ENV selected its file.
+            # They must be the same key; two unrelated sources remain invalid.
+            try:
+                path = Path(sources[0])
+                same_key = path.stat().st_size <= 1024 * 1024 and path.read_bytes() == base64.b64decode(sources[1], validate=True)
+            except (OSError, ValueError):
+                same_key = False
+            if not same_key:
+                raise SigningError("The prepared release signer differs from the registered private key.")
+        if not all(credentials) or not any(sources):
             raise SigningError("A release build requires one existing keystore and all signing credentials.")
     return {"mode": mode, "package": package, "certificate_sha256": digest}
 

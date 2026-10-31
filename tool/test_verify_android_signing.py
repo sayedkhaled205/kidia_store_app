@@ -44,6 +44,20 @@ def manifest(package=PACKAGE):
 
 
 class SigningPolicyTests(unittest.TestCase):
+    def test_ci_reinjected_release_secret_must_match_prepared_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "release.p12"
+            path.write_bytes(b"disposable-release-key-fixture")
+            env = {**release(), "CM_KEYSTORE_PATH": str(path),
+                   "CM_KEYSTORE": base64.b64encode(path.read_bytes()).decode()}
+            self.assertEqual(identity(env)["certificate_sha256"], DIGEST)
+            path.write_bytes(b"foreign-key")
+            with self.assertRaises(SigningError):
+                identity(env)
+            path.unlink()
+            with self.assertRaises(SigningError):
+                identity(env)
+
     def test_ci_reinjected_secret_must_match_prepared_qa_file(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "qa.p12"
