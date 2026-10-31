@@ -46,7 +46,8 @@ class UnifiedWorkflowTests(unittest.TestCase):
         self.assertIn('set -euo pipefail', launch)
         # Retain the simulator binary for diagnosis even if the health gate fails.
         self.assertLess(launch.index('ditto -c -k'), launch.index('tool/app_store_screenshots.py'))
-        self.assertEqual(launch.strip().splitlines()[-1], 'python3 tool/app_store_screenshots.py')
+        self.assertIn('timeout=300', launch)
+        self.assertEqual(launch.strip().splitlines()[-1], 'python3 -u tool/app_store_screenshots.py')
         capture = (ROOT / 'tool/app_store_screenshots.py').read_text(encoding='utf-8')
         self.assertIn('from verify_ios_simulator import verify', capture)
         self.assertIn('report = verify(identifier, os.environ["IOS_BUNDLE_ID"], folder,', capture)

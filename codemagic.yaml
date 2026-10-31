@@ -1033,10 +1033,10 @@ workflows:
         script: |
           set -euo pipefail
           mkdir -p build/ios/simulator-artifacts
-          ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip
+          python3 -u -c 'import subprocess; print("Packaging simulator application", flush=True); subprocess.run("ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip".split(), check=True, timeout=300)'
           python3 tool/test_verify_ios_simulator.py
           python3 tool/test_app_store_screenshots.py
-          python3 tool/app_store_screenshots.py
+          python3 -u tool/app_store_screenshots.py
     artifacts:
       - build/ios/simulator-artifacts/Runner-simulator.zip
       - build/ios/simulator-artifacts/iphone/*

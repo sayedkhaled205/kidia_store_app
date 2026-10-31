@@ -1,9 +1,25 @@
 import unittest
+from unittest.mock import patch
+import subprocess
 
-from app_store_screenshots import select_devices
+from app_store_screenshots import run_simulator, select_devices
 
 
 class ScreenshotDevicesTest(unittest.TestCase):
+    def test_commands_have_stage_specific_timeouts_and_preserve_ocr_limit(self):
+        with patch('app_store_screenshots.subprocess.run') as run:
+            run_simulator(['xcrun', 'simctl', 'bootstatus', 'device', '-b'], check=True)
+            self.assertEqual(run.call_args.kwargs['timeout'], 240)
+            run_simulator(['xcrun', 'simctl', 'launch', 'device', 'app'])
+            self.assertEqual(run.call_args.kwargs['timeout'], 90)
+            run_simulator(['xcrun', 'swift', 'ocr.swift'], timeout=60)
+            self.assertEqual(run.call_args.kwargs['timeout'], 60)
+
+    def test_timeout_is_failure_instead_of_silent_success(self):
+        with patch('app_store_screenshots.subprocess.run', side_effect=subprocess.TimeoutExpired('launch', 90)):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                run_simulator(['xcrun', 'simctl', 'launch', 'device', 'app'])
+
     def inventory(self, *names):
         return {"devices": {"com.apple.CoreSimulator.SimRuntime.iOS-26-0": [
             {"name": name, "udid": str(index), "isAvailable": True}
