@@ -593,6 +593,221 @@ workflows:
 
             curl "${CURL_ARGS[@]}" "$MOBISHOP_CALLBACK_URL"
 
+  kidia-managed-dual-release:
+    name: Kidia Android and iOS store builds
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      flutter: 3.44.8
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        provisioning_profiles:
+          - profile: kidia_app_store_profile
+            environment_variable: REGISTERED_IOS_PROFILE
+        certificates:
+          - kidia_app_store_distribution
+      vars:
+        MOBISHOP_ANDROID_BUILD_MODE: release
+        MOBISHOP_REQUIRE_RELEASE_SIGNING: "true"
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+        - $HOME/.gradle/caches
+    scripts:
+      - name: Validate customer build configuration
+        script: |
+          set -euo pipefail
+          test "${STORE_URL:?}" = https://kidiastore.com
+          test "${ANDROID_APPLICATION_ID:?}" = app.woomobile.store.s6990b322e39646bba188a1e472b6bf64
+          test "${IOS_BUNDLE_ID:?}" = app.mobishop.d983d98ad8afd98ad8a7d8b3d8aad988d8b1
+          test "${APPLE_TEAM_ID:?}" = AC7BML9GL6
+          test "${BUILD_VERSION_CODE:?}" -ge 302
+          if [ -z "${STORE_URL:-}" ]; then
+            echo "STORE_URL is required and must be supplied by the MobiShop build request."
+            exit 1
+          fi
+          case "$STORE_URL" in
+            https://*) ;;
+            *)
+              echo "STORE_URL must be a valid HTTPS store origin."
+              exit 1
+              ;;
+          esac
+          if ! printf '%s' "${ANDROID_APPLICATION_ID:-}" | grep -Eq '^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$'; then
+            echo "ANDROID_APPLICATION_ID must be a valid lowercase Android application ID."
+            exit 1
+          fi
+      - name: Verify Android build mode and registered signer
+        script: |
+          set -euo pipefail
+          test "${MOBISHOP_ANDROID_BUILD_MODE:?}" = release
+          python3 tool/test_verify_android_signing.py
+          python3 tool/verify_android_signing.py --prepare --env-file "${CM_ENV:?}"
+      - name: Validate registered iOS identity
+        script: |
+          set -euo pipefail
+          test -n "${BUILD_VERSION_NAME:?}"
+          python3 tool/test_configure_ios_store.py
+          python3 tool/test_verify_ios_signing.py
+          python3 tool/verify_ios_signing.py --profile "${REGISTERED_IOS_PROFILE:?}"
+          python3 tool/configure_ios_store.py
+      - name: Install Flutter dependencies
+        script: flutter pub get
+      - name: Generate selected store app icons
+        script: |
+          set -euo pipefail
+          python3 -m venv "$CM_BUILD_DIR/.icon-tools"
+          "$CM_BUILD_DIR/.icon-tools/bin/pip" install -r tool/requirements-build.txt
+          "$CM_BUILD_DIR/.icon-tools/bin/python" tool/build_app_icons.py
+      - name: Analyze Flutter project
+        script: flutter analyze lib test
+      - name: Run Flutter tests
+        script: flutter test
+      - name: Verify merchant and platform contracts
+        script: |
+          set -euo pipefail
+          python3 -m unittest discover -s tool -p test_native_build_defines81.py
+          python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
+      - name: Validate actual compiled customer design
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          flutter test test/core/app_design/compiled_design_preflight297_test.dart \
+            --dart-define=REQUIRE_SAVED_DESIGN=true \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Build Android APK
+        script: |
+          set -euo pipefail
+          source tool/android_build_version.sh
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
+          ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build apk --release \
+            "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Build Android App Bundle
+        script: |
+          set -euo pipefail
+          source tool/android_build_version.sh
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
+          ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build appbundle --release \
+            "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Apply existing iOS distribution profile
+        script: |
+          xcode-project use-profiles
+      - name: Build signed iOS IPA
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          flutter build ipa --release \
+            --build-name="$BUILD_VERSION_NAME" --build-number="${BUILD_VERSION_CODE:?}" \
+            --export-options-plist="$HOME/export_options.plist" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=$STORE_NAME" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Verify exported store IPA
+        script: |
+          set -euo pipefail
+          IPA_FILES=(build/ios/ipa/*.ipa)
+          test "${#IPA_FILES[@]}" = 1
+          python3 tool/verify_ios_signing.py --ipa "${IPA_FILES[0]}"
+      - name: Package application build files
+        script: |
+          set -euo pipefail
+
+          APK_PATH=$(find build/app/outputs/flutter-apk \
+            -type f -name "*.apk" | head -n 1)
+          AAB_PATH=$(find build/app/outputs/bundle \
+            -type f -name "*.aab" | head -n 1)
+
+          python3 tool/verify_android_signing.py \
+            --apk "$APK_PATH" --aab "$AAB_PATH" \
+            --output "$CM_BUILD_DIR/build/android-build-verification.json"
+
+          PACKAGE_DIR="$CM_BUILD_DIR/build/mobishop-package"
+          OUTPUT_DIR="$CM_BUILD_DIR/build/mobishop-artifacts"
+          rm -rf "$PACKAGE_DIR" "$OUTPUT_DIR"
+          mkdir -p "$PACKAGE_DIR" "$OUTPUT_DIR"
+
+          cp "$APK_PATH" "$PACKAGE_DIR/app-release.apk"
+          cp "$AAB_PATH" "$PACKAGE_DIR/app-release.aab"
+          cp "$CM_BUILD_DIR/build/android-build-verification.json" "$PACKAGE_DIR/android-build-verification.json"
+          IPA_PATH=$(find build/ios/ipa -type f -name '*.ipa' | head -n 1)
+          test -s "$APK_PATH"
+          test -s "$AAB_PATH"
+          test -s "$IPA_PATH"
+          cp "$IPA_PATH" "$PACKAGE_DIR/app-release.ipa"
+          ditto -c -k --sequesterRsrc \
+            "$PACKAGE_DIR" "$OUTPUT_DIR/mobishop-build-files.zip"
+      - name: Mark build successful
+        script: touch "$CM_BUILD_DIR/.mobishop-build-success"
+    artifacts:
+      - build/mobishop-artifacts/mobishop-build-files.zip
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab
+      - build/ios/ipa/*.ipa
+      - build/android-build-verification.json
+    publishing:
+      scripts:
+        - name: Send build result to MobiShop API
+          script: |
+            set -u
+
+            if [ -z "${MOBISHOP_CALLBACK_URL:-}" ] || \
+               [ -z "${MOBISHOP_CALLBACK_TOKEN:-}" ] || \
+               [ -z "${MOBISHOP_REQUEST_ID:-}" ] || \
+               [ -z "${CM_BUILD_ID:-}" ]; then
+              echo "MobiShop callback configuration is missing."
+              exit 1
+            fi
+
+            if [ -f "$CM_BUILD_DIR/.mobishop-build-success" ]; then
+              CALLBACK_STATUS="completed"
+              CALLBACK_PROGRESS="100"
+              CALLBACK_ERROR=""
+            else
+              CALLBACK_STATUS="failed"
+              CALLBACK_PROGRESS="0"
+              CALLBACK_ERROR="Codemagic build failed. Review the Codemagic build log."
+            fi
+
+            CURL_ARGS=(
+              --silent
+              --show-error
+              --fail-with-body
+              --retry 3
+              --retry-delay 2
+              --request POST
+              --header "Authorization: Bearer ${MOBISHOP_CALLBACK_TOKEN}"
+              --form-string "request_id=${MOBISHOP_REQUEST_ID}"
+              --form-string "codemagic_build_id=${CM_BUILD_ID}"
+              --form-string "status=${CALLBACK_STATUS}"
+              --form-string "progress=${CALLBACK_PROGRESS}"
+            )
+
+            if [ -n "$CALLBACK_ERROR" ]; then
+              CURL_ARGS+=(--form-string "error=${CALLBACK_ERROR}")
+            fi
+
+            curl "${CURL_ARGS[@]}" "$MOBISHOP_CALLBACK_URL"
+
   mobishop-release:
     name: MobiShop Android test build (QA)
     instance_type: mac_mini_m2
