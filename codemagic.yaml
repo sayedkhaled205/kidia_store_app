@@ -1,4 +1,98 @@
 workflows:
+  kidia-ios-release:
+    name: Kidia iOS App Store release
+    instance_type: mac_mini_m2
+    max_build_duration: 90
+    integrations:
+      app_store_connect: Kidia TestFlight Build
+    environment:
+      flutter: 3.44.8
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        provisioning_profiles:
+          - profile: kidia_app_store_profile
+            environment_variable: REGISTERED_IOS_PROFILE
+        certificates:
+          - kidia_app_store_distribution
+      vars:
+        IOS_BUNDLE_ID: app.mobishop.d983d98ad8afd98ad8a7d8b3d8aad988d8b1
+        APPLE_TEAM_ID: AC7BML9GL6
+        IOS_SIGNING_PROFILE_UUID: 9a94234d-1cf0-4084-849e-695f3e56550c
+        IOS_SIGNING_CERTIFICATE_SHA256: d03d24813406cefc2d3c445a044c5a9808d55b24ba34b36604232ea098c2b324
+        STORE_URL: https://kidiastore.com
+        STORE_NAME: كيديا ستور
+        STORE_LOCALE: ar
+        PUSH_CONFIG_URL: https://kidiastore.com/wp-json/mobishop/v1/push/config
+        APP_ICON_URL: https://kidiastore.com/wp-content/uploads/2025/05/cropped-cropped-2-6-1.png
+    scripts:
+      - name: Configure and test iOS store identity
+        script: |
+          set -euo pipefail
+          test "${STORE_URL:?}" = https://kidiastore.com
+          test "${IOS_BUNDLE_ID:?}" = app.mobishop.d983d98ad8afd98ad8a7d8b3d8aad988d8b1
+          test "${APPLE_TEAM_ID:?}" = AC7BML9GL6
+          test -n "${BUILD_VERSION_NAME:?}"
+          test -n "${BUILD_VERSION_CODE:?}"
+          python3 tool/verify_ios_signing.py --profile "${REGISTERED_IOS_PROFILE:?}"
+          python3 tool/test_configure_ios_store.py
+          python3 tool/configure_ios_store.py
+          flutter pub get
+      - name: Generate Kidia native icons
+        script: |
+          set -euo pipefail
+          python3 -m venv "$CM_BUILD_DIR/.icon-tools"
+          "$CM_BUILD_DIR/.icon-tools/bin/pip" install -r tool/requirements-build.txt
+          "$CM_BUILD_DIR/.icon-tools/bin/python" tool/build_app_icons.py
+      - name: Verify Flutter app
+        script: |
+          set -euo pipefail
+          flutter analyze lib test
+          flutter test
+      - name: Apply existing distribution profile
+        script: |
+          xcode-project use-profiles
+      - name: Verify merchant and platform contracts
+        script: |
+          set -euo pipefail
+          python3 -m unittest discover -s tool -p test_native_build_defines81.py
+          python3 tool/verify_commerce_matrix.py --platform "${STORE_PLATFORM:-woocommerce}"
+      - name: Validate actual compiled customer design
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          flutter test test/core/app_design/compiled_design_preflight297_test.dart \
+            --dart-define=REQUIRE_SAVED_DESIGN=true \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=${STORE_NAME:-MobiShop Store}" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+      - name: Build signed Kidia IPA
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          flutter build ipa --release \
+            --build-name="$BUILD_VERSION_NAME" --build-number="$BUILD_VERSION_CODE" \
+            --export-options-plist="$HOME/export_options.plist" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=$STORE_NAME" \
+            --dart-define="STORE_LOCALE=$STORE_LOCALE" \
+            --dart-define="PUSH_CONFIG_URL=$PUSH_CONFIG_URL"
+      - name: Verify exported App Store IPA
+        script: |
+          set -euo pipefail
+          IPA_FILES=(build/ios/ipa/*.ipa)
+          test "${#IPA_FILES[@]}" = 1
+          python3 tool/verify_ios_signing.py --ipa "${IPA_FILES[0]}"
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false
   kidia-ios-testflight:
     name: Kidia iOS staging TestFlight
     instance_type: mac_mini_m2

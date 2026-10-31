@@ -182,10 +182,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     action = parser.add_mutually_exclusive_group(required=True)
     action.add_argument("--install", action="store_true")
+    action.add_argument("--profile", type=Path)
     action.add_argument("--ipa", type=Path)
     args = parser.parse_args()
     try:
-        install(os.environ) if args.install else verify_ipa(args.ipa, os.environ)
+        if args.install:
+            install(os.environ)
+        elif args.profile:
+            validate_profile(decode_profile(args.profile), identity(os.environ))
+            print("Managed App Store profile matches the registered application and certificate.")
+        else:
+            verify_ipa(args.ipa, os.environ)
     except (SigningError, OSError, plistlib.InvalidFileException, zipfile.BadZipFile) as error:
         # Never echo secret inputs, signing command output or certificate bytes.
         raise SystemExit(str(error) if isinstance(error, SigningError) else "Apple signing verification failed.") from None
