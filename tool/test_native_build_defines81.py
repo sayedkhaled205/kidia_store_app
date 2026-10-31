@@ -150,7 +150,7 @@ class NativeBuildDefines81Tests(unittest.TestCase):
     def test_every_native_build_uses_the_same_preflight_and_json_file(self):
         workflow = (ROOT / "codemagic.yaml").read_text(encoding="utf-8")
         builds = [step for step in re.split(r"(?m)^      - name:", workflow) if "flutter build " in step]
-        self.assertEqual(len(builds), 10)
+        self.assertEqual(len(builds), 11)
         for step in builds:
             preflight = 'python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"'
             if 'flutter build ios --simulator' in step:
