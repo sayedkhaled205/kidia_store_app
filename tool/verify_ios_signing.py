@@ -140,6 +140,8 @@ def verify_application(app, expected, name):
     info = plistlib.loads((app / "Info.plist").read_bytes())
     if info.get("CFBundleIdentifier") != expected["bundle"] or info.get("CFBundleDisplayName") != name:
         raise SigningError("The exported application identity does not match this store.")
+    if type(info.get("ITSAppUsesNonExemptEncryption")) is not bool:
+        raise SigningError("The exported application must declare its encryption export compliance as a Boolean.")
     run(["codesign", "--verify", "--deep", "--strict", str(app)],
         "The exported application's code signature is invalid.")
     entitlements = plistlib.loads(run(["codesign", "-d", "--entitlements", ":-", str(app)],

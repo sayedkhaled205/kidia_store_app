@@ -6,6 +6,22 @@ from configure_ios_store import configure, _google_auth_settings, _apply_google_
 
 
 class StoreIdentityTest(unittest.TestCase):
+    def test_shipping_template_declares_exempt_encryption_and_configure_preserves_it(self):
+        template = Path(__file__).resolve().parents[1] / "ios/Runner/Info.plist"
+        data = plistlib.loads(template.read_bytes())
+        self.assertIs(data.get("ITSAppUsesNonExemptEncryption"), False)
+        for declaration in (False, True):
+            with self.subTest(declaration=declaration), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                project = root / "ios/Runner.xcodeproj/project.pbxproj"
+                project.parent.mkdir(parents=True)
+                project.write_text("PRODUCT_BUNDLE_IDENTIFIER = com.example.mobishopStoreApp;\n" * 3)
+                info = root / "ios/Runner/Info.plist"
+                info.parent.mkdir()
+                info.write_bytes(plistlib.dumps({**data, "ITSAppUsesNonExemptEncryption": declaration}))
+                configure(root, "com.example.kidia", "AB12345678", "Kidia")
+                self.assertIs(plistlib.loads(info.read_bytes())["ITSAppUsesNonExemptEncryption"], declaration)
+
     def test_identity_and_reject_partial_rewrite(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

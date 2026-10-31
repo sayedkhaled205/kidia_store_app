@@ -11,6 +11,18 @@ from verify_ios_signing import SigningError, identity, validate_entitlements, va
 
 
 class SigningIsolationTest(unittest.TestCase):
+    def test_missing_or_non_boolean_export_declaration_is_rejected_before_signing(self):
+        for declaration in (None, "false", 0):
+            with self.subTest(declaration=declaration), tempfile.TemporaryDirectory() as directory:
+                app = Path(directory)
+                info = {"CFBundleIdentifier": self.expected["bundle"], "CFBundleDisplayName": "Store"}
+                if declaration is not None:
+                    info["ITSAppUsesNonExemptEncryption"] = declaration
+                (app / "Info.plist").write_bytes(plistlib.dumps(info))
+                with patch("verify_ios_signing.run") as command, self.assertRaisesRegex(SigningError, "encryption"):
+                    verify_application(app, self.expected, "Store")
+                command.assert_not_called()
+
     def setUp(self):
         self.now = datetime(2026, 10, 20, tzinfo=timezone.utc)
         self.cert = b"test certificate; no signing material"
@@ -116,7 +128,8 @@ class SigningIsolationTest(unittest.TestCase):
                 app = Path(directory) / "Store.app"
                 app.mkdir()
                 (app / "Info.plist").write_bytes(plistlib.dumps({
-                    "CFBundleIdentifier": self.expected["bundle"], "CFBundleDisplayName": "Store"}))
+                    "CFBundleIdentifier": self.expected["bundle"], "CFBundleDisplayName": "Store",
+                    "ITSAppUsesNonExemptEncryption": False}))
 
                 def codesign(arguments, failure):
                     if arguments[1] == "--verify":
