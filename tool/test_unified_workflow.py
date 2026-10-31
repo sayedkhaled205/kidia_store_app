@@ -42,13 +42,16 @@ class UnifiedWorkflowTests(unittest.TestCase):
 
     def test_simulator_success_requires_log_and_screen_validation(self):
         workflow = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']['mobishop-ios-simulator-check']
-        launch = next(step['script'] for step in workflow['scripts'] if step['name'] == 'Launch on iPhone simulator')
+        launch = next(step['script'] for step in workflow['scripts'] if step['name'] == 'Capture actual App Store screenshots on iPhone and iPad')
         self.assertIn('set -euo pipefail', launch)
         # Retain the simulator binary for diagnosis even if the health gate fails.
-        self.assertLess(launch.index('ditto -c -k'), launch.index('tool/verify_ios_simulator.py'))
-        self.assertEqual(launch.strip().splitlines()[-1], 'python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json')
-        for name in ('launch.png', 'launch-check.json', 'launch-stdout.log', 'launch-stderr.log', 'launch-screen-text.json'):
-            self.assertIn('build/ios/simulator-artifacts/' + name, workflow['artifacts'])
+        self.assertLess(launch.index('ditto -c -k'), launch.index('tool/app_store_screenshots.py'))
+        self.assertEqual(launch.strip().splitlines()[-1], 'python3 tool/app_store_screenshots.py')
+        capture = (ROOT / 'tool/app_store_screenshots.py').read_text(encoding='utf-8')
+        self.assertIn('from verify_ios_simulator import verify', capture)
+        self.assertIn('report = verify(identifier, os.environ["IOS_BUNDLE_ID"], folder,', capture)
+        for family in ('iphone', 'ipad'):
+            self.assertIn('build/ios/simulator-artifacts/' + family + '/*', workflow['artifacts'])
 
     def test_signed_outputs_are_required_before_success(self):
         workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
