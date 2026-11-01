@@ -2562,14 +2562,14 @@
     "includes/blocks/class-mobishop-hero-slider-block.php": {
       "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-hero-slider-block.php",
       "newline": "lf",
-      "source_sha256": "9ca4e7811188d87c0b3c4d4637d8c4e2cf08b58ab08dc927a4ae781d4703c80c",
-      "sha256": "9ca4e7811188d87c0b3c4d4637d8c4e2cf08b58ab08dc927a4ae781d4703c80c"
+      "source_sha256": "a83699d80bc14ec9dde38a86bc8d21732837a11e1c2a4e45230e6df8737af123",
+      "sha256": "a83699d80bc14ec9dde38a86bc8d21732837a11e1c2a4e45230e6df8737af123"
     },
     "includes/blocks/class-mobishop-image-banner-block.php": {
       "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-image-banner-block.php",
       "newline": "lf",
-      "source_sha256": "de7576a65fc2391c2e33cdb6def76ce6f4b9c8469ee4f92ca5d2c82fca6ad766",
-      "sha256": "de7576a65fc2391c2e33cdb6def76ce6f4b9c8469ee4f92ca5d2c82fca6ad766"
+      "source_sha256": "8acecbff9913fb278dce0c53dfe69bcb87dac4e3e6081b0e7dc75c489f7143af",
+      "sha256": "8acecbff9913fb278dce0c53dfe69bcb87dac4e3e6081b0e7dc75c489f7143af"
     },
     "includes/blocks/class-mobishop-product-carousel-block.php": {
       "source": "connectors/woocommerce/source/includes/blocks/class-mobishop-product-carousel-block.php",
@@ -2742,8 +2742,8 @@
     "includes/class-mobishop-block.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-block.php",
       "newline": "lf",
-      "source_sha256": "164e2101f74814e8be8b9d8903c22fed97dda90e2fa653c904335f7c405b1ce5",
-      "sha256": "164e2101f74814e8be8b9d8903c22fed97dda90e2fa653c904335f7c405b1ce5"
+      "source_sha256": "73cd12b3c14dbbc7026b5013d810a6014a7071edee37da70e49f69d75a0b7330",
+      "sha256": "73cd12b3c14dbbc7026b5013d810a6014a7071edee37da70e49f69d75a0b7330"
     },
     "includes/class-mobishop-bundle-recipes.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop-bundle-recipes.php",

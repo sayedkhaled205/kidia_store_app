@@ -93,6 +93,7 @@ final class MobiShop_Image_Banner_Block extends MobiShop_Block {
 			'brands',
 			'search',
 			'external',
+			'support',
 		);
 
 		$action_type = isset( $settings['action_type'] )

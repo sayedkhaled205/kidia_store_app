@@ -437,8 +437,8 @@ abstract class MobiShop_Block {
 
 		// The all-brands screen has no entity ID, but Flutter actions require
 		// a non-empty value. Keep one canonical sentinel across the API.
-		if ( 'brands' === $type && '' === $value ) {
-			$value = 'all';
+		if ( in_array( $type, array( 'brands', 'support' ), true ) && '' === $value ) {
+			$value = 'brands' === $type ? 'all' : 'support';
 		}
 
 		$allowed_types = array(
@@ -449,6 +449,7 @@ abstract class MobiShop_Block {
 			'brands',
 			'search',
 			'external',
+			'support',
 		);
 
 		if (

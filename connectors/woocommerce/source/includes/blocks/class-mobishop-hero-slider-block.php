@@ -157,6 +157,12 @@ final class MobiShop_Hero_Slider_Block extends MobiShop_Block {
 			}
 
 			$button_link = $this->sanitize_http_url( $item['button_link'] ?? '' );
+			if ( 'external' === $action_type && '' !== trim( (string) ( $item['action_value'] ?? '' ) ) ) {
+				$button_link = $this->sanitize_http_url( $item['action_value'] );
+			}
+			if ( '' !== $action_type && 'external' !== $action_type ) {
+				$button_link = '';
+			}
 			if ( '' === $button_link && 'external' === $action_type ) {
 				$button_link = $this->sanitize_http_url( $item['action_value'] ?? '' );
 			}

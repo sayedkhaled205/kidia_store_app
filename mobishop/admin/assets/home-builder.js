@@ -88,7 +88,7 @@
 		if (label) {
 			label.textContent = actionType === "product" ? (labels.productId || "Product ID") : (labels.actionValue || "Action Value");
 		}
-		field.hidden = actionType === "" || actionType === "brands" || actionType === "on_sale";
+		field.hidden = actionType === "" || actionType === "brands" || actionType === "on_sale" || actionType === "support";
 		current.disabled = field.hidden;
 		if (field.hidden) {
 			current.dataset.savedValue = selectedValue;

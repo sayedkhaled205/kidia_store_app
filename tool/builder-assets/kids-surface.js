@@ -6,6 +6,7 @@
   document.querySelectorAll('.mobishop-builder-block[data-type="hero_slider"] input[name$="[button_link]"]').forEach(function(link){
    if(link.value.trim())return;
    var prefix=link.name.slice(0,-13), card=link.closest('.mobishop-builder-block');
+   if(card.querySelector('[name="'+prefix+'[action_type]"]') || card.querySelector('[name="'+prefix+'[action_value]"]'))return;
    ['action_type','action_value'].forEach(function(key){
     var name=prefix+'['+key+']';
     if(!card.querySelector('[name="'+name+'"]')){var field=document.createElement('input');field.type='hidden';field.name=name;field.value=key==='action_type'?'collection':'latest';card.appendChild(field);}

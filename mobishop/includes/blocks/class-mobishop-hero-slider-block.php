@@ -157,6 +157,12 @@ final class MobiShop_Hero_Slider_Block extends MobiShop_Block {
 			}
 
 			$button_link = $this->sanitize_http_url( $item['button_link'] ?? '' );
+			if ( 'external' === $action_type && '' !== trim( (string) ( $item['action_value'] ?? '' ) ) ) {
+				$button_link = $this->sanitize_http_url( $item['action_value'] );
+			}
+			if ( '' !== $action_type && 'external' !== $action_type ) {
+				$button_link = '';
+			}
 			if ( '' === $button_link && 'external' === $action_type ) {
 				$button_link = $this->sanitize_http_url( $item['action_value'] ?? '' );
 			}
@@ -416,6 +422,12 @@ final class MobiShop_Hero_Slider_Block extends MobiShop_Block {
 			$button_link = (string) ( $item['action_value'] ?? '' );
 		}
 		$button_position = sanitize_key( (string) ( $item['button_position'] ?? 'center_bottom' ) );
+		$action_type = (string) $item['action_type'];
+		if ( '' === $action_type && '' !== $button_link ) {
+			$action_type = 'external';
+		}
+		$action_value = 'external' === $action_type ? $button_link : (string) $item['action_value'];
+		$actions = array( '' => __( 'No Action', 'mobishop' ), 'category' => __( 'Category', 'mobishop' ), 'collection' => __( 'Collection', 'mobishop' ), 'product' => __( 'Product', 'mobishop' ), 'brand' => __( 'Brand', 'mobishop' ), 'brands' => __( 'All Brands', 'mobishop' ), 'search' => __( 'Search', 'mobishop' ), 'external' => __( 'External URL', 'mobishop' ) );
 
 		?>
 		<div class="mobishop-hero-block-item mobishop-slider-editor-item">
@@ -509,9 +521,15 @@ final class MobiShop_Hero_Slider_Block extends MobiShop_Block {
 				</select>
 			</p>
 
-			<p class="mobishop-builder-field mobishop-repeatable-field--button-link">
-				<label><?php echo esc_html__( 'Button Link', 'mobishop' ); ?></label>
-				<input type="url" placeholder="https://example.com" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][button_link]" value="<?php echo esc_attr( $button_link ); ?>">
+			<p class="mobishop-builder-field mobishop-repeatable-field--action-type">
+				<label><?php esc_html_e( 'Action Type', 'mobishop' ); ?></label>
+				<select name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_type]">
+					<?php foreach ( $actions as $value => $label ) : ?><option value="<?php echo esc_attr( $value ); ?>" <?php selected( $value, $action_type ); ?>><?php echo esc_html( $label ); ?></option><?php endforeach; ?>
+				</select>
+			</p>
+			<p class="mobishop-builder-field mobishop-repeatable-field--action-value">
+				<label><?php esc_html_e( 'Action Value', 'mobishop' ); ?></label>
+				<input type="text" name="blocks[<?php echo esc_attr( (string) $block_index ); ?>][settings][items][<?php echo esc_attr( (string) $item_index ); ?>][action_value]" value="<?php echo esc_attr( $action_value ); ?>">
 			</p>
 		</div>
 		<?php

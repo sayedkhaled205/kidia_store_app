@@ -344,6 +344,10 @@ class _HomePageState extends ConsumerState<HomePage> {
         context.go('/wishlist');
         return;
 
+      case 'support':
+        context.push('/support');
+        return;
+
       case 'external':
         unawaited(_openExternalUrl(context, value));
         return;

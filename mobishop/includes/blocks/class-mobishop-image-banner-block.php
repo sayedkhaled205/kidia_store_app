@@ -93,6 +93,7 @@ final class MobiShop_Image_Banner_Block extends MobiShop_Block {
 			'brands',
 			'search',
 			'external',
+			'support',
 		);
 
 		$action_type = isset( $settings['action_type'] )
@@ -355,6 +356,7 @@ final class MobiShop_Image_Banner_Block extends MobiShop_Block {
 					>
 						<?php echo esc_html__( 'External URL', 'mobishop' ); ?>
 					</option>
+					<option value="support" <?php selected( 'support', $settings['action_type'] ); ?>><?php esc_html_e( 'Customer Support', 'mobishop' ); ?></option>
 				</select>
 			</div>
 
