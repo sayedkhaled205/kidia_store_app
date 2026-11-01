@@ -7,33 +7,53 @@
   let busy = false, starting = false, polling = false, timer = null, clock = null;
   let modal = null, ui = {}, current = null, offset = 0, connectionError = false, activeStore = null;
   let cancelling = false, cancelInFlight = false, cancelTimer = null, postSent = false;
+  let generation = 0, awaitingBuild = false, previousBuildId = null;
   const terminal = build => build && ['failed', 'cancelled', 'completed'].includes(build.status);
   const cancelKey = store => 'woo:pending-build-cancel:' + store;
   function rememberCancel(id) { try { sessionStorage.setItem(cancelKey(activeStore), id); } catch (_) {} }
   function pendingCancel(store) { try { return sessionStorage.getItem(cancelKey(store)); } catch (_) { return null; } }
   function forgetCancel() { try { sessionStorage.removeItem(cancelKey(activeStore)); } catch (_) {} }
+  function clearAttempt() {
+    generation++; clearTimeout(timer); clearTimeout(cancelTimer); clearInterval(clock);
+    timer = cancelTimer = clock = null;
+    current = null; busy = starting = polling = cancelling = cancelInFlight = postSent = awaitingBuild = false;
+    previousBuildId = null; connectionError = false; offset = 0;
+    ui.elapsed.textContent = ui.checked.textContent = ui.outputs.textContent = '';
+    ui.notice.hidden = true; ui.footer.hidden = true; ui.progress.hidden = false;
+    ui.link.removeAttribute('href');
+  }
   function cancelState() {
-    ui.cancel.hidden = !busy && !starting && !cancelling;
+    ui.cancel.hidden = !busy && !starting && !cancelling && current?.status === 'completed';
     ui.cancel.disabled = cancelling;
-    ui.cancel.textContent = cancelling ? 'Cancelling…' : 'Cancel build';
+    ui.cancel.textContent = cancelling ? 'Cancelling…' : (busy || starting ? 'Cancel build' : 'Cancel');
     if (cancelling) { ui.status.textContent = 'Stopping the build…'; ui.again.hidden = true; }
   }
   async function cancelBuild() {
     if (cancelInFlight) return;
+    if (!busy && !starting && !cancelling) {
+      forgetCancel(); clearAttempt(); modal.close(); return;
+    }
     cancelling = true; clearTimeout(timer); clearTimeout(cancelTimer); cancelState();
     rememberCancel(current && !terminal(current) ? current.id : 'pending');
-    if (!current || terminal(current)) return; // start() will stop before POST, or cancel the accepted request.
+    if (!current || terminal(current)) {
+      if (!starting && awaitingBuild) await poll(activeStore);
+      return; // start() will stop before POST, or cancel the accepted request.
+    }
     rememberCancel(current.id);
     cancelInFlight = true;
+    const attempt = generation, store = activeStore, build = current;
     try {
-      const context = await json(`/account/builder/context?store=${encodeURIComponent(activeStore)}`);
-      const result = await json(safeLink(current.cancel_url), {method:'POST', keepalive:true,
+      const context = await json(`/account/builder/context?store=${encodeURIComponent(store)}`);
+      if (attempt !== generation) return;
+      const result = await json(safeLink(build.cancel_url), {method:'POST', keepalive:true,
         headers:{'Content-Type':'application/json','X-CSRF-TOKEN':context.csrf_token}, body:'{}'});
+      if (attempt !== generation) return;
       // Only the server's confirmed terminal status may end cancellation.
       if (result.status === 'cancelled') {
-        render({...current, status:'cancelled', progress:0, error:null, stage_label:'Build cancelled', finished_at:new Date().toISOString()});
-      } else { await poll(activeStore); }
+        render({...build, status:'cancelled', progress:0, error:null, stage_label:'Build cancelled', finished_at:new Date().toISOString()});
+      } else { await poll(store); }
     } catch (error) {
+      if (attempt !== generation) return;
       if (error.status === 409) {
         ui.status.textContent = 'Waiting for the build service to confirm cancellation…';
         cancelTimer = setTimeout(cancelBuild, 3000);
@@ -42,7 +62,7 @@
         ui.notice.hidden = false;
         ui.notice.textContent = 'Cancellation is not confirmed. The build may still be running. Press Cancel build to retry.';
       }
-    } finally { cancelInFlight = false; }
+    } finally { if (attempt === generation) cancelInFlight = false; }
   }
   const steps = ['Queued', 'Preparing', 'Checking', 'Building', 'Publishing', 'Ready'];
   function make(tag, className, text) {
@@ -208,45 +228,74 @@
   async function poll(store) {
     if (polling) return;
     polling = true;
+    const attempt = generation;
     try {
       const data = await json(`/account/stores/${encodeURIComponent(store)}/quick-build`);
+      if (attempt !== generation || store !== activeStore) return;
+      // An accepted/lost POST may not be visible yet; the previous terminal
+      // record is not proof that this new attempt failed or was cancelled.
+      if (awaitingBuild && (!data.build || data.build.id === previousBuildId)) {
+        ui.notice.hidden = false; ui.notice.textContent = 'Waiting for the new build request to appear. No duplicate build will be started.';
+        return;
+      }
       if (!data.build) throw new Error('The build request was not found.');
+      awaitingBuild = false;
       render(data.build);
+      if (cancelling && !terminal(data.build)) await cancelBuild();
     } catch (error) {
+      if (attempt !== generation || store !== activeStore) return;
       if ([401, 403, 404].includes(error.status)) {
-        busy = false; ui.status.textContent = error.status === 401 ? 'Please sign in again to view your build.' : error.message;
+        busy = awaitingBuild || (!!current && !terminal(current)); ui.status.textContent = error.status === 401 ? 'Please sign in again to view your build.' : error.message;
         ui.notice.hidden = true; clearInterval(clock);
+        cancelState();
       } else {
         connectionError = true;
         if (!current) { ui.notice.hidden = false; ui.notice.textContent = 'Waiting for the server. Retrying automatically without starting another build.'; }
         tick();
       }
-    } finally { polling = false; schedule(store); }
+    } finally {
+      if (attempt === generation) {
+        polling = false;
+        if (busy && cancelling && modal.open) timer = setTimeout(() => poll(store), 3000);
+        else schedule(store);
+      }
+    }
   }
   async function start(store, forceNew = false) {
     if (!uuid.test(store || '') || starting || cancelling) return;
+    if (activeStore && activeStore !== store) {
+      if (busy) return;
+      clearAttempt();
+    }
     activeStore = store;
     show(busy ? 'Checking your build…' : 'Checking for an existing build…');
-    if (current && !busy && !forceNew) { render(current); return; }
     if (busy) { clearTimeout(timer); await poll(store); return; }
     starting = true; postSent = false;
+    polling = false;
+    const attempt = ++generation;
     try {
       const existing = await json(`/account/stores/${encodeURIComponent(store)}/quick-build`);
+      if (attempt !== generation) return;
       const active = existing.build && (!['failed', 'cancelled', 'completed'].includes(existing.build.status) || (existing.build.status === 'completed' && !existing.build.download_url));
-      if (existing.build && (!forceNew || active)) {
-        render(existing.build); schedule(store); return;
+      if (existing.build && (active || (!forceNew && existing.build.status === 'completed'))) {
+        render(existing.build);
+        if (cancelling && active) await cancelBuild(); else schedule(store);
+        return;
       }
+      previousBuildId = existing.build?.id || null;
+      ui.elapsed.textContent = ui.checked.textContent = ui.outputs.textContent = '';
+      ui.notice.hidden = true; ui.footer.hidden = true; ui.progress.hidden = false;
       current = null; show('Starting your app build…'); busy = true; cancelState();
       const context = await json(`/account/builder/context?store=${encodeURIComponent(store)}`);
       if (cancelling) { busy = false; cancelling = false; forgetCancel(); ui.status.textContent = 'Build cancelled before it started'; cancelState(); return; }
-      postSent = true;
+      postSent = awaitingBuild = true;
       let result = await json(`/account/stores/${encodeURIComponent(store)}/quick-build`, {
         method:'POST', keepalive:true, headers:{'Content-Type':'application/json','X-CSRF-TOKEN':context.csrf_token}, body:'{}'
       });
       if (result.preparing) {
         // No remote build exists yet. Only this explicit click can continue;
         // refreshing reads status and never recreates this pending intent.
-        postSent = false;
+        postSent = awaitingBuild = false;
         show(result.setup.message);
         let setup = result.setup;
         while (!setup.ready && !cancelling) {
@@ -267,11 +316,11 @@
         // Preparation is complete. Refresh CSRF and send exactly one build request.
         const freshContext = await json(`/account/builder/context?store=${encodeURIComponent(store)}`);
         if (cancelling) { busy=false; cancelling=false; forgetCancel(); ui.status.textContent='Build cancelled before it started'; cancelState(); return; }
-        postSent = true;
+        postSent = awaitingBuild = true;
         result = await json(`/account/stores/${encodeURIComponent(store)}/quick-build`, {
           method:'POST', keepalive:true, headers:{'Content-Type':'application/json','X-CSRF-TOKEN':freshContext.csrf_token}, body:'{}'
         });
-        if (result.preparing) { busy=false; postSent=false; ui.status.textContent='The store connection changed during preparation. Try again when it is ready.'; ui.again.textContent='Try again'; ui.again.hidden=false; cancelState(); return; }
+        if (result.preparing) { busy=false; postSent=awaitingBuild=false; ui.status.textContent='The store connection changed during preparation. Try again when it is ready.'; ui.again.textContent='Try again'; ui.again.hidden=false; cancelState(); return; }
       }
       await poll(store);
     } catch (error) {
@@ -283,7 +332,7 @@
         ui.status.textContent = 'Build cancelled before it started';
         ui.notice.hidden = true; ui.footer.hidden = true; clearInterval(clock);
       } else if (busy && postSent && (!error.status || error.status >= 500)) { connectionError = true; await poll(store); }
-      else { busy = false; ui.status.textContent = error.message; ui.notice.hidden = true; ui.footer.hidden = true; ui.again.textContent = 'Try again'; ui.again.hidden = false; clearInterval(clock); }
+      else { busy = postSent = awaitingBuild = false; ui.status.textContent = error.message; ui.notice.hidden = true; ui.footer.hidden = true; ui.again.textContent = 'Try again'; ui.again.hidden = false; clearInterval(clock); }
     } finally {
       starting = false;
       if (cancelling && postSent) await cancelBuild();
