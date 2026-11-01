@@ -76,6 +76,41 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
+  test('native new-email enrollment uses the existing installed-client contract through OTP', () async {
+    final h = _Harness();
+    h.handler = (request) async {
+      final action = request.uri.path.split('/').last;
+      return h.response(request, switch (action) {
+        'identify' => {
+          'identifier': 'new@example.com', 'kind': 'email',
+          'methods': ['create_password'],
+        },
+        'password' => _registration(),
+        'verify' => {..._registration(), 'ticket': 'd' * 64, 'fields': ['name', 'password']},
+        'register' => _session(),
+        _ => throw StateError('Unexpected native action: $action'),
+      });
+    };
+    final identity = await h.service.identify('new@example.com');
+    expect(identity.allows('create_password'), isTrue);
+    final enrollment = await h.service.password(identity.identifier, 'new-password');
+    expect(enrollment.status, NativeAuthStatus.registrationRequired);
+    expect(h.store.writes, 0);
+    expect(h.legacy.registrations, 0);
+    final challenge = await h.service.sendOtp('+201012345678', ticket: enrollment.ticket);
+    final verified = await h.service.verifyOtp(challenge, '123456', ticket: enrollment.ticket);
+    expect(h.store.writes, 0);
+    final result = await h.service.register(verified.ticket, name: 'New Customer', password: 'new-password');
+    expect(h.posts('password').single.data['verifier'], h.posts('verify').single.data['verifier']);
+    expect(h.posts('verify').single.data['ticket'], enrollment.ticket);
+    expect(h.posts('register').single.data['ticket'], verified.ticket);
+    expect(h.posts('register').single.data.containsKey('email'), isFalse);
+    expect(h.store.writes, 0);
+    await h.service.commit(result);
+    expect(h.store.writes, 1);
+    expect(h.legacy.signIns + h.legacy.registrations, 0);
+  });
+
   for (final type in [
     DioExceptionType.connectionError,
     DioExceptionType.unknown,

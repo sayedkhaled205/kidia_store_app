@@ -605,6 +605,57 @@ void main() {
     },
   );
 
+  testWidgets('native new email confirms password then verifies phone before creating account', (tester) async {
+    final fixture = _Fixture()
+      ..actions.identityMethods = ['create_password']
+      ..actions.passwordResult = const NativeAuthResult(
+        status: NativeAuthStatus.registrationRequired,
+        ticket: 'email-enrollment', expiresIn: 300,
+        fields: ['name', 'password', 'phone'],
+      )
+      ..actions.verifyResult = const NativeAuthResult(
+        status: NativeAuthStatus.registrationRequired,
+        ticket: 'verified-enrollment', expiresIn: 300,
+        fields: ['name', 'password'],
+      );
+    await fixture.pump(tester);
+    await _identify(tester, 'new@example.com');
+    expect(find.text('أنشئ كلمة مرور'), findsOneWidget);
+    expect(find.byKey(const Key('auth-sign-in')), findsNothing);
+    await tester.enterText(find.byKey(const Key('auth-create-password')), 'new-password');
+    await tester.enterText(find.byKey(const Key('auth-confirm-password')), 'different');
+    await _tap(tester, 'auth-register');
+    expect(fixture.actions.passwordCalls, 0);
+    await tester.enterText(find.byKey(const Key('auth-confirm-password')), 'new-password');
+    await _tap(tester, 'auth-register');
+    expect(fixture.actions.commits, 0);
+    expect(fixture.actions.registrationTicket, isNull);
+    await tester.enterText(find.byKey(const Key('auth-phone')), '01012345678');
+    await _tap(tester, 'auth-send-otp');
+    expect(fixture.actions.otpTickets.last, 'email-enrollment');
+    await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
+    await _tap(tester, 'auth-verify-otp');
+    expect(fixture.actions.commits, 0);
+    await tester.enterText(find.byKey(const Key('auth-name')), 'عميل جديد');
+    // The existing screen retains both confirmed password fields across OTP.
+    await _tap(tester, 'auth-register');
+    expect(fixture.actions.registrationTicket, 'verified-enrollment');
+    expect(fixture.actions.registrationPassword, 'new-password');
+    expect(fixture.actions.commits, 1);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('OTP-only phone identity sends code directly without asking for password', (tester) async {
+    final fixture = _Fixture()..actions.identityMethods = ['phone_otp'];
+    await fixture.pump(tester);
+    await _identify(tester, '+201012345678');
+    expect(fixture.actions.sentPhones, ['+201012345678']);
+    expect(find.byKey(const Key('auth-otp')), findsOneWidget);
+    expect(find.byKey(const Key('auth-password')), findsNothing);
+    expect(fixture.actions.passwordCalls, 0);
+    expect(fixture.actions.commits, 0);
+  });
+
   testWidgets('close stays enabled during Google and ignores its late result', (
     tester,
   ) async {
@@ -833,6 +884,7 @@ class _Actions implements NativeAuthActions {
   );
   List<String>? identityMethods;
   NativeAuthResult? verifyResult;
+  NativeAuthResult? passwordResult;
   NativeAuthResult? googleResult;
   Future<NativeAuthResult>? verifyFuture;
   Future<NativeAuthResult>? googleFuture;
@@ -857,6 +909,7 @@ class _Actions implements NativeAuthActions {
   String? registrationTicket;
   String? registrationEmail;
   String? registrationName;
+  String? registrationPassword;
   void Function(AuthSession)? onCommit;
 
   @override
@@ -881,7 +934,7 @@ class _Actions implements NativeAuthActions {
   @override
   Future<NativeAuthResult> password(String identifier, String password) async {
     passwordCalls++;
-    return _authenticated();
+    return passwordResult ?? _authenticated();
   }
 
   @override
@@ -942,6 +995,7 @@ class _Actions implements NativeAuthActions {
   }) async {
     registrationTicket = ticket;
     registrationName = name;
+    registrationPassword = password;
     registrationEmail = email;
     return _authenticated();
   }

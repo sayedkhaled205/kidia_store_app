@@ -67,7 +67,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			'phone_country_code' => preg_replace( '/\D/', '', (string) ( $s['phone_country_code'] ?? '' ) ),
 			'methods' => array( 'password' => $enabled, 'email_password' => $enabled, 'phone_password' => $enabled,
 				'phone_otp' => $enabled && (bool) $phone, 'google' => $enabled && $google,
-				'registration' => $enabled && $this->registration_enabled() && ( $phone || ( $google && ! $this->requires_phone() ) ) ),
+				'registration' => $enabled && $this->registration_enabled() && ( $phone || ( $google && ! $this->requires_phone() ) ),
+				'email_registration' => $enabled && $this->registration_enabled() && (bool) $phone ),
 			'firebase' => $enabled && $phone ? $f : null,
 			'google' => $enabled && $google ? array( 'server_client_id' => $client, 'ios_client_id' => $platform === 'ios' ? $g['ios_client_id'] : null ) : null,
 		);
@@ -81,14 +82,23 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return $this->response( $this->capabilities( $request ) );
 	}
 
-	/** This step deliberately answers identically for existing and unknown identities. */
+	/** Choose sign-in or enrollment without exposing account details or issuing proof. */
 	public function identify( WP_REST_Request $request ) {
 		if ( $error = $this->guard( 'identify', 60 ) ) return $error;
 		$identity = $this->identity( (string) $request->get_param( 'identifier' ) );
 		if ( ! $identity ) return $this->error( 'invalid_identifier', 400 );
 		$c = $this->capabilities( $request );
-		$methods = array( 'password' );
-		if ( $identity['kind'] === 'phone' && $c['methods']['phone_otp'] ) $methods[] = 'phone_otp';
+		if ( $identity['kind'] === 'phone' ) {
+			$methods = array( 'password' );
+			if ( $c['methods']['phone_otp'] ) {
+				// New customers have no password yet. Existing accounts retain password recovery if SMS fails.
+				$users = $this->phone_users( $identity['identifier'] );
+				$methods = $users === array() ? array( 'phone_otp' ) : array( 'password', 'phone_otp' );
+			}
+		} else {
+			// Unknown emails alone may be offered password creation; existing emails keep the login flow.
+			$methods = $c['methods']['email_registration'] && ! email_exists( $identity['identifier'] ) ? array( 'create_password' ) : array( 'password' );
+		}
 		return $this->response( $identity + array( 'methods' => $methods ) );
 	}
 
@@ -117,7 +127,13 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 				}
 			}
 		}
-		if ( ! $matched ) return $this->error( 'invalid_credentials', 401 );
+		if ( ! $matched ) {
+			// A still-unknown email may only start enrollment: no account, password storage, or session here.
+			if ( $identity['kind'] === 'email' && ! email_exists( $identity['identifier'] ) && $this->capabilities( $request )['methods']['email_registration'] ) {
+				return $this->registration_ticket( array( 'kind' => 'email_registration', 'email' => $identity['identifier'] ), $request );
+			}
+			return $this->error( 'invalid_credentials', 401 );
+		}
 		// Password proof is scoped to the accounts whose own password matched.
 		$versions = array();
 		foreach ( $matched as $user ) $versions[ $user->ID ] = $this->hash( $user->user_pass );
@@ -255,7 +271,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( empty( $proof['user_id'] ) && ! $this->registration_enabled() ) return $this->error( 'registration_disabled', 403 );
 		if ( $proof['kind'] === 'password' && empty( $proof['user_id'] ) ) return $this->error( 'invalid_proof', 401 );
 		$fields = array( 'name', 'password' );
-		if ( $this->requires_phone() && empty( $proof['phone'] ) ) $fields[] = 'phone';
+		// Email-originated registrations always require a verified phone, even if require_phone is globally off.
+		if ( ( $this->requires_phone() || $proof['kind'] === 'email_registration' ) && empty( $proof['phone'] ) ) $fields[] = 'phone';
 		$ticket = $this->ticket( 'register', $proof, $request );
 		if ( is_wp_error( $ticket ) ) return $ticket;
 		return $this->response( array( 'status' => 'registration_required', 'ticket' => $ticket, 'expires_in' => self::TTL, 'fields' => $fields ) );
@@ -272,7 +289,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$email = strtolower( trim( (string) $request->get_param( 'email' ) ) );
 		if ( $name === '' || strlen( $name ) > 120 || ! is_string( $password ) || strlen( $password ) < 8 || strlen( $password ) > 4096
 			|| ( $email !== '' && $email !== ( $p['email'] ?? '' ) ) ) return $this->error( 'invalid_profile', 400 );
-		if ( $this->requires_phone() && empty( $p['phone'] ) ) return $this->error( 'phone_proof_required', 403 );
+		if ( ( $this->requires_phone() || $p['kind'] === 'email_registration' ) && empty( $p['phone'] ) ) return $this->error( 'phone_proof_required', 403 );
 		$user = ! empty( $p['user_id'] ) ? get_user_by( 'id', (int) $p['user_id'] ) : null;
 		if ( ! empty( $p['user_id'] ) && ! $this->proof_allows( $user, $p ) ) return $this->error( 'invalid_proof', 401 );
 		if ( ! $user && ! $this->registration_enabled() ) return $this->error( 'registration_disabled', 403 );

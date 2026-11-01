@@ -354,6 +354,30 @@ foreach ( array( '01012345678', 'customer@gmail.com', 'unknown@gmail.com' ) as $
     native_assert( ! isset( $data['accounts'] ) && ! isset( $data['user'] ) && ! isset( $data['ticket'] ) && ! str_contains( $serialized, 'Customer Seven' ) && ! str_contains( $serialized, 'Customer Nine' ), 'Identify does not reveal account lists or issue identity proof' );
 }
 
+// Unknown email identities are offered password creation instead of a doomed login; known/privileged emails are not.
+native_clear_rate();
+$known_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => 'customer@gmail.com' ) ) ), 'Known email identify' );
+native_assert( $known_identify['methods'] === array( 'password' ), 'Existing email identity still routes to password login' );
+$privileged_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => 'manager@gmail.com' ) ) ), 'Privileged email identify' );
+native_assert( $privileged_identify['methods'] === array( 'password' ), 'Privileged existing email identity is not offered password creation' );
+$unknown_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => 'new-email-customer@gmail.com' ) ) ), 'Unknown email identify' );
+native_assert( $unknown_identify['methods'] === array( 'create_password' ), 'Unknown email identity is offered password creation instead of a doomed login' );
+$phone_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => '01012345678' ) ) ), 'Phone identify with OTP configured' );
+native_assert( $phone_identify['methods'] === array( 'password', 'phone_otp' ), 'Existing phone keeps both verified OTP and password sign-in choices' );
+$unknown_phone_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => '+201599999999' ) ) ), 'Unknown phone identify with OTP configured' );
+native_assert( $unknown_phone_identify['methods'] === array( 'phone_otp' ), 'An unregistered phone still proceeds straight to OTP' );
+$base_native_settings = $GLOBALS['native_options']['mobishop_native_auth_settings'];
+$GLOBALS['native_options']['mobishop_native_auth_settings']['registration_enabled'] = false;
+$no_signup_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => 'new-email-customer@gmail.com' ) ) ), 'Unknown email identify with signup disabled' );
+native_assert( $no_signup_identify['methods'] === array( 'password' ), 'Disabled signup does not offer password creation for an unknown email' );
+$GLOBALS['native_options']['mobishop_native_auth_settings'] = $base_native_settings;
+$GLOBALS['native_options']['mobishop_native_auth_settings']['phone_enabled'] = false;
+$no_otp_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => 'new-email-customer@gmail.com' ) ) ), 'Unknown email identify with phone OTP unavailable' );
+native_assert( $no_otp_identify['methods'] === array( 'password' ), 'Unavailable phone OTP does not offer password creation for an unknown email' );
+$no_otp_phone_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => '01012345678' ) ) ), 'Phone identify with OTP unavailable' );
+native_assert( $no_otp_phone_identify['methods'] === array( 'password' ), 'Phone identity falls back to password when OTP is unavailable' );
+$GLOBALS['native_options']['mobishop_native_auth_settings'] = $base_native_settings;
+
 // A real signed proof selects eligible login identities only, never shipping-only matches.
 $proof = native_data( native_phone( $endpoint, $verifier ), 'Verified phone' );
 native_assert( $proof['status'] === 'select_account', 'A verified shared phone asks for account selection' );
@@ -677,6 +701,87 @@ $GLOBALS['native_meta'][$formatted_id] = array( 'kidia_login_phone' => '+2010999
 native_rejected( native_phone( $endpoint, $verifier, $formatted_phone ), 'Formatted shipping metadata cannot override a different canonical login identity or create a duplicate signup' );
 native_rejected( $endpoint->password( native_request( array( 'identifier' => $formatted_phone, 'password' => 'formatted-password', 'verifier' => $verifier ) ) ), 'Password cannot authenticate through formatted shipping metadata belonging to a different canonical identity' );
 unset( $GLOBALS['native_users'][$formatted_id], $GLOBALS['native_meta'][$formatted_id] );
+
+// An unknown email submitted to native/password may only start enrollment, never authenticate or persist anything.
+native_clear_rate();
+$unknown_email = 'brand-new-password-customer@gmail.com';
+$created_before_email = count( $GLOBALS['native_created'] );
+$issued_before_email = count( $GLOBALS['native_issued'] );
+$email_start = native_data( $endpoint->password( native_request( array( 'identifier' => $unknown_email, 'password' => 'first-typed-password', 'verifier' => $verifier ) ) ), 'Unknown email password enrollment' );
+native_assert( $email_start['status'] === 'registration_required' && in_array( 'phone', $email_start['fields'], true ), 'Unknown email password produces a registration ticket that still requires phone proof' );
+native_assert( count( $GLOBALS['native_created'] ) === $created_before_email && count( $GLOBALS['native_issued'] ) === $issued_before_email, 'Starting email enrollment creates no account and issues no session' );
+$stored_tickets = serialize( native_ticket_options() );
+native_assert( ! str_contains( $stored_tickets, 'first-typed-password' ), 'Enrollment proof never stores the submitted password' );
+
+// Existing-email wrong password still never offers enrollment.
+native_clear_rate();
+$tickets_before_bad_password = count( native_ticket_options() );
+native_rejected( $endpoint->password( native_request( array( 'identifier' => 'customer@gmail.com', 'password' => 'definitely-wrong', 'verifier' => $verifier ) ) ), 'Existing email wrong password is rejected' );
+native_assert( count( native_ticket_options() ) === $tickets_before_bad_password, 'Wrong password for an existing email creates no enrollment ticket' );
+
+// Enrollment is rechecked against capability at the moment it starts, not only at identify time.
+$base_password_settings = $GLOBALS['native_options']['mobishop_native_auth_settings'];
+$tickets_before_disabled = count( native_ticket_options() );
+$GLOBALS['native_options']['mobishop_native_auth_settings']['registration_enabled'] = false;
+native_clear_rate();
+native_rejected( $endpoint->password( native_request( array( 'identifier' => $unknown_email, 'password' => 'another-password', 'verifier' => $verifier ) ) ), 'Unknown email password is rejected when signup is disabled' );
+native_assert( count( native_ticket_options() ) === $tickets_before_disabled, 'Disabled signup creates no enrollment ticket' );
+$GLOBALS['native_options']['mobishop_native_auth_settings'] = $base_password_settings;
+$GLOBALS['native_options']['mobishop_native_auth_settings']['phone_enabled'] = false;
+native_clear_rate();
+native_rejected( $endpoint->password( native_request( array( 'identifier' => $unknown_email, 'password' => 'another-password', 'verifier' => $verifier ) ) ), 'Unknown email password is rejected when phone OTP is unavailable' );
+native_assert( count( native_ticket_options() ) === $tickets_before_disabled, 'Unavailable phone OTP creates no enrollment ticket' );
+$GLOBALS['native_options']['mobishop_native_auth_settings'] = $base_password_settings;
+
+// Enrollment still requires its own verifier binding.
+native_clear_rate();
+native_rejected( $endpoint->password( native_request( array( 'identifier' => $unknown_email, 'password' => 'another-password', 'verifier' => str_repeat( 'c', 63 ) ) ) ), 'Enrollment start rejects a malformed verifier' );
+
+// Email registration forces a verified phone even when require_phone is globally disabled.
+$GLOBALS['native_options']['mobishop_native_auth_settings']['require_phone'] = false;
+native_clear_rate();
+$no_phone_required_start = native_data( $endpoint->password( native_request( array( 'identifier' => $unknown_email, 'password' => 'first-typed-password', 'verifier' => $verifier ) ) ), 'Unknown email enrollment with global phone requirement disabled' );
+native_assert( in_array( 'phone', $no_phone_required_start['fields'], true ), 'Email registration still demands phone proof even when require_phone is globally disabled' );
+native_rejected( $endpoint->register_customer( native_request( array( 'ticket' => $no_phone_required_start['ticket'], 'verifier' => $verifier, 'name' => 'No Phone Required', 'password' => 'final-password' ) ) ), 'Email registration cannot complete without phone proof even when require_phone is globally disabled' );
+$GLOBALS['native_options']['mobishop_native_auth_settings'] = $base_password_settings;
+
+// A verified new email and phone create exactly one account, matching the identified email.
+native_clear_rate();
+$new_email = 'fresh-native-customer@gmail.com';
+$email_enroll_start = native_data( $endpoint->password( native_request( array( 'identifier' => $new_email, 'password' => 'typed-first-password', 'verifier' => $verifier ) ) ), 'New email enrollment start' );
+$email_enroll_phone = native_data( native_phone( $endpoint, $verifier, '+201044444444', array( 'ticket' => $email_enroll_start['ticket'] ) ), 'New email enrollment phone proof' );
+native_assert( $email_enroll_phone['status'] === 'registration_required' && ! in_array( 'phone', $email_enroll_phone['fields'], true ), 'Verified phone satisfies the forced email registration requirement' );
+$created_before_email_final = count( $GLOBALS['native_created'] );
+$email_registered = native_data( $endpoint->register_customer( native_request( array( 'ticket' => $email_enroll_phone['ticket'], 'verifier' => $verifier, 'name' => 'Fresh Native Customer', 'password' => 'final-chosen-password', 'email' => $new_email ) ) ), 'New email registration completion' );
+native_assert( $email_registered['status'] === 'authenticated' && count( $GLOBALS['native_created'] ) === $created_before_email_final + 1, 'A verified new email and phone create exactly one account' );
+$new_email_id = $email_registered['user_id'];
+native_assert( get_user_by( 'id', $new_email_id )->user_email === $new_email, 'The final account matches the originally identified email' );
+native_assert( get_user_meta( $new_email_id, 'kidia_login_phone', true ) === '+201044444444', 'The final account stores the verified phone' );
+native_rejected( $endpoint->register_customer( native_request( array( 'ticket' => $email_enroll_phone['ticket'], 'verifier' => $verifier, 'name' => 'Replay', 'password' => 'replay-password' ) ) ), 'Email registration ticket cannot be replayed' );
+
+// An email claimed by someone else after enrollment started cannot be duplicated or silently logged in.
+native_clear_rate();
+$race_email = 'race-created-email@gmail.com';
+$race_email_start = native_data( $endpoint->password( native_request( array( 'identifier' => $race_email, 'password' => 'typed-password', 'verifier' => $verifier ) ) ), 'Race email enrollment start' );
+$race_email_phone = native_data( native_phone( $endpoint, $verifier, '+201055555555', array( 'ticket' => $race_email_start['ticket'] ) ), 'Race email enrollment phone proof' );
+$race_created_id = wp_insert_user( array( 'user_login' => 'race-created-user', 'user_email' => $race_email, 'user_pass' => 'someone-elses-password', 'display_name' => 'Someone Else', 'role' => 'customer' ) );
+$issued_before_race_email = count( $GLOBALS['native_issued'] );
+native_rejected( $endpoint->register_customer( native_request( array( 'ticket' => $race_email_phone['ticket'], 'verifier' => $verifier, 'name' => 'Too Late', 'password' => 'too-late-password' ) ) ), 'Email claimed by another signup after enrollment started cannot be duplicated or logged in' );
+native_assert( count( $GLOBALS['native_issued'] ) === $issued_before_race_email, 'Losing the email race issues no session' );
+unset( $GLOBALS['native_users'][$race_created_id], $GLOBALS['native_meta'][$race_created_id] );
+
+// A phone already belonging to existing customers resolves via account selection without creating or overwriting an account.
+native_clear_rate();
+$existing_phone_email = 'another-brand-new-email@gmail.com';
+$existing_phone_start = native_data( $endpoint->password( native_request( array( 'identifier' => $existing_phone_email, 'password' => 'typed-password-two', 'verifier' => $verifier ) ) ), 'Email enrollment with an already-registered phone' );
+$before_email7 = get_user_by( 'id', 7 )->user_email;
+$before_pass7 = get_user_by( 'id', 7 )->user_pass;
+$existing_phone_result = native_data( native_phone( $endpoint, $verifier, '+201012345678', array( 'ticket' => $existing_phone_start['ticket'] ) ), 'Email enrollment phone proof matching an existing shared phone' );
+native_assert( $existing_phone_result['status'] === 'select_account', 'A phone already belonging to existing customers still asks for explicit selection instead of creating a new account from the email attempt' );
+$existing_phone_selected = native_data( native_select( $endpoint, $existing_phone_result['ticket'], $verifier, 7 ), 'Selecting the existing phone-owning account instead of the email enrollment' );
+native_assert( $existing_phone_selected['status'] === 'authenticated' && $existing_phone_selected['user_id'] === 7, 'Email enrollment resolves to the existing phone-owning customer' );
+native_assert( get_user_by( 'id', 7 )->user_email === $before_email7 && get_user_by( 'id', 7 )->user_pass === $before_pass7, 'Resolving to an existing phone-owning account never overwrites its email or password' );
+native_assert( ! in_array( $existing_phone_email, array_column( $GLOBALS['native_users'], 'email' ), true ), 'No account is created for the unclaimed enrollment email' );
 
 // HTTP calls stay fixed, do not follow redirects, and verify TLS.
 foreach ( $GLOBALS['native_http'] as $call ) {

@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.120",
+  "version": "1.46.121",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "ac141a743647d13046e38c14c9f9b558c20aa030dd981d54034ce6022a846bad",
-      "sha256": "ac141a743647d13046e38c14c9f9b558c20aa030dd981d54034ce6022a846bad"
+      "source_sha256": "a32cea3c4e5953583799cd210cf0f21a9a629dbf96de06f955aa71425c8d5cd3",
+      "sha256": "a32cea3c4e5953583799cd210cf0f21a9a629dbf96de06f955aa71425c8d5cd3"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2454,8 +2454,8 @@
     "api/class-native-customer-auth-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-native-customer-auth-endpoint.php",
       "newline": "lf",
-      "source_sha256": "c19613c7d5a9b4a68a683ceac7c66fdff5abca6123fe65874c4c84fd1694d3ef",
-      "sha256": "c19613c7d5a9b4a68a683ceac7c66fdff5abca6123fe65874c4c84fd1694d3ef"
+      "source_sha256": "0444c6bc755b093684cf836d32f075f3dba9483c6e434449876e07c42dfcc3cc",
+      "sha256": "0444c6bc755b093684cf836d32f075f3dba9483c6e434449876e07c42dfcc3cc"
     },
     "api/class-native-payment92.php": {
       "source": "connectors/woocommerce/source/api/class-native-payment92.php",
@@ -2988,8 +2988,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "5f702d752022fd462eea776103efb84974fed883b487c9f095f904330d4377ac",
-      "sha256": "5f702d752022fd462eea776103efb84974fed883b487c9f095f904330d4377ac"
+      "source_sha256": "8cef4bbd2e651fbe5abc1d48ccfd7102f96c5622d90f18702d61acb74026f91c",
+      "sha256": "8cef4bbd2e651fbe5abc1d48ccfd7102f96c5622d90f18702d61acb74026f91c"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -3024,8 +3024,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "e08666d4aaa999057d1aa19a76f49aa767ca21d510cffcff74f20a4cfdc32cd4",
-      "sha256": "e08666d4aaa999057d1aa19a76f49aa767ca21d510cffcff74f20a4cfdc32cd4"
+      "source_sha256": "1066bddabe71eae9a152b3d6ba1560dfbc9a6992f2a3744e43ab406c92c12a0a",
+      "sha256": "1066bddabe71eae9a152b3d6ba1560dfbc9a6992f2a3744e43ab406c92c12a0a"
     },
     "api/class-attribute-stock-filter.php": {
       "source": "connectors/woocommerce/source/api/class-attribute-stock-filter.php",
