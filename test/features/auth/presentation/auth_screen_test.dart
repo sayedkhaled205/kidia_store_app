@@ -209,6 +209,19 @@ void main() {
       expect(find.byKey(const Key('auth-different-phone')), findsOneWidget);
       expect(find.byKey(const Key('auth-send-otp')), findsNothing);
       expect(find.text('الدخول للحساب الموجود'), findsOneWidget);
+      expect(find.byKey(const Key('auth-phone')), findsNothing);
+      expect(find.text('01012345678'), findsOneWidget);
+      final card = tester.getRect(
+        find.byKey(const Key('auth-existing-account-card')),
+      );
+      final signIn = tester.getRect(
+        find.byKey(const Key('auth-existing-phone-signin')),
+      );
+      final change = tester.getRect(
+        find.byKey(const Key('auth-different-phone')),
+      );
+      expect(signIn.top - card.bottom, greaterThanOrEqualTo(24));
+      expect(change.top - signIn.bottom, greaterThanOrEqualTo(12));
       actions.identityMethods = ['password', 'phone_otp'];
       await _tap(tester, 'auth-existing-phone-signin');
       expect(find.byKey(const Key('auth-use-password')), findsOneWidget);

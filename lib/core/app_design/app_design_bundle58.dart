@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../features/home/data/home_image_prefetch.dart';
 
 import '../../features/catalog/domain/repositories/catalog_repository.dart';
 import '../../features/home/data/models/home_block_model.dart';
@@ -38,6 +39,9 @@ class AppDesignBundle58 {
   }
 
   Map<String, dynamic> toJson() => _copy(_json);
+
+  Iterable<String> get staticHomeImages =>
+      staticHomeImageUrls(_map(_json['home']));
 
   factory AppDesignBundle58.fromEncoded(
     String encoded, {

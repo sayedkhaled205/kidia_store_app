@@ -39,6 +39,7 @@ class AppHeaderBlockWidget extends StatelessWidget {
     );
     final Widget identity = block.logoUrl != null
         ? AppNetworkImage(
+            decodeAtDisplaySize: true,
             imageUrl: block.logoUrl!,
             trimTransparentPadding: true,
             height: block.logoHeight * responsive,
@@ -537,6 +538,7 @@ class _HeroSlideCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               AppNetworkImage(
+                decodeAtDisplaySize: true,
                 imageUrl: slide.imageUrl,
                 fit: block.imageFit == 'contain'
                     ? BoxFit.contain
@@ -922,6 +924,7 @@ class _CategoryMosaicTile extends StatelessWidget {
         fit: StackFit.expand,
         children: <Widget>[
           AppNetworkImage(
+            decodeAtDisplaySize: true,
             imageUrl: item.imageUrl,
             fit: BoxFit.cover,
             semanticLabel: item.name,
@@ -980,6 +983,7 @@ class _CategoryBannerCard extends StatelessWidget {
           fit: StackFit.expand,
           children: <Widget>[
             AppNetworkImage(
+              decodeAtDisplaySize: true,
               imageUrl: item.imageUrl,
               fit: BoxFit.cover,
               semanticLabel: item.name,
@@ -1043,6 +1047,7 @@ class _CategoryBlockCard extends StatelessWidget {
         ClipRRect(
           borderRadius: radius,
           child: AppNetworkImage(
+            decodeAtDisplaySize: true,
             imageUrl: item.imageUrl,
             width: imageSize,
             height: imageSize,
@@ -1230,6 +1235,7 @@ class _QuickLinkCard extends StatelessWidget {
               child: ColoredBox(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 child: AppNetworkImage(
+                  decodeAtDisplaySize: true,
                   imageUrl: item.imageUrl,
                   width: itemSize,
                   height: itemSize,
@@ -1501,6 +1507,7 @@ class _BannerGridTile extends StatelessWidget {
             fit: StackFit.expand,
             children: <Widget>[
               AppNetworkImage(
+                decodeAtDisplaySize: true,
                 imageUrl: item.imageUrl,
                 fit: block.imageFit == 'contain'
                     ? BoxFit.contain
@@ -1616,6 +1623,7 @@ class ImageBannerBlockWidget extends StatelessWidget {
                 fit: StackFit.expand,
                 children: <Widget>[
                   AppNetworkImage(
+                    decodeAtDisplaySize: true,
                     imageUrl: block.imageUrl,
                     fit: block.imageFit == 'contain'
                         ? BoxFit.contain
@@ -1714,8 +1722,11 @@ class ProductCarouselBlockWidget extends ConsumerWidget {
       return SharedHomeProductCollection(
         items: block.items,
         settings: CmsPageComponent(
-          id: shared.id, type: shared.type, enabled: shared.enabled,
-          settings: {...shared.settings,
+          id: shared.id,
+          type: shared.type,
+          enabled: shared.enabled,
+          settings: {
+            ...shared.settings,
             'show_name': block.showName,
             'show_price': block.showPrice,
             'show_regular_price': block.showRegularPrice,
@@ -1831,8 +1842,11 @@ class ProductGridBlockWidget extends ConsumerWidget {
       return SharedHomeProductCollection(
         items: block.items,
         settings: CmsPageComponent(
-          id: shared.id, type: shared.type, enabled: shared.enabled,
-          settings: {...shared.settings,
+          id: shared.id,
+          type: shared.type,
+          enabled: shared.enabled,
+          settings: {
+            ...shared.settings,
             'show_name': block.showName,
             'show_price': block.showPrice,
             'show_regular_price': block.showRegularPrice,
@@ -2079,6 +2093,7 @@ class _BundleCard extends StatelessWidget {
                       : ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: AppNetworkImage(
+                            decodeAtDisplaySize: true,
                             imageUrl: item.imageUrl!,
                             fit: BoxFit.cover,
                             semanticLabel: item.name,
@@ -2324,6 +2339,7 @@ class _BrandTile extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(10),
                   child: AppNetworkImage(
+                    decodeAtDisplaySize: true,
                     imageUrl: item.logoUrl,
                     fit: BoxFit.contain,
                     semanticLabel: item.name,
@@ -2560,6 +2576,7 @@ class CouponBannerBlockWidget extends StatelessWidget {
                 if (hasImage) ...[
                   Positioned.fill(
                     child: AppNetworkImage(
+                      decodeAtDisplaySize: true,
                       imageUrl: block.imageUrl!,
                       fit: BoxFit.cover,
                       semanticLabel: block.title,
@@ -3075,6 +3092,7 @@ class _VideoBannerBlockWidgetState extends State<VideoBannerBlockWidget> {
                   children: [
                     if (widget.block.posterUrl != null)
                       AppNetworkImage(
+                        decodeAtDisplaySize: true,
                         imageUrl: widget.block.posterUrl!,
                         fit: BoxFit.cover,
                         semanticLabel: 'صورة معاينة الفيديو',

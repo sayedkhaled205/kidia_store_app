@@ -395,10 +395,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _AuthStep.otp => copy.otpTitle,
     _AuthStep.accounts => copy.chooseAccount,
     _AuthStep.registration => copy.completeAccount,
-    _AuthStep.phone => copy.verifyPhone,
+    _AuthStep.phone =>
+      _existingContactPhone ? copy.existingTitle : copy.verifyPhone,
   };
 
   List<Widget> _identitySummary(AuthCopy copy) {
+    if (_existingContactPhone) return [];
     final value = _step == _AuthStep.otp
         ? _challenge?.phone ?? _phone.text
         : _identity?.identifier ?? _recoveryPhone ?? '';
@@ -631,11 +633,99 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           if (_busy) const Center(child: CircularProgressIndicator()),
         ];
       case _AuthStep.phone:
+        if (_existingContactPhone) {
+          final colors = Theme.of(context).colorScheme;
+          final phone = _recoveryPhone ?? _phone.text;
+          final displayPhone =
+              config.phoneCountryCode == '20' && phone.startsWith('+20')
+              ? '0${phone.substring(3)}'
+              : phone;
+          return [
+            Container(
+              key: const Key('auth-existing-account-card'),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: colors.primary.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.18),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.person_outline_rounded,
+                    color: colors.primary,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    copy.existingContactPhone,
+                    textAlign: TextAlign.center,
+                    style: _secondaryStyle?.copyWith(height: 1.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    displayPhone,
+                    key: const Key('auth-existing-account-phone'),
+                    textDirection: TextDirection.ltr,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            _primaryButton(
+              key: const Key('auth-existing-phone-signin'),
+              label: copy.enterExistingAccount,
+              onPressed: () => _perform((flow) async {
+                _otpEpoch++;
+                final identity = await _actions!.identify(_recoveryPhone!);
+                if (!_active(flow)) return;
+                setState(() {
+                  _identity = identity;
+                  _continuation = null;
+                  _challenge = null;
+                  _otpTicket = null;
+                  _password.clear();
+                  _step = _AuthStep.method;
+                  _existingContactPhone = false;
+                  _confirmContactPhone = false;
+                });
+              }),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              key: const Key('auth-different-phone'),
+              onPressed: _busy
+                  ? null
+                  : () => setState(() {
+                      _existingContactPhone = false;
+                      _confirmContactPhone = false;
+                      _phone.clear();
+                      _error = null;
+                    }),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(54),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.edit_outlined, size: 20),
+              label: Text(copy.differentPhone, textAlign: TextAlign.center),
+            ),
+          ];
+        }
         return [
           Text(
-            _existingContactPhone
-                ? copy.existingContactPhone
-                : _confirmContactPhone
+            _confirmContactPhone
                 ? copy.confirmContactPhone
                 : copy.phoneRequiredForAccount,
             textAlign: TextAlign.center,
@@ -654,40 +744,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 : copy.phoneRequired,
             onSubmitted: () => _submit(copy, config),
           ),
-          if (_existingContactPhone) ...[
-            _methodButton(
-              key: const Key('auth-existing-phone-signin'),
-              label: copy.enterExistingAccount,
-              icon: Icons.login_rounded,
-              onPressed: () => _perform((flow) async {
-                _otpEpoch++;
-                final identity = await _actions!.identify(_recoveryPhone!);
-                if (!_active(flow)) return;
-                setState(() {
-                  _identity = identity;
-                  _continuation = null;
-                  _challenge = null;
-                  _otpTicket = null;
-                  _password.clear();
-                  _step = _AuthStep.method;
-                  _existingContactPhone = false;
-                  _confirmContactPhone = false;
-                });
-              }),
-            ),
-            TextButton(
-              key: const Key('auth-different-phone'),
-              onPressed: _busy
-                  ? null
-                  : () => setState(() {
-                      _existingContactPhone = false;
-                      _confirmContactPhone = false;
-                      _phone.clear();
-                      _error = null;
-                    }),
-              child: Text(copy.differentPhone),
-            ),
-          ],
         ];
       case _AuthStep.registration:
         final fields = _continuation!.fields;

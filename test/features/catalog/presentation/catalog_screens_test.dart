@@ -233,7 +233,7 @@ void main() {
     });
   }
   for (final direction in TextDirection.values) {
-    for (final count in [1, 2, 3, 4, 7]) {
+    for (final count in [1, 2, 3, 4, 5, 7]) {
       testWidgets(
         'compact category row handles $count cards and large text $direction',
         (tester) async {
@@ -270,11 +270,11 @@ void main() {
           );
           final first = find.byKey(const Key('category-products-card-1'));
           final expected =
-              (296 - 10 * (count <= 3 ? 2 : 3)) / (count <= 3 ? 3 : 3.4);
+              (296 - 10 * (count <= 3 ? 2 : 3)) / (count == 4 ? 4 : count <= 3 ? 3 : 3.4);
           expect(tester.getSize(first).width, closeTo(expected, 0.1));
           final rail = find.byKey(const Key('category-products-rail'));
           final railBounds = tester.getRect(rail);
-          if (count <= 3) {
+          if (count <= 4) {
             final last = find.byKey(Key('category-products-card-$count'));
             final firstBounds = tester.getRect(first);
             final lastBounds = tester.getRect(last);

@@ -750,11 +750,13 @@ class CategoryProductsCards extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final fitsWithoutScrolling = categories.length <= 3;
-          final columns = fitsWithoutScrolling ? 3.0 : 3.4;
+          final fitsWithoutScrolling = categories.length <= 4;
+          final columns = fitsWithoutScrolling
+              ? (categories.length == 4 ? 4.0 : 3.0)
+              : 3.4;
           const gap = 10.0;
           final width =
-              (constraints.maxWidth - gap * (fitsWithoutScrolling ? 2 : 3)) /
+              (constraints.maxWidth - gap * (fitsWithoutScrolling ? columns - 1 : 3)) /
               columns;
           final horizontalPadding = fitsWithoutScrolling
               ? (constraints.maxWidth -

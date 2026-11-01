@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../../data/home_image_prefetch.dart';
 import 'package:mobishop_store_app/features/home/data/home_read_session.dart';
 import 'dart:async';
 
@@ -70,10 +73,27 @@ final homeReadSessionProvider = Provider<HomeReadSession>((ref) {
   return HomeReadSession();
 });
 
+final homeImageDownloadProvider = Provider<Future<void> Function(String)>((
+  ref,
+) {
+  return (url) async {
+    await CachedNetworkImageProvider.defaultCacheManager.getSingleFile(url);
+  };
+});
+
+final homeImagePrefetchProvider = Provider<HomeImagePrefetch>((ref) {
+  final design = ref.watch(portableAppDesign58Provider);
+  final prefetch = HomeImagePrefetch(ref.watch(homeImageDownloadProvider));
+  ref.onDispose(prefetch.close);
+  if (!kIsWeb && design != null) prefetch.add(design.staticHomeImages);
+  return prefetch;
+});
+
 final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>(
   (Ref ref, String locale) async {
     final design = ref.watch(portableAppDesign58Provider);
     if (design != null) {
+      ref.watch(homeImagePrefetchProvider);
       final catalog = ref.watch(catalogRepositoryProvider);
       Timer? directRefresh;
       ref.onDispose(() => directRefresh?.cancel());

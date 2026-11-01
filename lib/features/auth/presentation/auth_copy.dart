@@ -34,7 +34,7 @@ class AuthCopy {
       ? 'الرقم ده لحساب موجود. ادخل للحساب الموجود أو استخدم رقم مختلف.'
       : 'This number belongs to an existing account. Sign in to the existing account or use a different number.';
   String get enterExistingAccount =>
-      isArabic ? 'الدخول للحساب الموجود' : 'Sign in to the existing account';
+      isArabic ? 'الدخول للحساب الموجود' : 'Sign in to this account';
   String get otpSendFailed => isArabic
       ? 'تعذر إرسال رمز التحقق. اختار طريقة تانية للدخول.'
       : 'Unable to send the verification code. Choose another way to sign in.';

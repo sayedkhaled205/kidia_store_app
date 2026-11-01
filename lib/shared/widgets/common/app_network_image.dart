@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'wordmark_image.dart';
+import 'display_sized_cached_image.dart';
 
 class AppNetworkImage extends StatelessWidget {
   const AppNetworkImage({
@@ -18,6 +19,7 @@ class AppNetworkImage extends StatelessWidget {
     this.errorWidget,
     this.trimTransparentPadding = false,
     this.contentAspectRatio = 0,
+    this.decodeAtDisplaySize = false,
   });
 
   final String imageUrl;
@@ -32,6 +34,7 @@ class AppNetworkImage extends StatelessWidget {
   final Widget? errorWidget;
   final bool trimTransparentPadding;
   final double contentAspectRatio;
+  final bool decodeAtDisplaySize;
 
   @override
   Widget build(BuildContext context) {
@@ -91,32 +94,7 @@ class AppNetworkImage extends StatelessWidget {
                     backgroundColor: backgroundColor,
                   ),
             )
-          : CachedNetworkImage(
-              imageUrl: imageUrl,
-              width: width,
-              height: height,
-              fit: fit,
-              alignment: alignment,
-              fadeInDuration: const Duration(milliseconds: 220),
-              fadeOutDuration: const Duration(milliseconds: 120),
-              placeholderFadeInDuration: const Duration(milliseconds: 120),
-              placeholder: (BuildContext context, String url) {
-                return placeholder ??
-                    AppNetworkImageLoading(
-                      width: width,
-                      height: height,
-                      backgroundColor: backgroundColor,
-                    );
-              },
-              errorWidget: (BuildContext context, String url, Object error) {
-                return errorWidget ??
-                    AppNetworkImageError(
-                      width: width,
-                      height: height,
-                      backgroundColor: backgroundColor,
-                    );
-              },
-            ),
+          : _nativeImage(context),
     );
 
     if (borderRadius == null) {
@@ -125,6 +103,87 @@ class AppNetworkImage extends StatelessWidget {
 
     return ClipRRect(borderRadius: borderRadius!, child: image);
   }
+
+  Widget _nativeImage(BuildContext context) {
+    if (!decodeAtDisplaySize) return _cachedImage();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final renderWidth =
+            width ??
+            (constraints.hasBoundedWidth ? constraints.maxWidth : null);
+        final cacheWidth =
+            renderWidth != null && renderWidth.isFinite && renderWidth > 0
+            ? (renderWidth * MediaQuery.devicePixelRatioOf(context)).ceil()
+            : null;
+        if (cacheWidth == null ||
+            (fit != BoxFit.cover && fit != BoxFit.contain)) {
+          return _cachedImage();
+        }
+        final renderHeight =
+            height ??
+            (constraints.hasBoundedHeight ? constraints.maxHeight : null);
+        return Image(
+          image: DisplaySizedCachedImage(
+            imageUrl,
+            targetWidth: cacheWidth,
+            targetHeight:
+                renderHeight != null &&
+                    renderHeight.isFinite &&
+                    renderHeight > 0
+                ? (renderHeight * MediaQuery.devicePixelRatioOf(context)).ceil()
+                : null,
+            fit: fit,
+          ),
+          width: width,
+          height: height,
+          fit: fit,
+          alignment: alignment,
+          frameBuilder: (context, child, frame, synchronous) => frame != null
+              ? child
+              : placeholder ??
+                    AppNetworkImageLoading(
+                      width: width,
+                      height: height,
+                      backgroundColor: backgroundColor,
+                    ),
+          errorBuilder: (context, error, stack) =>
+              errorWidget ??
+              AppNetworkImageError(
+                width: width,
+                height: height,
+                backgroundColor: backgroundColor,
+              ),
+        );
+      },
+    );
+  }
+
+  Widget _cachedImage() => CachedNetworkImage(
+    imageUrl: imageUrl,
+    width: width,
+    height: height,
+    fit: fit,
+    alignment: alignment,
+    fadeInDuration: const Duration(milliseconds: 220),
+    fadeOutDuration: const Duration(milliseconds: 120),
+    placeholderFadeInDuration: const Duration(milliseconds: 120),
+    placeholder: (BuildContext context, String url) {
+      return placeholder ??
+          AppNetworkImageLoading(
+            width: width,
+            height: height,
+            backgroundColor: backgroundColor,
+          );
+    },
+    errorWidget: (BuildContext context, String url, Object error) {
+      return errorWidget ??
+          AppNetworkImageError(
+            width: width,
+            height: height,
+            backgroundColor: backgroundColor,
+          );
+    },
+  );
 }
 
 class AppNetworkImageLoading extends StatefulWidget {
