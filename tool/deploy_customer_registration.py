@@ -13,6 +13,7 @@ import zipfile
 
 BASE = '534c9eee92aabe3a87e19f5fdaad4e94e2344ece'
 FILES = {'api/class-native-customer-auth-endpoint.php', 'mobi2app-connector.php', 'readme.txt', 'SOURCE-BUILD.txt'}
+LIVE_FILES = {'api/class-native-customer-auth-endpoint.php'}
 PLUGIN = Path('/home/kidiastore/public_html/wp-content/plugins/mobi2app-connector')
 DOWNLOADS = Path('/home/woomobile/public_html/downloads')
 BACKUP = Path('/home/woomobile/customer-registration-20261101-backup')
@@ -65,8 +66,9 @@ def stage(commit):
     pending = {}
     for name in sorted(FILES):
         path = PLUGIN / name
-        before[path] = path.read_bytes()
-        assert sha(before[path]) == old['files'][name]['sha256'], 'Installed file changed: ' + name
+        if name in LIVE_FILES:
+            before[path] = path.read_bytes()
+            assert sha(before[path]) == old['files'][name]['sha256'], 'Installed file changed: ' + name
         record = new['files'][name]
         data = fetch(commit, record['source']).replace(b'\r\n', b'\n')
         assert sha(data) == record['source_sha256']
@@ -74,7 +76,10 @@ def stage(commit):
             data = data.replace(b'\n', b'\r\n')
         assert sha(data) == record['sha256']
         files[name] = data
-        pending[path] = data
+        if name in LIVE_FILES:
+            # Store metadata still labels a mixed older installation. This scoped
+            # hotfix must not relabel it or overwrite unrelated live changes.
+            pending[path] = data
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for name, data in sorted(files.items()):
@@ -89,7 +94,7 @@ def stage(commit):
     metadata = dict(slug=new['slug'], version=new['version'], file=versioned.name, sha256=sha(archive_bytes), files=len(files))
     pending[release] = (json.dumps(metadata, indent=2) + '\n').encode()
     BACKUP.mkdir(mode=0o700)
-    manifest = {'commit': commit, 'metadata': metadata, 'changes': {}}
+    manifest = {'commit': commit, 'metadata': metadata, 'installed_files': sorted(LIVE_FILES), 'changes': {}}
     for path, data in pending.items():
         number = str(len(manifest['changes']))
         if path in before:
