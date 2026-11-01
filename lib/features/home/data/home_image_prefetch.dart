@@ -52,8 +52,9 @@ Iterable<String> staticHomeImageUrls(Map<String, dynamic> home) sync* {
   final laterSlides = <String>[];
   for (final raw in home['blocks'] as List) {
     final block = raw as Map;
-    if (block['enabled'] != true || block.containsKey('catalog_query'))
+    if (block['enabled'] != true || block.containsKey('catalog_query')) {
       continue;
+    }
     final data = block['data'] as Map;
     switch (block['type']) {
       case 'hero_slider':
