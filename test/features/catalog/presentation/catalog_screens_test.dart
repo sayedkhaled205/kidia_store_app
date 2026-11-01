@@ -232,55 +232,92 @@ void main() {
       expect(tester.takeException(), isNull);
     });
   }
-  for (final count in [3, 4, 7]) {
-    testWidgets('compact category row handles $count cards and large text', (
-      tester,
-    ) async {
-      tester.view.physicalSize = const Size(320, 600);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      int? chosen;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: MediaQuery(
-              data: const MediaQueryData(textScaler: TextScaler.linear(1.8)),
-              child: CategoryProductsCards(
-                categories: List.generate(
-                  count,
-                  (i) => CatalogCategory(
-                    id: i + 1,
-                    name: 'Long category name $i',
-                    slug: '$i',
-                    nameHighlightEnabled: true,
+  for (final direction in TextDirection.values) {
+    for (final count in [1, 2, 3, 4, 7]) {
+      testWidgets(
+        'compact category row handles $count cards and large text $direction',
+        (tester) async {
+          tester.view.physicalSize = const Size(320, 600);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          int? chosen;
+          await tester.pumpWidget(
+            MaterialApp(
+              home: Scaffold(
+                body: MediaQuery(
+                  data: const MediaQueryData(
+                    textScaler: TextScaler.linear(1.8),
+                  ),
+                  child: Directionality(
+                    textDirection: direction,
+                    child: CategoryProductsCards(
+                      categories: List.generate(
+                        count,
+                        (i) => CatalogCategory(
+                          id: i + 1,
+                          name: 'Long category name $i',
+                          slug: '$i',
+                          nameHighlightEnabled: true,
+                        ),
+                      ),
+                      onSelected: (category) => chosen = category.id,
+                    ),
                   ),
                 ),
-                onSelected: (category) => chosen = category.id,
               ),
             ),
-          ),
-        ),
+          );
+          final first = find.byKey(const Key('category-products-card-1'));
+          final expected =
+              (296 - 10 * (count <= 3 ? 2 : 3)) / (count <= 3 ? 3 : 3.4);
+          expect(tester.getSize(first).width, closeTo(expected, 0.1));
+          final rail = find.byKey(const Key('category-products-rail'));
+          final railBounds = tester.getRect(rail);
+          if (count <= 3) {
+            final last = find.byKey(Key('category-products-card-$count'));
+            final firstBounds = tester.getRect(first);
+            final lastBounds = tester.getRect(last);
+            final groupLeft = firstBounds.left < lastBounds.left
+                ? firstBounds.left
+                : lastBounds.left;
+            final groupRight = firstBounds.right > lastBounds.right
+                ? firstBounds.right
+                : lastBounds.right;
+            expect(
+              (groupLeft + groupRight) / 2,
+              closeTo(railBounds.center.dx, 0.1),
+            );
+          } else {
+            final fourth = tester.getRect(
+              find.byKey(const Key('category-products-card-4')),
+            );
+            final visibleWidth = fourth.intersect(railBounds).width;
+            expect(visibleWidth, greaterThan(10));
+            expect(visibleWidth, lessThan(expected - 10));
+          }
+          await tester.tap(first);
+          expect(chosen, 1);
+          if (count >= 4) {
+            await tester.drag(
+              find.byKey(const Key('category-products-rail')),
+              Offset(direction == TextDirection.rtl ? 500 : -500, 0),
+            );
+            await tester.pumpAndSettle();
+            expect(
+              find.byKey(Key('category-products-card-$count')),
+              findsOneWidget,
+            );
+            final lastBounds = tester.getRect(
+              find.byKey(Key('category-products-card-$count')),
+            );
+            expect(lastBounds.left, greaterThanOrEqualTo(railBounds.left));
+            expect(lastBounds.right, lessThanOrEqualTo(railBounds.right));
+          }
+          expect(tester.takeException(), isNull);
+        },
       );
-      final first = find.byKey(const Key('category-products-card-1'));
-      final expected =
-          (296 - 10 * ((count == 3 ? 3 : 4) - 1)) / (count == 3 ? 3 : 4);
-      expect(tester.getSize(first).width, closeTo(expected, 0.1));
-      await tester.tap(first);
-      expect(chosen, 1);
-      if (count > 4) {
-        await tester.drag(
-          find.byKey(const Key('category-products-rail')),
-          const Offset(-500, 0),
-        );
-        await tester.pumpAndSettle();
-        expect(
-          find.byKey(Key('category-products-card-$count')),
-          findsOneWidget,
-        );
-      }
-      expect(tester.takeException(), isNull);
-    });
+    }
   }
   for (final direction in TextDirection.values) {
     testWidgets(

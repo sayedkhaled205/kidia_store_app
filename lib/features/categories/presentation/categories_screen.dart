@@ -750,13 +750,25 @@ class CategoryProductsCards extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final columns = categories.length <= 3 ? 3 : 4;
+          final fitsWithoutScrolling = categories.length <= 3;
+          final columns = fitsWithoutScrolling ? 3.0 : 3.4;
           const gap = 10.0;
-          final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
+          final width =
+              (constraints.maxWidth - gap * (fitsWithoutScrolling ? 2 : 3)) /
+              columns;
+          final horizontalPadding = fitsWithoutScrolling
+              ? (constraints.maxWidth -
+                        (width * categories.length + gap * (categories.length - 1))) /
+                    2
+              : 0.0;
           final textHeight = MediaQuery.textScalerOf(context).scale(13) * 2.6;
           return SizedBox(
             height: width + textHeight + 14,
             child: ListView.separated(
+              padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+              physics: fitsWithoutScrolling
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
               scrollDirection: Axis.horizontal,
               itemCount: categories.length,
               separatorBuilder: (_, _) => const SizedBox(width: gap),
