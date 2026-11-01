@@ -344,10 +344,14 @@ GoRouter createAppRouter({
                         }
                       }
 
-                      return const _PageAvailabilityGate(
+                      return _PageAvailabilityGate(
                         page: 'catalog',
                         child: CatalogProductListScreen(
-                          request: CatalogProductListRequest(),
+                          request: CatalogProductListRequest(
+                            categoryId: _positiveId(
+                              state.uri.queryParameters['category'] ?? '',
+                            ),
+                          ),
                         ),
                       );
                     },

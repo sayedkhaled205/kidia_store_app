@@ -26,7 +26,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 	}
 
 	public function routes(): void {
-		foreach ( array( 'config' => 'config', 'identify' => 'identify', 'password' => 'password', 'phone/verify' => 'phone_verify', 'select' => 'select', 'google' => 'google', 'register' => 'register_customer' ) as $route => $method ) {
+		foreach ( array( 'config' => 'config', 'identify' => 'identify', 'password' => 'password', 'phone/verify' => 'phone_verify', 'phone/enroll' => 'phone_enroll', 'phone/confirm' => 'phone_confirm', 'select' => 'select', 'google' => 'google', 'register' => 'register_customer' ) as $route => $method ) {
 			register_rest_route( 'mobishop/v1', '/auth/native/' . $route, array(
 				'methods' => $route === 'config' ? 'GET' : 'POST',
 				'callback' => array( $this, $method ), 'permission_callback' => '__return_true',
@@ -64,6 +64,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$google = $google && function_exists( 'openssl_verify' );
 		return array(
 			'version' => 1, 'enabled' => $enabled,
+			'supports_unverified_phone_enrollment' => $enabled && $this->registration_enabled(),
+			'supports_expected_phone_google' => $enabled && $google,
 			'phone_country_code' => preg_replace( '/\D/', '', (string) ( $s['phone_country_code'] ?? '' ) ),
 			'methods' => array( 'password' => $enabled, 'email_password' => $enabled, 'phone_password' => $enabled,
 				'phone_otp' => $enabled && (bool) $phone, 'google' => $enabled && $google,
@@ -92,7 +94,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			$methods = array( 'password' );
 			if ( $c['methods']['phone_otp'] ) {
 				// New customers have no password yet. Existing accounts retain password recovery if SMS fails.
-				$users = $this->phone_users( $identity['identifier'] );
+				$users = $this->phone_users( $identity['identifier'], true );
 				$methods = $users === array() ? array( 'phone_otp' ) : array( 'password', 'phone_otp' );
 			}
 		} else {
@@ -114,7 +116,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( $user instanceof WP_User ) $user = get_user_by( 'id', $user->ID );
 			if ( $user instanceof WP_User && $this->eligible( $user ) && strtolower( $user->user_email ) === $identity['identifier'] ) $matched[] = $user;
 		} else {
-			$candidates = $this->phone_users( $identity['identifier'] );
+			$candidates = $this->phone_users( $identity['identifier'], true );
 			if ( is_wp_error( $candidates ) ) return $this->error( 'invalid_credentials', 401 );
 			// Bound password hashing work; excessive ambiguous records require OTP.
 			if ( count( $candidates ) > 20 ) return $this->error( 'invalid_credentials', 401 );
@@ -123,7 +125,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 				$verified = wp_authenticate( $user->user_login, $password );
 				if ( $verified instanceof WP_User && $verified->ID === $user->ID ) {
 					$verified = get_user_by( 'id', $verified->ID );
-					if ( $this->eligible( $verified ) && $this->user_phone( $verified, $identity['identifier'] ) === $identity['identifier'] ) $matched[] = $verified;
+					if ( $this->eligible( $verified ) && $this->user_phone( $verified, $identity['identifier'], true ) === $identity['identifier'] ) $matched[] = $verified;
 				}
 			}
 		}
@@ -140,6 +142,48 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return $this->complete_proof( $matched, array( 'kind' => 'password', 'identity' => $identity, 'password_versions' => $versions ), $request );
 	}
 
+	/** Prepare an OTP attempt without asserting possession of the contact number. */
+	public function phone_enroll( WP_REST_Request $request ) {
+		if ( $error = $this->guard( 'phone_enroll', 20 ) ) return $error;
+		$phone = $this->phone( (string) $request->get_param( 'phone' ) );
+		if ( ! $phone || ! $this->verifier( $request ) ) return $this->error( 'invalid_identifier', 400 );
+		$prior = (string) $request->get_param( 'ticket' );
+		$proof = array( 'kind' => 'phone_registration' );
+		if ( $prior !== '' ) {
+			$row = $this->read_ticket( $prior, $request );
+			if ( ! $row || $row['purpose'] !== 'register' ) return $this->error( 'invalid_ticket', 401 );
+			$proof = $row['proof'];
+		}
+		$users = $this->phone_users( $phone );
+		if ( is_wp_error( $users ) ) return $users;
+		if ( $users ) return $this->error( 'existing_phone', 409 );
+		// Never relax account-completion proof for an existing account.
+		if ( ! empty( $proof['user_id'] ) ) return $this->error( 'phone_proof_required', 403 );
+		if ( ! $this->registration_enabled() ) return $this->error( 'registration_disabled', 403 );
+		if ( $prior !== '' && ! $this->consume( $prior, $row ) ) return $this->error( 'invalid_ticket', 401 );
+		unset( $proof['phone'], $proof['unverified_phone'] );
+		$proof['attempted_phone'] = $phone;
+		return $this->registration_ticket( $proof, $request );
+	}
+
+	/** A repeated contact number is not an authentication proof. */
+	public function phone_confirm( WP_REST_Request $request ) {
+		if ( $error = $this->guard( 'phone_confirm', 10 ) ) return $error;
+		$ticket = (string) $request->get_param( 'ticket' );
+		$row = $this->read_ticket( $ticket, $request );
+		if ( ! $row || $row['purpose'] !== 'register' ) return $this->error( 'invalid_ticket', 401 );
+		$proof = $row['proof'];
+		$phone = $this->phone( (string) $request->get_param( 'phone' ) );
+		if ( ! $phone || ! empty( $proof['user_id'] ) || ( $proof['attempted_phone'] ?? '' ) !== $phone ) return $this->error( 'phone_mismatch', 400 );
+		$users = $this->phone_users( $phone, true );
+		if ( is_wp_error( $users ) ) return $users;
+		if ( $users ) return $this->error( 'existing_phone', 409 );
+		if ( ! $this->consume( $ticket, $row ) ) return $this->error( 'invalid_ticket', 401 );
+		unset( $proof['attempted_phone'] );
+		$proof['unverified_phone'] = $phone;
+		return $this->registration_ticket( $proof, $request );
+	}
+
 	public function phone_verify( WP_REST_Request $request ) {
 		if ( $error = $this->guard( 'phone', 20 ) ) return $error;
 		$c = $this->capabilities( $request );
@@ -151,12 +195,15 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( ! $claims || ( $claims['aud'] ?? null ) !== $project || ( $claims['iss'] ?? null ) !== 'https://securetoken.google.com/' . $project
 			|| ! $this->fresh( $claims, true ) || ( $claims['phone_number'] ?? null ) !== $phone
 			|| ( $claims['firebase']['sign_in_provider'] ?? null ) !== 'phone' || strlen( $claims['sub'] ) > 128 ) return $this->error( 'invalid_proof', 401 );
+		$users = $this->phone_users( $phone );
+		if ( is_wp_error( $users ) ) return $users;
 		$proof = array( 'kind' => 'phone', 'phone' => $phone );
 		$prior = (string) $request->get_param( 'ticket' );
 		if ( $prior !== '' ) {
 			$row = $this->read_ticket( $prior, $request );
 			if ( ! $row || $row['purpose'] !== 'register' || ! $this->consume( $prior, $row ) ) return $this->error( 'invalid_ticket', 401 );
 			$proof = $row['proof'];
+			unset( $proof['unverified_phone'], $proof['attempted_phone'] );
 			$proof['phone'] = $phone;
 			// Existing account completion cannot silently merge another account's phone.
 			$users = $this->phone_users( $phone );
@@ -193,21 +240,28 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( isset( $claims['azp'] ) && ! in_array( $claims['azp'], $authorized, true ) ) return $this->error( 'invalid_proof', 401, 'google_presenter' );
 		if ( ( $claims['email_verified'] ?? null ) !== true || ! is_string( $claims['email'] ?? null ) || ! is_email( $claims['email'] ) ) return $this->error( 'invalid_proof', 401, 'google_email' );
 		$email = strtolower( $claims['email'] );
+		$expected_input = $request->get_param( 'expected_phone' );
+		$expected_phone = $expected_input === null ? null : $this->phone( (string) $expected_input );
+		if ( $expected_input !== null && ! $expected_phone ) return $this->error( 'google_phone_mismatch', 403 );
 		$proof = array( 'kind' => 'google', 'sub' => $claims['sub'], 'email' => $email,
 			'authoritative' => (bool) preg_match( '/@(gmail|googlemail)\.com$/', $email ) || ( is_string( $claims['hd'] ?? null ) && $claims['hd'] !== '' ) );
+		if ( $expected_phone !== null ) $proof['expected_phone'] = $expected_phone;
 		$linked = $this->google_user( $proof['sub'] );
 		if ( $linked ) {
 			$user = get_user_by( 'id', $linked );
 			if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401, 'google_customer_policy' );
+			if ( $expected_phone !== null && ! $this->google_matches_phone( $user, $expected_phone ) ) return $this->error( 'google_phone_mismatch', 403 );
 			return $this->complete_proof( array( $user ), $proof, $request );
 		}
 		// Google is not authoritative for arbitrary third-party email accounts.
 		if ( ! $proof['authoritative'] ) return $this->error( 'additional_proof_required', 403 );
 		$user = get_user_by( 'email', $email );
 		if ( $user ) {
+			if ( $expected_phone !== null && ! $this->google_matches_phone( $user, $expected_phone ) ) return $this->error( 'google_phone_mismatch', 403 );
 			if ( ! $this->eligible( $user ) || ! $this->link_google( $user->ID, $proof['sub'] ) ) return $this->error( 'account_conflict', 409 );
 			return $this->complete_proof( array( $user ), $proof, $request );
 		}
+		if ( $expected_phone !== null ) return $this->error( 'google_phone_mismatch', 403 );
 		return $this->registration_ticket( $proof, $request );
 	}
 
@@ -239,6 +293,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 
 	private function finish( WP_User $user, array $proof, WP_REST_Request $request ) {
 		if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401 );
+		if ( ! empty( $proof['expected_phone'] ) && ! $this->google_matches_phone( $user, $proof['expected_phone'] ) ) return $this->error( 'google_phone_mismatch', 403 );
 		if ( $proof['kind'] === 'google_phone' && $this->google_user( $proof['sub'] ) !== $user->ID && ! $this->link_google( $user->ID, $proof['sub'] ) ) return $this->error( 'account_conflict', 409 );
 		if ( ! $this->ready( $user ) ) {
 			$proof['user_id'] = (int) $user->ID;
@@ -272,7 +327,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( $proof['kind'] === 'password' && empty( $proof['user_id'] ) ) return $this->error( 'invalid_proof', 401 );
 		$fields = array( 'name', 'password' );
 		// Email-originated registrations always require a verified phone, even if require_phone is globally off.
-		if ( ( $this->requires_phone() || $proof['kind'] === 'email_registration' ) && empty( $proof['phone'] ) ) $fields[] = 'phone';
+		if ( empty( $proof['phone'] ) && empty( $proof['unverified_phone'] ) ) $fields[] = 'phone';
 		$ticket = $this->ticket( 'register', $proof, $request );
 		if ( is_wp_error( $ticket ) ) return $ticket;
 		return $this->response( array( 'status' => 'registration_required', 'ticket' => $ticket, 'expires_in' => self::TTL, 'fields' => $fields ) );
@@ -289,17 +344,24 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$email = strtolower( trim( (string) $request->get_param( 'email' ) ) );
 		if ( $name === '' || strlen( $name ) > 120 || ! is_string( $password ) || strlen( $password ) < 8 || strlen( $password ) > 4096
 			|| ( $email !== '' && $email !== ( $p['email'] ?? '' ) ) ) return $this->error( 'invalid_profile', 400 );
-		if ( ( $this->requires_phone() || $p['kind'] === 'email_registration' ) && empty( $p['phone'] ) ) return $this->error( 'phone_proof_required', 403 );
+		if ( empty( $p['phone'] ) && empty( $p['unverified_phone'] ) ) return $this->error( 'phone_proof_required', 403 );
 		$user = ! empty( $p['user_id'] ) ? get_user_by( 'id', (int) $p['user_id'] ) : null;
 		if ( ! empty( $p['user_id'] ) && ! $this->proof_allows( $user, $p ) ) return $this->error( 'invalid_proof', 401 );
 		if ( ! $user && ! $this->registration_enabled() ) return $this->error( 'registration_disabled', 403 );
 		// Serialize registrations for the verified identity, including parallel tickets.
 		$identities = array();
 		foreach ( array( 'phone', 'email', 'user_id' ) as $field ) if ( ! empty( $p[ $field ] ) ) $identities[] = 'register:' . $field . ':' . $p[ $field ];
+		if ( ! empty( $p['unverified_phone'] ) ) $identities[] = 'register:phone:' . $p['unverified_phone'];
 		if ( ! empty( $p['sub'] ) ) $identities[] = 'google-link:sub:' . $p['sub'];
 		$locks = $this->lock( $identities );
 		if ( $locks === null ) return $this->error( 'retry', 409 );
 		try {
+			if ( ! empty( $p['unverified_phone'] ) ) {
+				if ( $user ) return $this->error( 'invalid_proof', 401 );
+				$existing = $this->phone_users( $p['unverified_phone'], true );
+				if ( is_wp_error( $existing ) ) return $existing;
+				if ( $existing ) return $this->error( 'existing_phone', 409 );
+			}
 			if ( ! empty( $p['phone'] ) ) {
 				$existing_users = $this->phone_users( $p['phone'] );
 				if ( is_wp_error( $existing_users ) ) return $existing_users;
@@ -319,6 +381,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 				if ( is_wp_error( $id ) ) return $this->error( 'registration_failed', 409 );
 			}
 			if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401 );
+			if ( ! empty( $p['unverified_phone'] ) ) update_user_meta( $user->ID, 'kidia_unverified_phone', $p['unverified_phone'] );
 			if ( ! empty( $p['phone'] ) ) {
 				update_user_meta( $user->ID, 'kidia_login_phone', $p['phone'] );
 				update_user_meta( $user->ID, 'fme_billing_phone', $p['phone'] );
@@ -333,6 +396,14 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		}
 	}
 
+	/** Google proves this account; a contact claim cannot override a verified owner. */
+	private function google_matches_phone( WP_User $user, string $phone ): bool {
+		$owners = $this->phone_users( $phone );
+		if ( is_wp_error( $owners ) ) return false;
+		if ( $owners ) return in_array( (int) $user->ID, array_map( static fn( $owner ) => (int) $owner->ID, $owners ), true );
+		return $this->user_phone( $user, $phone, true ) === $phone;
+	}
+
 	private function eligible( $user ): bool {
 		return $user instanceof WP_User && empty( $user->allcaps['edit_users'] ) && (bool) call_user_func( $this->allowed, $user );
 	}
@@ -344,7 +415,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( $p['kind'] === 'google' ) return $this->google_user( $p['sub'] ) === $user->ID;
 		return in_array( (int) $user->ID, $p['ids'] ?? array(), true )
 			&& hash_equals( (string) ( $p['password_versions'][ $user->ID ] ?? '' ), $this->hash( $user->user_pass ) )
-			&& ( $p['identity']['kind'] === 'phone' ? $this->user_phone( $user, $p['identity']['identifier'] ) === $p['identity']['identifier'] : strtolower( $user->user_email ) === $p['identity']['identifier'] );
+			&& ( $p['identity']['kind'] === 'phone' ? $this->user_phone( $user, $p['identity']['identifier'], true ) === $p['identity']['identifier'] : strtolower( $user->user_email ) === $p['identity']['identifier'] );
 	}
 
 	private function identity( string $value ): ?array {
@@ -372,9 +443,9 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return (array) apply_filters( 'mobishop_native_auth_phone_meta_keys', array( 'kidia_login_phone', 'fme_billing_phone', 'billing_phone' ) );
 	}
 
-	private function user_phone( WP_User $user, string $expected ): string {
+	private function user_phone( WP_User $user, string $expected, bool $include_unverified = false ): string {
 		// The first stored identity is authoritative: shipping metadata cannot override it.
-		foreach ( $this->phone_keys() as $key ) {
+		foreach ( array_merge( $this->phone_keys(), $include_unverified ? array( 'kidia_unverified_phone' ) : array() ) as $key ) {
 			$value = (string) get_user_meta( $user->ID, $key, true );
 			if ( $value !== '' ) {
 				// Older providers also store E.164 without the leading plus.
@@ -385,7 +456,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return '';
 	}
 
-	private function phone_users( string $phone ) {
+	private function phone_users( string $phone, bool $include_unverified = false ) {
 		$values = array( $phone, ltrim( $phone, '+' ), '00' . ltrim( $phone, '+' ) );
 		$country = preg_replace( '/\D/', '', (string) ( $this->settings()['phone_country_code'] ?? '' ) );
 		if ( $country && strpos( $phone, '+' . $country ) === 0 ) {
@@ -394,11 +465,11 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		}
 		$query = array( 'relation' => 'OR' );
 		$pattern = $this->phone_lookup_pattern( $values );
-		foreach ( $this->phone_keys() as $key ) $query[] = array( 'key' => $key, 'value' => $pattern, 'compare' => 'REGEXP' );
+		foreach ( array_merge( $this->phone_keys(), $include_unverified ? array( 'kidia_unverified_phone' ) : array() ) as $key ) $query[] = array( 'key' => $key, 'value' => $pattern, 'compare' => 'REGEXP' );
 		// Bound the candidate set in SQL. No full user-table scan in PHP or partial picker.
 		$users = get_users( array( 'meta_query' => $query, 'number' => 51, 'orderby' => 'ID', 'order' => 'ASC' ) );
 		if ( count( $users ) > 50 ) return $this->error( 'account_conflict', 409 );
-		$eligible = array_values( array_filter( $users, fn( $user ) => $this->eligible( $user ) && $this->user_phone( $user, $phone ) === $phone ) );
+		$eligible = array_values( array_filter( $users, fn( $user ) => $this->eligible( $user ) && $this->user_phone( $user, $phone, $include_unverified ) === $phone ) );
 		return $users && ! $eligible ? $this->error( 'account_conflict', 409 ) : $eligible;
 	}
 

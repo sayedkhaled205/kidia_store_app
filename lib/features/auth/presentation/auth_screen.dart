@@ -56,6 +56,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   String? _otpTicket;
   String? _recoveryPhone;
   bool _canRetryCode = false;
+  bool _confirmContactPhone = false;
+  bool _existingContactPhone = false;
+  bool _existingOtpSendFailed = false;
   _AuthStep _step = _AuthStep.identifier;
   bool _busy = false;
   bool _resolving = false;
@@ -251,6 +254,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             ),
                           ],
                           if (_step == _AuthStep.password &&
+                              !_existingOtpSendFailed &&
+                              config.allows('phone_otp') &&
                               _identity?.allows('phone_otp') == true)
                             TextButton(
                               key: const Key('auth-use-otp'),
@@ -290,7 +295,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 _AuthStep.password,
                                 _AuthStep.recovery,
                               ].contains(_step) &&
-                              config.allows('google')) ...[
+                              config.allows('google') &&
+                              (_expectedGooglePhone == null ||
+                                  (config.supportsExpectedPhoneGoogle &&
+                                      _actions
+                                          is NativeExistingPhoneGoogleActions))) ...[
                             if (hasIdentifier) ...[
                               const SizedBox(height: 24),
                               Row(
@@ -317,8 +326,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         _continuation = null;
                                         _canRetryCode = false;
                                       });
-                                      final result = await _actions!.google();
+                                      final expectedPhone =
+                                          _expectedGooglePhone;
+                                      final result = expectedPhone == null
+                                          ? await _actions!.google()
+                                          : await (_actions
+                                                    as NativeExistingPhoneGoogleActions)
+                                                .googleForPhone(expectedPhone);
                                       if (_active(flow)) {
+                                        if (result.status ==
+                                            NativeAuthStatus
+                                                .registrationRequired) {
+                                          _identity = null;
+                                        }
                                         await _acceptResult(result, flow);
                                       }
                                     }),
@@ -440,7 +460,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ];
       case _AuthStep.method:
         return [
-          if (_identity!.allows('password'))
+          if (_identity!.allows('password') && _phonePasswordEnabled(config))
             _methodButton(
               key: const Key('auth-use-password'),
               label: copy.usePassword,
@@ -450,7 +470,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 _error = null;
               }),
             ),
-          if (_identity!.allows('phone_otp')) ...[
+          if (_identity!.allows('phone_otp') && config.allows('phone_otp')) ...[
             const SizedBox(height: 12),
             _methodButton(
               key: const Key('auth-use-otp'),
@@ -469,13 +489,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       case _AuthStep.recovery:
         return [
           Text(
-            copy.otpAlternatives,
+            _existingOtpSendFailed ? copy.otpSendFailed : copy.otpAlternatives,
             textAlign: TextAlign.center,
             style: _secondaryStyle,
           ),
           const SizedBox(height: 16),
-          if (_identity?.allows('password') == true ||
-              (_identity == null && config.allows('phone_password')))
+          if ((_identity?.allows('password') == true || _identity == null) &&
+              _phonePasswordEnabled(config))
             _methodButton(
               key: const Key('auth-use-password'),
               label: copy.usePassword,
@@ -501,37 +521,38 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               }),
             ),
           const SizedBox(height: 12),
-          TextButton(
-            key: const Key('auth-retry-otp'),
-            onPressed: _busy || (!_canRetryCode && _resendSeconds > 0)
-                ? null
-                : () {
-                    if (_canRetryCode && _challenge != null) {
-                      setState(() {
-                        _otp.clear();
-                        _error = null;
-                        _step = _AuthStep.otp;
-                      });
-                    } else {
-                      unawaited(
-                        _perform(
-                          (flow) => _sendOtp(
-                            flow,
-                            _recoveryPhone!,
-                            ticket: _otpTicket,
+          if (!_existingOtpSendFailed)
+            TextButton(
+              key: const Key('auth-retry-otp'),
+              onPressed: _busy || (!_canRetryCode && _resendSeconds > 0)
+                  ? null
+                  : () {
+                      if (_canRetryCode && _challenge != null) {
+                        setState(() {
+                          _otp.clear();
+                          _error = null;
+                          _step = _AuthStep.otp;
+                        });
+                      } else {
+                        unawaited(
+                          _perform(
+                            (flow) => _sendOtp(
+                              flow,
+                              _recoveryPhone!,
+                              ticket: _otpTicket,
+                            ),
                           ),
-                        ),
-                      );
-                    }
-                  },
-            child: Text(
-              _canRetryCode
-                  ? copy.retryCode
-                  : _resendSeconds > 0
-                  ? '${copy.retryOtp} ($_resendSeconds)'
-                  : copy.retryOtp,
+                        );
+                      }
+                    },
+              child: Text(
+                _canRetryCode
+                    ? copy.retryCode
+                    : _resendSeconds > 0
+                    ? '${copy.retryOtp} ($_resendSeconds)'
+                    : copy.retryOtp,
+              ),
             ),
-          ),
           if (_busy) const Center(child: CircularProgressIndicator()),
         ];
       case _AuthStep.password:
@@ -612,7 +633,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       case _AuthStep.phone:
         return [
           Text(
-            copy.phoneRequiredForAccount,
+            _existingContactPhone
+                ? copy.existingContactPhone
+                : _confirmContactPhone
+                ? copy.confirmContactPhone
+                : copy.phoneRequiredForAccount,
             textAlign: TextAlign.center,
             style: _secondaryStyle,
           ),
@@ -629,6 +654,40 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 : copy.phoneRequired,
             onSubmitted: () => _submit(copy, config),
           ),
+          if (_existingContactPhone) ...[
+            _methodButton(
+              key: const Key('auth-existing-phone-signin'),
+              label: copy.enterExistingAccount,
+              icon: Icons.login_rounded,
+              onPressed: () => _perform((flow) async {
+                _otpEpoch++;
+                final identity = await _actions!.identify(_recoveryPhone!);
+                if (!_active(flow)) return;
+                setState(() {
+                  _identity = identity;
+                  _continuation = null;
+                  _challenge = null;
+                  _otpTicket = null;
+                  _password.clear();
+                  _step = _AuthStep.method;
+                  _existingContactPhone = false;
+                  _confirmContactPhone = false;
+                });
+              }),
+            ),
+            TextButton(
+              key: const Key('auth-different-phone'),
+              onPressed: _busy
+                  ? null
+                  : () => setState(() {
+                      _existingContactPhone = false;
+                      _confirmContactPhone = false;
+                      _phone.clear();
+                      _error = null;
+                    }),
+              child: Text(copy.differentPhone),
+            ),
+          ],
         ];
       case _AuthStep.registration:
         final fields = _continuation!.fields;
@@ -833,13 +892,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     label: Text(label),
   );
 
+  bool _phonePasswordEnabled(NativeAuthConfig config) =>
+      config.methods.containsKey('phone_password')
+      ? config.allows('phone_password')
+      : config.allows('password');
+
+  String? get _expectedGooglePhone =>
+      _identity?.kind == 'phone' && _identity?.allows('password') == true
+      ? _identity!.identifier
+      : null;
+
   bool get _hasSubmit =>
-      _pendingCommit != null ||
-      ![
-        _AuthStep.method,
-        _AuthStep.recovery,
-        _AuthStep.accounts,
-      ].contains(_step);
+      !_existingContactPhone &&
+      (_pendingCommit != null ||
+          ![
+            _AuthStep.method,
+            _AuthStep.recovery,
+            _AuthStep.accounts,
+          ].contains(_step));
   String get _submitKey => switch (_step) {
     _AuthStep.identifier => 'auth-continue',
     _AuthStep.password => 'auth-sign-in',
@@ -856,7 +926,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           _AuthStep.createPassword ||
           _AuthStep.registration => copy.createAccount,
           _AuthStep.otp => copy.verifyCode,
-          _AuthStep.phone => copy.sendOtp,
+          _AuthStep.phone =>
+            _confirmContactPhone ? copy.confirmPhone : copy.sendOtp,
           _ => copy.continueLabel,
         };
 
@@ -896,11 +967,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           );
           if (_active(flow)) await _acceptResult(result, flow);
         case _AuthStep.phone:
-          await _sendOtp(
-            flow,
-            config.normalizeOtpPhone(_phone.text)!,
-            ticket: _continuation!.ticket,
-          );
+          final phone = config.normalizeOtpPhone(_phone.text)!;
+          if (_confirmContactPhone &&
+              phone == _recoveryPhone &&
+              _actions is NativePhoneEnrollmentActions) {
+            try {
+              final result = await (_actions as NativePhoneEnrollmentActions)
+                  .confirmUnverifiedPhone(_continuation!.ticket, phone);
+              if (_active(flow)) {
+                _confirmContactPhone = false;
+                await _acceptResult(result, flow);
+              }
+            } on AuthRepositoryException catch (error) {
+              if (error.code != 'mobishop_native_existing_phone') rethrow;
+              if (_active(flow)) _offerExistingPhone(phone);
+            }
+            return;
+          }
+          await _sendOtp(flow, phone, ticket: _continuation?.ticket);
         case _AuthStep.otp:
           final challenge = _challenge;
           final epoch = _otpEpoch;
@@ -921,15 +1005,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           }
         case _AuthStep.registration:
           final continuation = _continuation!;
-          final result = await _actions!.register(
-            continuation.ticket,
-            name: _name.text.trim(),
-            password: _password.text,
-            email: continuation.fields.contains('email')
-                ? _email.text.trim()
-                : null,
-          );
-          if (_active(flow)) await _acceptResult(result, flow);
+          try {
+            final result = await _actions!.register(
+              continuation.ticket,
+              name: _name.text.trim(),
+              password: _password.text,
+              email: continuation.fields.contains('email')
+                  ? _email.text.trim()
+                  : null,
+            );
+            if (_active(flow)) await _acceptResult(result, flow);
+          } on AuthRepositoryException catch (error) {
+            if (error.code != 'mobishop_native_existing_phone' ||
+                _recoveryPhone == null) {
+              rethrow;
+            }
+            if (_active(flow)) _offerExistingPhone(_recoveryPhone!);
+          }
         case _AuthStep.method:
         case _AuthStep.recovery:
         case _AuthStep.accounts:
@@ -968,16 +1060,58 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }) async {
     final epoch = ++_otpEpoch;
     NativeOtpChallenge challenge;
+    var boundTicket = ticket;
+    var preparedContact = false;
+    DateTime? preparedExpiresAt;
+    bool canConfirmContact() =>
+        preparedContact &&
+        boundTicket != null &&
+        _continuation?.ticket == boundTicket &&
+        preparedExpiresAt != null &&
+        DateTime.now().isBefore(preparedExpiresAt);
+    final enrollment = _actions;
+    if (previous == null &&
+        ref
+                .read(nativeAuthConfigProvider)
+                .value
+                ?.supportsUnverifiedPhoneEnrollment ==
+            true &&
+        _identity?.allows('password') != true &&
+        enrollment is NativePhoneEnrollmentActions) {
+      try {
+        final prepared = await (enrollment as NativePhoneEnrollmentActions)
+            .preparePhone(phone, ticket: ticket);
+        if (!_active(flow) || epoch != _otpEpoch) return;
+        _continuation = prepared;
+        boundTicket = prepared.ticket;
+        preparedContact = true;
+        preparedExpiresAt = DateTime.now().add(
+          Duration(seconds: prepared.expiresIn),
+        );
+      } on AuthRepositoryException catch (error) {
+        if (!_active(flow) || epoch != _otpEpoch) return;
+        if (error.code == 'mobishop_native_existing_phone') {
+          _offerExistingPhone(phone);
+          return;
+        }
+        if (error.code != 'mobishop_native_phone_proof_required') rethrow;
+        // An existing incomplete account must retain its independent OTP proof.
+      }
+    }
     try {
       challenge = await _actions!.sendOtp(
         phone,
         resend: previous,
-        ticket: ticket,
+        ticket: boundTicket,
       );
     } catch (error) {
       if (_active(flow) && epoch == _otpEpoch) {
         _challenge = null;
-        _showOtpRecovery(error, phone, ticket: ticket);
+        if (canConfirmContact()) {
+          _showContactConfirmation(phone, boundTicket!);
+        } else {
+          _showOtpRecovery(error, phone, ticket: boundTicket, sendFailed: true);
+        }
       }
       return;
     }
@@ -991,7 +1125,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         },
         onError: (Object error, StackTrace stack) {
           if (_active(flow) && epoch == _otpEpoch && !_resolving) {
-            _showOtpRecovery(error, phone, ticket: ticket);
+            if (canConfirmContact() && _isOtpSendFailure(error)) {
+              _showContactConfirmation(phone, boundTicket!);
+            } else {
+              _showOtpRecovery(
+                error,
+                phone,
+                ticket: boundTicket,
+                sendFailed: _isOtpSendFailure(error),
+              );
+            }
           }
         },
       ),
@@ -999,20 +1142,79 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     if (!_active(flow) || epoch != _otpEpoch) return;
     setState(() {
       _challenge = challenge;
-      _otpTicket = ticket;
+      _otpTicket = boundTicket;
+      _confirmContactPhone = false;
+      _existingContactPhone = false;
       _otp.clear();
       _step = _AuthStep.otp;
     });
     _startResendTimer();
   }
 
-  void _showOtpRecovery(Object error, String phone, {String? ticket}) {
+  void _offerExistingPhone(String phone) {
+    _otpEpoch++;
+    setState(() {
+      _existingContactPhone = true;
+      _confirmContactPhone = false;
+      _recoveryPhone = phone;
+      _phone.text = phone;
+      _challenge = null;
+      _step = _AuthStep.phone;
+      _busy = false;
+    });
+  }
+
+  bool _isOtpSendFailure(Object error) =>
+      error is AuthRepositoryException &&
+      const {
+        'quota-exceeded',
+        'too-many-requests',
+        'app-not-authorized',
+        'captcha-check-failed',
+        'invalid-app-credential',
+        'missing-client-identifier',
+        'network-request-failed',
+        'verification-timeout',
+        'operation-not-allowed',
+      }.contains(error.code);
+
+  void _showContactConfirmation(String phone, String ticket) {
+    _otpEpoch++;
+    setState(() {
+      _challenge = null;
+      _confirmContactPhone = true;
+      _existingContactPhone = false;
+      _recoveryPhone = phone;
+      _otpTicket = ticket;
+      _phone.clear();
+      _step = _AuthStep.phone;
+      _busy = false;
+      _error = null;
+    });
+  }
+
+  void _showOtpRecovery(
+    Object error,
+    String phone, {
+    String? ticket,
+    bool sendFailed = false,
+  }) {
+    if (error is AuthRepositoryException &&
+        error.code == 'mobishop_native_existing_phone') {
+      _offerExistingPhone(phone);
+      return;
+    }
     final message = _messageFor(error);
     _operation++;
     _otpEpoch++; // A late automatic callback cannot sign in after recovery.
     setState(() {
       _recoveryPhone = phone;
       _otpTicket = ticket;
+      _existingOtpSendFailed =
+          sendFailed &&
+          ticket == null &&
+          _identity?.kind == 'phone' &&
+          _identity?.allows('password') == true;
       _canRetryCode =
           _challenge != null &&
           error is AuthRepositoryException &&
@@ -1125,6 +1327,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _otpTicket = null;
       _recoveryPhone = null;
       _canRetryCode = false;
+      _confirmContactPhone = false;
+      _existingContactPhone = false;
+      _existingOtpSendFailed = false;
       _resendSeconds = 0;
       _pendingCommit = null;
       _busy = false;

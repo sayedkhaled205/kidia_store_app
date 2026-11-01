@@ -189,6 +189,8 @@ mobishop_home_assert( 'Free shipping' === $promo_api['text'], 'Promo Strip must 
 mobishop_home_assert( 'search' === $promo_api['action']['type'], 'Promo Strip action settings must reach Flutter.' );
 
 $quick_links = new MobiShop_Quick_Links_Block();
+$precise_gap = $quick_links->sanitize_settings( array( 'gap' => 11.4 ) );
+mobishop_home_assert( 11.4 === $precise_gap['gap'], 'Quick Link fractional spacing must survive saving.' );
 $quick_links_settings = array_merge(
 	$quick_links->get_default_settings(),
 	array(

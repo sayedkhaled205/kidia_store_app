@@ -17,7 +17,11 @@ import 'storage/auth_session_store.dart';
 
 /// Exchanges native identity proofs only with the configured merchant.
 /// Results remain provisional until the caller explicitly commits one.
-class NativeAuthService implements NativeAuthActions {
+class NativeAuthService
+    implements
+        NativeAuthActions,
+        NativePhoneEnrollmentActions,
+        NativeExistingPhoneGoogleActions {
   NativeAuthService({
     required Uri storeUri,
     required Dio dio,
@@ -178,6 +182,36 @@ class NativeAuthService implements NativeAuthActions {
   }
 
   @override
+  Future<NativeAuthResult> preparePhone(String phone, {String? ticket}) {
+    final continuation = ticket == null
+        ? null
+        : _requireTicket(ticket, NativeAuthStatus.registrationRequired);
+    final attempt = continuation?.attempt ?? _restart();
+    return _run(attempt, () async {
+      final configuration = await _wait(config(), attempt);
+      if (!configuration.supportsUnverifiedPhoneEnrollment) throw _unavailable;
+      return _result(
+        await _post('phone/enroll', attempt, {
+          'phone': phone,
+          'ticket': ?ticket,
+        }),
+        attempt,
+      );
+    });
+  }
+
+  @override
+  Future<NativeAuthResult> confirmUnverifiedPhone(
+    String ticket,
+    String phone,
+  ) => _continue(
+    ticket,
+    NativeAuthStatus.registrationRequired,
+    'phone/confirm',
+    {'phone': phone},
+  );
+
+  @override
   Future<NativeOtpChallenge> sendOtp(
     String phone, {
     NativeOtpChallenge? resend,
@@ -312,19 +346,31 @@ class NativeAuthService implements NativeAuthActions {
   }
 
   @override
-  Future<NativeAuthResult> google() {
+  Future<NativeAuthResult> google() => _google();
+
+  @override
+  Future<NativeAuthResult> googleForPhone(String expectedPhone) =>
+      _google(expectedPhone: expectedPhone);
+
+  Future<NativeAuthResult> _google({String? expectedPhone}) {
     final attempt = _restart();
     return _run(attempt, () async {
       await _wait(_sdk.cancel(), attempt);
       final configuration = await _wait(config(), attempt);
       if (_legacy || !configuration.allows('google')) throw _unavailable;
+      if (expectedPhone != null && !configuration.supportsExpectedPhoneGoogle) {
+        throw _unavailable;
+      }
       final token = await _wait(
         _sdk.google(_sdkConfig(configuration)),
         attempt,
       );
       if (token.isEmpty) throw const FormatException('Missing native proof.');
       return _result(
-        await _post('google', attempt, {'id_token': token}),
+        await _post('google', attempt, {
+          'id_token': token,
+          'expected_phone': ?expectedPhone,
+        }),
         attempt,
       );
     });
@@ -504,6 +550,8 @@ class NativeAuthService implements NativeAuthActions {
       'identify',
       'password',
       'phone/verify',
+      'phone/enroll',
+      'phone/confirm',
       'google',
       'select',
       'register',
@@ -604,6 +652,14 @@ class NativeAuthService implements NativeAuthActions {
     }
     final code = value is Map ? value['code'] : null;
     const messages = {
+      'mobishop_native_google_phone_mismatch':
+          'حساب جوجل ده مش مرتبط بالحساب المطلوب. جرّب حساب جوجل تاني أو الباسورد.',
+      'mobishop_native_existing_phone':
+          'الرقم ده لحساب موجود. ادخل بباسورد الحساب أو استخدم رقم مختلف.',
+      'mobishop_native_phone_proof_required':
+          'الحساب الموجود محتاج التحقق من رقم الموبايل.',
+      'mobishop_native_phone_mismatch':
+          'اكتب نفس رقم الموبايل اللي حاولنا نبعت له الرمز.',
       'mobishop_native_invalid_proof':
           'تعذر التحقق من محاولة الدخول. اختار الحساب وحاول تاني، أو استخدم كلمة المرور.',
       'mobishop_native_invalid_ticket': 'انتهت محاولة الدخول. ابدأ من جديد.',

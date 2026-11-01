@@ -27,6 +27,21 @@ class AuthCopy {
       ? 'اكتب رقم موبايل أو بريد إلكتروني صحيح'
       : 'Enter a valid phone number or email';
   String get phone => isArabic ? 'رقم الموبايل' : 'Phone number';
+  String get confirmContactPhone => isArabic
+      ? 'اكتب رقم موبايلك مرة كمان للمتابعة'
+      : 'Enter your phone number again to continue';
+  String get existingContactPhone => isArabic
+      ? 'الرقم ده لحساب موجود. ادخل للحساب الموجود أو استخدم رقم مختلف.'
+      : 'This number belongs to an existing account. Sign in to the existing account or use a different number.';
+  String get enterExistingAccount =>
+      isArabic ? 'الدخول للحساب الموجود' : 'Sign in to the existing account';
+  String get otpSendFailed => isArabic
+      ? 'تعذر إرسال رمز التحقق. اختار طريقة تانية للدخول.'
+      : 'Unable to send the verification code. Choose another way to sign in.';
+  String get differentPhone =>
+      isArabic ? 'استخدام رقم مختلف' : 'Use a different number';
+  String get confirmPhone =>
+      isArabic ? 'تأكيد الرقم والمتابعة' : 'Confirm number and continue';
   String get phoneRequired =>
       isArabic ? 'اكتب رقم موبايل صحيح' : 'Enter a valid phone number';
   String get internationalPhone =>

@@ -96,7 +96,7 @@ final class MobiShop_Quick_Links_Block extends MobiShop_Block {
 			'columns'     => max( 2, min( 6, absint( $settings['columns'] ?? 4 ) ) ),
 			'image_shape' => $shape,
 			'item_size'   => max( 48, min( 140, absint( $settings['item_size'] ?? 76 ) ) ),
-			'gap'         => max( 0, min( 32, absint( $settings['gap'] ?? 12 ) ) ),
+			'gap'         => max( 0, min( 32, (float) ( $settings['gap'] ?? 12 ) ) ),
 			'show_labels' => ! empty( $settings['show_labels'] ),
 			'label_color' => sanitize_hex_color( $settings['label_color'] ?? '' ) ?: '#1F2933',
 			'label_size'  => max( 10, min( 22, absint( $settings['label_size'] ?? 13 ) ) ),
@@ -155,7 +155,7 @@ final class MobiShop_Quick_Links_Block extends MobiShop_Block {
 			<div class="mobishop-builder-field"><label><?php esc_html_e( 'Columns', 'mobi2app-connector' ); ?></label><input type="number" min="2" max="6" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][columns]" value="<?php echo esc_attr( (string) $settings['columns'] ); ?>"></div>
 			<div class="mobishop-builder-field"><label><?php esc_html_e( 'Image Shape', 'mobi2app-connector' ); ?></label><select name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][image_shape]"><option value="circle" <?php selected( 'circle', $settings['image_shape'] ); ?>><?php esc_html_e( 'Circle', 'mobi2app-connector' ); ?></option><option value="rounded" <?php selected( 'rounded', $settings['image_shape'] ); ?>><?php esc_html_e( 'Rounded', 'mobi2app-connector' ); ?></option><option value="square" <?php selected( 'square', $settings['image_shape'] ); ?>><?php esc_html_e( 'Square', 'mobi2app-connector' ); ?></option></select></div>
 			<div class="mobishop-builder-field"><label><?php esc_html_e( 'Image Size', 'mobi2app-connector' ); ?></label><input type="number" min="48" max="140" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][item_size]" value="<?php echo esc_attr( (string) $settings['item_size'] ); ?>"></div>
-			<div class="mobishop-builder-field"><label><?php esc_html_e( 'Gap', 'mobi2app-connector' ); ?></label><input type="number" min="0" max="32" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
+			<div class="mobishop-builder-field"><label><?php esc_html_e( 'Gap', 'mobi2app-connector' ); ?></label><input type="number" min="0" max="32" step="0.1" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][gap]" value="<?php echo esc_attr( (string) $settings['gap'] ); ?>"></div>
 			<div class="mobishop-builder-field"><label><?php esc_html_e( 'Label Size', 'mobi2app-connector' ); ?></label><input type="number" min="10" max="22" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_size]" value="<?php echo esc_attr( (string) $settings['label_size'] ); ?>"></div>
             <input type="hidden" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_weight]" value="<?php echo esc_attr( (string) $settings['label_weight'] ); ?>">
 			<div class="mobishop-builder-field"><label><?php esc_html_e( 'Label Color', 'mobi2app-connector' ); ?></label><input type="color" name="blocks[<?php echo esc_attr( (string) $index ); ?>][settings][label_color]" value="<?php echo esc_attr( (string) $settings['label_color'] ); ?>"></div>

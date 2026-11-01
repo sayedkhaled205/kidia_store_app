@@ -783,6 +783,84 @@ native_assert( $existing_phone_selected['status'] === 'authenticated' && $existi
 native_assert( get_user_by( 'id', 7 )->user_email === $before_email7 && get_user_by( 'id', 7 )->user_pass === $before_pass7, 'Resolving to an existing phone-owning account never overwrites its email or password' );
 native_assert( ! in_array( $existing_phone_email, array_column( $GLOBALS['native_users'], 'email' ), true ), 'No account is created for the unclaimed enrollment email' );
 
+// Failed-send contact confirmation grants enrollment only, never phone ownership.
+foreach ( array( 'phone', 'email', 'google' ) as $index => $origin ) {
+    native_clear_rate();
+    $contact = '+20106666666' . $index;
+    $params = array( 'phone' => $contact, 'verifier' => $verifier );
+    if ( $origin === 'email' ) {
+        $start = native_data( $endpoint->password( native_request( array( 'identifier' => 'contact-only-' . $index . '@gmail.com', 'password' => 'initial-password', 'verifier' => $verifier ) ) ), 'Contact-only email start' );
+        $params['ticket'] = $start['ticket'];
+    } elseif ( $origin === 'google' ) {
+        $start = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'contact-only-google' ), array( 'email' => 'contact-only-google@gmail.com' ) ) ), 'verifier' => $verifier ) ) ), 'Contact-only Google start' );
+        $params['ticket'] = $start['ticket'];
+    }
+    $prepared = native_data( $endpoint->phone_enroll( native_request( $params ) ), 'Prepare ' . $origin . ' contact attempt' );
+    $confirm = array( 'ticket' => $prepared['ticket'], 'verifier' => $verifier, 'phone' => $contact );
+    native_rejected( $endpoint->phone_confirm( native_request( array_merge( $confirm, array( 'phone' => '+201077777777' ) ) ) ), 'Changed phone cannot confirm a previous attempt' );
+    native_rejected( $endpoint->phone_confirm( native_request( array_merge( $confirm, array( 'verifier' => str_repeat( 'd', 64 ) ) ) ) ), 'Contact confirmation retains verifier binding' );
+    native_rejected( $endpoint->register_customer( native_request( array( 'ticket' => $prepared['ticket'], 'verifier' => $verifier, 'name' => 'Contact Only', 'password' => 'contact-password' ) ) ), 'Attempt preparation alone cannot register' );
+    $confirmed = native_data( $endpoint->phone_confirm( native_request( $confirm ) ), 'Repeat same contact after failed send' );
+    native_assert( ! in_array( 'phone', $confirmed['fields'], true ), 'Contact confirmation permits profile entry' );
+    native_rejected( $endpoint->phone_confirm( native_request( $confirm ) ), 'Contact confirmation is one-use' );
+    native_rejected( $endpoint->register_customer( native_request( array( 'ticket' => $confirmed['ticket'], 'verifier' => $verifier, 'name' => 'Contact Only', 'password' => '' ) ) ), 'Contact fallback never creates a passwordless account' );
+    $registered = native_data( $endpoint->register_customer( native_request( array( 'ticket' => $confirmed['ticket'], 'verifier' => $verifier, 'name' => 'Contact Only', 'password' => 'contact-password' ) ) ), 'Create contact-only ' . $origin . ' customer' );
+    $contact_id = $registered['user_id'];
+    native_assert( get_user_meta( $contact_id, 'kidia_unverified_phone', true ) === $contact, 'Unverified number has a separate contact field' );
+    native_assert( ! get_user_meta( $contact_id, 'kidia_login_phone', true ) && ! get_user_meta( $contact_id, 'fme_billing_phone', true ), 'Contact fallback does not write verified identity metadata' );
+    $issued_before_contact_otp = count( $GLOBALS['native_issued'] );
+    $rightful_ticket = native_data( native_phone( $endpoint, $verifier, $contact ), 'Real owner proves previously unverified contact' );
+    native_assert( $rightful_ticket['status'] === 'registration_required', 'Real phone proof starts a separate account instead of logging into the contact claimant account' );
+    native_assert( count( $GLOBALS['native_issued'] ) === $issued_before_contact_otp, 'Contact-only number grants no OTP session' );
+    $contact_identity = native_data( $endpoint->identify( native_request( array( 'identifier' => $contact ) ) ), 'Contact-only sign-in methods' );
+    native_assert( $contact_identity['methods'] === array( 'password', 'phone_otp' ), 'Contact claims cannot remove the legitimate owner OTP path' );
+    $another_attempt = native_data( $endpoint->phone_enroll( native_request( array( 'phone' => $contact, 'verifier' => $verifier ) ) ), 'Unverified claims cannot block fresh OTP attempts' );
+    native_rejected( $endpoint->phone_confirm( native_request( array( 'ticket' => $another_attempt['ticket'], 'phone' => $contact, 'verifier' => $verifier ) ) ), 'A second unverified claim still needs the existing account password' );
+    $contact_login = native_data( $endpoint->password( native_request( array( 'identifier' => $contact, 'password' => 'contact-password', 'verifier' => $verifier ) ) ), 'Contact phone and own password authenticate' );
+    native_assert( $contact_login['user_id'] === $contact_id, 'Password is proof for the existing contact-only account' );
+    $claimant_before = $GLOBALS['native_users'][$contact_id];
+    $rightful = native_data( $endpoint->register_customer( native_request( array( 'ticket' => $rightful_ticket['ticket'], 'verifier' => $verifier, 'name' => 'Real Owner', 'password' => 'real-owner-password' ) ) ), 'Real phone owner completes distinct verified account' );
+    native_assert( $rightful['user_id'] !== $contact_id && $GLOBALS['native_users'][$contact_id] === $claimant_before, 'Phone proof never merges or changes the unverified claimant account' );
+    native_assert( get_user_meta( $rightful['user_id'], 'kidia_login_phone', true ) === $contact, 'The rightful account owns its verified phone identity' );
+    update_user_meta( $rightful['user_id'], 'kidia_unverified_phone', $contact );
+    $verified_again = native_data( native_phone( $endpoint, $verifier, $contact ), 'Same-user stale unverified marker does not disable verified OTP' );
+    native_assert( $verified_again['user_id'] === $rightful['user_id'], 'Verified identity takes precedence over stale unverified contact' );
+    update_user_meta( $rightful['user_id'], 'kidia_unverified_phone', '+201099999999' );
+    $verified_again = native_data( native_phone( $endpoint, $verifier, $contact ), 'Different stale unverified marker does not override verified number' );
+    native_assert( $verified_again['user_id'] === $rightful['user_id'], 'Verified phone keys retain their established precedence' );
+}
+
+// Parallel confirmation tickets still share the registration identity lock/check.
+native_clear_rate();
+$race_contact = '+201077777777';
+$contact_a = native_data( $endpoint->phone_enroll( native_request( array( 'phone' => $race_contact, 'verifier' => $verifier ) ) ), 'Parallel contact A' );
+$contact_b = native_data( $endpoint->phone_enroll( native_request( array( 'phone' => $race_contact, 'verifier' => $verifier ) ) ), 'Parallel contact B' );
+$confirmed_a = native_data( $endpoint->phone_confirm( native_request( array( 'ticket' => $contact_a['ticket'], 'phone' => $race_contact, 'verifier' => $verifier ) ) ), 'Confirm contact A' );
+$confirmed_b = native_data( $endpoint->phone_confirm( native_request( array( 'ticket' => $contact_b['ticket'], 'phone' => $race_contact, 'verifier' => $verifier ) ) ), 'Confirm contact B' );
+native_data( $endpoint->register_customer( native_request( array( 'ticket' => $confirmed_a['ticket'], 'name' => 'First Contact', 'password' => 'contact-password', 'verifier' => $verifier ) ) ), 'First contact registration wins' );
+native_rejected( $endpoint->register_customer( native_request( array( 'ticket' => $confirmed_b['ticket'], 'name' => 'Second Contact', 'password' => 'contact-password', 'verifier' => $verifier ) ) ), 'Parallel earlier confirmation cannot duplicate contact' );
+native_rejected( $endpoint->phone_enroll( native_request( array( 'phone' => '+201012345678', 'verifier' => $verifier ) ) ), 'Existing verified phone offers no new contact enrollment' );
+
+// Expected-phone Google sign-in constrains an independently authenticated Google account.
+native_clear_rate();
+$bounded_issued_before = count( $GLOBALS['native_issued'] );
+$bounded_links_before = NextendSocialLogin::$providers['google']->links;
+$bounded_request = array( 'id_token' => native_jwt( native_google_claims() ), 'verifier' => $verifier, 'expected_phone' => '+201112345678' );
+native_rejected( $endpoint->google( native_request( $bounded_request ) ), 'Google linked to a different phone cannot enter the requested existing account' );
+$unlinked_bounded = array( 'id_token' => native_jwt( array_merge( native_google_claims( 'bounded-unlinked-shipping' ), array( 'email' => 'shipping@gmail.com' ) ) ), 'verifier' => $verifier, 'expected_phone' => '+201012345678' );
+native_rejected( $endpoint->google( native_request( $unlinked_bounded ) ), 'Authoritative Google email mismatch is rejected before linking' );
+native_assert( NextendSocialLogin::$providers['google']->links === $bounded_links_before && count( $GLOBALS['native_issued'] ) === $bounded_issued_before, 'Mismatched Google proof creates no link and issues no session' );
+$unregistered_bounded = array( 'id_token' => native_jwt( array_merge( native_google_claims( 'bounded-new-google' ), array( 'email' => 'bounded-new@gmail.com' ) ) ), 'verifier' => $verifier, 'expected_phone' => '+201012345678' );
+native_rejected( $endpoint->google( native_request( $unregistered_bounded ) ), 'Unrelated new Google identity cannot switch existing sign-in into registration' );
+$bounded_request['expected_phone'] = '+201012345678';
+$bounded_match = native_data( $endpoint->google( native_request( $bounded_request ) ), 'Google proof matching the expected existing phone' );
+native_assert( $bounded_match['user_id'] === 7, 'Matching Google identity signs into its own expected account' );
+$claimant_google = array( 'id_token' => native_jwt( array_merge( native_google_claims( 'contact-only-google' ), array( 'email' => 'contact-only-google@gmail.com' ) ) ), 'verifier' => $verifier, 'expected_phone' => '+201066666662' );
+native_rejected( $endpoint->google( native_request( $claimant_google ) ), 'A Google account with only an unverified claim cannot override the independently verified phone owner' );
+$unlinked_bounded['expected_phone'] = '+201112345678';
+$bounded_email_match = native_data( $endpoint->google( native_request( $unlinked_bounded ) ), 'Google authoritative email proving its own expected account' );
+native_assert( $bounded_email_match['user_id'] === 12, 'An email-proven Google account is linked only after expected phone matches its own account' );
+
 // HTTP calls stay fixed, do not follow redirects, and verify TLS.
 foreach ( $GLOBALS['native_http'] as $call ) {
     native_assert( ( $call['args']['sslverify'] ?? true ) === true && ( $call['args']['redirection'] ?? -1 ) === 0, 'Trusted signing-key retrieval verifies TLS and follows no redirects' );

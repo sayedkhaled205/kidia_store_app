@@ -293,7 +293,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           _showMissingActionValue(context);
           return;
         }
-        context.go('/categories/$encodedValue');
+        context.push('/products?category=$encodedValue');
         return;
 
       case 'collection':

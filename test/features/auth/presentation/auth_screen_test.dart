@@ -23,19 +23,291 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
-  viewportRotationTests('Sign in', (tester,size) => _Fixture().pump(tester,size:size));
-  testWidgets('first identifier field shows the local phone example in gray without restricting email', (tester) async {
-    final fixture = _Fixture();
-    await fixture.pump(tester);
-    final field = tester.widget<TextField>(find.descendant(
-      of: find.byKey(const Key('auth-email')), matching: find.byType(TextField)));
-    expect(field.decoration!.hintText, '01XXXXXXXXX');
-    expect(field.decoration!.hintStyle!.color, const Color(0xFF9E9E9E));
-    expect(field.decoration!.floatingLabelBehavior, FloatingLabelBehavior.always);
-    await tester.enterText(find.byKey(const Key('auth-email')), 'customer@example.com');
-    await _tap(tester, 'auth-continue');
-    expect(fixture.actions.identifiers, ['customer@example.com']);
+  testWidgets(
+    'old connector keeps ordinary Google but never claims phone-bound Google support',
+    (tester) async {
+      final actions = _Actions()
+        ..configuration = const NativeAuthConfig(
+          methods: {'phone_password': true, 'phone_otp': true, 'google': true},
+        );
+      await _Fixture(actions: actions).pump(tester);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+      await _identify(tester, '+201012345678');
+      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-use-otp')), findsOneWidget);
+      expect(find.byKey(const Key('auth-google')), findsNothing);
+    },
+  );
+  testWidgets(
+    'asynchronous send failure repeats new contact without error banner',
+    (tester) async {
+      final automatic = Completer<NativeAuthResult?>();
+      final actions = _EnrollmentActions()
+        ..identityMethods = ['phone_otp']
+        ..automaticResults.add(automatic.future);
+      await _Fixture(actions: actions).pump(tester);
+      await _identify(tester, '+201012345678');
+      automatic.completeError(
+        const AuthRepositoryException(
+          kind: AuthFailureKind.rateLimited,
+          code: 'quota-exceeded',
+          message: 'SMS unavailable',
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('auth-phone')), findsOneWidget);
+      expect(find.byKey(const Key('auth-error')), findsNothing);
+      await tester.enterText(
+        find.byKey(const Key('auth-phone')),
+        '01012345678',
+      );
+      await _tap(tester, 'auth-send-otp');
+      expect(actions.confirmCalls, 1);
+      expect(actions.commits, 0);
+    },
+  );
+
+  testWidgets('wrong OTP never enables unverified contact confirmation', (
+    tester,
+  ) async {
+    final actions = _EnrollmentActions()
+      ..identityMethods = ['phone_otp']
+      ..verifyError = const AuthRepositoryException(
+        kind: AuthFailureKind.unauthorized,
+        code: 'invalid-verification-code',
+        message: 'Wrong code',
+      );
+    await _Fixture(actions: actions).pump(tester);
+    await _identify(tester, '+201012345678');
+    await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
+    await _tap(tester, 'auth-verify-otp');
+    expect(find.byKey(const Key('auth-phone')), findsNothing);
+    expect(find.byKey(const Key('auth-retry-otp')), findsOneWidget);
+    expect(actions.confirmCalls, 0);
+    expect(actions.commits, 0);
   });
+
+  testWidgets(
+    'mismatched Google existing phone remains at sign-in methods without commit',
+    (tester) async {
+      final actions = _Actions()
+        ..googleError = const AuthRepositoryException(
+          kind: AuthFailureKind.unauthorized,
+          code: 'mobishop_native_google_phone_mismatch',
+          message: 'جرّب حساب جوجل تاني أو الباسورد.',
+        );
+      await _Fixture(actions: actions).pump(tester);
+      await _identify(tester, '+201012345678');
+      await _tap(tester, 'auth-google');
+      expect(actions.expectedGooglePhone, '+201012345678');
+      expect(actions.commits, 0);
+      expect(actions.registrationTicket, isNull);
+      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+    },
+  );
+  testWidgets('existing account method choices honor disabled OTP and Google', (
+    tester,
+  ) async {
+    final actions = _Actions()
+      ..configuration = const NativeAuthConfig(
+        methods: {
+          'password': true,
+          'phone_password': true,
+          'phone_otp': false,
+          'google': false,
+        },
+      );
+    await _Fixture(actions: actions).pump(tester);
+    await _identify(tester, '+201012345678');
+    expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+    expect(find.byKey(const Key('auth-use-otp')), findsNothing);
+    expect(find.byKey(const Key('auth-google')), findsNothing);
+  });
+  testWidgets(
+    'older connector without enrollment capability keeps new phone OTP',
+    (tester) async {
+      final actions = _EnrollmentActions(supported: false)
+        ..identityMethods = ['phone_otp'];
+      await _Fixture(actions: actions).pump(tester);
+      await _identify(tester, '+201012345678');
+      expect(actions.prepareCalls, 0);
+      expect(actions.confirmCalls, 0);
+      expect(actions.sentPhones, ['+201012345678']);
+      expect(find.byKey(const Key('auth-otp')), findsOneWidget);
+    },
+  );
+  testWidgets('existing phone OTP failure never offers unverified enrollment', (
+    tester,
+  ) async {
+    final actions = _EnrollmentActions()
+      ..sendError = StateError('SMS unavailable');
+    await _Fixture(actions: actions).pump(tester);
+    await _startOtp(tester);
+    expect(actions.prepareCalls, 0);
+    expect(actions.confirmCalls, 0);
+    expect(find.byKey(const Key('auth-phone')), findsNothing);
+    expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+    expect(actions.commits, 0);
+  });
+
+  testWidgets(
+    'new phone send failure repeats contact before profile, without committing',
+    (tester) async {
+      final actions = _EnrollmentActions()
+        ..identityMethods = ['phone_otp']
+        ..sendError = StateError('SMS unavailable');
+      final fixture = _Fixture(actions: actions);
+      await fixture.pump(tester);
+      await _identify(tester, '+201012345678');
+      expect(actions.prepareCalls, 1);
+      expect(actions.commits, 0);
+      expect(find.byKey(const Key('auth-phone')), findsOneWidget);
+      expect(find.text('اكتب رقم موبايلك مرة كمان للمتابعة'), findsOneWidget);
+      expect(find.byKey(const Key('auth-error')), findsNothing);
+      await tester.enterText(
+        find.byKey(const Key('auth-phone')),
+        '01012345678',
+      );
+      await _tap(tester, 'auth-send-otp');
+      expect(actions.confirmCalls, 1);
+      expect(actions.sentPhones.length, 1);
+      expect(find.byKey(const Key('auth-name')), findsOneWidget);
+      expect(actions.commits, 0);
+    },
+  );
+
+  testWidgets('different number after send failure starts a new OTP attempt', (
+    tester,
+  ) async {
+    final actions = _EnrollmentActions()
+      ..identityMethods = ['phone_otp']
+      ..sendError = StateError('SMS unavailable');
+    await _Fixture(actions: actions).pump(tester);
+    await _identify(tester, '01012345678');
+    actions.sendError = null;
+    await tester.enterText(find.byKey(const Key('auth-phone')), '01112345678');
+    await _tap(tester, 'auth-send-otp');
+    expect(actions.prepareCalls, 2);
+    expect(actions.confirmCalls, 0);
+    expect(find.byKey(const Key('auth-otp')), findsOneWidget);
+  });
+
+  testWidgets(
+    'existing enrollment phone offers sign-in methods and a different number',
+    (tester) async {
+      final actions = _EnrollmentActions()
+        ..identityMethods = ['phone_otp']
+        ..prepareError = const AuthRepositoryException(
+          kind: AuthFailureKind.conflict,
+          message: 'Existing phone',
+          code: 'mobishop_native_existing_phone',
+        );
+      await _Fixture(actions: actions).pump(tester);
+      await _identify(tester, '01012345678');
+      expect(actions.sentPhones, isEmpty);
+      expect(find.byKey(const Key('auth-different-phone')), findsOneWidget);
+      expect(find.byKey(const Key('auth-send-otp')), findsNothing);
+      expect(find.text('الدخول للحساب الموجود'), findsOneWidget);
+      actions.identityMethods = ['password', 'phone_otp'];
+      await _tap(tester, 'auth-existing-phone-signin');
+      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-use-otp')), findsOneWidget);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+      await _tap(tester, 'auth-use-password');
+      expect(find.byKey(const Key('auth-password')), findsOneWidget);
+      expect(actions.commits, 0);
+    },
+  );
+
+  testWidgets(
+    'existing account send failure shows only enabled password and Google fallbacks',
+    (tester) async {
+      final actions = _Actions()..sendError = StateError('SMS unavailable');
+      await _Fixture(actions: actions).pump(tester);
+      await _startOtp(tester);
+      expect(
+        find.text('تعذر إرسال رمز التحقق. اختار طريقة تانية للدخول.'),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+      expect(find.byKey(const Key('auth-retry-otp')), findsNothing);
+      expect(find.byKey(const Key('auth-use-otp')), findsNothing);
+      await _tap(tester, 'auth-use-password');
+      expect(find.byKey(const Key('auth-use-otp')), findsNothing);
+      expect(actions.commits, 0);
+    },
+  );
+
+  testWidgets(
+    'disabled Google stays hidden after an existing account send failure',
+    (tester) async {
+      final actions = _Actions()
+        ..sendError = StateError('SMS unavailable')
+        ..configuration = const NativeAuthConfig(
+          methods: {'phone_password': true, 'phone_otp': true, 'google': false},
+        );
+      await _Fixture(actions: actions).pump(tester);
+      await _startOtp(tester);
+      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-google')), findsNothing);
+      expect(find.byKey(const Key('auth-retry-otp')), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'existing enrollment sign-in uses a fresh Google proof without registration or phone linking',
+    (tester) async {
+      final actions = _EnrollmentActions()
+        ..identityMethods = ['phone_otp']
+        ..prepareError = const AuthRepositoryException(
+          kind: AuthFailureKind.conflict,
+          message: 'Existing phone',
+          code: 'mobishop_native_existing_phone',
+        );
+      await _Fixture(actions: actions).pump(tester);
+      await _identify(tester, '+201012345678');
+      actions.identityMethods = ['password', 'phone_otp'];
+      await _tap(tester, 'auth-existing-phone-signin');
+      await _tap(tester, 'auth-google');
+      expect(actions.googleCalls, 1);
+      expect(actions.commits, 1);
+      expect(actions.passwordCalls, 0);
+      expect(actions.verifyTicket, isNull);
+      expect(actions.registrationTicket, isNull);
+    },
+  );
+
+  viewportRotationTests(
+    'Sign in',
+    (tester, size) => _Fixture().pump(tester, size: size),
+  );
+  testWidgets(
+    'first identifier field shows the local phone example in gray without restricting email',
+    (tester) async {
+      final fixture = _Fixture();
+      await fixture.pump(tester);
+      final field = tester.widget<TextField>(
+        find.descendant(
+          of: find.byKey(const Key('auth-email')),
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(field.decoration!.hintText, '01XXXXXXXXX');
+      expect(field.decoration!.hintStyle!.color, const Color(0xFF9E9E9E));
+      expect(
+        field.decoration!.floatingLabelBehavior,
+        FloatingLabelBehavior.always,
+      );
+      await tester.enterText(
+        find.byKey(const Key('auth-email')),
+        'customer@example.com',
+      );
+      await _tap(tester, 'auth-continue');
+      expect(fixture.actions.identifiers, ['customer@example.com']);
+    },
+  );
 
   testWidgets('Google sign-in keeps a bundled full-color mark without tinting', (
     tester,
@@ -605,56 +877,76 @@ void main() {
     },
   );
 
-  testWidgets('native new email confirms password then verifies phone before creating account', (tester) async {
-    final fixture = _Fixture()
-      ..actions.identityMethods = ['create_password']
-      ..actions.passwordResult = const NativeAuthResult(
-        status: NativeAuthStatus.registrationRequired,
-        ticket: 'email-enrollment', expiresIn: 300,
-        fields: ['name', 'password', 'phone'],
-      )
-      ..actions.verifyResult = const NativeAuthResult(
-        status: NativeAuthStatus.registrationRequired,
-        ticket: 'verified-enrollment', expiresIn: 300,
-        fields: ['name', 'password'],
+  testWidgets(
+    'native new email confirms password then verifies phone before creating account',
+    (tester) async {
+      final fixture = _Fixture()
+        ..actions.identityMethods = ['create_password']
+        ..actions.passwordResult = const NativeAuthResult(
+          status: NativeAuthStatus.registrationRequired,
+          ticket: 'email-enrollment',
+          expiresIn: 300,
+          fields: ['name', 'password', 'phone'],
+        )
+        ..actions.verifyResult = const NativeAuthResult(
+          status: NativeAuthStatus.registrationRequired,
+          ticket: 'verified-enrollment',
+          expiresIn: 300,
+          fields: ['name', 'password'],
+        );
+      await fixture.pump(tester);
+      await _identify(tester, 'new@example.com');
+      expect(find.text('أنشئ كلمة مرور'), findsOneWidget);
+      expect(find.byKey(const Key('auth-sign-in')), findsNothing);
+      await tester.enterText(
+        find.byKey(const Key('auth-create-password')),
+        'new-password',
       );
-    await fixture.pump(tester);
-    await _identify(tester, 'new@example.com');
-    expect(find.text('أنشئ كلمة مرور'), findsOneWidget);
-    expect(find.byKey(const Key('auth-sign-in')), findsNothing);
-    await tester.enterText(find.byKey(const Key('auth-create-password')), 'new-password');
-    await tester.enterText(find.byKey(const Key('auth-confirm-password')), 'different');
-    await _tap(tester, 'auth-register');
-    expect(fixture.actions.passwordCalls, 0);
-    await tester.enterText(find.byKey(const Key('auth-confirm-password')), 'new-password');
-    await _tap(tester, 'auth-register');
-    expect(fixture.actions.commits, 0);
-    expect(fixture.actions.registrationTicket, isNull);
-    await tester.enterText(find.byKey(const Key('auth-phone')), '01012345678');
-    await _tap(tester, 'auth-send-otp');
-    expect(fixture.actions.otpTickets.last, 'email-enrollment');
-    await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
-    await _tap(tester, 'auth-verify-otp');
-    expect(fixture.actions.commits, 0);
-    await tester.enterText(find.byKey(const Key('auth-name')), 'عميل جديد');
-    // The existing screen retains both confirmed password fields across OTP.
-    await _tap(tester, 'auth-register');
-    expect(fixture.actions.registrationTicket, 'verified-enrollment');
-    expect(fixture.actions.registrationPassword, 'new-password');
-    expect(fixture.actions.commits, 1);
-    expect(tester.takeException(), isNull);
-  });
+      await tester.enterText(
+        find.byKey(const Key('auth-confirm-password')),
+        'different',
+      );
+      await _tap(tester, 'auth-register');
+      expect(fixture.actions.passwordCalls, 0);
+      await tester.enterText(
+        find.byKey(const Key('auth-confirm-password')),
+        'new-password',
+      );
+      await _tap(tester, 'auth-register');
+      expect(fixture.actions.commits, 0);
+      expect(fixture.actions.registrationTicket, isNull);
+      await tester.enterText(
+        find.byKey(const Key('auth-phone')),
+        '01012345678',
+      );
+      await _tap(tester, 'auth-send-otp');
+      expect(fixture.actions.otpTickets.last, 'email-enrollment');
+      await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
+      await _tap(tester, 'auth-verify-otp');
+      expect(fixture.actions.commits, 0);
+      await tester.enterText(find.byKey(const Key('auth-name')), 'عميل جديد');
+      // The existing screen retains both confirmed password fields across OTP.
+      await _tap(tester, 'auth-register');
+      expect(fixture.actions.registrationTicket, 'verified-enrollment');
+      expect(fixture.actions.registrationPassword, 'new-password');
+      expect(fixture.actions.commits, 1);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('OTP-only phone identity sends code directly without asking for password', (tester) async {
-    final fixture = _Fixture()..actions.identityMethods = ['phone_otp'];
-    await fixture.pump(tester);
-    await _identify(tester, '+201012345678');
-    expect(fixture.actions.sentPhones, ['+201012345678']);
-    expect(find.byKey(const Key('auth-otp')), findsOneWidget);
-    expect(find.byKey(const Key('auth-password')), findsNothing);
-    expect(fixture.actions.passwordCalls, 0);
-    expect(fixture.actions.commits, 0);
-  });
+  testWidgets(
+    'OTP-only phone identity sends code directly without asking for password',
+    (tester) async {
+      final fixture = _Fixture()..actions.identityMethods = ['phone_otp'];
+      await fixture.pump(tester);
+      await _identify(tester, '+201012345678');
+      expect(fixture.actions.sentPhones, ['+201012345678']);
+      expect(find.byKey(const Key('auth-otp')), findsOneWidget);
+      expect(find.byKey(const Key('auth-password')), findsNothing);
+      expect(fixture.actions.passwordCalls, 0);
+      expect(fixture.actions.commits, 0);
+    },
+  );
 
   testWidgets('close stays enabled during Google and ignores its late result', (
     tester,
@@ -799,7 +1091,8 @@ class _TestAuthController extends AuthController {
 }
 
 class _Fixture {
-  final actions = _Actions();
+  _Fixture({_Actions? actions}) : actions = actions ?? _Actions();
+  final _Actions actions;
   final auth = _TestAuthController();
   late GoRouter router;
 
@@ -872,9 +1165,50 @@ class _Fixture {
   }
 }
 
-class _Actions implements NativeAuthActions {
+class _EnrollmentActions extends _Actions
+    implements NativePhoneEnrollmentActions {
+  _EnrollmentActions({bool supported = true}) {
+    configuration = NativeAuthConfig(
+      phoneCountryCode: configuration.phoneCountryCode,
+      methods: configuration.methods,
+      supportsUnverifiedPhoneEnrollment: supported,
+      supportsExpectedPhoneGoogle: configuration.supportsExpectedPhoneGoogle,
+    );
+  }
+  int prepareCalls = 0;
+  int confirmCalls = 0;
+  Object? prepareError;
+  @override
+  Future<NativeAuthResult> preparePhone(String phone, {String? ticket}) async {
+    prepareCalls++;
+    if (prepareError != null) throw prepareError!;
+    return NativeAuthResult(
+      status: NativeAuthStatus.registrationRequired,
+      ticket: 'prepared-$prepareCalls',
+      expiresIn: 300,
+      fields: const ['name', 'password', 'phone'],
+    );
+  }
+
+  @override
+  Future<NativeAuthResult> confirmUnverifiedPhone(
+    String ticket,
+    String phone,
+  ) async {
+    confirmCalls++;
+    return const NativeAuthResult(
+      status: NativeAuthStatus.registrationRequired,
+      ticket: 'contact-only-profile',
+      expiresIn: 300,
+      fields: ['name', 'password'],
+    );
+  }
+}
+
+class _Actions implements NativeAuthActions, NativeExistingPhoneGoogleActions {
   NativeAuthConfig configuration = const NativeAuthConfig(
     phoneCountryCode: '20',
+    supportsExpectedPhoneGoogle: true,
     methods: {
       'email_password': true,
       'phone_password': true,
@@ -889,6 +1223,7 @@ class _Actions implements NativeAuthActions {
   Future<NativeAuthResult>? verifyFuture;
   Future<NativeAuthResult>? googleFuture;
   Object? googleError;
+  String? expectedGooglePhone;
   Object? verifyError;
   Object? sendError;
   Object? commitError;
@@ -980,6 +1315,12 @@ class _Actions implements NativeAuthActions {
   }
 
   @override
+  Future<NativeAuthResult> googleForPhone(String expectedPhone) {
+    expectedGooglePhone = expectedPhone;
+    return google();
+  }
+
+  @override
   Future<NativeAuthResult> selectAccount(String ticket, int accountId) async {
     selectionTicket = ticket;
     selectedAccount = accountId;
@@ -1022,4 +1363,3 @@ NativeAuthResult _authenticated() => NativeAuthResult(
     user: const AuthUser(id: 7, email: 'customer@example.com'),
   ),
 );
-

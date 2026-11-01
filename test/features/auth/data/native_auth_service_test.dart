@@ -14,6 +14,8 @@ import 'package:mobishop_store_app/features/auth/domain/repositories/auth_reposi
 const _configuration = {
   'version': 1,
   'enabled': true,
+  'supports_unverified_phone_enrollment': true,
+  'supports_expected_phone_google': true,
   'methods': {
     'password': true,
     'email_password': true,
@@ -76,40 +78,222 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
-  test('native new-email enrollment uses the existing installed-client contract through OTP', () async {
-    final h = _Harness();
-    h.handler = (request) async {
-      final action = request.uri.path.split('/').last;
-      return h.response(request, switch (action) {
-        'identify' => {
-          'identifier': 'new@example.com', 'kind': 'email',
-          'methods': ['create_password'],
+  test(
+    'old connector cannot ignore a Google phone constraint and ordinary Google still works',
+    () async {
+      final h = _Harness()..configStatus = -1;
+      h.handler = (request) async => h.response(
+        request,
+        request.uri.path.endsWith('/config')
+            ? (Map<String, dynamic>.from(_configuration)
+                ..remove('supports_expected_phone_google'))
+            : _session(),
+      );
+      await expectLater(
+        h.service.googleForPhone('+201012345678'),
+        throwsA(_failure),
+      );
+      expect(h.posts('google'), isEmpty);
+      expect(h.sdk.googleCalls, 0);
+      final result = await h.service.google();
+      expect(
+        h.posts('google').single.data.containsKey('expected_phone'),
+        isFalse,
+      );
+      expect(h.store.writes, 0);
+      await h.service.commit(result);
+      expect(h.store.writes, 1);
+    },
+  );
+  test(
+    'Google existing phone sends constraint and rejects mismatch without session commit',
+    () async {
+      final h = _Harness();
+      h.handler = (request) async => h.response(request, {
+        'code': 'mobishop_native_google_phone_mismatch',
+      }, status: 403);
+      await expectLater(
+        h.service.googleForPhone('+201012345678'),
+        throwsA(
+          isA<AuthRepositoryException>().having(
+            (e) => e.code,
+            'code',
+            'mobishop_native_google_phone_mismatch',
+          ),
+        ),
+      );
+      expect(h.posts('google').single.data['expected_phone'], '+201012345678');
+      expect(h.store.writes, 0);
+    },
+  );
+  test(
+    'missing connector capability never calls new enrollment endpoint',
+    () async {
+      final h = _Harness()..configStatus = -1;
+      h.handler = (request) async {
+        final oldConfig = Map<String, dynamic>.from(_configuration)
+          ..remove('supports_unverified_phone_enrollment');
+        return h.response(request, oldConfig);
+      };
+      expect(
+        (await h.service.config()).supportsUnverifiedPhoneEnrollment,
+        isFalse,
+      );
+      await expectLater(
+        h.service.preparePhone('+201012345678'),
+        throwsA(_failure),
+      );
+      expect(h.posts('phone/enroll'), isEmpty);
+      await h.service.sendOtp('+201012345678');
+      expect(h.sdk.challenges.length, 1);
+    },
+  );
+  test(
+    'existing phone wire code remains actionable without unsafe server text',
+    () async {
+      final h = _Harness();
+      h.handler = (request) async => Response(
+        requestOptions: request,
+        statusCode: 409,
+        data: {
+          'code': 'mobishop_native_existing_phone',
+          'message': 'unsafe server text',
         },
-        'password' => _registration(),
-        'verify' => {..._registration(), 'ticket': 'd' * 64, 'fields': ['name', 'password']},
-        'register' => _session(),
-        _ => throw StateError('Unexpected native action: $action'),
-      });
-    };
-    final identity = await h.service.identify('new@example.com');
-    expect(identity.allows('create_password'), isTrue);
-    final enrollment = await h.service.password(identity.identifier, 'new-password');
-    expect(enrollment.status, NativeAuthStatus.registrationRequired);
+      );
+      await expectLater(
+        h.service.preparePhone('+201012345678'),
+        throwsA(
+          isA<AuthRepositoryException>()
+              .having((e) => e.code, 'code', 'mobishop_native_existing_phone')
+              .having(
+                (e) => e.message,
+                'safe message',
+                isNot(contains('unsafe')),
+              ),
+        ),
+      );
+      expect(h.store.writes, 0);
+    },
+  );
+  test(
+    'contact fallback preserves enrollment verifier and commits only final session',
+    () async {
+      final h = _Harness();
+      h.handler = (request) async {
+        final action = request.uri.path.split('/').last;
+        return h.response(request, switch (action) {
+          'password' => _registration(),
+          'enroll' => {..._registration(), 'ticket': 'e' * 64},
+          'confirm' => {
+            ..._registration(),
+            'ticket': 'f' * 64,
+            'fields': ['name', 'password'],
+          },
+          'register' => _session(),
+          _ => throw StateError('Unexpected action $action'),
+        });
+      };
+      final start = await h.service.password('new@example.com', 'new-password');
+      final attempt = await h.service.preparePhone(
+        '+201012345678',
+        ticket: start.ticket,
+      );
+      expect(h.store.writes, 0);
+      final confirmed = await h.service.confirmUnverifiedPhone(
+        attempt.ticket,
+        '+201012345678',
+      );
+      expect(
+        h.posts('phone/enroll').single.data['verifier'],
+        h.posts('password').single.data['verifier'],
+      );
+      expect(
+        h.posts('phone/confirm').single.data['verifier'],
+        h.posts('password').single.data['verifier'],
+      );
+      final result = await h.service.register(
+        confirmed.ticket,
+        name: 'Contact',
+        password: 'new-password',
+      );
+      expect(h.store.writes, 0);
+      await h.service.commit(result);
+      expect(h.store.writes, 1);
+    },
+  );
+
+  test('cancelled contact enrollment cannot confirm an old ticket', () async {
+    final h = _Harness();
+    h.handler = (request) async => h.response(request, _registration());
+    final prepared = await h.service.preparePhone('+201012345678');
+    await h.service.cancel();
+    await expectLater(
+      h.service.confirmUnverifiedPhone(prepared.ticket, '+201012345678'),
+      throwsA(_failure),
+    );
+    expect(h.posts('phone/confirm'), isEmpty);
     expect(h.store.writes, 0);
-    expect(h.legacy.registrations, 0);
-    final challenge = await h.service.sendOtp('+201012345678', ticket: enrollment.ticket);
-    final verified = await h.service.verifyOtp(challenge, '123456', ticket: enrollment.ticket);
-    expect(h.store.writes, 0);
-    final result = await h.service.register(verified.ticket, name: 'New Customer', password: 'new-password');
-    expect(h.posts('password').single.data['verifier'], h.posts('verify').single.data['verifier']);
-    expect(h.posts('verify').single.data['ticket'], enrollment.ticket);
-    expect(h.posts('register').single.data['ticket'], verified.ticket);
-    expect(h.posts('register').single.data.containsKey('email'), isFalse);
-    expect(h.store.writes, 0);
-    await h.service.commit(result);
-    expect(h.store.writes, 1);
-    expect(h.legacy.signIns + h.legacy.registrations, 0);
   });
+
+  test(
+    'native new-email enrollment uses the existing installed-client contract through OTP',
+    () async {
+      final h = _Harness();
+      h.handler = (request) async {
+        final action = request.uri.path.split('/').last;
+        return h.response(request, switch (action) {
+          'identify' => {
+            'identifier': 'new@example.com',
+            'kind': 'email',
+            'methods': ['create_password'],
+          },
+          'password' => _registration(),
+          'verify' => {
+            ..._registration(),
+            'ticket': 'd' * 64,
+            'fields': ['name', 'password'],
+          },
+          'register' => _session(),
+          _ => throw StateError('Unexpected native action: $action'),
+        });
+      };
+      final identity = await h.service.identify('new@example.com');
+      expect(identity.allows('create_password'), isTrue);
+      final enrollment = await h.service.password(
+        identity.identifier,
+        'new-password',
+      );
+      expect(enrollment.status, NativeAuthStatus.registrationRequired);
+      expect(h.store.writes, 0);
+      expect(h.legacy.registrations, 0);
+      final challenge = await h.service.sendOtp(
+        '+201012345678',
+        ticket: enrollment.ticket,
+      );
+      final verified = await h.service.verifyOtp(
+        challenge,
+        '123456',
+        ticket: enrollment.ticket,
+      );
+      expect(h.store.writes, 0);
+      final result = await h.service.register(
+        verified.ticket,
+        name: 'New Customer',
+        password: 'new-password',
+      );
+      expect(
+        h.posts('password').single.data['verifier'],
+        h.posts('verify').single.data['verifier'],
+      );
+      expect(h.posts('verify').single.data['ticket'], enrollment.ticket);
+      expect(h.posts('register').single.data['ticket'], verified.ticket);
+      expect(h.posts('register').single.data.containsKey('email'), isFalse);
+      expect(h.store.writes, 0);
+      await h.service.commit(result);
+      expect(h.store.writes, 1);
+      expect(h.legacy.signIns + h.legacy.registrations, 0);
+    },
+  );
 
   for (final type in [
     DioExceptionType.connectionError,

@@ -28,6 +28,10 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/pages/catalog_product_list_screen.dart';
 import 'package:mobishop_store_app/features/catalog/presentation/providers/catalog_providers.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_layout.dart';
+import 'package:mobishop_store_app/features/home/presentation/pages/home_page.dart';
+import 'package:mobishop_store_app/features/home/presentation/providers/home_providers.dart';
 import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart'
     as cart_selection;
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
@@ -40,6 +44,51 @@ import 'features/product/support/product_test_data.dart';
 import 'features/auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  for (final back in ['header', 'system']) {
+    testWidgets('Home category shortcut returns to Home with $back back', (tester) async {
+      final router = createAppRouter();
+      await _pumpStartedApp(tester, router: router,
+        homeContent: HomeLayout(version: 1, page: 'home', locale: 'ar',
+          updatedAt: DateTime(2026), blocks: [const QuickLinksBlock(
+            id: 'shortcuts', enabled: true,
+            title: null, subtitle: null, layout: 'row', columns: 4,
+            imageShape: 'circle', itemSize: 64, gap: 12, showLabels: true,
+            labelColor: '#111111', labelSize: 12,
+            items: [QuickLinkItem(id: 'kids', label: 'Kids shortcut',
+              imageUrl: '', subtitle: null,
+              action: HomeAction(type: 'category', value: '17'))],
+          )]),
+        homeLayout: CmsPageLayout.fallback('home'),
+        catalogLayout: CmsPageLayout.fallback('catalog'));
+      await tester.tap(find.text('Kids shortcut'));
+      await tester.pumpAndSettle();
+      expect(router.routerDelegate.currentConfiguration.last.matchedLocation, '/products');
+      expect(tester.widget<CatalogProductListScreen>(find.byType(CatalogProductListScreen)).request.categoryId, 17);
+      if (back == 'header') {
+        await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+      } else {
+        expect(await router.routerDelegate.popRoute(), isTrue);
+      }
+      await tester.pumpAndSettle();
+      expect(router.routeInformationProvider.value.uri.path, '/');
+      expect(find.byType(HomePage), findsOneWidget);
+      expect(find.text('Kids shortcut'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await _disposeApp(tester, router);
+    });
+  }
+
+  for (final category in ['0', '-2', 'invalid']) {
+    testWidgets('products route ignores invalid category $category', (tester) async {
+      final router = createAppRouter(initialLocation: '/products?category=$category');
+      await _pumpStartedApp(tester, router: router,
+        catalogLayout: CmsPageLayout.fallback('catalog'));
+      expect(tester.widget<CatalogProductListScreen>(find.byType(CatalogProductListScreen)).request.categoryId, isNull);
+      expect(tester.takeException(), isNull);
+      await _disposeApp(tester, router);
+    });
+  }
+
   for (final origin in ['/', '/categories', '/wishlist']) {
     testWidgets('search from $origin opens a product and returns to the same query', (tester) async {
       final router = createAppRouter(initialLocation: origin);
@@ -564,6 +613,7 @@ Future<void> _pumpStartedApp(
   CmsPageLayout? wishlistLayout,
   CmsPageLayout? productLayout,
   CmsPageLayout? accountLayout,
+  HomeLayout? homeContent,
   CatalogRepository catalogRepository = const _RouterCatalogRepository(),
   cart_selection.AddProductPurchaseSelection? addSelection,
 }) async {
@@ -571,6 +621,8 @@ Future<void> _pumpStartedApp(
     ProviderScope(
       overrides: [
         appStartupProvider.overrideWith((ref) async {}),
+        if (homeContent != null)
+          homeLayoutProvider.overrideWith((ref, locale) async => homeContent),
         nativeAuthActionsProvider.overrideWithValue(IdleNativeAuthActions()),
         appLocaleProvider.overrideWithValue(const Locale('ar')),
         applicationIdentity58Provider.overrideWithValue({

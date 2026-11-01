@@ -7,12 +7,16 @@ class NativeAuthConfig {
     this.firebase = const {},
     this.google = const {},
     this.phoneCountryCode = '',
+    this.supportsUnverifiedPhoneEnrollment = false,
+    this.supportsExpectedPhoneGoogle = false,
   });
   final bool enabled;
   final Map<String, bool> methods;
   final Map<String, dynamic> firebase;
   final Map<String, dynamic> google;
   final String phoneCountryCode;
+  final bool supportsUnverifiedPhoneEnrollment;
+  final bool supportsExpectedPhoneGoogle;
 
   String get phoneHint => phoneCountryCode == '20' ? '01XXXXXXXXX' : '';
 
@@ -48,6 +52,10 @@ class NativeAuthConfig {
   factory NativeAuthConfig.fromJson(Map<String, dynamic> json) =>
       NativeAuthConfig(
         enabled: json['enabled'] == true,
+        supportsUnverifiedPhoneEnrollment:
+            json['supports_unverified_phone_enrollment'] == true,
+        supportsExpectedPhoneGoogle:
+            json['supports_expected_phone_google'] == true,
         phoneCountryCode:
             RegExp(
               r'^[1-9]\d{0,3}$',
@@ -197,6 +205,16 @@ class NativeOtpChallenge {
   final Object handle;
   final int? resendToken;
   final Future<NativeAuthResult?> automaticResult;
+}
+
+/// Optional enrollment protocol. Confirmation records contact data, never ownership.
+abstract interface class NativePhoneEnrollmentActions {
+  Future<NativeAuthResult> preparePhone(String phone, {String? ticket});
+  Future<NativeAuthResult> confirmUnverifiedPhone(String ticket, String phone);
+}
+
+abstract interface class NativeExistingPhoneGoogleActions {
+  Future<NativeAuthResult> googleForPhone(String expectedPhone);
 }
 
 abstract interface class NativeAuthActions {
