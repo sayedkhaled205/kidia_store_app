@@ -50,15 +50,15 @@
         var logout=new URL(cfg.logoutUrl,location.origin);logout.searchParams.set('redirect_to',login.href);link.href=logout.href;box.appendChild(link);
         button(box,'استخدام رقم مختلف',retry);
     }
-    function fallbackForm(stage,phone,details,send,myGeneration,retry) {
-        var box=fresh(stage,'أكّد رقم موبايلك');message(box,'اكتب نفس الرقم مرة تانية عشان تكمّل إنشاء حسابك.');
+    function fallbackForm(stage,phone,details,send,myGeneration,retry,verified) {
+        var box=fresh(stage,verified?'أكمل إنشاء حسابك':'أكّد رقم موبايلك');message(box,verified?'تم تأكيد رقمك. اكتب اسمك وكلمة مرور لحسابك.':'اكتب نفس الرقم مرة تانية عشان تكمّل إنشاء حسابك.');
         var form=document.createElement('form');form.style.cssText='display:grid;gap:14px';box.appendChild(form);
-        var repeated=field(form,'رقم الموبايل','phone','tel','01xxxxxxxxx');
+        var repeated=verified?null:field(form,'رقم الموبايل','phone','tel','01xxxxxxxxx');
         if(!details){field(form,'الاسم','name');field(form,'كلمة المرور','password','password');field(form,'تأكيد كلمة المرور','confirm_password','password');}
         var status=message(form,''),submit=button(form,'إنشاء الحساب');
         if(retry)button(form,'تغيير الرقم أو البدء من جديد',retry);
         form.addEventListener('submit',async function(e){e.preventDefault();if(submit.disabled)return;
-            if(local(repeated.value)!==local(phone)){status.textContent='الرقم مختلف. اكتب نفس الرقم الذي أدخلته أول مرة.';return;}
+            if(repeated && local(repeated.value)!==local(phone)){status.textContent='الرقم مختلف. اكتب نفس الرقم الذي أدخلته أول مرة.';return;}
             var values=details||Object.fromEntries(new FormData(form));
             if(values.password!==undefined && values.password!==values.confirm_password){status.textContent='كلمة المرور وتأكيدها مش متطابقين.';return;}
             submit.disabled=true;status.textContent='جاري إكمال الحساب…';
@@ -85,6 +85,15 @@
             },myGeneration,function(){generation++;active=false;if(panel){panel.remove();panel=null;}location.replace(cfg.loginUrl);});
         }).catch(function(error){if(myGeneration!==generation)return;status.textContent=/existing_phone/.test(error.message)?'الرقم مسجل بالفعل. ارجع وادخل لحسابك بكلمة المرور أو جوجل.':friendly(error);});
         return true;
+    };
+    window.KidiaVerifiedPhoneRegistration=function(phone,ticket,v) {
+        document.dispatchEvent(new CustomEvent('kidia:otp-reset'));
+        active=true;var myGeneration=++generation,stage=root.querySelector('[data-kidia-stage="phone"]');
+        var native=root.querySelector('#kidia-otp-native');if(native)native.hidden=true;
+        fallbackForm(stage,phone,null,async function(details){
+            if(myGeneration!==generation)return;
+            await request('register_customer',Object.assign({},details,{verifier:v,ticket:ticket}));
+        },myGeneration,function(){generation++;active=false;location.replace(cfg.loginUrl);},true);
     };
     document.addEventListener('kidia:otp-reset',function(){generation++;active=false;if(panel){panel.remove();panel=null;}});
     var setup=root.querySelector('.kidia-phone-setup-form');

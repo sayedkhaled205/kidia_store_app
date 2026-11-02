@@ -244,7 +244,9 @@ final class MobiShop_Customer_Account_Endpoint {
 		$billing_phone = is_callable( array( $customer, 'get_billing_phone' ) )
 			? (string) $customer->get_billing_phone()
 			: '';
-		$phone = (string) get_user_meta( $customer_id, self::ACCOUNT_PHONE_META, true );
+		$contact = (string) get_user_meta( $customer_id, 'kidia_unverified_phone', true );
+		$contact_only = $contact !== '' && ! get_user_meta( $customer_id, 'kidia_login_phone', true );
+		$phone = $contact_only ? $contact : (string) get_user_meta( $customer_id, self::ACCOUNT_PHONE_META, true );
 		if ( '' === trim( $phone ) && '' !== trim( $billing_phone ) ) {
 			$phone = $this->sanitize_phone_value( $billing_phone );
 			update_user_meta( $customer_id, self::ACCOUNT_PHONE_META, $phone );

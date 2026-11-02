@@ -58,9 +58,7 @@ final class MobiShop_Customer_Source {
 
     public static function contact( $user ): void {
         if ( ! current_user_can( 'edit_user', $user->ID ) ) return;
-        foreach ( array( '_mobishop_account_phone', 'kidia_login_phone', 'fme_billing_phone', 'billing_phone' ) as $key ) {
-            if ( get_user_meta( $user->ID, $key, true ) ) return;
-        }
+        if ( get_user_meta( $user->ID, 'kidia_login_phone', true ) ) return;
         $phone = (string) get_user_meta( $user->ID, 'kidia_unverified_phone', true );
         if ( $phone === '' ) return;
         echo '<h2>' . esc_html( self::label( 'Contact phone' ) ) . '</h2><p><bdi>' . esc_html( $phone ) . '</bdi> — ' . esc_html( self::label( 'Not verified by SMS' ) ) . '</p>';

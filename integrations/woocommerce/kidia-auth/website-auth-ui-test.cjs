@@ -52,5 +52,17 @@ function value(w,name,v){let input=w.document.querySelector('[name="'+name+'"]')
  value(e.w,'kidia_setup_phone','01000000004');submit(e.w,e.w.document.querySelector('.kidia-phone-setup-form'));await settle();
  value(e.w,'phone','01000000004');submit(e.w,e.w.document.querySelector('.kidia-shared-completion form'));await settle();
  ok(e.calls.some(c=>c.method==='website_contact'&&c.mode==='confirm'&&c.phone==='+201000000004'),'Pending email confirms its own contact');e.close();
+ // The real FME verification callback must hand an unknown signed phone to profile entry, not reload/login.
+ e=env('anonymous',async d=>({status:'authenticated'}));
+ e.w.fmelwpDataObj={ajaxurl:'/ajax',nonce:'otp-fixture-nonce'};let sentOtp;
+ e.w.jQuery={ajax:opts=>{sentOtp=opts.data;return Promise.resolve({success:true,registration:true,ticket:'verified-phone-ticket'});}};
+ e.w.eval(fs.readFileSync(path.join(base,'website/kidia-firebase-otp.js'),'utf8'));
+ e.w.confirmationResult={confirm:async()=>({user:{getIdToken:async()=> 'signed-fixture-token'}})};
+ await e.w.fma_lwp_firebase_otp_validation('+201000000005','123456',false);await settle();
+ ok(/^[a-f0-9]{64}$/.test(sentOtp.kidia_native_verifier),'Verified phone request carries its browser binding');
+ ok(!e.calls.some(c=>c.method==='register_customer'),'OTP proof alone issues no account cookie');
+ ok(!e.w.document.querySelector('.kidia-shared-completion input[name="phone"]'),'Successful OTP does not ask for repeated phone');
+ value(e.w,'name','Verified Fixture');value(e.w,'password','fixture-password');value(e.w,'confirm_password','fixture-password');submit(e.w,e.w.document.querySelector('.kidia-shared-completion form'));await settle();
+ ok(e.calls.some(c=>c.method==='register_customer'&&c.ticket==='verified-phone-ticket'&&c.verifier===sentOtp.kidia_native_verifier),'Verified signup preserves signed ticket and binding until profile submission');e.close();
  console.log(`Website auth UI: ${checks} checks passed.`);
 })().catch(e=>{console.error(e);process.exitCode=1;});

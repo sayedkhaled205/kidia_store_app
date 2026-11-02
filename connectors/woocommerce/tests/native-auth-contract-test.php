@@ -158,6 +158,7 @@ function email_exists( $email ) { $user = get_user_by( 'email', $email ); return
 function username_exists( $login ) { $user = get_user_by( 'login', $login ); return $user ? $user->ID : false; }
 function native_meta_matches( $id, $query ) {
     if ( isset( $query['key'] ) ) {
+        if ( ( $query['compare'] ?? '' ) === 'NOT EXISTS' ) return ! array_key_exists( $query['key'], $GLOBALS['native_meta'][$id] ?? array() );
         $value = get_user_meta( $id, $query['key'], true );
         if ( ( $query['compare'] ?? '=' ) === 'REGEXP' ) return preg_match( '~' . $query['value'] . '~uD', (string) $value ) === 1;
         return ( $query['compare'] ?? '=' ) === 'IN' ? in_array( $value, (array) $query['value'], true ) : $value === $query['value'];
@@ -814,6 +815,8 @@ foreach ( array( 'phone', 'email', 'google' ) as $index => $origin ) {
     native_assert( (bool) get_user_meta( $contact_id, '_mobishop_app_last_login_at', true ), 'Only completed app sign-in records channel metadata' );
     native_assert( get_user_meta( $contact_id, 'kidia_unverified_phone', true ) === $contact, 'Unverified number has a separate contact field' );
     native_assert( ! get_user_meta( $contact_id, 'kidia_login_phone', true ) && ! get_user_meta( $contact_id, 'fme_billing_phone', true ), 'Contact fallback does not write verified identity metadata' );
+    update_user_meta( $contact_id, 'billing_phone', $contact ); // Later checkout/vendor copies are not OTP proof.
+    update_user_meta( $contact_id, 'fme_billing_phone', $contact );
     $issued_before_contact_otp = count( $GLOBALS['native_issued'] );
     $rightful_ticket = native_data( native_phone( $endpoint, $verifier, $contact ), 'Real owner proves previously unverified contact' );
     native_assert( $rightful_ticket['status'] === 'registration_required', 'Real phone proof starts a separate account instead of logging into the contact claimant account' );
@@ -920,6 +923,28 @@ native_rejected( $endpoint->website_contact( native_request( $race_finish ) ), '
 unset( $GLOBALS['on_native_lock'] );
 native_assert( $GLOBALS['native_users'][62]['name'] === 'Before Race' && ! get_user_meta( 62, 'kidia_unverified_phone', true ), 'Losing completion race changes neither profile nor contact' );
 $GLOBALS['website_user'] = 0;
+
+// A large set of unverified shipping copies must not hide the real verified owner.
+$shipping_attack_ids = array();
+for ( $i = 1000; $i < 1051; $i++ ) {
+    $shipping_attack_ids[] = $i;
+    $GLOBALS['native_users'][$i] = array( 'login' => 'contact-shipping-' . $i, 'email' => 'contact-' . $i . '@example.com', 'password' => 'fixture-password', 'name' => 'Contact Fixture', 'roles' => array( 'customer' ) );
+    $GLOBALS['native_meta'][$i] = array( 'kidia_unverified_phone' => '+201' . str_pad( (string)$i, 9, '0', STR_PAD_LEFT ), 'billing_phone' => '+201077777771', 'fme_billing_phone' => '+201077777771' );
+}
+$GLOBALS['native_users'][1052] = array( 'login' => 'real-shipping-target', 'email' => 'real-target@example.com', 'password' => 'owner-password', 'name' => 'Real Owner', 'roles' => array( 'customer' ) );
+$GLOBALS['native_meta'][1052] = array( 'kidia_login_phone' => '+201077777771' );
+native_clear_rate();
+$shipping_owner = native_data( native_phone( $endpoint, $verifier, '+201077777771' ), 'Verified owner after 51 unverified shipping copies' );
+native_assert( $shipping_owner['status'] === 'authenticated' && $shipping_owner['user_id'] === 1052, 'SQL filtering preserves the rightful owner before the candidate limit' );
+foreach ( array_merge( $shipping_attack_ids, array(1052) ) as $id ) { unset($GLOBALS['native_users'][$id],$GLOBALS['native_meta'][$id]); }
+// A website verifier uses only its server-supplied Firebase project, without Android readiness.
+$saved_native_settings = $GLOBALS['native_options']['mobishop_native_auth_settings'];
+$GLOBALS['native_options']['mobishop_native_auth_settings']['phone_enabled'] = false;
+$website_engine = new MobiShop_Native_Customer_Auth_Endpoint( static fn($user) => new WP_REST_Response(array('user_id'=>$user->ID)), static fn($user) => true, 'test-project' );
+$web_proof = native_data( native_phone( $website_engine, $verifier, '+201077777772', array( 'client_channel'=>'website' ) ), 'Website Firebase proof is independent from native Android configuration' );
+native_assert( $web_proof['status'] === 'registration_required', 'Trusted website project produces only a registration ticket for an unknown phone' );
+native_rejected( native_phone( $endpoint, $verifier, '+201077777772', array('client_channel'=>'website') ), 'Request channel cannot opt the public native endpoint into a different trusted project' );
+$GLOBALS['native_options']['mobishop_native_auth_settings'] = $saved_native_settings;
 
 echo 'Native customer auth: '
 

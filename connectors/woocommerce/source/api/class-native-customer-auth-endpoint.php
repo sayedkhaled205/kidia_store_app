@@ -10,10 +10,12 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 	private const GOOGLE_CERTS = 'https://www.googleapis.com/oauth2/v1/certs';
 	private $issue;
 	private $allowed;
+	private $trusted_website_phone_project;
 
-	public function __construct( callable $issue, callable $allowed ) {
+	public function __construct( callable $issue, callable $allowed, ?string $trusted_website_phone_project = null ) {
 		$this->issue = $issue;
 		$this->allowed = $allowed;
+		$this->trusted_website_phone_project = $trusted_website_phone_project;
 	}
 
 	public function register(): void {
@@ -217,7 +219,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( $mode === 'verify' ) {
 				$c = $this->capabilities( $request );
 				$claims = $this->jwt( $request->get_param( 'id_token' ), self::FIREBASE_CERTS );
-				$project = $c['firebase']['projectId'] ?? '';
+				$project = $request->get_param( 'client_channel' ) === 'website' && $this->trusted_website_phone_project !== null ? $this->trusted_website_phone_project : ( $c['firebase']['projectId'] ?? '' );
 				$verified = $project !== '' && $claims && ( $claims['aud'] ?? null ) === $project
 					&& ( $claims['iss'] ?? null ) === 'https://securetoken.google.com/' . $project && $this->fresh( $claims, true )
 					&& ( $claims['phone_number'] ?? null ) === $phone && ( $claims['firebase']['sign_in_provider'] ?? null ) === 'phone';
@@ -252,11 +254,12 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 	public function phone_verify( WP_REST_Request $request ) {
 		if ( $error = $this->guard( 'phone', 20 ) ) return $error;
 		$c = $this->capabilities( $request );
-		if ( ! $c['methods']['phone_otp'] ) return $this->error( 'unavailable', 503 );
+		$website = $request->get_param( 'client_channel' ) === 'website' && $this->trusted_website_phone_project !== null;
+		if ( $website ? $this->trusted_website_phone_project === '' : ! $c['methods']['phone_otp'] ) return $this->error( 'unavailable', 503 );
 		$phone = $this->phone( (string) $request->get_param( 'phone' ) );
 		if ( ! $phone || ! $this->verifier( $request ) ) return $this->error( 'invalid_proof', 401 );
 		$claims = $this->jwt( $request->get_param( 'id_token' ), self::FIREBASE_CERTS );
-		$project = $c['firebase']['projectId'];
+		$project = $website ? $this->trusted_website_phone_project : $c['firebase']['projectId'];
 		if ( ! $claims || ( $claims['aud'] ?? null ) !== $project || ( $claims['iss'] ?? null ) !== 'https://securetoken.google.com/' . $project
 			|| ! $this->fresh( $claims, true ) || ( $claims['phone_number'] ?? null ) !== $phone
 			|| ( $claims['firebase']['sign_in_provider'] ?? null ) !== 'phone' || strlen( $claims['sub'] ) > 128 ) return $this->error( 'invalid_proof', 401 );
@@ -515,8 +518,11 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 	}
 
 	private function user_phone( WP_User $user, string $expected, bool $include_unverified = false ): string {
+		// Contact-only accounts never gain an OTP identity from a later checkout.
+		$contact = (string) get_user_meta( $user->ID, 'kidia_unverified_phone', true );
 		// The first stored identity is authoritative: shipping metadata cannot override it.
 		foreach ( array_merge( $this->phone_keys(), $include_unverified ? array( 'kidia_unverified_phone' ) : array() ) as $key ) {
+			if ( in_array( $key, array( 'fme_billing_phone', 'billing_phone' ), true ) && $contact !== '' ) continue;
 			$value = (string) get_user_meta( $user->ID, $key, true );
 			if ( $value !== '' ) {
 				// Older providers also store E.164 without the leading plus.
@@ -536,10 +542,17 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		}
 		$query = array( 'relation' => 'OR' );
 		$pattern = $this->phone_lookup_pattern( $values );
-		foreach ( array_merge( $this->phone_keys(), $include_unverified ? array( 'kidia_unverified_phone' ) : array() ) as $key ) $query[] = array( 'key' => $key, 'value' => $pattern, 'compare' => 'REGEXP' );
+		foreach ( array_merge( $this->phone_keys(), $include_unverified ? array( 'kidia_unverified_phone' ) : array() ) as $key ) {
+			$clause = array( 'key' => $key, 'value' => $pattern, 'compare' => 'REGEXP' );
+			// Exclude contact-only legacy copies in SQL, before the bounded candidate limit.
+			if ( in_array( $key, array( 'fme_billing_phone', 'billing_phone' ), true ) ) $clause = array( 'relation' => 'AND', $clause,
+				array( 'relation' => 'OR', array( 'key' => 'kidia_unverified_phone', 'compare' => 'NOT EXISTS' ), array( 'key' => 'kidia_unverified_phone', 'value' => '', 'compare' => '=' ) ) );
+			$query[] = $clause;
+		}
 		// Bound the candidate set in SQL. No full user-table scan in PHP or partial picker.
 		$users = get_users( array( 'meta_query' => $query, 'number' => 51, 'orderby' => 'ID', 'order' => 'ASC' ) );
 		if ( count( $users ) > 50 ) return $this->error( 'account_conflict', 409 );
+		if ( ! $include_unverified ) $users = array_values( array_filter( $users, fn( $user ) => ! get_user_meta( $user->ID, 'kidia_unverified_phone', true ) || $this->user_phone( $user, $phone ) !== '' ) );
 		$eligible = array_values( array_filter( $users, fn( $user ) => $this->eligible( $user ) && $this->user_phone( $user, $phone, $include_unverified ) === $phone ) );
 		return $users && ! $eligible ? $this->error( 'account_conflict', 409 ) : $eligible;
 	}

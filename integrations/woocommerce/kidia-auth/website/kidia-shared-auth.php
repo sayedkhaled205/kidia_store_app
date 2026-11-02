@@ -3,6 +3,18 @@
  * Reuses the connector's registration and identity protections for the website.
  */
 defined('ABSPATH') || exit;
+function kidia_website_auth_engine() {
+    return new MobiShop_Native_Customer_Auth_Endpoint(
+        static function($user) {
+            wp_set_current_user((int)$user->ID);
+            wp_set_auth_cookie((int)$user->ID,true,is_ssl());
+            do_action('wp_login',(string)$user->user_login,$user);
+            return new WP_REST_Response(['status'=>'authenticated']);
+        },
+        static fn($user) => $user instanceof WP_User && !user_can($user,'manage_options') && !user_can($user,'edit_users') && !user_can($user,'manage_woocommerce'),
+        get_option('fmaServiceProvider') === 'firebase' ? (string)get_option('fma_lwp_projectID') : ''
+    );
+}
 function kidia_shared_auth_action(): void {
     nocache_headers();
     check_ajax_referer('mobishop_website_auth', 'nonce');
@@ -22,15 +34,7 @@ function kidia_shared_auth_action(): void {
     if ($method === 'register_customer' && (!isset($params['password'],$params['confirm_password']) || !hash_equals($params['password'],$params['confirm_password']))) {
         wp_send_json_error(['code'=>'invalid_profile'],400);
     }
-    $engine = new MobiShop_Native_Customer_Auth_Endpoint(
-        static function($user) {
-            wp_set_current_user((int)$user->ID);
-            wp_set_auth_cookie((int)$user->ID,true,is_ssl());
-            do_action('wp_login',(string)$user->user_login,$user);
-            return new WP_REST_Response(['status'=>'authenticated']);
-        },
-        static fn($user) => $user instanceof WP_User && !user_can($user,'manage_options') && !user_can($user,'edit_users') && !user_can($user,'manage_woocommerce')
-    );
+    $engine = kidia_website_auth_engine();
     $request = new WP_REST_Request('POST');
     $request->set_body_params($params);
     $result = $engine->$method($request);
@@ -41,7 +45,7 @@ add_action('wp_ajax_kidia_shared_auth','kidia_shared_auth_action');
 add_action('wp_ajax_nopriv_kidia_shared_auth','kidia_shared_auth_action');
 add_action('wp_enqueue_scripts', static function(): void {
     if (!class_exists('Kidia_Store_Custom_Login_Page_V020') || !Kidia_Store_Custom_Login_Page_V020::instance()->is_login_page()) return;
-    wp_enqueue_script('kidia-shared-auth',plugin_dir_url(__FILE__).'kidia-shared-auth.js',['kidia-login-page'],'1.0.0',true);
+    wp_enqueue_script('kidia-shared-auth',plugin_dir_url(__FILE__).'kidia-shared-auth.js',['kidia-login-page'],'1.0.1',true);
     wp_localize_script('kidia-shared-auth','KidiaSharedAuth',[
         'nonce'=>wp_create_nonce('mobishop_website_auth'),
         'ajaxUrl'=>admin_url('admin-ajax.php'),

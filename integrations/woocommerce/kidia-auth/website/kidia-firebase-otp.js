@@ -247,7 +247,8 @@
             return Promise.resolve();
         }
         stopSms();
-        var current = generation, confirmation = window.confirmationResult;
+        var current = generation, confirmation = window.confirmationResult, nativeVerifier = '';
+        var bytes=new Uint8Array(32);crypto.getRandomValues(bytes);nativeVerifier=Array.from(bytes,function(v){return v.toString(16).padStart(2,'0');}).join('');
         busy(true);
         emit('verifying');
         var verification = bounded(Promise.resolve().then(function () { return confirmation.confirm(code); }), 25000)
@@ -258,7 +259,7 @@
                 if (current !== generation) { throw {cancelled: true}; }
                 activeRequest = jQuery.ajax({url: fmelwpDataObj.ajaxurl, method: 'POST', timeout: 20000, dataType: 'json', data: {
                     action: 'fme_lwp_process_otp_validation', phone_number: phone,
-                    nonce: fmelwpDataObj.nonce, firebaseIdToken: idToken
+                    nonce: fmelwpDataObj.nonce, firebaseIdToken: idToken, kidia_native_verifier: nativeVerifier
                 }});
                 return bounded(activeRequest, 21000).then(function (response) {
                     if (response && response.chooseAccount && response.success && current === generation) {
@@ -270,6 +271,10 @@
                 if (current !== generation) { return; }
                 if (!response || !response.success) { throw {kidiaMessage: response && response.message}; }
                 if (response.chooseAccount) { return; }
+                if (response.registration) {
+                    if (typeof window.KidiaVerifiedPhoneRegistration !== 'function') throw new Error('registration-not-ready');
+                    window.KidiaVerifiedPhoneRegistration(phone,response.ticket,nativeVerifier);return;
+                }
                 completeLogin();
             }).catch(function (error) {
                 if (current !== generation || error && error.cancelled) { return; }

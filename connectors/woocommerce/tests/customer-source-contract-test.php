@@ -24,7 +24,8 @@ foreach(['', 'bad', ['registered']] as $input){$_GET=['mobishop_customer_channel
 $_GET=['mobishop_customer_channel'=>'registered'];$GLOBALS['allowed']=false;$q=new Query;MobiShop_Customer_Source::filter_query($q);check(!$q->values,'Permission protected');$GLOBALS['allowed']=true;
 $GLOBALS['pagenow']='other.php';$q=new Query;MobiShop_Customer_Source::filter_query($q);check(!$q->values,'Only users screen');$GLOBALS['pagenow']='users.php';
 ob_start();MobiShop_Customer_Source::filter_control('bottom');check(ob_get_clean()==='','No duplicate controls');
+$GLOBALS['meta'][7]['billing_phone']='+201000000003';
 ob_start();MobiShop_Customer_Source::contact((object)['ID'=>7]);$html=ob_get_clean();check(str_contains($html,'+201000000001'),'Read-only contact visible');
 $GLOBALS['meta'][7]['kidia_login_phone']='+201000000002';ob_start();MobiShop_Customer_Source::contact((object)['ID'=>7]);check(ob_get_clean()==='','Stale contact cannot override verified phone');
-check(!isset($GLOBALS['meta'][7]['billing_phone']),'Display never promotes contact to identity');
+check($GLOBALS['meta'][7]['billing_phone']==='+201000000003','Display never changes shipping phone or promotes contact');
 echo "Customer-source checks: $n passed.\n";

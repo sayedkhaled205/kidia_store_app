@@ -337,6 +337,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		 * dedicated identity has been stored. */
 		if ( empty( $users ) ) {
 			$users = $this->find_users_by_phone_meta( array( 'fme_billing_phone', 'billing_phone' ), $forms );
+			$users = array_values( array_filter( $users, static fn( $id ): bool => ! get_user_meta( $id, 'kidia_unverified_phone', true ) || get_user_meta( $id, self::LOGIN_PHONE_META, true ) ) );
 		}
 
 		/* Never guess when the same phone is already present on two accounts. */
@@ -382,6 +383,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		$users = $this->find_users_by_phone_meta( array( self::LOGIN_PHONE_META ), $forms );
 		if ( empty( $users ) ) {
 			$users = $this->find_users_by_phone_meta( array( 'fme_billing_phone', 'billing_phone' ), $forms );
+			$users = array_values( array_filter( $users, static fn( $id ): bool => ! get_user_meta( $id, 'kidia_unverified_phone', true ) || get_user_meta( $id, self::LOGIN_PHONE_META, true ) ) );
 		}
 
 		if ( 1 !== count( $users ) ) {
@@ -393,7 +395,6 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 			return false;
 		}
 
-		$this->store_login_phone( (int) $user->ID, $phone );
 		return $user;
 	}
 
@@ -434,7 +435,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 			$user = get_user_by( 'id', $contact_id );
 			if ( $user && ! user_can( $user, 'manage_options' ) && ! user_can( $user, 'edit_users' ) && ! user_can( $user, 'manage_woocommerce' ) ) {
 				$has_identity = false;
-				foreach ( array( self::LOGIN_PHONE_META, 'fme_billing_phone', 'billing_phone' ) as $key ) if ( get_user_meta( $contact_id, $key, true ) ) $has_identity = true;
+				foreach ( array( self::LOGIN_PHONE_META ) as $key ) if ( get_user_meta( $contact_id, $key, true ) ) $has_identity = true;
 				if ( $has_identity ) continue;
 				$candidates[] = $user;
 				$known_ids[]  = $contact_id;
@@ -539,9 +540,10 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		}
 
 		$phone = (string) get_user_meta( $user_id, self::LOGIN_PHONE_META, true );
+		$contact = (string) get_user_meta( $user_id, 'kidia_unverified_phone', true );
 		if ( '' === $phone ) {
-			$legacy = (string) get_user_meta( $user_id, 'fme_billing_phone', true );
-			if ( '' === $legacy ) {
+			$legacy = $contact === '' ? (string) get_user_meta( $user_id, 'fme_billing_phone', true ) : '';
+			if ( '' === $legacy && $contact === '' ) {
 				$legacy = (string) get_user_meta( $user_id, 'billing_phone', true );
 			}
 			if ( '' !== $this->canonical_phone( $legacy ) ) {

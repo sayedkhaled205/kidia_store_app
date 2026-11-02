@@ -93,6 +93,22 @@ final class Kidia_Firebase_OTP_265 {
                 'accounts' => array_map([self::class, 'account_label'], $eligible)]);
         }
         if ($users && !$eligible) { self::reject('استخدم رقم تسجيل الدخول الأصلي للحساب، أو سجّل بالإيميل أو جوجل.'); }
+        if (!$eligible) {
+            // Never let the legacy vendor resolve a contact/shipping number into an account.
+            if (!function_exists('kidia_website_auth_engine')) self::reject('تعذر إكمال التسجيل. استخدم البريد أو جوجل.');
+            $request = new WP_REST_Request('POST');
+            $request->set_body_params(['phone'=>$phone, 'id_token'=>$token, 'client_channel'=>'website',
+                'verifier'=>is_string($_POST['kidia_native_verifier'] ?? null) ? wp_unslash($_POST['kidia_native_verifier']) : '']);
+            $result = kidia_website_auth_engine()->phone_verify($request);
+            if (is_wp_error($result)) self::reject('تعذر إكمال التحقق. أعد المحاولة أو استخدم البريد أو جوجل.');
+            $data = $result->get_data();
+            if (($data['status'] ?? '') === 'registration_required') {
+                wp_send_json(['success'=>true, 'registration'=>true, 'ticket'=>$data['ticket']]);
+            }
+            if (($data['status'] ?? '') === 'authenticated') wp_send_json(['success'=>true]);
+            self::reject('استخدم البريد أو جوجل لاختيار حسابك.');
+        }
+
         if ($eligible) {
             self::$selected_customer = (int) $eligible[0]->ID;
             self::$verified_phone = $phone;
@@ -109,7 +125,9 @@ final class Kidia_Firebase_OTP_265 {
         foreach (['kidia_login_phone', 'fme_billing_phone', 'billing_phone'] as $key) {
             $query[] = ['key' => $key, 'value' => $forms, 'compare' => 'IN'];
         }
-        return get_users(['number' => -1, 'count_total' => false, 'orderby' => 'ID', 'order' => 'ASC', 'meta_query' => $query]);
+        $users = get_users(['number' => -1, 'count_total' => false, 'orderby' => 'ID', 'order' => 'ASC', 'meta_query' => $query]);
+        // A checkout phone on a contact-only account is not an OTP owner.
+        return array_values(array_filter($users, static fn($user) => !get_user_meta($user->ID, 'kidia_unverified_phone', true) || get_user_meta($user->ID, 'kidia_login_phone', true)));
     }
 
     public static function eligible_customer($user, string $phone): bool {
@@ -118,6 +136,7 @@ final class Kidia_Firebase_OTP_265 {
         $forms = [$phone, substr($phone, 1), $local, substr($local, 1)];
         // A shipping number must never override a different established login identity.
         foreach (['kidia_login_phone', 'fme_billing_phone', 'billing_phone'] as $key) {
+            if (in_array($key, ['fme_billing_phone','billing_phone'], true) && get_user_meta($user->ID, 'kidia_unverified_phone', true)) continue;
             $identity = trim((string) get_user_meta($user->ID, $key, true));
             if ($identity !== '') { return in_array($identity, $forms, true); }
         }
@@ -172,7 +191,7 @@ final class Kidia_Firebase_OTP_265 {
                 if ($library !== 'app') { $scripts->registered[$handle]->deps = ['fma_lwp_firebase_app']; }
             }
         }
-        wp_enqueue_script('kidia-firebase-otp265', plugin_dir_url(__FILE__) . 'kidia-firebase-otp.js', ['fme_lwp_public_script', 'fma_lwp_firebase_auth'], '1.2.2', true);
+        wp_enqueue_script('kidia-firebase-otp265', plugin_dir_url(__FILE__) . 'kidia-firebase-otp.js', ['fme_lwp_public_script', 'fma_lwp_firebase_auth'], '1.2.3', true);
         wp_enqueue_style('kidia-otp-accounts', plugin_dir_url(__FILE__) . 'kidia-otp-accounts.css', [], '1.2.0');
     }
 }

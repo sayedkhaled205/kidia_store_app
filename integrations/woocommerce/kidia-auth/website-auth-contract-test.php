@@ -3,6 +3,7 @@
 define('HOUR_IN_SECONDS',3600);define('MINUTE_IN_SECONDS',60);define('ABSPATH',__DIR__);
 class Redirected extends Exception {}
 $GLOBALS['meta']=[];$GLOBALS['users']=[];$GLOBALS['creates']=0;$GLOBALS['current']=0;
+function wp_doing_ajax(){return true;}
 function sanitize_key($s){return preg_replace('/[^a-z0-9_-]/','',strtolower($s));}
 function absint($s){return abs((int)$s);}function sanitize_text_field($s){return strip_tags($s);}function sanitize_email($s){return $s;}function is_email($s){return filter_var($s,FILTER_VALIDATE_EMAIL)!==false;}function wp_unslash($s){return $s;}
 function get_option($k){return 1;}function get_post_type($id){return 'page';}function get_post_status($id){return 'publish';}function get_permalink($id=0){return 'https://example.test/login-register/';}
@@ -22,7 +23,8 @@ function invoke($method,...$args){global $instance;$m=new ReflectionMethod($inst
 foreach([['','password-fixture','password-fixture'],['Name','short','short'],['Name','password-fixture','different']] as [$name,$password,$confirm]){try{invoke('register_email_customer','fixture@example.test',$password,$name,$confirm);}catch(Redirected $r){}check($GLOBALS['creates']===0,'Invalid profile never creates account');}
 try{invoke('register_email_customer','fixture@example.test','password-fixture','Fixture Name','password-fixture');}catch(Redirected $r){}
 check($GLOBALS['creates']===1,'Valid email creates one account');check($GLOBALS['users'][50]->display_name==='Fixture Name','Chosen name saved');check(get_user_meta(50,'kidia_profile_details_collected',true)==='1','Credentials not requested twice');
-$GLOBALS['meta'][50]['kidia_unverified_phone']='+201000000001';$before=$GLOBALS['meta'];ob_start();$instance->render_account_login_phone();$html=ob_get_clean();check(str_contains($html,'01000000001')&&str_contains($html,'readonly'),'Unverified phone is visible read-only');check($before===$GLOBALS['meta'],'Profile display never promotes phone');
+$GLOBALS['meta'][50]['kidia_unverified_phone']='+201000000001';$GLOBALS['meta'][50]['billing_phone']='01000000001';$GLOBALS['meta'][50]['fme_billing_phone']='+201000000001';$before=$GLOBALS['meta'];ob_start();$instance->render_account_login_phone();$html=ob_get_clean();check(str_contains($html,'01000000001')&&str_contains($html,'readonly'),'Unverified phone is visible read-only');check($before===$GLOBALS['meta'],'Profile display never promotes phone');
+$_SERVER['REQUEST_METHOD']='POST';$_POST=['action'=>'fme_lwp_process_otp_validation','phone_number'=>'+201000000001'];$before=$GLOBALS['meta'];$instance->prepare_phone_account_match();check($GLOBALS['meta']===$before,'OTP migration never promotes a shipping/contact-only number');
 $c=invoke('phone_password_candidates','01000000001');check(count($c)===1&&$c[0]->ID===50,'Password candidate sees unverified contact');
 $GLOBALS['meta'][50]['kidia_login_phone']='+201000000002';check(invoke('phone_password_candidates','01000000001')===[],'Stale contact cannot override another primary identity');unset($GLOBALS['meta'][50]['kidia_login_phone']);
 $GLOBALS['users'][50]->caps=['edit_users'=>true];check(invoke('phone_password_candidates','01000000001')===[],'Privileged contact excluded');$GLOBALS['users'][50]->caps=[];
