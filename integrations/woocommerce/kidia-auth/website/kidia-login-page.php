@@ -817,6 +817,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		.kidia-auth-shell .kidia-password-wrap .kidia-input{margin:0;padding-inline-end:58px}
 		.kidia-auth-shell .kidia-password-toggle{position:absolute;top:50%;bottom:auto;transform:translateY(-50%);inset-inline-end:8px;margin:0;padding:0;display:grid;place-items:center;line-height:1;width:42px;height:42px;min-height:0}
 		.kidia-auth-shell .kidia-password-toggle svg{display:block}
+		.kidia-auth-shell .kidia-register-confirm-field{display:block;margin-top:12px}
 		' );
 
 		wp_enqueue_script(
