@@ -540,21 +540,43 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			$local = substr( $phone, strlen( $country ) + 1 );
 			$values[] = $local; $values[] = '0' . $local;
 		}
-		$query = array( 'relation' => 'OR' );
 		$pattern = $this->phone_lookup_pattern( $values );
-		foreach ( array_merge( $this->phone_keys(), $include_unverified ? array( 'kidia_unverified_phone' ) : array() ) as $key ) {
-			$clause = array( 'key' => $key, 'value' => $pattern, 'compare' => 'REGEXP' );
-			// Exclude contact-only legacy copies in SQL, before the bounded candidate limit.
-			if ( in_array( $key, array( 'fme_billing_phone', 'billing_phone' ), true ) ) $clause = array( 'relation' => 'AND', $clause,
-				array( 'relation' => 'OR', array( 'key' => 'kidia_unverified_phone', 'compare' => 'NOT EXISTS' ), array( 'key' => 'kidia_unverified_phone', 'value' => '', 'compare' => '=' ) ) );
-			$query[] = $clause;
-		}
-		// Bound the candidate set in SQL. No full user-table scan in PHP or partial picker.
-		$users = get_users( array( 'meta_query' => $query, 'number' => 51, 'orderby' => 'ID', 'order' => 'ASC' ) );
+		$keys = array_merge( $this->phone_keys(), $include_unverified ? array( 'kidia_unverified_phone' ) : array() );
+		$users = $this->phone_candidates( $keys, $pattern );
 		if ( count( $users ) > 50 ) return $this->error( 'account_conflict', 409 );
 		if ( ! $include_unverified ) $users = array_values( array_filter( $users, fn( $user ) => ! get_user_meta( $user->ID, 'kidia_unverified_phone', true ) || $this->user_phone( $user, $phone ) !== '' ) );
 		$eligible = array_values( array_filter( $users, fn( $user ) => $this->eligible( $user ) && $this->user_phone( $user, $phone, $include_unverified ) === $phone ) );
 		return $users && ! $eligible ? $this->error( 'account_conflict', 409 ) : $eligible;
+	}
+
+	/** Keep the 51-user limit and WordPress filters, without multiplying metadata joins. */
+	private function phone_candidates( array $keys, string $pattern ): array {
+		global $wpdb;
+		$keys = array_values( array_unique( array_map( 'strval', $keys ) ) );
+		if ( ! $keys ) return array();
+		$spec = array( 'keys' => $keys, 'pattern' => $pattern );
+		$placeholders = implode( ',', array_fill( 0, count( $keys ), '%s' ) );
+		$predicate = $wpdb->prepare(
+			"EXISTS (SELECT 1 FROM {$wpdb->usermeta} AS mobishop_phone_meta
+			LEFT JOIN {$wpdb->usermeta} AS mobishop_contact_meta
+			ON mobishop_contact_meta.user_id = mobishop_phone_meta.user_id AND mobishop_contact_meta.meta_key = 'kidia_unverified_phone'
+			WHERE mobishop_phone_meta.user_id = {$wpdb->users}.ID
+			AND mobishop_phone_meta.meta_key IN ($placeholders) AND mobishop_phone_meta.meta_value REGEXP %s
+			AND (mobishop_phone_meta.meta_key NOT IN ('fme_billing_phone','billing_phone')
+			OR mobishop_contact_meta.user_id IS NULL OR mobishop_contact_meta.meta_value = ''))",
+			array_merge( $keys, array( $pattern ) )
+		);
+		$filter = static function( $query ) use ( $spec, $predicate ): void {
+			if ( ( $query->query_vars['mobishop_native_phone_lookup'] ?? null ) === $spec ) {
+				$query->query_where .= ' AND ' . $predicate;
+			}
+		};
+		add_action( 'pre_user_query', $filter );
+		try {
+			return get_users( array( 'mobishop_native_phone_lookup' => $spec, 'number' => 51, 'orderby' => 'ID', 'order' => 'ASC' ) );
+		} finally {
+			remove_action( 'pre_user_query', $filter );
+		}
 	}
 
 	/** Match only known canonical variants plus the formatting accepted by phone_input(). */

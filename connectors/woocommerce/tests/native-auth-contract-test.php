@@ -99,6 +99,7 @@ function __( $text, $domain = '' ) { return $text; }
 function __return_true() { return true; }
 function is_wp_error( $value ) { return $value instanceof WP_Error; }
 function add_action( $hook, $callback, $priority = 10, $accepted = 1 ) { $GLOBALS['native_hooks'][$hook][] = $callback; }
+function remove_action( $hook, $callback, $priority = 10 ) { $GLOBALS['native_hooks'][$hook] = array_values( array_filter( $GLOBALS['native_hooks'][$hook] ?? array(), static fn($value) => $value !== $callback ) ); }
 function add_filter( $hook, $callback, $priority = 10, $accepted = 1 ) {}
 function apply_filters( $hook, $value, ...$args ) { return $value; }
 function do_action( $hook, ...$args ) { foreach ( $GLOBALS['native_hooks'][$hook] ?? array() as $callback ) $callback( ...$args ); }
@@ -168,6 +169,19 @@ function native_meta_matches( $id, $query ) {
     return strtoupper( $query['relation'] ?? 'AND' ) === 'OR' ? in_array( true, $results, true ) : ! in_array( false, $results, true );
 }
 function get_users( $args = array() ) {
+    $query = (object) array('query_vars' => $args, 'query_where' => 'WHERE 1=1');
+    do_action('pre_user_query', $query);
+    if (isset($args['mobishop_native_phone_lookup'])) {
+        if (!str_contains($query->query_where, 'EXISTS (SELECT 1')) throw new RuntimeException('Phone predicate not attached');
+        $GLOBALS['phone_lookup_sql'] = $query->query_where;
+        $spec = $args['mobishop_native_phone_lookup'];
+        $args['meta_query'] = array('relation' => 'OR');
+        foreach ($spec['keys'] as $key) {
+            $clause = array('key'=>$key, 'value'=>$spec['pattern'], 'compare'=>'REGEXP');
+            if (in_array($key,array('billing_phone','fme_billing_phone'),true)) $clause = array('relation'=>'AND',$clause,array('relation'=>'OR',array('key'=>'kidia_unverified_phone','compare'=>'NOT EXISTS'),array('key'=>'kidia_unverified_phone','value'=>'','compare'=>'=')));
+            $args['meta_query'][] = $clause;
+        }
+    } elseif (str_contains($query->query_where,'mobishop_phone_meta')) throw new RuntimeException('Phone predicate leaked to unrelated query');
     $result = array();
     foreach ( $GLOBALS['native_users'] as $id => $record ) {
         if ( isset( $args['include'] ) && ! in_array( $id, $args['include'], true ) ) continue;
@@ -224,9 +238,17 @@ function wp_remote_retrieve_header( $response, $key ) { return $response['header
 
 $wpdb = new class {
     public $options = 'wp_options';
+    public $users = 'wp_users';
+    public $usermeta = 'wp_usermeta';
     public $prefix = 'wp_';
     public $race = false;
-    public function prepare( $sql, ...$args ) { return array( $sql, $args ); }
+    public function prepare( $sql, ...$args ) {
+        if (str_starts_with($sql,'EXISTS')) {
+            $values = count($args)===1 && is_array($args[0]) ? $args[0] : $args;
+            return vsprintf($sql,array_map(static fn($v)=>"'".str_replace("'","''",$v)."'",$values));
+        }
+        return array( $sql, $args );
+    }
     public function query( $prepared ) {
         if ( $this->race ) { $this->race = false; return 0; }
         list( $sql, $args ) = $prepared;

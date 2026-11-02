@@ -2454,8 +2454,8 @@
     "api/class-native-customer-auth-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-native-customer-auth-endpoint.php",
       "newline": "lf",
-      "source_sha256": "f242aafc659491d392dabcbb180f4afd3d29841115085ef2a8e151c21e38ea9a",
-      "sha256": "f242aafc659491d392dabcbb180f4afd3d29841115085ef2a8e151c21e38ea9a"
+      "source_sha256": "6681aa03ed1053d5fd4c5d474c610fe20d84477ba494a8a1c907f7020a56c6eb",
+      "sha256": "6681aa03ed1053d5fd4c5d474c610fe20d84477ba494a8a1c907f7020a56c6eb"
     },
     "api/class-native-payment92.php": {
       "source": "connectors/woocommerce/source/api/class-native-payment92.php",
