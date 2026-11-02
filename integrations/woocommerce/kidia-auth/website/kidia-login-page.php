@@ -3,7 +3,7 @@
  * Plugin Name: Kidia Login Page
  * Plugin URI:  https://kidiastore.com/
  * Description: Branded WooCommerce login and registration page for Kidia Store, ready for phone OTP integration.
- * Version:     0.6.15
+ * Version:     0.6.16
  * Author:      Kidia Store
  * Text Domain: kidia-login-page
  * Requires Plugins: woocommerce
@@ -206,7 +206,7 @@ if ( class_exists( 'Kidia_Store_Custom_Login_Page_V020', false ) ) {
 
 final class Kidia_Store_Custom_Login_Page_V020 {
 
-	private const VERSION        = '0.6.15';
+	private const VERSION        = '0.6.16';
 	private const PHONE_SEND_WINDOW = HOUR_IN_SECONDS;
 	private const PHONE_SEND_COOLDOWN = MINUTE_IN_SECONDS;
 	private const PHONE_SEND_LIMIT = 3;
@@ -642,14 +642,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		}
 
 		update_user_meta( $user_id, 'billing_email', $email );
-		if ( strtolower( (string) $user->user_email ) !== strtolower( $email ) ) {
-			wp_update_user(
-				array(
-					'ID'         => $user_id,
-					'user_email' => $email,
-				)
-			);
-		}
+		// Order contact details are not proof of ownership of an account email.
 	}
 
 	/** Find one account by its WordPress email or WooCommerce billing email. */
@@ -1021,7 +1014,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		$args = array(
 			'kidia_stage' => 'phone',
 			'kidia_phone' => $this->local_phone( $phone ),
-			'kidia_phone_multiple' => count( $this->phone_signin_candidates( $phone ) ) > 1 ? '1' : '0',
+			'kidia_phone_multiple' => count( $this->phone_password_candidates( $phone ) ) > 1 ? '1' : '0',
 		);
 		if ( $error ) {
 			$args['kidia_phone_error'] = sanitize_key( $error );
@@ -1359,7 +1352,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		$redirect = false;
 
 		if ( function_exists( 'is_account_page' ) && is_account_page() ) {
-			$redirect = true;
+			$redirect = ! ( function_exists( 'is_wc_endpoint_url' ) && is_wc_endpoint_url( 'lost-password' ) );
 		}
 
 		if ( function_exists( 'is_checkout' ) && is_checkout() ) {
@@ -1407,8 +1400,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 	}
 
 	private function get_redirect_target(): string {
-		// An interrupted purchase resumes at its original URL, including the
-		// checkout endpoint, query and fragment. Ordinary sign-in still goes home.
+		// Resume a permitted customer destination; ordinary sign-in still goes home.
 		foreach ( array( $_GET['redirect_to'] ?? null, $_POST['redirect_to'] ?? null ) as $requested ) {
 			if ( is_string( $requested ) && '' !== $requested ) {
 				return $this->get_purchase_return_target( wp_unslash( $requested ) ) ?: home_url( '/' );
@@ -1438,7 +1430,20 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		$path = untrailingslashit( $path );
 		$cart = untrailingslashit( rawurldecode( (string) wp_parse_url( wc_get_cart_url(), PHP_URL_PATH ) ) );
 		$checkout = untrailingslashit( rawurldecode( (string) wp_parse_url( wc_get_checkout_url(), PHP_URL_PATH ) ) );
-		if ( $path !== $cart && $path !== $checkout && ( ! $checkout || 0 !== strpos( $path, $checkout . '/' ) ) ) {
+		$customer_path = false;
+		$account_id = function_exists( 'wc_get_page_id' ) ? wc_get_page_id( 'myaccount' ) : 0;
+		$account = $account_id > 0 ? untrailingslashit( (string) wp_parse_url( get_permalink( $account_id ), PHP_URL_PATH ) ) : '';
+		if ( $account !== '' ) {
+			$customer_path = $path === $account;
+			foreach ( array( 'orders', 'view-order', 'edit-address', 'edit-account', 'downloads', 'payment-methods' ) as $endpoint ) {
+				$slug = trim( (string) get_option( 'woocommerce_myaccount_' . str_replace( '-', '_', $endpoint ) . '_endpoint', $endpoint ), '/' );
+				$prefix = $account . '/' . $slug;
+				if ( $slug !== '' && ( $path === $prefix || str_starts_with( $path, $prefix . '/' ) ) ) $customer_path = true;
+			}
+		}
+		$wishlist = function_exists( 'get_page_by_path' ) ? get_page_by_path( 'wishlist' ) : null;
+		if ( $wishlist && $path === untrailingslashit( (string) wp_parse_url( get_permalink( $wishlist->ID ), PHP_URL_PATH ) ) ) $customer_path = true;
+		if ( ! $customer_path && $path !== $cart && $path !== $checkout && ( ! $checkout || 0 !== strpos( $path, $checkout . '/' ) ) ) {
 			return '';
 		}
 		// Returning to a page must not replay a one-time cart action.

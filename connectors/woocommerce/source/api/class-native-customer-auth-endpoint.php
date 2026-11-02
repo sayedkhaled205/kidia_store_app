@@ -428,6 +428,13 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$locks = $this->lock( $identities );
 		if ( $locks === null ) return $this->error( 'retry', 409 );
 		try {
+			if ( ! empty( $p['user_id'] ) ) {
+				// Completion may have changed while this request acquired its identity leases.
+				wp_cache_delete( (int) $p['user_id'], 'users' );
+				wp_cache_delete( (int) $p['user_id'], 'user_meta' );
+				$user = get_user_by( 'id', (int) $p['user_id'] );
+				if ( ! $this->proof_allows( $user, $p ) || $this->ready( $user ) ) return $this->error( 'invalid_ticket', 401 );
+			}
 			if ( ! empty( $p['unverified_phone'] ) ) {
 				if ( $user ) return $this->error( 'invalid_proof', 401 );
 				$existing = $this->phone_users( $p['unverified_phone'], true );

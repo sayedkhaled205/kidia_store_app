@@ -439,7 +439,14 @@ final class MobiShop_Customer_Auth_Endpoint {
 			return $this->unauthorized_error();
 		}
 
-		delete_transient( $code_key );
+		// Only the atomic deletion winner may redeem this immutable handoff.
+		if ( ! delete_transient( $code_key ) ) {
+			return new WP_Error(
+				'mobishop_auth_social_invalid_handoff',
+				__( 'The social sign-in request is invalid or expired.', 'mobi2app-connector' ),
+				array( 'status' => 401 )
+			);
+		}
 		$request_id = (string) ( $handoff['request_id'] ?? '' );
 		if ( $this->is_social_secret( $request_id ) ) {
 			delete_transient( $this->social_key( 'request', $request_id ) );
@@ -866,13 +873,19 @@ final class MobiShop_Customer_Auth_Endpoint {
 		$route = isset( $GLOBALS['wp']->query_vars['rest_route'] )
 			? (string) $GLOBALS['wp']->query_vars['rest_route']
 			: '';
-		if ( str_starts_with( $route, '/wc/store/' ) || str_starts_with( $route, '/mobishop/v1/' ) ) {
-			return true;
+		if ( $route !== '' ) {
+			return str_starts_with( $route, '/wc/store/' ) || str_starts_with( $route, '/mobishop/v1/' );
 		}
 		$uri = isset( $_SERVER['REQUEST_URI'] )
 			? (string) wp_unslash( $_SERVER['REQUEST_URI'] )
 			: '';
-		return str_contains( $uri, '/wp-json/wc/store/' ) || str_contains( $uri, '/wp-json/mobishop/v1/' );
+		$path = (string) wp_parse_url( $uri, PHP_URL_PATH );
+		$rest_url = rest_url();
+		$rest_path = rtrim( (string) wp_parse_url( $rest_url, PHP_URL_PATH ), '/' );
+		if ( $rest_path === '' || wp_parse_url( $rest_url, PHP_URL_QUERY ) !== null ) {
+			return false;
+		}
+		return str_starts_with( $path, $rest_path . '/wc/store/' ) || str_starts_with( $path, $rest_path . '/mobishop/v1/' );
 	}
 
 	/** Render Nextend's own provider URL so its configured website app is reused. */

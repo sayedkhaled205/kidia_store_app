@@ -10,6 +10,8 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/auth_pro
 import 'package:mobishop_store_app/features/auth/presentation/providers/website_auth_providers.dart';
 
 class AuthController extends AsyncNotifier<AuthSession?> {
+  Future<void>? _signOutOperation;
+  String? _signOutToken;
   AuthRepository get _repository => ref.read(authRepositoryProvider);
 
   @override
@@ -117,17 +119,41 @@ class AuthController extends AsyncNotifier<AuthSession?> {
     return completion;
   }
 
-  Future<void> signOut() async {
+  Future<void> signOut() {
+    final token = state.value?.token;
+    if (_signOutOperation != null && _signOutToken == token) {
+      return _signOutOperation!;
+    }
+    _signOutToken = token;
+    late final Future<void> operation;
+    operation = _performSignOut().whenComplete(() {
+      if (identical(_signOutOperation, operation)) {
+        _signOutOperation = null;
+        _signOutToken = null;
+      }
+    });
+    return _signOutOperation = operation;
+  }
+
+  Future<void> _performSignOut() async {
     final Ref operationRef = ref;
     final AuthSession? session = state.value;
     if (session == null) {
       if (ref.mounted) state = const AsyncData<AuthSession?>(null);
       return;
     }
+    bool localSessionCleared = true;
     try {
       await _repository.signOut(session);
+    } on AuthRepositoryException catch (error) {
+      localSessionCleared = error.code != 'local_sign_out_failed';
+      rethrow;
     } finally {
-      if (operationRef.mounted) state = const AsyncData<AuthSession?>(null);
+      if (operationRef.mounted &&
+          localSessionCleared &&
+          state.value?.token == session.token) {
+        state = const AsyncData<AuthSession?>(null);
+      }
     }
   }
 }

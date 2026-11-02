@@ -188,7 +188,9 @@ function wp_salt( string $scheme = 'auth' ): string {
 }
 
 function get_transient( string $key ) {
-	return $GLOBALS['mobishop_transients'][ $key ] ?? false;
+	$snapshot = $GLOBALS['mobishop_transients'][ $key ] ?? false;
+	if ( isset( $GLOBALS['mobishop_after_transient_read'] ) ) ( $GLOBALS['mobishop_after_transient_read'] )( $key );
+	return $snapshot;
 }
 
 function set_transient( string $key, $value, int $expiration ): bool {
@@ -198,8 +200,9 @@ function set_transient( string $key, $value, int $expiration ): bool {
 }
 
 function delete_transient( string $key ): bool {
+	$exists = array_key_exists( $key, $GLOBALS['mobishop_transients'] );
 	unset( $GLOBALS['mobishop_transients'][ $key ] );
-	return true;
+	return $exists;
 }
 
 function shortcode_exists( string $tag ): bool {
@@ -211,6 +214,7 @@ function esc_url_raw( string $url ): string {
 }
 
 function rest_url( string $path = '' ): string {
+	if ( array_key_exists( 'mobishop_rest_url', $GLOBALS ) ) return $GLOBALS['mobishop_rest_url'];
 	return 'https://shop.example.com/wp-json/' . ltrim( $path, '/' );
 }
 

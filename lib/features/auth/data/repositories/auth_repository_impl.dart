@@ -155,11 +155,19 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> signOut(AuthSession session) async {
+    // Clear before waiting for the server so a delayed response cannot erase
+    // a newer session committed while revocation is in flight.
     try {
-      await transport.signOut(session.token);
-    } finally {
       await sessionStore.clear();
+    } catch (error) {
+      throw AuthRepositoryException(
+        kind: AuthFailureKind.unknown,
+        code: 'local_sign_out_failed',
+        message: 'Could not clear the saved session. Please try again.',
+        cause: error,
+      );
     }
+    await transport.signOut(session.token);
   }
 
   Future<T> _guard<T>(Future<T> Function() operation) async {

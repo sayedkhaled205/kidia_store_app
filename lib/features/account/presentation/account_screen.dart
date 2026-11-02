@@ -58,7 +58,10 @@ class AccountScreen extends ConsumerWidget {
     final AsyncValue<AuthSession?> authState = ref.watch(
       authControllerProvider,
     );
-    final AuthSession? session = authState.asData?.value;
+    final retainedSession = authState.asData?.value;
+    final AuthSession? session = retainedSession?.isExpired == false
+        ? retainedSession
+        : null;
     final CmsPageLayout pageLayout =
         ref.watch(cmsPageLayoutProvider('account')).value ??
         CmsPageLayout.fallback('account');
@@ -236,19 +239,28 @@ class AccountScreen extends ConsumerWidget {
     WidgetRef ref,
     bool isArabic,
   ) async {
-    await ref.read(authControllerProvider.notifier).signOut();
+    bool remoteFailed = false;
+    try {
+      await ref.read(authControllerProvider.notifier).signOut();
+    } catch (_) {
+      remoteFailed = true;
+    }
     if (!context.mounted) {
       return;
     }
+    final stillSignedIn = ref.read(authControllerProvider).value != null;
+    final message = stillSignedIn
+        ? (isArabic
+              ? 'تعذر إكمال تسجيل الخروج. حاول مرة أخرى.'
+              : 'Could not finish signing out. Please try again.')
+        : remoteFailed
+        ? (isArabic
+              ? 'تم تسجيل الخروج من الجهاز. تعذر الاتصال بالخادم.'
+              : 'Signed out on this device. The server could not be reached.')
+        : (isArabic ? 'تم تسجيل الخروج.' : 'You have been signed out.');
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            isArabic ? 'تم تسجيل الخروج.' : 'You have been signed out.',
-          ),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 }
 

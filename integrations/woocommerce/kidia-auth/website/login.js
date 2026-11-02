@@ -45,6 +45,7 @@
 	var phoneSendAttempts = Object.create(null);
 	var phoneRequestInFlight = false;
 	var phoneFlowGeneration = 0;
+	var identifierGeneration = 0, identifierController = null, identifierPending = false;
 	var verificationAttempts = 0;
 	var verificationWasVisible = false;
 	var existingPhoneFlow = false;
@@ -890,11 +891,14 @@
 			return;
 		}
 		setLoading(true);
+		identifierPending = true;
+		var currentLookup = ++identifierGeneration;
 		var body = new URLSearchParams();
 		body.append('action', 'kidia_check_phone');
 		body.append('nonce', config.nonce);
 		body.append('phone', phone);
 		var lookupController = new AbortController();
+		identifierController = lookupController;
 		var lookupTimer = window.setTimeout(function () { lookupController.abort(); }, 15000);
 		window.fetch(config.ajaxUrl, {
 			signal: lookupController.signal,
@@ -905,6 +909,7 @@
 		})
 			.then(function (response) { return response.json(); })
 			.then(function (payload) {
+				if (currentLookup !== identifierGeneration) return;
 				if (!payload || !payload.success) {
 					throw new Error(payload && payload.data && payload.data.message ? payload.data.message : 'error');
 				}
@@ -915,9 +920,10 @@
 				}
 			})
 			.catch(function (error) {
+				if (currentLookup !== identifierGeneration) return;
 				showEmailFallback();
 			})
-			.finally(function () { window.clearTimeout(lookupTimer); setLoading(false); syncIdentifierButton(); });
+			.finally(function () { window.clearTimeout(lookupTimer); if (currentLookup !== identifierGeneration) return; identifierPending = false; identifierController = null; setLoading(false); syncIdentifierButton(); });
 	}
 
 	var passwordChoice = root.querySelector('[data-kidia-use-password]');
@@ -990,12 +996,18 @@
 		}
 
 		setLoading(true);
+		identifierPending = true;
+		var currentLookup = ++identifierGeneration;
+		var lookupController = new AbortController();
+		identifierController = lookupController;
+		var lookupTimer = window.setTimeout(function () { lookupController.abort(); }, 15000);
 		var body = new URLSearchParams();
 		body.append('action', 'kidia_check_email');
 		body.append('nonce', config.nonce);
 		body.append('email', email);
 
 		window.fetch(config.ajaxUrl, {
+			signal: lookupController.signal,
 			method: 'POST',
 			credentials: 'same-origin',
 			headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
@@ -1003,12 +1015,14 @@
 		})
 			.then(function (response) { return response.json(); })
 			.then(function (payload) {
+				if (currentLookup !== identifierGeneration) return;
 				if (!payload || !payload.success) {
 					throw new Error(payload && payload.data && payload.data.message ? payload.data.message : 'error');
 				}
 				openEmail(email, Boolean(payload.data.exists));
 			})
 			.catch(function (error) {
+				if (currentLookup !== identifierGeneration) return;
 				/* Some hosts protect admin-ajax.php with an anti-bot layer. Do not
 				 * block the customer when the email lookup is unavailable. Continue
 				 * in login mode; new customers can switch to account creation from
@@ -1017,13 +1031,21 @@
 				setFeedback('');
 				openEmail(email, true);
 			})
-			.finally(function () { setLoading(false); });
+			.finally(function () { window.clearTimeout(lookupTimer); if (currentLookup !== identifierGeneration) return; identifierPending = false; identifierController = null; setLoading(false); });
 	}
+	function cancelIdentifierLookup() {
+		identifierGeneration++;
+		if (identifierController) identifierController.abort();
+		identifierController = null; identifierPending = false;
+		setLoading(false);
+	}
+	window.addEventListener('pagehide', cancelIdentifierLookup);
 
 	if (identifierForm && identifierInput) {
 		syncIdentifierButton();
 		identifierForm.addEventListener('submit', function (event) {
 			event.preventDefault();
+			if (identifierPending) return;
 			setFeedback('');
 
 			var value = identifierInput.value.trim();
@@ -1051,6 +1073,7 @@
 
 	root.querySelectorAll('[data-kidia-back]').forEach(function (button) {
 		button.addEventListener('click', function () {
+			cancelIdentifierLookup();
 			window.clearInterval(phoneAutoSendTimer);
 			window.clearInterval(phoneCooldownTimer);
 			phoneCooldownUntil = 0;

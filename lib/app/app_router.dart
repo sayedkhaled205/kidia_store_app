@@ -460,7 +460,9 @@ GoRouter createAppRouter({
             if (authState.isLoading) {
               return const _ProtectedAccountLoading();
             }
-            if (authState.asData?.value == null) {
+            if (authState.hasError ||
+                authState.asData?.value == null ||
+                authState.asData!.value!.isExpired) {
               return const AuthScreen(popOnSuccess: false);
             }
             return const CustomerOrdersScreen();
@@ -486,7 +488,9 @@ GoRouter createAppRouter({
             }
             final authState = ref.watch(authControllerProvider);
             if (authState.isLoading) return const _ProtectedAccountLoading();
-            if (authState.asData?.value == null) {
+            if (authState.hasError ||
+                authState.asData?.value == null ||
+                authState.asData!.value!.isExpired) {
               return const AuthScreen(popOnSuccess: false);
             }
             return CustomerOrdersScreen(key: ValueKey(id), initialOrderId: id);
@@ -506,7 +510,9 @@ GoRouter createAppRouter({
             if (authState.isLoading) {
               return const _ProtectedAccountLoading();
             }
-            if (authState.asData?.value == null) {
+            if (authState.hasError ||
+                authState.asData?.value == null ||
+                authState.asData!.value!.isExpired) {
               return const AuthScreen(popOnSuccess: false);
             }
             return const SavedAddressesScreen();
@@ -526,7 +532,9 @@ GoRouter createAppRouter({
             if (authState.isLoading) {
               return const _ProtectedAccountLoading();
             }
-            if (authState.asData?.value == null) {
+            if (authState.hasError ||
+                authState.asData?.value == null ||
+                authState.asData!.value!.isExpired) {
               return const AuthScreen(popOnSuccess: false);
             }
             return const CustomerProfileScreen();
@@ -546,7 +554,9 @@ GoRouter createAppRouter({
             if (authState.isLoading) {
               return const _ProtectedAccountLoading();
             }
-            if (authState.asData?.value == null) {
+            if (authState.hasError ||
+                authState.asData?.value == null ||
+                authState.asData!.value!.isExpired) {
               return const AuthScreen(popOnSuccess: false);
             }
             return const CustomerSupportScreen();

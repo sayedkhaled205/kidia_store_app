@@ -83,7 +83,10 @@
                 if(myGeneration!==generation)return;
                 await request('register_customer',Object.assign({},details,{phone:canonical(phone),verifier:v,ticket:attempt.ticket}));
             },myGeneration,function(){generation++;active=false;if(panel){panel.remove();panel=null;}location.replace(cfg.loginUrl);});
-        }).catch(function(error){if(myGeneration!==generation)return;status.textContent=/existing_phone/.test(error.message)?'الرقم مسجل بالفعل. ارجع وادخل لحسابك بكلمة المرور أو جوجل.':friendly(error);});
+        }).catch(function(error){if(myGeneration!==generation)return;status.textContent=/existing_phone/.test(error.message)?'الرقم مسجل بالفعل. ارجع وادخل لحسابك بكلمة المرور أو جوجل.':friendly(error);
+            button(box,'المحاولة مرة أخرى',function(){generation++;active=false;window.KidiaAuthFallback(phone,false);});
+            button(box,'تغيير الرقم أو طريقة الدخول',function(){document.dispatchEvent(new CustomEvent('kidia:otp-reset'));location.replace(cfg.loginUrl);});
+        });
         return true;
     };
     window.KidiaVerifiedPhoneRegistration=function(phone,ticket,v) {

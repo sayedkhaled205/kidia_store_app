@@ -97,6 +97,12 @@ jobs:
           php tool/builder-assets/push-analytics-contract.php
       - name: Run PHP contract tests
         run: find mobishop/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
+      - name: Check shared account boundaries and website recovery
+        run: |
+          php connectors/woocommerce/tests/auth-boundary-regressions-test.php
+          php connectors/woocommerce/tests/native-auth-completion-race-test.php
+          php integrations/woocommerce/kidia-auth/website-auth-logic-regression-test.php
+          node integrations/woocommerce/kidia-auth/website-auth-recovery-test.cjs
 
   flutter:
     name: Flutter app
