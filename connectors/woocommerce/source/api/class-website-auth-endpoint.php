@@ -52,11 +52,43 @@ final class MobiShop_Website_Auth_Endpoint {
 			&& ! isset( $parts['fragment'] ) ? $url : '';
 	}
 
+	/** Reuse only an enabled provider's own same-store authorization URL. */
+	public static function facebook_login_url( string $redirect ): string {
+		if ( ! function_exists( 'shortcode_exists' ) || ! shortcode_exists( 'nextend_social_login' ) ) return '';
+		$html = do_shortcode( sprintf( '[nextend_social_login provider="facebook" redirect="%s"]', esc_url_raw( $redirect ) ) );
+		if ( ! preg_match( '/<a\b[^>]*\bhref=(["\'])(.*?)\1/i', $html, $matches ) ) return '';
+		$url = html_entity_decode( $matches[2], ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+		if ( str_starts_with( $url, '/' ) && ! str_starts_with( $url, '//' ) ) $url = home_url( $url );
+		$target = wp_parse_url( $url ); $home = wp_parse_url( home_url( '/' ) );
+		if ( ! is_array( $target ) || ! is_array( $home )
+			|| ( $target['scheme'] ?? '' ) !== 'https' || ( $home['scheme'] ?? '' ) !== 'https'
+			|| strtolower( (string) ( $target['host'] ?? '' ) ) !== strtolower( (string) ( $home['host'] ?? '' ) )
+			|| ( $target['port'] ?? 443 ) !== ( $home['port'] ?? 443 )
+			|| isset( $target['user'] ) || isset( $target['pass'] ) || isset( $target['fragment'] ) ) return '';
+		parse_str( (string) ( $target['query'] ?? '' ), $query );
+		return ( $query['loginSocial'] ?? '' ) === 'facebook' ? $url : '';
+	}
+
 	public function config() {
-		return $this->response( array( 'enabled' => $this->login_url() !== '', 'version' => 1 ) );
+		return $this->response( array( 'enabled' => $this->login_url() !== '', 'version' => 1, 'providers' => array( 'facebook' => $this->facebook_enabled() ) ) );
+	}
+
+	public function facebook_enabled(): bool {
+		return $this->login_url() !== '' && self::facebook_login_url( $this->login_url() ) !== '';
+	}
+
+	private function destination( array $row ): string {
+		// An existing browser account must be explicitly confirmed or switched.
+		// Nextend hides sign-in buttons for signed-in users; never link providers here.
+		if ( ( $row['provider'] ?? null ) !== 'facebook' || is_user_logged_in() ) return $this->login_url();
+		$url = self::facebook_login_url( $this->login_url() );
+		if ( $url === '' ) wp_die( 'Facebook sign-in is currently unavailable. Please return to the app.' );
+		return $url;
 	}
 
 	public function start( WP_REST_Request $request ) {
+		$provider = $request->get_param( 'provider' );
+		if ( $provider !== null && ( $provider !== 'facebook' || self::facebook_login_url( $this->login_url() ) === '' ) ) return $this->error( 'provider_unavailable', 400 );
 		$state = (string) $request->get_param( 'state' );
 		$challenge = (string) $request->get_param( 'challenge' );
 		if ( ! $this->login_url() ) return $this->error( 'unavailable', 404 );
@@ -66,7 +98,7 @@ final class MobiShop_Website_Auth_Endpoint {
 		if ( $count >= 30 ) return $this->error( 'rate_limited', 429 );
 		set_transient( $rate, $count + 1, self::TTL );
 		$id = bin2hex( random_bytes( 32 ) );
-		$row = array( 'state' => $state, 'challenge' => $challenge, 'expires' => time() + self::TTL, 'binding' => '', 'user' => 0, 'code' => '' );
+		$row = array( 'provider' => $provider, 'state' => $state, 'challenge' => $challenge, 'expires' => time() + self::TTL, 'binding' => '', 'user' => 0, 'code' => '' );
 		if ( ! add_option( self::PREFIX . $id, $row, '', false ) ) return $this->error( 'unavailable', 503 );
 		wp_schedule_single_event( time() + self::TTL + 60, 'mobishop_web_login_cleanup', array( $id ) );
 		return $this->response( array( 'authorize_url' => add_query_arg( 'mobishop_login', $id, home_url( '/' ) ) ) );
@@ -82,10 +114,11 @@ final class MobiShop_Website_Auth_Endpoint {
 	private function change( string $id, array $old, ?array $next ): bool {
 		global $wpdb;
 		if ( $next === null ) {
-			$changed = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name=%s AND option_value=%s", self::PREFIX . $id, maybe_serialize( $old ) ) ) === 1;
+			$sql = $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name=%s AND option_value=%s", self::PREFIX . $id, maybe_serialize( $old ) );
 		} else {
-			$changed = $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value=%s WHERE option_name=%s AND option_value=%s", maybe_serialize( $next ), self::PREFIX . $id, maybe_serialize( $old ) ) ) === 1;
+			$sql = $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value=%s WHERE option_name=%s AND option_value=%s", maybe_serialize( $next ), self::PREFIX . $id, maybe_serialize( $old ) );
 		}
+		$changed = $wpdb->query( $sql ) === 1;
 		wp_cache_delete( self::PREFIX . $id, 'options' );
 		return $changed;
 	}
@@ -128,7 +161,7 @@ final class MobiShop_Website_Auth_Endpoint {
 			$this->cookie( $id . '.' . $secret, $row['expires'] );
 			nocache_headers();
 			$this->browser_headers();
-			wp_safe_redirect( $this->login_url() );
+			wp_safe_redirect( $this->destination( $row ) );
 			exit;
 		}
 		$bound = $this->bound();
@@ -151,7 +184,7 @@ final class MobiShop_Website_Auth_Endpoint {
 				&& wp_verify_nonce( (string) ( $_POST['_wpnonce'] ?? '' ), 'mobishop_continue_' . $id ) ) {
 				if ( ( $_POST['choice'] ?? '' ) === 'switch' ) {
 					wp_logout();
-					wp_safe_redirect( $this->login_url() ); exit;
+					wp_safe_redirect( $this->destination( $row ) ); exit;
 				}
 				$this->verified( $user );
 				$row = $this->read( $id );

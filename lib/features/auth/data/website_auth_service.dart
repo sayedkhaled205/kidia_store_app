@@ -90,9 +90,13 @@ class WebsiteAuthService {
   }
 
   Future<AuthSession> signIn({
+    String? provider,
     WebsiteAuthBrowser? presenter,
     WebsiteAuthAttempt? attempt,
   }) async {
+    if (provider != null && provider != 'facebook') {
+      throw const FormatException('Unsupported sign-in provider.');
+    }
     if (_active) throw StateError('Sign-in already in progress.');
     _active = true;
     try {
@@ -103,6 +107,7 @@ class WebsiteAuthService {
       final startRequest = _request(
         'start',
         body: {
+          if (provider != null) 'provider': provider,
           'state': state,
           'challenge': sha256.convert(utf8.encode(verifier)).toString(),
         },

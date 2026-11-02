@@ -21,6 +21,13 @@ function value(w,name,v){let input=w.document.querySelector('[name="'+name+'"]')
  value(e.w,'kidia_name','');let id=e.w.document.querySelector('#kidia-identifier');id.value='new@example.test';submit(e.w,e.w.document.querySelector('.kidia-identifier-form'));await settle();
  ok(!e.w.document.querySelector('.kidia-register-name-field').hidden,'Name visible for registration');
  ok(!e.w.document.querySelector('.kidia-register-confirm-field').hidden,'Confirmation visible for registration');
+ for(const name of ['kidia_name','kidia_email','kidia_password_confirm']) {
+   const f=e.w.document.querySelector('[name="'+name+'"]');ok(!!f.placeholder&&!!f.getAttribute('aria-label'),'Inside hint and accessible name for '+name);
+ }
+ const pass=e.w.document.querySelector('#kidia-password'),confirm=e.w.document.querySelector('[name="kidia_password_confirm"]');
+ const eye=confirm.closest('.kidia-password-wrap').querySelector('button');
+ eye.click();ok(confirm.type==='text'&&pass.type==='password','Confirmation eye only reveals confirmation');
+ eye.click();ok(confirm.type==='password'&&eye.getAttribute('aria-pressed')==='false','Confirmation eye masks field again');
  e.w.document.querySelector('[data-kidia-switch-mode]').click();
  ok(e.w.document.querySelector('[name="kidia_name"]').disabled,'Hidden name does not block login');
  ok(e.w.document.querySelector('[name="kidia_password_confirm"]').disabled,'Hidden confirmation does not block login');

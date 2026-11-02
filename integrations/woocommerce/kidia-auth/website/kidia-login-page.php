@@ -3,7 +3,7 @@
  * Plugin Name: Kidia Login Page
  * Plugin URI:  https://kidiastore.com/
  * Description: Branded WooCommerce login and registration page for Kidia Store, ready for phone OTP integration.
- * Version:     0.6.16
+ * Version:     0.6.17
  * Author:      Kidia Store
  * Text Domain: kidia-login-page
  * Requires Plugins: woocommerce
@@ -206,7 +206,7 @@ if ( class_exists( 'Kidia_Store_Custom_Login_Page_V020', false ) ) {
 
 final class Kidia_Store_Custom_Login_Page_V020 {
 
-	private const VERSION        = '0.6.16';
+	private const VERSION        = '0.6.17';
 	private const PHONE_SEND_WINDOW = HOUR_IN_SECONDS;
 	private const PHONE_SEND_COOLDOWN = MINUTE_IN_SECONDS;
 	private const PHONE_SEND_LIMIT = 3;
@@ -809,6 +809,15 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 			array(),
 			self::VERSION
 		);
+
+		// Shared by email, phone and provider account completion fields.
+		wp_add_inline_style( 'kidia-login-page', '
+		.kidia-auth-shell .kidia-input::placeholder{color:#9aa2a6;opacity:1}
+		.kidia-auth-shell .kidia-password-wrap{position:relative;display:block}
+		.kidia-auth-shell .kidia-password-wrap .kidia-input{margin:0;padding-inline-end:58px}
+		.kidia-auth-shell .kidia-password-toggle{position:absolute;top:50%;bottom:auto;transform:translateY(-50%);inset-inline-end:8px;margin:0;padding:0;display:grid;place-items:center;line-height:1;width:42px;height:42px;min-height:0}
+		.kidia-auth-shell .kidia-password-toggle svg{display:block}
+		' );
 
 		wp_enqueue_script(
 			'kidia-login-page',

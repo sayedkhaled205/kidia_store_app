@@ -232,6 +232,7 @@ function wp_parse_url( string $url, int $component = -1 ) {
 }
 
 function do_shortcode( string $shortcode ): string {
+	if ( isset( $GLOBALS['mobishop_social_html_override'] ) ) return $GLOBALS['mobishop_social_html_override'];
 	preg_match( '/provider="([^"]+)"/', $shortcode, $provider );
 	preg_match( '/redirect="([^"]+)"/', $shortcode, $redirect );
 	preg_match( '/trackerdata="([^"]+)"/', $shortcode, $tracker );

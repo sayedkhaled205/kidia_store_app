@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:mobishop_store_app/features/auth/data/cms_preview_auth_actions.dart';
+import 'package:mobishop_store_app/features/auth/data/website_auth_service.dart';
 import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 
 import 'package:flutter/material.dart';
@@ -50,6 +52,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _email = TextEditingController();
   final _phone = TextEditingController();
   NativeAuthActions? _actions;
+  WebsiteAuthAttempt? _websiteAttempt;
   NativeAuthIdentity? _identity;
   NativeAuthResult? _continuation;
   NativeAuthResult? _pendingCommit;
@@ -97,6 +100,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   void _cancelActions() {
+    _websiteAttempt?.cancel();
     final actions = _actions;
     if (actions != null) unawaited(actions.cancel().catchError((Object _) {}));
   }
@@ -362,6 +366,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 excludeFromSemantics: true,
                               ),
                               label: Text(copy.continueWithGoogle),
+                            ),
+                          ],
+                          if ([
+                                _AuthStep.identifier,
+                                _AuthStep.password,
+                              ].contains(_step) &&
+                              _expectedGooglePhone == null &&
+                              config.allows('facebook')) ...[
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              key: const Key('auth-facebook'),
+                              onPressed: _busy ? null : _facebook,
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size.fromHeight(50),
+                                shape: const StadiumBorder(),
+                              ),
+                              icon: const Icon(
+                                Icons.facebook,
+                                color: Color(0xFF1877F2),
+                                size: 26,
+                              ),
+                              label: Text(copy.continueWithFacebook),
                             ),
                           ],
                         ],
@@ -853,7 +879,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       inputFormatters: formatter == null ? null : [formatter],
       decoration: _decoration(label).copyWith(
         counterText: '',
-        hintText: hint,
+        hintText: hint?.isNotEmpty == true ? hint : label,
+        labelText: hint?.isNotEmpty == true ? label : null,
         hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
         floatingLabelBehavior: hint?.isNotEmpty == true
             ? FloatingLabelBehavior.always
@@ -910,7 +937,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   );
 
   InputDecoration _decoration(String label) => InputDecoration(
-    labelText: label,
+    hintText: label,
+    hintStyle: const TextStyle(color: Color(0xFF9E9E9E)),
     filled: false,
     contentPadding: EdgeInsets.symmetric(
       horizontal: 16,
@@ -1444,6 +1472,35 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       }
     });
   }
+
+  Future<void> _facebook() => _perform((flow) async {
+    if (AppConfig.isCmsPreview || _actions is CmsPreviewAuthActions) {
+      throw AuthRepositoryException(
+        kind: AuthFailureKind.configuration,
+        code: 'preview-only',
+        message: Localizations.localeOf(context).languageCode == 'ar'
+            ? 'دي معاينة لشاشة الدخول. جرّب تسجيل الدخول من تطبيق الموبايل.'
+            : 'This is a sign-in preview. Try signing in from the mobile app.',
+      );
+    }
+    await _actions!.cancel();
+    if (!_active(flow)) return;
+    final attempt = WebsiteAuthAttempt();
+    _websiteAttempt = attempt;
+    try {
+      await ref.read(authControllerProvider.future);
+      if (!_active(flow)) return;
+      await ref
+          .read(authControllerProvider.notifier)
+          .signInThroughWebsite(provider: 'facebook', attempt: attempt);
+      if (_active(flow)) {
+        _completed = true;
+        _finish();
+      }
+    } finally {
+      if (identical(_websiteAttempt, attempt)) _websiteAttempt = null;
+    }
+  });
 
   void _finish() {
     if (!widget.popOnSuccess) return;

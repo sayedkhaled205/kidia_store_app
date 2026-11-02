@@ -1,6 +1,6 @@
 (function (scope) {
   'use strict';
-  const allowedMethods = ['password', 'email_password', 'phone_password', 'phone_otp', 'google', 'registration'];
+  const allowedMethods = ['password', 'email_password', 'phone_password', 'phone_otp', 'google', 'facebook', 'registration'];
   async function load(payload, fetchPublic) {
     if (payload.platform !== 'woocommerce') throw new Error('Unsupported preview authentication platform.');
     const store = payload.store_data || {};

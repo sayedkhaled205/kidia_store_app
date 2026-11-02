@@ -13,6 +13,7 @@ function wc_get_page_permalink( $page ) { return $GLOBALS['woo_account_url'] ?? 
 function wc_get_page_id( $page ) { return $GLOBALS['woo_account_id'] ?? 20; }
 function maybe_serialize( $value ) { return serialize($value); }
 function wp_schedule_single_event( $time, $hook, $args ) {}
+function is_user_logged_in() { return $GLOBALS['web_logged_in'] ?? false; }
 
 // Simulate compare-and-swap against a persistent option store, including races.
 $wpdb = new class {
@@ -62,6 +63,29 @@ function start_web($bridge) {
     return [$args['mobishop_login'],$state,$verifier];
 }
 web_assert($bridge->config()->data['enabled'], 'Detects configured website flow');
+web_assert($bridge->facebook_enabled(), 'Configured Facebook is available');
+$destination = new ReflectionMethod($bridge, 'destination');
+$destination->setAccessible(true);
+web_assert(str_contains($destination->invoke($bridge, ['provider'=>'facebook']), 'loginSocial=facebook'), 'Anonymous Facebook starts chosen provider');
+$GLOBALS['web_logged_in'] = true;
+$GLOBALS['mobishop_social_html_override'] = '';
+web_assert($destination->invoke($bridge, ['provider'=>'facebook']) === get_permalink(10), 'Existing browser account goes to confirmation despite hidden Nextend button');
+$GLOBALS['web_logged_in'] = false;
+web_assert(!$bridge->facebook_enabled(), 'Disabled provider is hidden');
+foreach (['https://evil.example/wp-login.php?loginSocial=facebook','https://user@shop.example.com/wp-login.php?loginSocial=facebook','https://shop.example.com/wp-login.php?loginSocial=google','//evil.example/?loginSocial=facebook'] as $unsafe) {
+    $GLOBALS['mobishop_social_html_override'] = '<a href="'.$unsafe.'">Login</a>';
+    web_assert(!$bridge->facebook_enabled(), 'Unsafe or wrong-provider URL rejected');
+}
+unset($GLOBALS['mobishop_social_html_override']);
+$before_provider_start = count($options);
+web_assert(is_wp_error($bridge->start(new WP_REST_Request(['provider'=>'unknown']))), 'Unknown provider is rejected before creating attempt');
+web_assert(count($options)===$before_provider_start, 'Rejected provider creates no pending login');
+$fb=$bridge->start(new WP_REST_Request(['provider'=>'facebook','state'=>str_repeat('c',64),'challenge'=>str_repeat('d',64)]));
+parse_str(parse_url($fb->data['authorize_url'],PHP_URL_QUERY),$fb_args);
+web_assert($options['_mobishop_web_login_'.$fb_args['mobishop_login']]['provider']==='facebook', 'Chosen provider retained in bound server attempt');
+$options['kidia_login_page_id']=0;$GLOBALS['woo_account_id']=-1;
+web_assert(!$bridge->facebook_enabled(), 'Missing account page disables provider');
+$options['kidia_login_page_id']=10;unset($GLOBALS['woo_account_id']);
 web_assert(is_wp_error($bridge->start(new WP_REST_Request(['state'=>'bad','challenge'=>'bad']))), 'Invalid request rejected');
 [$id,$state,$verifier] = start_web($bridge);
 $key='_mobishop_web_login_'.$id;

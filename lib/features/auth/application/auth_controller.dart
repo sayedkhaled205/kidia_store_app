@@ -31,13 +31,14 @@ class AuthController extends AsyncNotifier<AuthSession?> {
   }
 
   Future<AuthSession> signInThroughWebsite({
+    String? provider,
     WebsiteAuthBrowser? presenter,
     WebsiteAuthAttempt? attempt,
   }) async {
     final operationRef = ref;
     final session = await ref
         .read(websiteAuthServiceProvider)
-        .signIn(presenter: presenter, attempt: attempt);
+        .signIn(provider: provider, presenter: presenter, attempt: attempt);
     attempt?.checkActive();
     if (!operationRef.mounted) return session;
     state = AsyncData<AuthSession?>(session);

@@ -71,6 +71,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			'phone_country_code' => preg_replace( '/\D/', '', (string) ( $s['phone_country_code'] ?? '' ) ),
 			'methods' => array( 'password' => $enabled, 'email_password' => $enabled, 'phone_password' => $enabled,
 				'phone_otp' => $enabled && (bool) $phone, 'google' => $enabled && $google,
+				'facebook' => $enabled && class_exists( 'MobiShop_Website_Auth_Endpoint' ) && ( new MobiShop_Website_Auth_Endpoint( $this->issue, $this->allowed ) )->facebook_enabled(),
 				'registration' => $enabled && $this->registration_enabled() && ( $phone || ( $google && ! $this->requires_phone() ) ),
 				'email_registration' => $enabled && $this->registration_enabled() && (bool) $phone ),
 			'firebase' => $enabled && $phone ? $f : null,

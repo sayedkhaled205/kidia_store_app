@@ -23,13 +23,13 @@
         } finally { clearTimeout(timer); }
     }
     function field(form,label,name,type,placeholder) {
-        var wrap=document.createElement('label');wrap.textContent=label;
+        var wrap=document.createElement('label'),caption=document.createElement('span');caption.textContent=label;caption.className='screen-reader-text';wrap.appendChild(caption);
         var input=document.createElement('input');input.className='kidia-input';input.name=name;input.type=type||'text';input.required=true;
-        if(placeholder)input.placeholder=placeholder;
+        input.placeholder=placeholder||label;input.setAttribute('aria-label',label);
         if(type==='tel'){input.inputMode='numeric';input.pattern='01[0125][0-9]{8}';input.maxLength=11;input.dir='ltr';input.autocomplete='tel-national';}
         if(type==='password'){input.minLength=8;input.maxLength=4096;input.autocomplete='new-password';}
         if(name==='name'){input.maxLength=120;input.autocomplete='name';}
-        wrap.appendChild(input);form.appendChild(wrap);return input;
+        wrap.appendChild(input);form.appendChild(wrap);wrap.dispatchEvent(new CustomEvent('kidia:fields-added',{bubbles:true}));return input;
     }
     function message(form,text) { var p=document.createElement('p');p.className='kidia-feedback';p.setAttribute('role','status');p.textContent=text;form.appendChild(p);return p; }
     function button(form,text,action) {var b=document.createElement('button');b.type=action?'button':'submit';b.className='kidia-primary-button';b.textContent=text;if(action)b.addEventListener('click',action);form.appendChild(b);return b;}

@@ -85,6 +85,25 @@ void main() {
   String callback() =>
       '${WebsiteAuthService.schemeFor(Uri.parse('https://store.example'))}://auth/complete?code=$code&state=$state';
 
+  test('Facebook reuses bound one-time website exchange', () async {
+    final session = await service(
+      (_) async => callback(),
+    ).signIn(provider: 'facebook');
+    expect(requests.first.data['provider'], 'facebook');
+    expect(requests.last.data.containsKey('provider'), isFalse);
+    expect(storage.value, session);
+  });
+  test('unrecognized provider opens no browser or server request', () async {
+    await expectLater(
+      service(
+        (_) async => throw StateError('must not open'),
+      ).signIn(provider: 'unknown'),
+      throwsFormatException,
+    );
+    expect(requests, isEmpty);
+    expect(storage.value, isNull);
+  });
+
   test(
     'stores the chosen verified customer, code exchange stays on store HTTPS',
     () async {

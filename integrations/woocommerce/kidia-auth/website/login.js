@@ -1106,14 +1106,48 @@
 		});
 	}
 
-	var passwordToggle = root.querySelector('[data-kidia-password-toggle]');
-	if (passwordToggle && passwordInput) {
-		passwordToggle.addEventListener('click', function () {
-			var reveal = passwordInput.type === 'password';
-			passwordInput.type = reveal ? 'text' : 'password';
-			passwordToggle.setAttribute('aria-label', reveal ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');
+	function enhanceFields(container) {
+		container.querySelectorAll('input.kidia-input').forEach(function (input) {
+			if (!['text', 'email', 'password'].includes(input.type)) return;
+			var label = input.closest('label') || (input.id && root.querySelector('label[for="' + input.id + '"]'));
+			var caption = label && label.querySelector('span');
+			var name = input.getAttribute('aria-label') || (caption ? caption.textContent : label && label.textContent) || input.placeholder;
+			if (name) {
+				input.setAttribute('aria-label', name.trim());
+				if (!input.placeholder) input.placeholder = name.trim();
+			}
+			if (caption) caption.classList.add('screen-reader-text');
+			else if (label && !label.contains(input)) label.classList.add('screen-reader-text');
+			if (input.type !== 'password') return;
+			var wrap = input.closest('.kidia-password-wrap');
+			if (!wrap) {
+				wrap = document.createElement('span');
+				wrap.className = 'kidia-field-wrap kidia-password-wrap';
+				input.before(wrap); wrap.appendChild(input);
+			}
+			if (wrap.querySelector('[data-kidia-password-toggle]')) return;
+			var toggle = document.createElement('button');
+			toggle.type = 'button'; toggle.className = 'kidia-password-toggle';
+			toggle.setAttribute('data-kidia-password-toggle', '');
+			toggle.setAttribute('aria-label', 'إظهار كلمة المرور');
+			toggle.setAttribute('aria-pressed', 'false');
+			toggle.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6z"></path><circle cx="12" cy="12" r="2.6"></circle></svg>';
+			wrap.appendChild(toggle);
 		});
 	}
+	enhanceFields(root);
+	root.addEventListener('kidia:fields-added', function (event) { enhanceFields(event.target); });
+	root.addEventListener('click', function (event) {
+		var toggle = event.target.closest('[data-kidia-password-toggle]');
+		if (!toggle || !root.contains(toggle)) return;
+		var input = toggle.closest('.kidia-password-wrap').querySelector('input');
+		if (!input || input.disabled) return;
+		event.preventDefault();
+		var reveal = input.type === 'password';
+		input.type = reveal ? 'text' : 'password';
+		toggle.setAttribute('aria-pressed', String(reveal));
+		toggle.setAttribute('aria-label', reveal ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور');
+	});
 
 	var closeButton = root.querySelector('[data-kidia-close]');
 	if (closeButton) {

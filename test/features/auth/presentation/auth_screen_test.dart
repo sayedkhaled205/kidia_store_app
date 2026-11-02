@@ -24,6 +24,33 @@ import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart'
 
 void main() {
   testWidgets(
+    'preview shows configured Facebook without starting authentication',
+    (tester) async {
+      final fixture = _Fixture();
+      await fixture.pump(
+        tester,
+        previewActions: CmsPreviewAuthActions(
+          () async => {
+            'version': 1,
+            'enabled': true,
+            'methods': {
+              'email_password': true,
+              'google': true,
+              'facebook': true,
+            },
+          },
+          isArabic: true,
+        ),
+      );
+      expect(find.byKey(const Key('auth-facebook')), findsOneWidget);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+      await _tap(tester, 'auth-facebook');
+      expect(find.textContaining('دي معاينة'), findsOneWidget);
+      expect(fixture.actions.commits, 0);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
     'old connector keeps ordinary Google but never claims phone-bound Google support',
     (tester) async {
       final actions = _Actions()

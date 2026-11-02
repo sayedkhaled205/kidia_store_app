@@ -180,7 +180,6 @@ final class Kidia_Firebase_OTP_265 {
     public static function assets(): void {
         $scripts = wp_scripts();
         if (isset($scripts->registered['kidia-login-page'])) {
-            $scripts->registered['kidia-login-page']->ver = '0.6.15-shared1';
             wp_enqueue_style('kidia-phone-methods', plugin_dir_url(__FILE__) . 'kidia-phone-methods.css', ['kidia-login-page'], '1.0.0');
         }
         if (!wp_script_is('fme_lwp_public_script', 'enqueued') || get_option('fmaServiceProvider') !== 'firebase') { return; }
