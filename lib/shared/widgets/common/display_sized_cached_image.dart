@@ -8,6 +8,7 @@ import 'package:flutter/painting.dart';
 class DisplaySizedCachedImage extends CachedNetworkImageProvider {
   const DisplaySizedCachedImage(
     super.url, {
+    super.cacheManager,
     required this.targetWidth,
     required this.targetHeight,
     required this.fit,

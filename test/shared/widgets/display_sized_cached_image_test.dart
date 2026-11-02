@@ -1,14 +1,12 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file/file.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'dart:typed_data';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/shared/widgets/common/display_sized_cached_image.dart';
 
 class _ImageFile implements File {
   _ImageFile(this.bytes);
@@ -58,37 +56,39 @@ void main() {
           return data;
         }))!;
         picture.dispose();
-        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          (_) async => '.',
-        );
-        final oldCache = CachedNetworkImageProvider.defaultCacheManager;
-        CachedNetworkImageProvider.defaultCacheManager = _ImageCache(
-          _ImageFile(bytes),
-        );
-        addTearDown(() {
-          CachedNetworkImageProvider.defaultCacheManager = oldCache;
-          PaintingBinding.instance.imageCache.clear();
-        });
+        addTearDown(() => PaintingBinding.instance.imageCache.clear());
         await tester.pumpWidget(
           MaterialApp(
             home: MediaQuery(
               data: const MediaQueryData(devicePixelRatio: 3),
               child: Center(
-                child: AppNetworkImage(
-                  imageUrl: 'https://example.com/${target.height}.png',
+                child: Image(
+                  image: DisplaySizedCachedImage(
+                    'https://example.com/${target.height}.png',
+                    cacheManager: _ImageCache(_ImageFile(bytes)),
+                    targetWidth: (target.width * 3).ceil(),
+                    targetHeight: (target.height * 3).ceil(),
+                    fit: BoxFit.cover,
+                  ),
                   width: target.width,
                   height: target.height,
-                  decodeAtDisplaySize: true,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
           ),
         );
-        await tester.runAsync(() async {
-          await Future<void>.delayed(const Duration(milliseconds: 150));
-        });
-        await tester.pump();
+        for (var attempt = 0; attempt < 100; attempt++) {
+          if (tester
+              .widgetList<RawImage>(find.byType(RawImage))
+              .any((image) => image.image != null)) {
+            break;
+          }
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)),
+          );
+          await tester.pump();
+        }
         final raw = tester
             .widgetList<RawImage>(find.byType(RawImage))
             .where((image) => image.image != null)
