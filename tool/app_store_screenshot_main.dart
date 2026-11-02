@@ -1,10 +1,12 @@
 // Simulator-only listing capture. The shipping entry point remains lib/main.dart.
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:mobishop_store_app/app/app.dart';
 import 'package:mobishop_store_app/app/app_router.dart';
 import 'package:mobishop_store_app/core/localization/app_locale_provider.dart';
@@ -14,6 +16,9 @@ Future<void> main() async {
     throw UnsupportedError('Listing capture requires an iOS debug simulator.');
   }
   final binding = WidgetsFlutterBinding.ensureInitialized();
+  final documents = await getApplicationDocumentsDirectory();
+  final readiness = File('${documents.path}/app-store-capture-ready-v1.txt');
+  if (await readiness.exists()) await readiness.delete();
   final container = ProviderContainer();
   await container.read(appLanguagePreferenceProvider.future);
   await container
@@ -35,7 +40,7 @@ Future<void> main() async {
   );
   var stableChecks = 0;
   var attempts = 0;
-  Timer.periodic(const Duration(seconds: 2), (timer) {
+  Timer.periodic(const Duration(seconds: 2), (timer) async {
     var images = 0;
     var paragraphs = 0;
     final viewport = Offset.zero & (view.physicalSize / view.devicePixelRatio);
@@ -58,10 +63,15 @@ Future<void> main() async {
     }
     stableChecks = images >= 3 && paragraphs >= 4 ? stableChecks + 1 : 0;
     if (stableChecks >= 2) {
-      debugPrintSynchronously(
-        'APP_STORE_CAPTURE_READY_V1 images=$images text=$paragraphs',
-      );
       timer.cancel();
+      // A local simulator artifact, independent of Flutter's debug log transport.
+      // Publish only after the real visible content passed consecutive checks.
+      final staged = File('${readiness.path}.tmp');
+      await staged.writeAsString(
+        'APP_STORE_CAPTURE_READY_V1 images=$images text=$paragraphs',
+        flush: true,
+      );
+      await staged.rename(readiness.path);
     } else if (++attempts >= 60) {
       debugPrintSynchronously(
         'APP_STORE_CAPTURE_NOT_READY images=$images text=$paragraphs',

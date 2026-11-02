@@ -20,6 +20,9 @@ class SimulatorLaunchTest(unittest.TestCase):
         self.errors = ""
         self.lines = ["New arrivals", "Home", "Account"]
         self.commands = []
+        self.container = self.artifacts / "data"
+        (self.container / "Documents").mkdir(parents=True)
+        self.marker = self.container / "Documents" / "app-store-capture-ready-v1.txt"
 
     def runner(self, command, **kwargs):
         self.commands.append(command)
@@ -27,6 +30,10 @@ class SimulatorLaunchTest(unittest.TestCase):
             for flag, content in (("--stdout=", self.logs), ("--stderr=", self.errors)):
                 Path(next(part[len(flag):] for part in command if part.startswith(flag))).write_text(content, encoding="utf-8")
             return subprocess.CompletedProcess(command, 0, self.bundle + ": 12345\n", "")
+        if command[:3] == ["xcrun", "simctl", "get_app_container"]:
+            self.assertEqual(command[-1], "data")
+            self.assertEqual(kwargs["timeout"], 30)
+            return subprocess.CompletedProcess(command, 0, str(self.container), "")
         if command[0] == "ps":
             return subprocess.CompletedProcess(command, 0, "/CoreSimulator/Devices/" + self.device + "/data/Runner.app/Runner\n", "")
         if command[:3] == ["xcrun", "simctl", "io"]:
@@ -52,11 +59,12 @@ class SimulatorLaunchTest(unittest.TestCase):
 
     def test_capture_waits_for_actual_rendering_instead_of_fixed_twelve_seconds(self):
         self.lines = ["11:14", "unrecognized Arabic"]
+        self.logs = ""
         waits = []
         def sleeper(seconds):
             waits.append(seconds)
             if len(waits) == 7:
-                (self.artifacts / "launch-stdout.log").write_text(
+                self.marker.write_text(
                     "APP_STORE_CAPTURE_READY_V1 images=5 text=9", encoding="utf-8")
         result = verify(self.device, self.bundle, self.artifacts, self.runner, sleeper,
                         require_capture_ready=True)
@@ -71,7 +79,50 @@ class SimulatorLaunchTest(unittest.TestCase):
     def test_readiness_requires_decoded_images_and_text(self):
         self.assertFalse(capture_ready("APP_STORE_CAPTURE_READY_V1 images=0 text=4"))
         self.assertFalse(capture_ready("APP_STORE_CAPTURE_READY_V1 images=3 text=0"))
-        self.assertTrue(capture_ready("flutter: APP_STORE_CAPTURE_READY_V1 images=4 text=8"))
+        self.assertTrue(capture_ready("APP_STORE_CAPTURE_READY_V1 images=4 text=8"))
+
+    def test_stale_marker_and_log_marker_cannot_establish_readiness(self):
+        self.marker.write_text("APP_STORE_CAPTURE_READY_V1 images=9 text=9")
+        self.logs = "APP_STORE_CAPTURE_READY_V1 images=9 text=9"
+        waits = []
+        with self.assertRaisesRegex(ValueError, "did not finish rendering"):
+            verify(self.device, self.bundle, self.artifacts, self.runner, waits.append,
+                   require_capture_ready=True)
+        self.assertEqual(sum(waits), 126)
+        self.assertFalse(self.marker.exists())
+
+    def test_invalid_or_oversized_marker_fails_closed(self):
+        for content in ("APP_STORE_CAPTURE_READY_V1 images=0 text=8",
+                        "APP_STORE_CAPTURE_READY_V1 images=9 text=9\nunexpected",
+                        "APP_STORE_CAPTURE_READY_V1 images=9 text=9" + " " * 4096):
+            with self.subTest(content=content[:60]):
+                def sleeper(_):
+                    self.marker.write_text(content)
+                with self.assertRaisesRegex(ValueError, "did not finish rendering"):
+                    verify(self.device, self.bundle, self.artifacts, self.runner, sleeper,
+                           require_capture_ready=True)
+
+    def test_valid_marker_does_not_bypass_fatal_logs_or_system_dialog(self):
+        for failure in ("logs", "dialog"):
+            with self.subTest(failure=failure):
+                self.logs = "Unhandled Exception" if failure == "logs" else ""
+                self.lines = (["Would Like to Send You Notifications", "Allow", "Home"]
+                              if failure == "dialog" else ["Home", "Account"])
+                def sleeper(_):
+                    self.marker.write_text("APP_STORE_CAPTURE_READY_V1 images=5 text=8")
+                with self.assertRaisesRegex(ValueError, "application logs|System dialog"):
+                    verify(self.device, self.bundle, self.artifacts, self.runner, sleeper,
+                           require_capture_ready=True)
+
+    def test_missing_data_container_is_failure_before_launch(self):
+        def runner(command, **kwargs):
+            if command[:3] == ["xcrun", "simctl", "get_app_container"]:
+                return subprocess.CompletedProcess(command, 1, "", "not installed")
+            return self.runner(command, **kwargs)
+        with self.assertRaisesRegex(ValueError, "data container"):
+            verify(self.device, self.bundle, self.artifacts, runner, lambda _: None,
+                   require_capture_ready=True)
+        self.assertFalse(any(c[:3] == ["xcrun", "simctl", "launch"] for c in self.commands))
 
     def test_immediate_exit_is_failure_but_retains_screenshot(self):
         def runner(command, **kwargs):

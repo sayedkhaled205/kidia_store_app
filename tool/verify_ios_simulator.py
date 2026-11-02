@@ -69,8 +69,8 @@ def read_log(path):
     return path.read_text(encoding="utf-8", errors="replace")
 
 
-def capture_ready(logs):
-    match = re.search(r"APP_STORE_CAPTURE_READY_V1 images=(\d+) text=(\d+)", logs)
+def capture_ready(marker):
+    match = re.fullmatch(r"APP_STORE_CAPTURE_READY_V1 images=(\d+) text=(\d+)", marker.strip())
     return bool(match and int(match[1]) >= 3 and int(match[2]) >= 4)
 
 
@@ -91,6 +91,18 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
         path.unlink(missing_ok=True)
     stdout.touch()
     stderr.touch()
+    readiness = None
+    if require_capture_ready:
+        container_result = runner([
+            "xcrun", "simctl", "get_app_container", device, bundle, "data",
+        ], capture_output=True, text=True, timeout=30)
+        container_path = container_result.stdout.strip()
+        if (container_result.returncode or not container_path or "\n" in container_path
+                or not Path(container_path).is_absolute() or not Path(container_path).is_dir()):
+            raise ValueError("Simulator application data container could not be located")
+        readiness = Path(container_path) / "Documents" / "app-store-capture-ready-v1.txt"
+        # Remove a prior run's marker before launch; logs can never establish readiness.
+        readiness.unlink(missing_ok=True)
     result = runner([
         "xcrun", "simctl", "launch", "--terminate-running-process",
         "--stdout=" + str(stdout), "--stderr=" + str(stderr), device, bundle,
@@ -112,7 +124,8 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
             break
         if require_capture_ready:
             current_logs = read_log(stdout) + "\n" + read_log(stderr)
-            ready = capture_ready(current_logs)
+            if readiness.is_file() and readiness.stat().st_size <= 4096:
+                ready = capture_ready(readiness.read_text(encoding="utf-8", errors="replace"))
             if ready and elapsed >= 12:
                 break
             if fatal_signals(current_logs):
