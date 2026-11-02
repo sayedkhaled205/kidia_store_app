@@ -114,6 +114,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final hasIdentifier =
         config?.supportsPhone == true ||
         config?.allows('email_password') == true;
+    final showGoogle =
+        [
+          _AuthStep.identifier,
+          _AuthStep.method,
+          _AuthStep.password,
+          _AuthStep.recovery,
+        ].contains(_step) &&
+        config?.allows('google') == true &&
+        (_expectedGooglePhone == null ||
+            (config!.supportsExpectedPhoneGoogle &&
+                _actions is NativeExistingPhoneGoogleActions));
+    final showFacebook =
+        [_AuthStep.identifier, _AuthStep.password].contains(_step) &&
+        _expectedGooglePhone == null &&
+        config?.allows('facebook') == true;
     final copy = AuthCopy.of(context);
     final branding = ref.watch(applicationIdentity58Provider);
     final storeName = branding?['app_name'] as String? ?? AppConfig.storeName;
@@ -294,100 +309,135 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                     : copy.resendOtp,
                               ),
                             ),
-                          if ([
-                                _AuthStep.identifier,
-                                _AuthStep.method,
-                                _AuthStep.password,
-                                _AuthStep.recovery,
-                              ].contains(_step) &&
-                              config.allows('google') &&
-                              (_expectedGooglePhone == null ||
-                                  (config.supportsExpectedPhoneGoogle &&
-                                      _actions
-                                          is NativeExistingPhoneGoogleActions))) ...[
+                          if (showGoogle || showFacebook) ...[
                             if (hasIdentifier) ...[
-                              const SizedBox(height: 24),
-                              Row(
-                                key: const Key('auth-social-or'),
-                                children: [
-                                  const Expanded(child: Divider(endIndent: 16)),
-                                  Text(copy.or, style: _secondaryStyle),
-                                  const Expanded(child: Divider(indent: 16)),
-                                ],
-                              ),
-                              const SizedBox(height: 16),
-                            ],
-                            OutlinedButton.icon(
-                              key: const Key('auth-google'),
-                              onPressed: _busy
-                                  ? null
-                                  : () => _perform((flow) async {
-                                      _otpEpoch++;
-                                      // Google starts a new service attempt, so
-                                      // the previous phone proof cannot be reused.
-                                      setState(() {
-                                        _challenge = null;
-                                        _otpTicket = null;
-                                        _continuation = null;
-                                        _canRetryCode = false;
-                                      });
-                                      _registrationDetailsCollected = false;
-                                      final expectedPhone =
-                                          _expectedGooglePhone;
-                                      final result = expectedPhone == null
-                                          ? await _actions!.google()
-                                          : await (_actions
-                                                    as NativeExistingPhoneGoogleActions)
-                                                .googleForPhone(expectedPhone);
-                                      if (_active(flow)) {
-                                        if (result.status ==
-                                            NativeAuthStatus
-                                                .registrationRequired) {
-                                          _identity = null;
-                                        }
-                                        await _acceptResult(result, flow);
-                                      }
-                                    }),
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: Size.fromHeight(
-                                  (_ui.values['auth_google_button_height']
-                                              as num?)
-                                          ?.toDouble() ??
-                                      50,
+                              const SizedBox(height: 28),
+                              Center(
+                                child: SizedBox(
+                                  width: 176,
+                                  child: Row(
+                                    key: const Key('auth-social-or'),
+                                    children: [
+                                      const Expanded(
+                                        child: Divider(
+                                          color: Color(0xFFE5E5E5),
+                                          endIndent: 18,
+                                        ),
+                                      ),
+                                      Text(copy.or, style: _secondaryStyle),
+                                      const Expanded(
+                                        child: Divider(
+                                          color: Color(0xFFE5E5E5),
+                                          indent: 18,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                shape: const StadiumBorder(),
                               ),
-                              icon: Image.asset(
-                                'assets/branding/google-g.png',
-                                key: const Key('auth-google-brand'),
-                                width: 24,
-                                height: 24,
-                                fit: BoxFit.contain,
-                                excludeFromSemantics: true,
-                              ),
-                              label: Text(copy.continueWithGoogle),
-                            ),
-                          ],
-                          if ([
-                                _AuthStep.identifier,
-                                _AuthStep.password,
-                              ].contains(_step) &&
-                              _expectedGooglePhone == null &&
-                              config.allows('facebook')) ...[
-                            const SizedBox(height: 12),
-                            OutlinedButton.icon(
-                              key: const Key('auth-facebook'),
-                              onPressed: _busy ? null : _facebook,
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.fromHeight(50),
-                                shape: const StadiumBorder(),
-                              ),
-                              icon: const Icon(
-                                Icons.facebook,
-                                color: Color(0xFF1877F2),
-                                size: 26,
-                              ),
-                              label: Text(copy.continueWithFacebook),
+                              const SizedBox(height: 20),
+                            ],
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              textDirection: TextDirection.ltr,
+                              children: [
+                                if (showGoogle)
+                                  Tooltip(
+                                    message: copy.continueWithGoogle,
+                                    excludeFromSemantics: true,
+                                    child: OutlinedButton(
+                                      key: const Key('auth-google'),
+                                      onPressed: _busy
+                                          ? null
+                                          : () => _perform((flow) async {
+                                              _otpEpoch++;
+                                              // Google starts a new service attempt, so
+                                              // the previous phone proof cannot be reused.
+                                              setState(() {
+                                                _challenge = null;
+                                                _otpTicket = null;
+                                                _continuation = null;
+                                                _canRetryCode = false;
+                                              });
+                                              _registrationDetailsCollected =
+                                                  false;
+                                              final expectedPhone =
+                                                  _expectedGooglePhone;
+                                              final result =
+                                                  expectedPhone == null
+                                                  ? await _actions!.google()
+                                                  : await (_actions
+                                                            as NativeExistingPhoneGoogleActions)
+                                                        .googleForPhone(
+                                                          expectedPhone,
+                                                        );
+                                              if (_active(flow)) {
+                                                if (result.status ==
+                                                    NativeAuthStatus
+                                                        .registrationRequired) {
+                                                  _identity = null;
+                                                }
+                                                await _acceptResult(
+                                                  result,
+                                                  flow,
+                                                );
+                                              }
+                                            }),
+                                      style: OutlinedButton.styleFrom(
+                                        fixedSize: const Size.square(52),
+                                        minimumSize: const Size.square(52),
+                                        padding: EdgeInsets.zero,
+                                        backgroundColor: Colors.white,
+                                        side: const BorderSide(
+                                          color: Color(0xFFEEEEEE),
+                                        ),
+                                        shape: const CircleBorder(),
+                                      ),
+                                      child: Semantics(
+                                        label: copy.continueWithGoogle,
+                                        child: Image.asset(
+                                          'assets/branding/google-g.png',
+                                          key: const Key('auth-google-brand'),
+                                          width: 24,
+                                          height: 24,
+                                          fit: BoxFit.contain,
+                                          excludeFromSemantics: true,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                if (showGoogle && showFacebook)
+                                  const SizedBox(width: 28),
+                                if (showFacebook)
+                                  Tooltip(
+                                    message: copy.continueWithFacebook,
+                                    excludeFromSemantics: true,
+                                    child: OutlinedButton(
+                                      key: const Key('auth-facebook'),
+                                      onPressed: _busy ? null : _facebook,
+                                      style: OutlinedButton.styleFrom(
+                                        fixedSize: const Size.square(52),
+                                        minimumSize: const Size.square(52),
+                                        padding: EdgeInsets.zero,
+                                        side: BorderSide.none,
+                                        shape: const CircleBorder(),
+                                      ),
+                                      child: Semantics(
+                                        label: copy.continueWithFacebook,
+                                        child: ExcludeSemantics(
+                                          child: Transform.scale(
+                                            scale: 1.2,
+                                            child: const Icon(
+                                              Icons.facebook,
+                                              color: Color(0xFF1877F2),
+                                              size: 52,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ],
                         ],
