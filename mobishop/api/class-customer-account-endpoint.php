@@ -249,6 +249,8 @@ final class MobiShop_Customer_Account_Endpoint {
 			$phone = $this->sanitize_phone_value( $billing_phone );
 			update_user_meta( $customer_id, self::ACCOUNT_PHONE_META, $phone );
 		}
+		// A contact claim is visible to its own customer, never promoted to an OTP identity.
+		if ( '' === trim( $phone ) ) $phone = (string) get_user_meta( $customer_id, 'kidia_unverified_phone', true );
 		return array(
 			'id'           => $customer_id,
 			'email'        => sanitize_email( (string) $customer->get_email() ),

@@ -46,6 +46,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _confirmation = TextEditingController();
   final _otp = TextEditingController();
   final _name = TextEditingController();
+  bool _registrationDetailsCollected = false;
   final _email = TextEditingController();
   final _phone = TextEditingController();
   NativeAuthActions? _actions;
@@ -326,6 +327,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         _continuation = null;
                                         _canRetryCode = false;
                                       });
+                                      _registrationDetailsCollected = false;
                                       final expectedPhone =
                                           _expectedGooglePhone;
                                       final result = expectedPhone == null
@@ -514,6 +516,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 }
                 setState(() {
                   _identity = identity;
+                  _registrationDetailsCollected = false;
                   _continuation = null;
                   _challenge = null;
                   _otpTicket = null;
@@ -557,12 +560,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             ),
           if (_busy) const Center(child: CircularProgressIndicator()),
         ];
-      case _AuthStep.password:
       case _AuthStep.createPassword:
-        return _passwordFields(
-          copy,
-          creating: _step == _AuthStep.createPassword,
-        );
+        return [
+          _textField(
+            key: const Key('auth-name'),
+            controller: _name,
+            label: copy.name,
+            keyboard: TextInputType.name,
+            autofill: AutofillHints.name,
+            direction: null,
+            validator: (value) =>
+                value?.trim().isNotEmpty == true ? null : copy.nameRequired,
+          ),
+          const SizedBox(height: 14),
+          ..._passwordFields(copy, creating: true),
+        ];
+      case _AuthStep.password:
+        return _passwordFields(copy, creating: false);
       case _AuthStep.otp:
         return [
           _textField(
@@ -687,6 +701,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 if (!_active(flow)) return;
                 setState(() {
                   _identity = identity;
+                  _registrationDetailsCollected = false;
                   _continuation = null;
                   _challenge = null;
                   _otpTicket = null;
@@ -1017,6 +1032,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           }
         case _AuthStep.password:
         case _AuthStep.createPassword:
+          _registrationDetailsCollected = _step == _AuthStep.createPassword;
           final result = await _actions!.password(
             _identity!.identifier,
             _password.text,
@@ -1307,6 +1323,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _error = null;
     });
     try {
+      if (_registrationDetailsCollected &&
+          result.status == NativeAuthStatus.registrationRequired &&
+          !result.fields.contains('phone') &&
+          !result.fields.contains('email')) {
+        setState(() {
+          _continuation = result;
+          _step = _AuthStep.registration;
+        });
+        try {
+          result = await _actions!.register(
+            result.ticket,
+            name: _name.text.trim(),
+            password: _password.text,
+          );
+        } on AuthRepositoryException catch (error) {
+          if (error.code == 'mobishop_native_existing_phone' &&
+              _recoveryPhone != null) {
+            if (_active(flow)) _offerExistingPhone(_recoveryPhone!);
+            return;
+          }
+          rethrow;
+        }
+        if (!_active(flow)) return;
+      }
       switch (result.status) {
         case NativeAuthStatus.authenticated:
           _pendingCommit = result;
@@ -1370,6 +1410,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   void _changeIdentifier() {
+    _registrationDetailsCollected = false;
     _flow++;
     _operation++;
     _otpEpoch++;

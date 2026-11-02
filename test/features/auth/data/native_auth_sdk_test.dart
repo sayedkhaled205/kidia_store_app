@@ -82,6 +82,35 @@ class GoogleBackend implements NativeGoogleBackend {
 }
 
 void main() {
+  testWidgets(
+    'silent SMS start fails after twenty seconds and ignores late proof',
+    (tester) async {
+      final backend = PhoneBackend();
+      final sdk = FirebaseNativeAuthSdk(
+        phoneBackendFactory: (_) async => backend,
+        platform: TargetPlatform.android,
+        isWeb: false,
+      );
+      final pending = sdk.startPhone(config: config, phone: '+201012345678');
+      final failure = expectLater(
+        pending,
+        throwsA(sdkError('verification-timeout')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 20));
+      await failure;
+      backend.sent('late-code', null);
+      backend.completed(
+        PhoneAuthProvider.credential(
+          verificationId: 'late-code',
+          smsCode: '123456',
+        ),
+      );
+      await tester.pump();
+      expect(backend.tokenCalls, 0);
+      await sdk.cancel();
+    },
+  );
   late PhoneBackend phone;
   late GoogleBackend google;
   late FirebaseNativeAuthSdk sdk;

@@ -142,7 +142,9 @@ final class FirebaseNativeAuthSdk implements NativeAuthSdk {
     }
     final generation = ++_generation;
     _phone?.cancel();
-    final backend = await _phoneBackendFactory(firebase);
+    final backend = await _phoneBackendFactory(
+      firebase,
+    ).timeout(const Duration(seconds: 10));
     _checkCurrent(generation);
     final attempt = _PhoneAttempt(generation, backend);
     _phone = attempt;
@@ -150,7 +152,7 @@ final class FirebaseNativeAuthSdk implements NativeAuthSdk {
     // Register a sink immediately; the original future still reports errors.
     unawaited(attempt.automatic.future.then<void>((_) {}, onError: (_, _) {}));
     unawaited(attempt.started.future.then<void>((_) {}, onError: (_, _) {}));
-    attempt.timer = Timer(const Duration(seconds: 90), () {
+    attempt.timer = Timer(const Duration(seconds: 20), () {
       if (generation != _generation) return;
       if (!attempt.started.isCompleted) {
         attempt.fail(
@@ -180,6 +182,15 @@ final class FirebaseNativeAuthSdk implements NativeAuthSdk {
         sent: (id, token) {
           if (generation != _generation || attempt.started.isCompleted) return;
           attempt.sent(id, token);
+          attempt.timer?.cancel();
+          // Keep automatic retrieval independent from the short send deadline.
+          attempt.timer = Timer(const Duration(seconds: 90), () {
+            if (generation == _generation &&
+                !attempt.automatic.isCompleted &&
+                !attempt.claimed) {
+              attempt.automatic.complete(null);
+            }
+          });
         },
         timedOut: (id) {
           if (generation != _generation || attempt.claimed) return;

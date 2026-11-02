@@ -154,7 +154,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( ! $row || $row['purpose'] !== 'register' ) return $this->error( 'invalid_ticket', 401 );
 			$proof = $row['proof'];
 		}
-		$users = $this->phone_users( $phone );
+		$users = $this->phone_users( $phone, true );
 		if ( is_wp_error( $users ) ) return $users;
 		if ( $users ) return $this->error( 'existing_phone', 409 );
 		// Never relax account-completion proof for an existing account.
@@ -182,6 +182,71 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		unset( $proof['attempted_phone'] );
 		$proof['unverified_phone'] = $phone;
 		return $this->registration_ticket( $proof, $request );
+	}
+
+	/** Cookie-authenticated website completion; never exposed as a REST route. */
+	public function website_contact( WP_REST_Request $request ) {
+		if ( $error = $this->guard( 'website_contact', 20 ) ) return $error;
+		$id = get_current_user_id();
+		$user = get_user_by( 'id', $id );
+		if ( ! $id || ! $this->eligible( $user ) || ! wp_verify_nonce( (string) $request->get_param( 'nonce' ), 'mobishop_website_auth' )
+			|| ! get_user_meta( $id, 'kidia_phone_setup_required', true ) || ! $this->verifier( $request ) ) return $this->error( 'invalid_proof', 403 );
+		$phone = $this->phone( (string) $request->get_param( 'phone' ) );
+		if ( ! $phone ) return $this->error( 'invalid_identifier', 400 );
+		$mode = (string) $request->get_param( 'mode' );
+		$session = $this->hash( wp_get_session_token() );
+		$ticket = (string) $request->get_param( 'ticket' );
+		if ( $mode !== 'prepare' ) {
+			$row = $this->read_ticket( $ticket, $request );
+			if ( ! $row || $row['purpose'] !== 'website_contact' || ( $row['proof']['user_id'] ?? 0 ) !== $id
+				|| ( $row['proof']['phone'] ?? '' ) !== $phone || ! hash_equals( $row['proof']['session'], $session ) ) return $this->error( 'invalid_ticket', 401 );
+		}
+		$locks = $this->lock( array( 'register:phone:' . $phone, 'register:user_id:' . $id ) );
+		if ( $locks === null ) return $this->error( 'retry', 409 );
+		try {
+			wp_cache_delete( $id, 'user_meta' );
+			if ( ! get_user_meta( $id, 'kidia_phone_setup_required', true ) ) return $this->error( 'invalid_ticket', 401 );
+			$users = $this->phone_users( $phone, true );
+			if ( is_wp_error( $users ) ) return $users;
+			foreach ( $users as $owner ) if ( $owner->ID !== $id ) return $this->error( 'existing_phone', 409 );
+			if ( $mode === 'prepare' ) {
+				$token = $this->ticket( 'website_contact', array( 'user_id' => $id, 'phone' => $phone, 'session' => $session ), $request );
+				return is_wp_error( $token ) ? $token : $this->response( array( 'status' => 'contact_confirmation_required', 'ticket' => $token ) );
+			}
+			$verified = false;
+			if ( $mode === 'verify' ) {
+				$c = $this->capabilities( $request );
+				$claims = $this->jwt( $request->get_param( 'id_token' ), self::FIREBASE_CERTS );
+				$project = $c['firebase']['projectId'] ?? '';
+				$verified = $project !== '' && $claims && ( $claims['aud'] ?? null ) === $project
+					&& ( $claims['iss'] ?? null ) === 'https://securetoken.google.com/' . $project && $this->fresh( $claims, true )
+					&& ( $claims['phone_number'] ?? null ) === $phone && ( $claims['firebase']['sign_in_provider'] ?? null ) === 'phone';
+				if ( ! $verified ) return $this->error( 'invalid_proof', 401 );
+			} elseif ( $mode !== 'confirm' ) return $this->error( 'invalid_proof', 400 );
+			$collected = (bool) get_user_meta( $id, 'kidia_profile_details_collected', true );
+			$name = sanitize_text_field( (string) $request->get_param( 'name' ) );
+			$password = $request->get_param( 'password' );
+			if ( ! $collected && ( $name === '' || strlen( $name ) > 120 || ! is_string( $password ) || strlen( $password ) < 8 || strlen( $password ) > 4096
+				|| ! is_string( $request->get_param( 'confirm_password' ) ) || ! hash_equals( $password, $request->get_param( 'confirm_password' ) ) ) ) return $this->error( 'invalid_profile', 400 );
+			if ( ! $verified ) foreach ( $this->phone_keys() as $key ) if ( get_user_meta( $id, $key, true ) ) return $this->error( 'account_conflict', 409 );
+			if ( ! $this->consume( $ticket, $row ) ) return $this->error( 'invalid_ticket', 401 );
+			if ( ! $collected ) {
+				$updated = wp_update_user( array( 'ID' => $id, 'display_name' => $name, 'first_name' => $name, 'user_pass' => $password ) );
+				if ( is_wp_error( $updated ) ) return $this->error( 'registration_failed', 409 );
+			}
+			if ( $verified ) {
+				update_user_meta( $id, 'kidia_login_phone', $phone );
+				update_user_meta( $id, 'fme_billing_phone', $phone );
+				if ( ! get_user_meta( $id, 'billing_phone', true ) ) update_user_meta( $id, 'billing_phone', $phone );
+				delete_user_meta( $id, 'kidia_unverified_phone' );
+			} else {
+				// A repeated number is a contact, never an OTP identity or billing fallback.
+				update_user_meta( $id, 'kidia_unverified_phone', $phone );
+			}
+			delete_user_meta( $id, 'kidia_phone_setup_required' );
+			delete_user_meta( $id, 'kidia_profile_details_collected' );
+			return call_user_func( $this->issue, get_user_by( 'id', $id ) );
+		} finally { $this->unlock( $locks ); }
 	}
 
 	public function phone_verify( WP_REST_Request $request ) {
@@ -301,6 +366,10 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		}
 		$result = call_user_func( $this->issue, $user );
 		if ( $result instanceof WP_REST_Response ) {
+			if ( $result->get_status() < 300 && $request->get_param( 'client_channel' ) !== 'website' ) {
+				update_user_meta( $user->ID, '_mobishop_app_last_login_at', gmdate( 'c' ) );
+				update_user_meta( $user->ID, '_mobishop_app_last_auth_method', sanitize_key( $proof['kind'] ) );
+			}
 			$result->set_data( array( 'status' => 'authenticated' ) + $result->get_data() );
 			$result->header( 'Cache-Control', 'no-store, private' );
 		}
@@ -371,6 +440,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( ! $user && ! empty( $p['email'] ) && email_exists( $p['email'] ) ) return $this->error( 'account_conflict', 409 );
 			if ( ! empty( $p['sub'] ) && $this->google_user( $p['sub'] ) && ( ! $user || $this->google_user( $p['sub'] ) !== $user->ID ) ) return $this->error( 'account_conflict', 409 );
 			if ( ! $this->consume( $ticket, $row ) ) return $this->error( 'invalid_ticket', 401 );
+			$is_new_account = ! $user;
 			if ( ! $user ) {
 				$id = wp_insert_user( array( 'user_login' => 'mobile_' . bin2hex( random_bytes( 12 ) ),
 					'user_email' => $p['email'] ?? '', 'user_pass' => $password, 'display_name' => $name, 'first_name' => $name, 'role' => 'customer' ) );
@@ -388,6 +458,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 				if ( ! get_user_meta( $user->ID, 'billing_phone', true ) ) update_user_meta( $user->ID, 'billing_phone', $p['phone'] );
 			}
 			if ( ! empty( $p['sub'] ) && ! $this->link_google( $user->ID, $p['sub'], true ) ) return $this->error( 'account_conflict', 409 );
+			if ( $is_new_account && $request->get_param( 'client_channel' ) !== 'website' ) update_user_meta( $user->ID, '_mobishop_app_registered_at', gmdate( 'c' ) );
 			delete_user_meta( $user->ID, 'kidia_phone_setup_required' );
 			do_action( 'mobishop_native_auth_profile_completed', $user->ID, $p['kind'] );
 			return $this->finish( get_user_by( 'id', $user->ID ), $p, $request );

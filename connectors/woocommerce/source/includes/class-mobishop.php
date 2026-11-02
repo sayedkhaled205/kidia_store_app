@@ -23,6 +23,8 @@ require_once MOBISHOP_PATH . 'includes/class-mobishop-setup-wizard.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-license-manager.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-analytics.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-order-source98.php';
+require_once MOBISHOP_PATH . 'includes/class-mobishop-customer-source.php';
+MobiShop_Customer_Source::register();
 require_once MOBISHOP_PATH . 'includes/class-mobishop-product-channel-visibility.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-ai-offer-engine.php';
 require_once MOBISHOP_PATH . 'includes/class-mobishop-ai-analysis-job.php';

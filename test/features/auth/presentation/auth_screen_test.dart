@@ -871,6 +871,10 @@ void main() {
       await fixture.pump(tester);
       await _identify(tester, 'new@example.com');
       await tester.enterText(
+        find.byKey(const Key('auth-name')),
+        'New Customer',
+      );
+      await tester.enterText(
         find.byKey(const Key('auth-create-password')),
         'new-password',
       );
@@ -909,6 +913,10 @@ void main() {
         );
       await fixture.pump(tester);
       await _identify(tester, 'new@example.com');
+      await tester.enterText(
+        find.byKey(const Key('auth-name')),
+        'New Customer',
+      );
       expect(find.text('أنشئ كلمة مرور'), findsOneWidget);
       expect(find.byKey(const Key('auth-sign-in')), findsNothing);
       await tester.enterText(
@@ -936,14 +944,64 @@ void main() {
       expect(fixture.actions.otpTickets.last, 'email-enrollment');
       await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
       await _tap(tester, 'auth-verify-otp');
-      expect(fixture.actions.commits, 0);
-      await tester.enterText(find.byKey(const Key('auth-name')), 'عميل جديد');
-      // The existing screen retains both confirmed password fields across OTP.
-      await _tap(tester, 'auth-register');
+      // The collected name and password complete the verified ticket without a new form.
+      expect(find.byKey(const Key('auth-name')), findsNothing);
       expect(fixture.actions.registrationTicket, 'verified-enrollment');
       expect(fixture.actions.registrationPassword, 'new-password');
       expect(fixture.actions.commits, 1);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'email signup registration failure retries the new ticket without another OTP',
+    (tester) async {
+      final fixture = _Fixture();
+      fixture.actions.identityMethods = ['create_password'];
+      fixture.actions.passwordResult = const NativeAuthResult(
+        status: NativeAuthStatus.registrationRequired,
+        ticket: 'email-start',
+        expiresIn: 300,
+        fields: ['name', 'password', 'phone'],
+      );
+      fixture.actions.verifyResult = const NativeAuthResult(
+        status: NativeAuthStatus.registrationRequired,
+        ticket: 'email-complete',
+        expiresIn: 300,
+        fields: ['name', 'password'],
+      );
+      fixture.actions.registrationError = StateError('offline');
+      await fixture.pump(tester);
+      await _identify(tester, 'new@example.com');
+      await tester.enterText(
+        find.byKey(const Key('auth-name')),
+        'New Customer',
+      );
+      await tester.enterText(
+        find.byKey(const Key('auth-create-password')),
+        'new-password',
+      );
+      await tester.enterText(
+        find.byKey(const Key('auth-confirm-password')),
+        'new-password',
+      );
+      await _tap(tester, 'auth-register');
+      await tester.enterText(
+        find.byKey(const Key('auth-phone')),
+        '01012345678',
+      );
+      await _tap(tester, 'auth-send-otp');
+      await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
+      await _tap(tester, 'auth-verify-otp');
+      expect(fixture.actions.commits, 0);
+      expect(find.byKey(const Key('auth-otp')), findsNothing);
+      expect(find.byKey(const Key('auth-register')), findsOneWidget);
+      fixture.actions.registrationError = null;
+      await _tap(tester, 'auth-register');
+      expect(fixture.actions.registrationTicket, 'email-complete');
+      expect(fixture.actions.registrationName, 'New Customer');
+      expect(fixture.actions.registrationPassword, 'new-password');
+      expect(fixture.actions.commits, 1);
     },
   );
 
@@ -1230,6 +1288,7 @@ class _Actions implements NativeAuthActions, NativeExistingPhoneGoogleActions {
     },
   );
   List<String>? identityMethods;
+  Object? registrationError;
   NativeAuthResult? verifyResult;
   NativeAuthResult? passwordResult;
   NativeAuthResult? googleResult;
@@ -1351,6 +1410,7 @@ class _Actions implements NativeAuthActions, NativeExistingPhoneGoogleActions {
     registrationName = name;
     registrationPassword = password;
     registrationEmail = email;
+    if (registrationError != null) throw registrationError!;
     return _authenticated();
   }
 

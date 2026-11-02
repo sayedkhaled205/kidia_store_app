@@ -124,6 +124,7 @@ function get_option( $key, $default = false ) { return $GLOBALS['native_options'
 function add_option( $key, $value = '', $deprecated = '', $autoload = null ) {
     if ( array_key_exists( $key, $GLOBALS['native_options'] ) ) return false;
     $GLOBALS['native_options'][$key] = $value;
+    if ( isset( $GLOBALS['on_native_lock'] ) && str_starts_with( $key, '_mobishop_native_auth_' ) && isset( $value['owner'] ) ) ( $GLOBALS['on_native_lock'] )();
     return true;
 }
 function update_option( $key, $value, $autoload = null ) { $GLOBALS['native_options'][$key] = $value; return true; }
@@ -141,6 +142,9 @@ function wp_schedule_single_event( $timestamp, $hook, $args = array() ) { return
 function get_user_meta( $id, $key = '', $single = false ) { $value = $GLOBALS['native_meta'][(int) $id][$key] ?? null; return $value === null ? ( $single ? '' : array() ) : $value; }
 function update_user_meta( $id, $key, $value ) { $GLOBALS['native_meta'][(int) $id][$key] = $value; return true; }
 function delete_user_meta( $id, $key, $value = '' ) { unset( $GLOBALS['native_meta'][(int) $id][$key] ); return true; }
+function get_current_user_id() { return $GLOBALS['website_user'] ?? 0; }
+function wp_get_session_token() { return $GLOBALS['website_session'] ?? 'browser-session'; }
+function wp_verify_nonce( $value, $action ) { return $value === 'fixture-nonce' && $action === 'mobishop_website_auth'; }
 function get_userdata( $id ) { return get_user_by( 'id', $id ); }
 function get_user_by( $field, $value ) {
     foreach ( $GLOBALS['native_users'] as $id => $record ) {
@@ -806,6 +810,8 @@ foreach ( array( 'phone', 'email', 'google' ) as $index => $origin ) {
     native_rejected( $endpoint->register_customer( native_request( array( 'ticket' => $confirmed['ticket'], 'verifier' => $verifier, 'name' => 'Contact Only', 'password' => '' ) ) ), 'Contact fallback never creates a passwordless account' );
     $registered = native_data( $endpoint->register_customer( native_request( array( 'ticket' => $confirmed['ticket'], 'verifier' => $verifier, 'name' => 'Contact Only', 'password' => 'contact-password' ) ) ), 'Create contact-only ' . $origin . ' customer' );
     $contact_id = $registered['user_id'];
+    native_assert( (bool) get_user_meta( $contact_id, '_mobishop_app_registered_at', true ), 'App registration is recorded separately from phone identity' );
+    native_assert( (bool) get_user_meta( $contact_id, '_mobishop_app_last_login_at', true ), 'Only completed app sign-in records channel metadata' );
     native_assert( get_user_meta( $contact_id, 'kidia_unverified_phone', true ) === $contact, 'Unverified number has a separate contact field' );
     native_assert( ! get_user_meta( $contact_id, 'kidia_login_phone', true ) && ! get_user_meta( $contact_id, 'fme_billing_phone', true ), 'Contact fallback does not write verified identity metadata' );
     $issued_before_contact_otp = count( $GLOBALS['native_issued'] );
@@ -814,8 +820,7 @@ foreach ( array( 'phone', 'email', 'google' ) as $index => $origin ) {
     native_assert( count( $GLOBALS['native_issued'] ) === $issued_before_contact_otp, 'Contact-only number grants no OTP session' );
     $contact_identity = native_data( $endpoint->identify( native_request( array( 'identifier' => $contact ) ) ), 'Contact-only sign-in methods' );
     native_assert( $contact_identity['methods'] === array( 'password', 'phone_otp' ), 'Contact claims cannot remove the legitimate owner OTP path' );
-    $another_attempt = native_data( $endpoint->phone_enroll( native_request( array( 'phone' => $contact, 'verifier' => $verifier ) ) ), 'Unverified claims cannot block fresh OTP attempts' );
-    native_rejected( $endpoint->phone_confirm( native_request( array( 'ticket' => $another_attempt['ticket'], 'phone' => $contact, 'verifier' => $verifier ) ) ), 'A second unverified claim still needs the existing account password' );
+    native_rejected( $endpoint->phone_enroll( native_request( array( 'phone' => $contact, 'verifier' => $verifier ) ) ), 'Existing unverified contact is detected before starting another registration' );
     $contact_login = native_data( $endpoint->password( native_request( array( 'identifier' => $contact, 'password' => 'contact-password', 'verifier' => $verifier ) ) ), 'Contact phone and own password authenticate' );
     native_assert( $contact_login['user_id'] === $contact_id, 'Password is proof for the existing contact-only account' );
     $claimant_before = $GLOBALS['native_users'][$contact_id];
@@ -865,4 +870,57 @@ native_assert( $bounded_email_match['user_id'] === 12, 'An email-proven Google a
 foreach ( $GLOBALS['native_http'] as $call ) {
     native_assert( ( $call['args']['sslverify'] ?? true ) === true && ( $call['args']['redirection'] ?? -1 ) === 0, 'Trusted signing-key retrieval verifies TLS and follows no redirects' );
 }
-echo 'Native customer auth: ' . $GLOBALS['native_checks'] . ' contract/security checks passed.' . PHP_EOL;
+$saved_channel = get_user_meta( 11, '_mobishop_app_last_login_at', true );
+update_user_meta( 11, '_mobishop_app_last_login_at', 'unchanged-channel-fixture' );
+native_data( $endpoint->password( native_request( array( 'identifier' => 'different@gmail.com', 'password' => 'password-eleven', 'verifier' => $verifier, 'client_channel' => 'website' ) ) ), 'Website authentication uses its own channel' );
+native_assert( get_user_meta( 11, '_mobishop_app_last_login_at', true ) === 'unchanged-channel-fixture', 'Website sign-in is not marked as an app sign-in' );
+update_user_meta( 11, '_mobishop_app_last_login_at', $saved_channel );
+
+// Website completion is cookie/session/nonce bound and shares native identity locks.
+$GLOBALS['native_users'][60] = array( 'login' => 'pending-web', 'email' => 'pending-web@example.com', 'password' => 'old-web-password', 'name' => 'Pending Web', 'roles' => array( 'customer' ) );
+$GLOBALS['native_meta'][60] = array( 'kidia_phone_setup_required' => 'account' );
+$web = array( 'phone' => '+201066666665', 'verifier' => $verifier, 'nonce' => 'fixture-nonce', 'mode' => 'prepare', 'client_channel' => 'website' );
+native_rejected( $endpoint->website_contact( native_request( $web ) ), 'Anonymous callers cannot complete a website session' );
+$GLOBALS['website_user'] = 60;
+native_rejected( $endpoint->website_contact( native_request( array_merge( $web, array( 'nonce' => 'wrong' ) ) ) ), 'Website completion requires its current user nonce' );
+$web_attempt = native_data( $endpoint->website_contact( native_request( $web ) ), 'Prepare website phone attempt' );
+$web_finish = array_merge( $web, array( 'mode' => 'confirm', 'ticket' => $web_attempt['ticket'], 'name' => 'Web Name', 'password' => 'web-password', 'confirm_password' => 'web-password' ) );
+native_rejected( $endpoint->website_contact( native_request( array_merge( $web_finish, array( 'confirm_password' => 'different' ) ) ) ), 'Website password confirmation is enforced before writes' );
+native_assert( ! get_user_meta( 60, 'kidia_unverified_phone', true ), 'Invalid website profile writes no contact' );
+$GLOBALS['website_session'] = 'other-browser';
+native_rejected( $endpoint->website_contact( native_request( $web_finish ) ), 'Website ticket cannot move between authenticated browsers' );
+$GLOBALS['website_session'] = 'browser-session';
+native_rejected( $endpoint->website_contact( native_request( array_merge( $web_finish, array( 'mode' => 'verify', 'id_token' => 'forged-token' ) ) ) ), 'Website OTP still requires signed Firebase proof' );
+$web_result = native_data( $endpoint->website_contact( native_request( $web_finish ) ), 'Website repeated-contact completion' );
+native_assert( $web_result['user_id'] === 60 && get_user_meta( 60, 'kidia_unverified_phone', true ) === $web['phone'], 'Website preserves the authenticated pending account and contact' );
+native_assert( ! get_user_meta( 60, 'kidia_login_phone', true ) && ! get_user_meta( 60, 'fme_billing_phone', true ) && ! get_user_meta( 60, 'billing_phone', true ), 'Website contact is not promoted into any OTP identity' );
+native_assert( ! get_user_meta( 60, '_mobishop_app_last_login_at', true ), 'Website completion is not an app login' );
+native_rejected( $endpoint->website_contact( native_request( $web_finish ) ), 'Completed website ticket cannot replay' );
+$GLOBALS['native_users'][61] = array( 'login' => 'pending-email-web', 'email' => 'pending-email-web@example.com', 'password' => 'already-chosen-password', 'name' => 'Email Name', 'roles' => array( 'customer' ) );
+$GLOBALS['native_meta'][61] = array( 'kidia_phone_setup_required' => 'account', 'kidia_profile_details_collected' => 1 );
+$GLOBALS['website_user'] = 61;
+$web2 = array_merge( $web, array( 'phone' => '+201066666664' ) );
+$attempt2 = native_data( $endpoint->website_contact( native_request( $web2 ) ), 'Email website does not recollect password' );
+$GLOBALS['native_meta'][11]['kidia_unverified_phone'] = $web2['phone'];
+$finish2 = array_merge( $web2, array( 'mode' => 'confirm', 'ticket' => $attempt2['ticket'] ) );
+native_rejected( $endpoint->website_contact( native_request( $finish2 ) ), 'Website rechecks contact ownership at final commit' );
+native_assert( get_user_meta( 61, 'kidia_phone_setup_required', true ) === 'account', 'Lost phone race does not complete the pending website account' );
+unset( $GLOBALS['native_meta'][11]['kidia_unverified_phone'] );
+$before61 = $GLOBALS['native_users'][61];
+native_data( $endpoint->website_contact( native_request( $finish2 ) ), 'Precollected website profile completes without resetting password' );
+native_assert( $GLOBALS['native_users'][61] === $before61, 'Name/password collected once remain unchanged' );
+$GLOBALS['native_users'][62] = array( 'login' => 'pending-race-web', 'email' => 'pending-race-web@example.com', 'password' => 'password-before-race', 'name' => 'Before Race', 'roles' => array( 'customer' ) );
+$GLOBALS['native_meta'][62] = array( 'kidia_phone_setup_required' => 'account' );
+$GLOBALS['website_user'] = 62;
+$race_web = array_merge( $web, array( 'phone' => '+201066666663' ) );
+$race_attempt = native_data( $endpoint->website_contact( native_request( $race_web ) ), 'Prepare race website ticket' );
+$race_finish = array_merge( $race_web, array( 'mode' => 'confirm', 'ticket' => $race_attempt['ticket'], 'name' => 'After Race', 'password' => 'password-after-race', 'confirm_password' => 'password-after-race' ) );
+$GLOBALS['on_native_lock'] = static function() { delete_user_meta( 62, 'kidia_phone_setup_required' ); };
+native_rejected( $endpoint->website_contact( native_request( $race_finish ) ), 'Concurrent website completion is rechecked after lock acquisition' );
+unset( $GLOBALS['on_native_lock'] );
+native_assert( $GLOBALS['native_users'][62]['name'] === 'Before Race' && ! get_user_meta( 62, 'kidia_unverified_phone', true ), 'Losing completion race changes neither profile nor contact' );
+$GLOBALS['website_user'] = 0;
+
+echo 'Native customer auth: '
+
+ . $GLOBALS['native_checks'] . ' contract/security checks passed.' . PHP_EOL;

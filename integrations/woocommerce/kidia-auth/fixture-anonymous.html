@@ -1,0 +1,248 @@
+<main
+	class="kidia-auth-shell"
+	dir="rtl"
+	data-initial-stage=""
+	data-initial-mode=""
+>
+	<section class="kidia-auth-card" aria-labelledby="kidia-auth-title">
+		<header class="kidia-auth-header">
+			<button class="kidia-close" type="button" data-kidia-close aria-label="إغلاق صفحة تسجيل الدخول">
+				<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+					<path d="M6 6l12 12M18 6L6 18"></path>
+				</svg>
+			</button>
+
+			<a class="kidia-auth-logo" href="https://example.test/" aria-label="العودة إلى كيديا ستور">
+									<span class="kidia-wordmark" aria-label="Kidia">kidia</span>
+							</a>
+
+			<span class="kidia-header-spacer" aria-hidden="true"></span>
+		</header>
+
+		<div class="kidia-auth-content">
+			<h1 id="kidia-auth-title">تسجيل الدخول أو إنشاء حساب</h1>
+			<p class="kidia-auth-intro">أدخل البريد الإلكتروني أو رقم الهاتف للمتابعة</p>
+
+			<div class="kidia-notices" aria-live="polite">
+							</div>
+
+			<section class="kidia-stage kidia-stage-identifier" data-kidia-stage="identifier">
+				<p class="kidia-email-fallback-notice" data-kidia-email-fallback-notice role="alert" hidden></p>
+				<div data-kidia-fallback-social-slot></div>
+				<form class="kidia-identifier-form" novalidate>
+					<label class="screen-reader-text" for="kidia-identifier">البريد الإلكتروني أو رقم الهاتف</label>
+					<div class="kidia-field-wrap">
+						<input
+							id="kidia-identifier"
+							class="kidia-input"
+							type="text"
+							value=""
+							placeholder="البريد الإلكتروني أو رقم الهاتف"
+							autocomplete="username"
+							inputmode="numeric"
+							enterkeyhint="continue"
+							aria-describedby="kidia-identifier-feedback"
+						>
+					</div>
+
+					<p id="kidia-identifier-feedback" class="kidia-feedback" role="alert"></p>
+
+					<button class="kidia-primary-button" type="submit">
+						<span class="kidia-button-label">متابعة</span>
+						<span class="kidia-button-spinner" aria-hidden="true"></span>
+					</button>
+				</form>
+			</section>
+
+			<section class="kidia-stage kidia-stage-email" data-kidia-stage="email" hidden>
+				<button class="kidia-back-button" type="button" data-kidia-back>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+					<span>تغيير البريد</span>
+				</button>
+
+				<div class="kidia-identity-chip" dir="ltr">
+					<span data-kidia-email-display></span>
+				</div>
+
+				<h2 data-kidia-email-title>أدخل كلمة المرور</h2>
+
+				<form class="kidia-email-form" method="post" action="https://example.test/login-register/">
+					<input type="hidden" name="kidia_email_nonce" value="fixture">					<input type="hidden" name="kidia_email_auth" value="1">
+					<label class="kidia-register-email-field" for="kidia-register-email" hidden>
+						<span>البريد الإلكتروني</span>
+						<input
+							id="kidia-register-email"
+							class="kidia-input"
+							type="email"
+							name="kidia_email"
+							value=""
+							placeholder="البريد الإلكتروني"
+							autocomplete="email"
+							dir="ltr"
+							data-kidia-email-input
+							required
+						>
+					</label>
+					<input type="hidden" name="kidia_email_action" value="login" data-kidia-email-action>
+
+					<label class="kidia-register-name-field" for="kidia-register-name" hidden>
+						<span>الاسم</span>
+						<input
+							id="kidia-register-name"
+							class="kidia-input"
+							type="text"
+							name="kidia_name"
+							placeholder="الاسم"
+							autocomplete="name"
+							maxlength="120"
+							data-kidia-name-input
+							required
+						>
+					</label>
+
+					<label class="screen-reader-text" for="kidia-password">كلمة المرور</label>
+					<div class="kidia-field-wrap kidia-password-wrap">
+						<input
+							id="kidia-password"
+							class="kidia-input"
+							type="password"
+							name="kidia_password"
+							placeholder="كلمة المرور"
+							autocomplete="current-password"
+							required
+						>
+						<button class="kidia-password-toggle" type="button" data-kidia-password-toggle aria-label="إظهار كلمة المرور">
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"></path>
+								<circle cx="12" cy="12" r="2.6"></circle>
+							</svg>
+						</button>
+					</div>
+					<p class="kidia-password-error" data-kidia-password-error role="alert" hidden>البريد الإلكتروني أو كلمة المرور غير صحيحة.</p>
+
+                    <label class="kidia-register-confirm-field" hidden><span>تأكيد كلمة المرور</span>
+                        <input class="kidia-input" type="password" name="kidia_password_confirm" autocomplete="new-password" minlength="8" maxlength="4096" required>
+                    </label>
+					<label class="kidia-remember-row">
+						<input type="checkbox" name="kidia_remember" value="1" checked>
+						<span>تذكرني</span>
+					</label>
+
+					<button class="kidia-primary-button" type="submit" data-kidia-email-submit>تسجيل الدخول</button>
+
+					<div class="kidia-email-links">
+						<button class="kidia-forgot-link" type="button" data-kidia-forgot>نسيت كلمة المرور؟</button>
+						<button class="kidia-switch-mode" type="button" data-kidia-switch-mode>إنشاء حساب جديد</button>
+					</div>
+				</form>
+			</section>
+
+			<section class="kidia-stage kidia-stage-forgot" data-kidia-stage="forgot" hidden>
+				<button class="kidia-back-button" type="button" data-kidia-back>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+					<span>العودة لتسجيل الدخول</span>
+				</button>
+
+				<h2>استعادة كلمة المرور</h2>
+				<p class="kidia-reset-help">اكتب بريدك الإلكتروني وسنرسل لك رابطًا لإنشاء كلمة مرور جديدة.</p>
+
+									<form class="kidia-forgot-form" method="post" action="https://example.test/login-register/">
+						<input type="hidden" name="kidia_forgot_nonce" value="fixture">						<input type="hidden" name="kidia_forgot_password" value="1">
+						<label class="screen-reader-text" for="kidia-forgot-email">البريد الإلكتروني</label>
+						<input
+							id="kidia-forgot-email"
+							class="kidia-input"
+							type="email"
+							name="kidia_forgot_email"
+							value=""
+							placeholder="البريد الإلكتروني"
+							autocomplete="email"
+							dir="ltr"
+							required
+						>
+						<button class="kidia-primary-button" type="submit">إرسال رابط الاستعادة</button>
+					</form>
+							</section>
+
+			<section class="kidia-stage kidia-stage-phone" data-kidia-stage="phone" hidden>
+				<button class="kidia-back-button" type="button" data-kidia-back>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+					<span>تغيير الرقم</span>
+				</button>
+
+				<div class="kidia-identity-chip kidia-phone-chip" dir="ltr">
+					<span data-kidia-phone-display></span>
+				</div>
+				<p class="kidia-phone-status" data-kidia-phone-status role="alert" hidden></p>
+				<div class="kidia-phone-fallback" data-kidia-phone-fallback hidden>
+					<button type="button" class="kidia-secondary-button" data-kidia-back>إدخال رقم الهاتف مرة تانية</button>
+					<p>أعد إدخال الرقم لطلب كود جديد، أو سجّل الدخول بجوجل بالأسفل.</p>
+				</div>
+				
+				<div class="kidia-phone-existing" data-kidia-phone-existing hidden>
+					<h2>اختر طريقة تسجيل الدخول</h2>
+					<p>اختار الطريقة الأنسب ليك للدخول.</p>
+					<div class="kidia-phone-methods" role="group" aria-label="طريقة تسجيل الدخول">
+						<button type="button" class="kidia-phone-method" data-kidia-use-password aria-expanded="false" aria-controls="kidia-phone-password-form"><strong>كلمة المرور</strong><span>ادخل بالباسورد</span></button>
+						<button type="button" class="kidia-phone-method" data-kidia-use-otp><strong>كود التحقق OTP</strong><span>ابعتلي كود على الموبايل</span></button>
+					</div>
+					<form method="post" action="https://example.test/login-register/" class="kidia-phone-password-form" id="kidia-phone-password-form" hidden>
+						<input type="hidden" name="kidia_phone_password_nonce" value="fixture">						<input type="hidden" name="kidia_phone_password_auth" value="1">
+						<input type="hidden" name="kidia_phone" value="" data-kidia-phone-hidden>
+						<div data-kidia-phone-account-email hidden>
+							<label for="kidia-phone-account-email">إيميل الحساب</label>
+							<p class="kidia-phone-account-help">الرقم مرتبط بأكثر من حساب. اكتب إيميل الحساب اللي تحب تدخل بيه، أو اختار كود التحقق لعرض حساباتك.</p>
+							<input id="kidia-phone-account-email" class="kidia-input" type="email" name="kidia_phone_account_email" autocomplete="username" dir="ltr" disabled>
+						</div>
+						<label for="kidia-phone-password">كلمة المرور</label>
+						<input id="kidia-phone-password" class="kidia-input" type="password" name="kidia_phone_password" autocomplete="current-password" required>
+												<button class="kidia-primary-button" type="submit">تسجيل الدخول</button>
+					</form>
+				</div>
+
+				<div id="kidia-otp-native" class="kidia-otp-native" data-phone-ready="0" hidden>
+											<div class="kidia-integration-pending">
+							<span class="kidia-pending-icon" aria-hidden="true">✓</span>
+							<p>تصميم الصفحة جاهز. سيتم تفعيل إرسال الكود بمجرد تثبيت إضافة الهاتف.</p>
+						</div>
+									</div>
+			</section>
+
+			<section class="kidia-stage kidia-stage-phone-setup" data-kidia-stage="phone-setup" hidden>
+				<h2>أكمل إنشاء حسابك</h2>
+									<p class="kidia-reset-help">أضف رقم الهاتف وكلمة مرور حتى تستطيع الدخول إلى نفس الحساب بالطريقتين.</p>
+								<form method="post" action="https://example.test/login-register/" class="kidia-phone-setup-form" data-kidia-setup-type="">
+					<input type="hidden" name="kidia_phone_setup_nonce" value="fixture">					<input type="hidden" name="kidia_phone_setup" value="1">
+                                            <label for="kidia-phone-username">الاسم</label>
+                        <input id="kidia-phone-username" class="kidia-input" type="text" name="kidia_phone_username" autocomplete="name" maxlength="120" required>
+                        <label for="kidia-phone-new-password">كلمة المرور</label>
+                        <input id="kidia-phone-new-password" class="kidia-input" type="password" name="kidia_phone_new_password" autocomplete="new-password" minlength="8" maxlength="4096" required>
+                        <label for="kidia-phone-new-password-confirm">تأكيد كلمة المرور</label>
+                        <input id="kidia-phone-new-password-confirm" class="kidia-input" type="password" name="kidia_phone_new_password_confirm" autocomplete="new-password" minlength="8" maxlength="4096" required>
+                                                                <label for="kidia-setup-phone">رقم الموبايل</label>
+                        <input id="kidia-setup-phone" class="kidia-input" type="tel" name="kidia_setup_phone" inputmode="numeric" autocomplete="tel-national" maxlength="11" pattern="01[0125][0-9]{8}" placeholder="01xxxxxxxxx" required>
+                    										<button class="kidia-primary-button" type="submit">حفظ والدخول</button>
+				</form>
+			</section>
+
+							<div data-kidia-social-home>
+				<div class="kidia-social-login" data-kidia-social-block>
+				<div class="kidia-divider" data-kidia-social-divider><span>أو</span></div>
+				<div class="kidia-social-buttons" data-kidia-social-buttons>
+					<a class="kidia-google-provider">Google</a><a class="kidia-facebook-provider">Facebook</a>				</div>
+				<p class="kidia-feedback" data-kidia-google-status role="alert" hidden></p>
+				</div>
+				</div>
+			
+			<p class="kidia-privacy-copy">
+				خصوصيتك محمية، وبالمتابعة أنت توافق على
+									سياسة الخصوصية.
+							</p>
+			<p class="kidia-recaptcha-copy">
+				هذا الموقع محمي بواسطة reCAPTCHA وتطبق
+				<a href="https://policies.google.com/privacy" rel="noopener noreferrer">سياسة خصوصية Google</a>
+				و<a href="https://policies.google.com/terms" rel="noopener noreferrer">شروط الخدمة</a>.
+			</p>
+		</div>
+	</section>
+</main>

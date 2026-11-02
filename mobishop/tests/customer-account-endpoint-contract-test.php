@@ -251,6 +251,20 @@ mobishop_account_assert( $unauthorized instanceof WP_Error, 'Signed-out account 
 mobishop_account_assert( 401 === $unauthorized->get_error_data()['status'], 'Missing sessions must return HTTP 401.' );
 
 $GLOBALS['mobishop_current_user_id'] = 7;
+$original_meta = $GLOBALS['mobishop_user_meta'][7];
+$original_billing_phone = $GLOBALS['mobishop_customer']['billing']['phone'];
+unset( $GLOBALS['mobishop_customer']['billing']['phone'] );
+unset( $GLOBALS['mobishop_user_meta'][7]['_mobishop_account_phone'] );
+$GLOBALS['mobishop_user_meta'][7]['kidia_unverified_phone'] = '+201012345678';
+$contact_profile = $endpoint->get_account();
+mobishop_account_assert( '+201012345678' === $contact_profile->data['profile']['phone'], 'Own unverified contact is visible in the profile.' );
+mobishop_account_assert( empty( $GLOBALS['mobishop_user_meta'][7]['_mobishop_account_phone'] ) && empty( $GLOBALS['mobishop_user_meta'][7]['billing_phone'] ) && empty( $GLOBALS['mobishop_user_meta'][7]['kidia_login_phone'] ), 'Reading a contact never promotes it to verified identity.' );
+$GLOBALS['mobishop_user_meta'][7] = $original_meta;
+$GLOBALS['mobishop_user_meta'][7]['kidia_unverified_phone'] = '+201099999999';
+$account = $endpoint->get_account();
+mobishop_account_assert( '01000000000' === $account->data['profile']['phone'], 'Primary phone wins over stale unverified contact.' );
+$GLOBALS['mobishop_user_meta'][7] = $original_meta;
+$GLOBALS['mobishop_customer']['billing']['phone'] = $original_billing_phone;
 $account = $endpoint->get_account();
 mobishop_account_assert( $account instanceof WP_REST_Response, 'Signed-in customers must receive account data.' );
 mobishop_account_assert( 'customer@example.com' === $account->data['profile']['email'], 'The WooCommerce profile must be returned.' );
