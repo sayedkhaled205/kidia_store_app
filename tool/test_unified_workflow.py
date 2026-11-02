@@ -7,6 +7,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class UnifiedWorkflowTests(unittest.TestCase):
+    def test_capture_entrypoint_cannot_be_used_by_shipping_builds(self):
+        workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
+        for name, workflow in workflows.items():
+            scripts = '\n'.join(step['script'] for step in workflow['scripts'])
+            if name == 'mobishop-ios-simulator-check':
+                self.assertIn('--target=tool/app_store_screenshot_main.dart', scripts)
+            else:
+                self.assertNotIn('app_store_screenshot_main.dart', scripts)
+
     def test_each_native_build_runs_explicit_platform_contracts(self):
         workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
         for name, workflow in workflows.items():

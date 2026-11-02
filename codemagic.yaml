@@ -1023,7 +1023,7 @@ workflows:
       - name: Compile iOS simulator application
         script: |
           set -euo pipefail
-          flutter build ios --simulator --debug \
+          flutter build ios --simulator --debug --target=tool/app_store_screenshot_main.dart \
             --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=$STORE_NAME" \

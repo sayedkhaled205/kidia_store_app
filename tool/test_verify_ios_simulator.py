@@ -110,7 +110,7 @@ class SimulatorLaunchTest(unittest.TestCase):
     def test_permission_dialog_alone_does_not_pass_on_pid(self):
         self.logs = ""
         self.lines = ["Store would like to send you notifications", "Notifications may include alerts", "Don't Allow", "Allow"]
-        with self.assertRaisesRegex(ValueError, "insufficient storefront evidence"):
+        with self.assertRaisesRegex(ValueError, "System dialog"):
             self.check()
 
     def test_error_screen_still_rejected_with_no_flutter_output(self):
@@ -119,7 +119,7 @@ class SimulatorLaunchTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "error screen"):
             self.check()
 
-    def test_actual_fixed_home_labels_are_recognized_behind_normal_permission_dialog(self):
+    def test_storefront_behind_permission_dialog_cannot_pass(self):
         self.logs = ""
         self.lines = ["03:25", "kidia", "Search products", "Kids Style", "Nursery", "Toys", "Newborn",
                       "Would Like to Send You Notifications", "Don't Allow", "Allow", "Shop now", "NEW ARRIVAL"]
@@ -127,8 +127,8 @@ class SimulatorLaunchTest(unittest.TestCase):
                                      {"type": "hero_slider", "data": {"items": [{"button_label": "Shop now"}]}},
                                      {"type": "product_carousel", "data": {"title": "NEW ARRIVAL"}}]}}
         encoded = base64.b64encode(json.dumps(design).encode()).decode()
-        result = self.check(encoded_design=encoded)
-        self.assertGreaterEqual(result["storefront_labels_matched"], 6)
+        with self.assertRaisesRegex(ValueError, "System dialog"):
+            self.check(encoded_design=encoded)
 
     def test_no_storefront_marker_means_inconclusive_failure_even_with_debug_banner(self):
         self.lines = ["03:25", "Settings", "Camera", "Calendar", "Photos"]

@@ -131,6 +131,12 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
     signals = fatal_signals("\n".join(lines))
     if signals:
         raise ValueError("Simulator startup error screen detected: " + ", ".join(signals))
+    overlay = normalized_text(" ".join(lines))
+    if any(marker in overlay for marker in (
+        "like to send you notifications", "notifications may include alerts",
+        "ready for apple intelligence", "يرغب في إرسال إشعارات", "السماح بالإشعارات",
+    )):
+        raise ValueError("System dialog obscures the simulator screenshot")
     visible_storefront_labels = storefront_evidence(lines, encoded_design)
     if len(visible_storefront_labels) < 2:
         raise ValueError("Simulator screen has insufficient storefront evidence; a live PID or system dialog alone is insufficient")
