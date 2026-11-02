@@ -1029,22 +1029,15 @@ workflows:
             --dart-define="STORE_NAME=$STORE_NAME" \
             --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
             --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
-      - name: Launch on iPhone simulator
+      - name: Capture actual App Store screenshots on iPhone and iPad
         script: |
           set -euo pipefail
-          xcrun simctl list devices available -j > "$CM_BUILD_DIR/.simulator-devices.json"
-          SIMULATOR_ID=$(python3 -c 'import json,os; data=json.load(open(os.environ["CM_BUILD_DIR"]+"/.simulator-devices.json")); print(next(d["udid"] for runtime,devices in data["devices"].items() if ".iOS-" in runtime for d in devices if d.get("isAvailable") and d["name"].startswith("iPhone")))')
-          xcrun simctl boot "$SIMULATOR_ID" || true
-          xcrun simctl bootstatus "$SIMULATOR_ID" -b
-          xcrun simctl install "$SIMULATOR_ID" build/ios/iphonesimulator/Runner.app
           mkdir -p build/ios/simulator-artifacts
-          ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip
+          python3 -u -c 'import subprocess; print("Packaging simulator application", flush=True); subprocess.run("ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip".split(), check=True, timeout=300)'
           python3 tool/test_verify_ios_simulator.py
-          python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json
+          python3 tool/test_app_store_screenshots.py
+          python3 -u tool/app_store_screenshots.py
     artifacts:
       - build/ios/simulator-artifacts/Runner-simulator.zip
-      - build/ios/simulator-artifacts/launch.png
-      - build/ios/simulator-artifacts/launch-check.json
-      - build/ios/simulator-artifacts/launch-stdout.log
-      - build/ios/simulator-artifacts/launch-stderr.log
-      - build/ios/simulator-artifacts/launch-screen-text.json
+      - build/ios/simulator-artifacts/iphone/*
+      - build/ios/simulator-artifacts/ipad/*
