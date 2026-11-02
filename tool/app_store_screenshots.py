@@ -54,7 +54,7 @@ def capture(app, destination):
             run_simulator(["xcrun", "simctl", "install", identifier, str(app)], check=True)
             folder = destination / family
             report = verify(identifier, os.environ["IOS_BUNDLE_ID"], folder, runner=run_simulator,
-                            encoded_design=os.environ.get("APP_DESIGN_BUNDLE", ""))
+                            encoded_design=os.environ.get("APP_DESIGN_BUNDLE", ""), require_capture_ready=True)
             image = (folder / "launch.png").read_bytes()
             size = struct.unpack(">II", image[16:24])
             if size not in SIZES[family]:

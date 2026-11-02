@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 import unittest
 
-from verify_ios_simulator import fatal_signals, storefront_evidence, verify
+from verify_ios_simulator import capture_ready, fatal_signals, storefront_evidence, verify
 
 
 class SimulatorLaunchTest(unittest.TestCase):
@@ -49,6 +49,29 @@ class SimulatorLaunchTest(unittest.TestCase):
         self.assertTrue(result["flutter_output_captured"])
         self.assertTrue(result["screenshot_inspected"])
         self.assertIn("live login", result["limitations"])
+
+    def test_capture_waits_for_actual_rendering_instead_of_fixed_twelve_seconds(self):
+        self.lines = ["11:14", "unrecognized Arabic"]
+        waits = []
+        def sleeper(seconds):
+            waits.append(seconds)
+            if len(waits) == 7:
+                (self.artifacts / "launch-stdout.log").write_text(
+                    "APP_STORE_CAPTURE_READY_V1 images=5 text=9", encoding="utf-8")
+        result = verify(self.device, self.bundle, self.artifacts, self.runner, sleeper,
+                        require_capture_ready=True)
+        self.assertTrue(result["capture_content_ready"])
+        self.assertEqual(result["duration_seconds"], 21)
+
+    def test_loading_screen_is_not_accepted_even_with_navigation_labels(self):
+        with self.assertRaisesRegex(ValueError, "did not finish rendering"):
+            verify(self.device, self.bundle, self.artifacts, self.runner, lambda _: None,
+                   require_capture_ready=True)
+
+    def test_readiness_requires_decoded_images_and_text(self):
+        self.assertFalse(capture_ready("APP_STORE_CAPTURE_READY_V1 images=0 text=4"))
+        self.assertFalse(capture_ready("APP_STORE_CAPTURE_READY_V1 images=3 text=0"))
+        self.assertTrue(capture_ready("flutter: APP_STORE_CAPTURE_READY_V1 images=4 text=8"))
 
     def test_immediate_exit_is_failure_but_retains_screenshot(self):
         def runner(command, **kwargs):

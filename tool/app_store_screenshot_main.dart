@@ -1,6 +1,9 @@
 // Simulator-only listing capture. The shipping entry point remains lib/main.dart.
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/app/app.dart';
 import 'package:mobishop_store_app/app/app_router.dart';
@@ -30,4 +33,40 @@ Future<void> main() async {
       child: MobiShopApp(router: router),
     ),
   );
+  var stableChecks = 0;
+  var attempts = 0;
+  Timer.periodic(const Duration(seconds: 2), (timer) {
+    var images = 0;
+    var paragraphs = 0;
+    final viewport = Offset.zero & (view.physicalSize / view.devicePixelRatio);
+    void inspect(RenderObject object) {
+      if (object is RenderOffstage && object.offstage) return;
+      if (object is RenderBox && object.hasSize && object.attached) {
+        final rect = object.localToGlobal(Offset.zero) & object.size;
+        if (!rect.overlaps(viewport)) return;
+        if (object is RenderImage && object.image != null) images++;
+        if (object is RenderParagraph &&
+            object.text.toPlainText().trim().isNotEmpty) {
+          paragraphs++;
+        }
+      }
+      object.visitChildren(inspect);
+    }
+
+    for (final renderView in binding.renderViews) {
+      inspect(renderView);
+    }
+    stableChecks = images >= 3 && paragraphs >= 4 ? stableChecks + 1 : 0;
+    if (stableChecks >= 2) {
+      debugPrintSynchronously(
+        'APP_STORE_CAPTURE_READY_V1 images=$images text=$paragraphs',
+      );
+      timer.cancel();
+    } else if (++attempts >= 60) {
+      debugPrintSynchronously(
+        'APP_STORE_CAPTURE_NOT_READY images=$images text=$paragraphs',
+      );
+      timer.cancel();
+    }
+  });
 }

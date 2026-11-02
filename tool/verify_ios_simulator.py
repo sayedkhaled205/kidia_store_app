@@ -69,7 +69,12 @@ def read_log(path):
     return path.read_text(encoding="utf-8", errors="replace")
 
 
-def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sleep, encoded_design=""):
+def capture_ready(logs):
+    match = re.search(r"APP_STORE_CAPTURE_READY_V1 images=(\d+) text=(\d+)", logs)
+    return bool(match and int(match[1]) >= 3 and int(match[2]) >= 4)
+
+
+def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sleep, encoded_design="", require_capture_ready=False):
     try:
         device = str(uuid.UUID(device)).upper()
     except ValueError:
@@ -95,13 +100,23 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
         raise ValueError("The simulator could not launch this store's application")
     pid = match[1]
     alive = True
-    for _ in range(4):
+    ready = False
+    elapsed = 0
+    for _ in range(42 if require_capture_ready else 4):
         sleeper(3)
+        elapsed += 3
         process = runner(["ps", "-p", pid, "-o", "command="], capture_output=True, text=True)
         command = process.stdout.lower()
         if process.returncode or device.lower() not in command or "/runner.app/runner" not in command:
             alive = False
             break
+        if require_capture_ready:
+            current_logs = read_log(stdout) + "\n" + read_log(stderr)
+            ready = capture_ready(current_logs)
+            if ready and elapsed >= 12:
+                break
+            if fatal_signals(current_logs):
+                break
     # Capture the actual screen before reporting failure, including a live error page.
     capture = runner(["xcrun", "simctl", "io", device, "screenshot", str(screenshot)], capture_output=True, text=True)
     if not alive:
@@ -112,6 +127,8 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
     signals = fatal_signals(logs)
     if signals:
         raise ValueError("Simulator startup errors in application logs: " + ", ".join(signals))
+    if require_capture_ready and not ready:
+        raise ValueError("Actual storefront images did not finish rendering within 126 seconds")
     # iOS debug output can legitimately omit Flutter's VM-service banner.
     # Screenshot inspection is mandatory even when the captured logs are empty.
     flutter_output = bool(re.search(r"Dart VM service is listening|flutter:", logs, re.I))
@@ -138,14 +155,18 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
     )):
         raise ValueError("System dialog obscures the simulator screenshot")
     visible_storefront_labels = storefront_evidence(lines, encoded_design)
-    if len(visible_storefront_labels) < 2:
+    # Vision on the build host cannot reliably read Arabic. The capture-only
+    # entrypoint inspects actual on-screen rendered text and decoded images;
+    # its marker is never used by the normal startup check.
+    if len(visible_storefront_labels) < 2 and not (require_capture_ready and ready):
         raise ValueError("Simulator screen has insufficient storefront evidence; a live PID or system dialog alone is insufficient")
     return {
-        "status": "startup_no_detected_fatal_errors", "duration_seconds": 12,
+        "status": "startup_no_detected_fatal_errors", "duration_seconds": elapsed,
         "bundle_id": bundle, "device_id": device, "process_alive": True,
         "application_logs_checked": True, "flutter_output_captured": flutter_output,
         "screenshot_inspected": True, "storefront_labels_matched": len(visible_storefront_labels),
         "recognized_lines": len(lines), "fatal_signals": [],
+        "capture_content_ready": ready,
         "limitations": "Bounded startup check only; live login, checkout, payment and push remain unverified.",
     }
 
