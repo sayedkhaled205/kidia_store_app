@@ -68,17 +68,19 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			&& function_exists( 'openssl_verify' ) && preg_match( '/^[a-z][a-z0-9-]{3,62}$/', $project )
 			&& ( $f['projectId'] ?? '' ) === $project && ! empty( $f['apiKey'] ) && ! empty( $f['messagingSenderId'] )
 			&& ! empty( $f['iosBundleId'] ) && strpos( (string) ( $f['appId'] ?? '' ), ':ios:' ) !== false;
+		// New-account contact enrollment remains available without an operational SMS provider.
+		// It records an unverified number; it cannot authenticate an existing account.
+		$registration = $enabled && $this->registration_enabled();
 		return array(
 			'version' => 1, 'enabled' => $enabled,
 			'privacy_policy_url' => function_exists( 'get_privacy_policy_url' ) ? esc_url_raw( get_privacy_policy_url(), array( 'https' ) ) : '',
-			'supports_unverified_phone_enrollment' => $enabled && $this->registration_enabled(),
+			'supports_unverified_phone_enrollment' => $registration,
 			'supports_expected_phone_google' => $enabled && $google,
 			'phone_country_code' => preg_replace( '/\D/', '', (string) ( $s['phone_country_code'] ?? '' ) ),
 			'methods' => array( 'password' => $enabled, 'email_password' => $enabled, 'phone_password' => $enabled,
 				'phone_otp' => $enabled && (bool) $phone, 'google' => $enabled && $google, 'apple' => $enabled && $apple,
 				'facebook' => $enabled && class_exists( 'MobiShop_Website_Auth_Endpoint' ) && ( new MobiShop_Website_Auth_Endpoint( $this->issue, $this->allowed ) )->facebook_enabled(),
-				'registration' => $enabled && $this->registration_enabled() && ( $phone || ( $google && ! $this->requires_phone() ) ),
-				'email_registration' => $enabled && $this->registration_enabled() && (bool) $phone ),
+				'registration' => $registration, 'email_registration' => $registration ),
 			'firebase' => $enabled && ( $phone || $apple ) ? $f : null,
 			'google' => $enabled && $google ? array( 'server_client_id' => $client, 'ios_client_id' => $platform === 'ios' ? $g['ios_client_id'] : null ) : null,
 		);

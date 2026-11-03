@@ -401,7 +401,7 @@ native_assert( $no_signup_identify['methods'] === array( 'password' ), 'Disabled
 $GLOBALS['native_options']['mobishop_native_auth_settings'] = $base_native_settings;
 $GLOBALS['native_options']['mobishop_native_auth_settings']['phone_enabled'] = false;
 $no_otp_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => 'new-email-customer@gmail.com' ) ) ), 'Unknown email identify with phone OTP unavailable' );
-native_assert( $no_otp_identify['methods'] === array( 'password' ), 'Unavailable phone OTP does not offer password creation for an unknown email' );
+native_assert( $no_otp_identify['methods'] === array( 'create_password' ), 'Unavailable phone OTP retains new-email enrollment through unverified contact confirmation' );
 $no_otp_phone_identify = native_data( $endpoint->identify( native_request( array( 'identifier' => '01012345678' ) ) ), 'Phone identify with OTP unavailable' );
 native_assert( $no_otp_phone_identify['methods'] === array( 'password' ), 'Phone identity falls back to password when OTP is unavailable' );
 $GLOBALS['native_options']['mobishop_native_auth_settings'] = $base_native_settings;
@@ -757,8 +757,20 @@ native_assert( count( native_ticket_options() ) === $tickets_before_disabled, 'D
 $GLOBALS['native_options']['mobishop_native_auth_settings'] = $base_password_settings;
 $GLOBALS['native_options']['mobishop_native_auth_settings']['phone_enabled'] = false;
 native_clear_rate();
-native_rejected( $endpoint->password( native_request( array( 'identifier' => $unknown_email, 'password' => 'another-password', 'verifier' => $verifier ) ) ), 'Unknown email password is rejected when phone OTP is unavailable' );
-native_assert( count( native_ticket_options() ) === $tickets_before_disabled, 'Unavailable phone OTP creates no enrollment ticket' );
+$without_otp = native_data( $endpoint->password( native_request( array( 'identifier' => $unknown_email, 'password' => 'another-password', 'verifier' => $verifier ) ) ), 'Unknown email enrollment while phone OTP is unavailable' );
+native_assert( $without_otp['status'] === 'registration_required' && in_array( 'phone', $without_otp['fields'], true ), 'Unavailable OTP still requires explicit contact enrollment' );
+native_assert( count( $GLOBALS['native_created'] ) === $created_before_email && count( $GLOBALS['native_issued'] ) === $issued_before_email, 'Unavailable OTP enrollment creates no account or session by itself' );
+$without_otp_config = native_data( $endpoint->config( native_request( array( 'platform' => 'ios' ) ) ), 'iOS configuration without phone OTP' );
+native_assert( $without_otp_config['methods']['email_registration'] && $without_otp_config['methods']['registration'] && ! $without_otp_config['methods']['phone_otp'], 'Registration availability never claims disabled OTP is ready' );
+$contact_request = array( 'ticket' => $without_otp['ticket'], 'verifier' => $verifier, 'phone' => '+201088888881', 'platform' => 'ios' );
+$without_otp_prepared = native_data( $endpoint->phone_enroll( native_request( $contact_request ) ), 'Prepare unavailable-OTP contact' );
+$contact_request['ticket'] = $without_otp_prepared['ticket'];
+$without_otp_confirmed = native_data( $endpoint->phone_confirm( native_request( $contact_request ) ), 'Confirm unavailable-OTP contact' );
+$without_otp_registered = native_data( $endpoint->register_customer( native_request( array( 'ticket' => $without_otp_confirmed['ticket'], 'verifier' => $verifier, 'name' => 'No SMS Customer', 'password' => 'new-fixture-password', 'platform' => 'ios' ) ) ), 'Complete new email without configured OTP' );
+$without_otp_id = $without_otp_registered['user_id'];
+native_assert( get_user_meta( $without_otp_id, 'kidia_unverified_phone', true ) === '+201088888881' && ! get_user_meta( $without_otp_id, 'kidia_login_phone', true ), 'No-OTP signup keeps the number explicitly unverified' );
+native_rejected( $endpoint->password( native_request( array( 'identifier' => $unknown_email, 'password' => 'wrong-password', 'verifier' => $verifier ) ) ), 'The new account subsequently requires its own password' );
+unset( $GLOBALS['native_users'][$without_otp_id], $GLOBALS['native_meta'][$without_otp_id] );
 $GLOBALS['native_options']['mobishop_native_auth_settings'] = $base_password_settings;
 
 // Enrollment still requires its own verifier binding.
