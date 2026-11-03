@@ -944,6 +944,10 @@ void main() {
   testWidgets('category page renders the list and grid CMS layouts', (
     WidgetTester tester,
   ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     const Map<String, Key> layouts = <String, Key>{
       'default': Key('category-layout-default'),
       'visual_grid': Key('category-layout-visual_grid'),

@@ -353,9 +353,17 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         slivers: <Widget>[
           SliverPadding(
             padding: EdgeInsetsDirectional.fromSTEB(16, 14, 16, 12),
-            sliver: SliverGrid(
+            sliver: SliverLayoutBuilder(
+              builder: (context, constraints) => SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
+                crossAxisCount: layout == 'compact_grid'
+                    ? compactCategoryColumns(
+                        _settings,
+                        nodes.map((node) => node.category),
+                        constraints.crossAxisExtent,
+                        MediaQuery.textScalerOf(context).scale(16) / 16,
+                      )
+                    : columns,
                 mainAxisSpacing: _settings.cardGap,
                 crossAxisSpacing: _settings.cardGap,
                 mainAxisExtent:
@@ -381,6 +389,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                   ),
                 ),
                 childCount: nodes.length,
+              ),
               ),
             ),
           ),

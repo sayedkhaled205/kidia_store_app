@@ -28,6 +28,16 @@ void main() {
   final previousHttpOverrides = HttpOverrides.current;
   setUpAll(() => HttpOverrides.global = OfflineFixtureHttpOverrides());
   tearDownAll(() => HttpOverrides.global = previousHttpOverrides);
+  // Imported widget fixtures synthesize text and viewport sizes. Keep their
+  // keyboard deterministic; physical keyboard behavior needs its own UI run.
+  setUp(
+    () =>
+        IntegrationTestWidgetsFlutterBinding.instance.testTextInput.register(),
+  );
+  tearDown(
+    () => IntegrationTestWidgetsFlutterBinding.instance.testTextInput
+        .unregister(),
+  );
   auth.main();
   deletion.main();
   gallery.main();

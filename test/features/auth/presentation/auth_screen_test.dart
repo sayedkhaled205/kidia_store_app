@@ -1226,6 +1226,8 @@ void main() {
 
 Future<void> _tap(WidgetTester tester, String key, {bool settle = true}) async {
   await tester.ensureVisible(find.byKey(Key(key)));
+  // A native frame must lay out the scrolled control before hit testing it.
+  await tester.pump();
   await tester.tap(find.byKey(Key(key)));
   if (settle) {
     await tester.pumpAndSettle();
