@@ -7,6 +7,7 @@ $GLOBALS['delete_tables'] = array();
 $GLOBALS['delete_cron'] = array();
 $GLOBALS['delete_orders'] = array();
 $GLOBALS['delete_posts'] = array();
+$GLOBALS['delete_comments'] = array();
 $GLOBALS['delete_flags'] = array();
 $GLOBALS['delete_count'] = 0;
 function maybe_serialize( $value ) { return is_array( $value ) ? serialize( $value ) : $value; }
@@ -43,6 +44,16 @@ function wp_delete_user( $id, $reassign ) {
 	unset($GLOBALS['mobishop_users'][$id],$GLOBALS['mobishop_user_meta_store'][$id]); $GLOBALS['delete_count']++; return true;
 }
 function get_post( $id ) { return $GLOBALS['delete_posts'][$id] ?? null; }
+function get_comments( $args ) {
+	if (!empty($GLOBALS['delete_flags']['comment-read'])) { $GLOBALS['wpdb']->last_error='Synthetic comment failure'; return array(); }
+	return array_slice(array_values(array_filter($GLOBALS['delete_comments'],fn($c)=>(int)$c->user_id===$args['user_id'])),0,$args['number']);
+}
+function get_comment($id){return $GLOBALS['delete_comments'][$id]??null;}
+function wp_delete_comment($id,$force){
+	if(!empty($GLOBALS['delete_flags']['comment-delete']))return false;
+	mobishop_auth_assert($force===true,'Remove owned comment metadata with the comment.');
+	unset($GLOBALS['delete_comments'][$id]);return true;
+}
 function wp_delete_post( $id, $force ) {
 	if (!empty($GLOBALS['delete_flags']['coupon'])) return false;
 	$old=get_post($id); unset($GLOBALS['delete_posts'][$id]); return $old;
@@ -117,7 +128,7 @@ $saved_users=$GLOBALS['mobishop_users'];
 function deletion_reset() {
 	global $saved_users;
 	$GLOBALS['mobishop_users']=$saved_users;
-	foreach(array('delete_options','delete_flags','delete_tables','delete_orders','delete_posts','delete_cron','mobishop_transients','mobishop_user_meta_store','mobishop_user_meta_cache') as $key) $GLOBALS[$key]=array();
+	foreach(array('delete_options','delete_flags','delete_tables','delete_orders','delete_posts','delete_comments','delete_cron','mobishop_transients','mobishop_user_meta_store','mobishop_user_meta_cache') as $key) $GLOBALS[$key]=array();
 	$GLOBALS['mobishop_force_meta_write_failure']=false;
 	$GLOBALS['delete_count']=0;
 	$GLOBALS['wpdb']->last_error='';
@@ -138,6 +149,13 @@ function deletion_tick() {
 }
 function phase() {return maybe_unserialize($GLOBALS['delete_options']['mobishop_account_deletion_v1_7'])['phase'];}
 
+deletion_reset();
+// The audited feature must not roll out until external erasure is complete.
+$gate_login=deletion_login();
+mobishop_auth_assert($deletion->availability(deletion_request($gate_login))->data['available']===false,'Unfinished erasure rollout is unavailable by default.');
+mobishop_auth_assert(is_wp_error($deletion->request_deletion(deletion_request($gate_login))),'Disabled rollout rejects POST.');
+mobishop_auth_assert(!is_wp_error($endpoint->authenticate_route(deletion_request($gate_login))),'Disabled rollout retains login.');
+define('MOBISHOP_ACCOUNT_DELETION_ENABLED',true); // Synthetic fixture only.
 deletion_reset();
 mobishop_auth_assert(is_wp_error($deletion->request_deletion(new WP_REST_Request(array('confirmation'=>'delete-my-account')))),'Unauthenticated deletion denied.');
 foreach(array('confirmation','multisite','schedule','save','revocation','stale','future','revoked-before-lock','promoted-before-lock') as $case) {
@@ -176,6 +194,9 @@ $GLOBALS['delete_tables']['wp_mobishop_events']=array_fill(0,51,array('user_id'=
 $GLOBALS['delete_tables']['wp_mobishop_events'][]=array('user_id'=>8);
 $GLOBALS['delete_tables']['wp_mobishop_recovery_campaigns']=array(array('id'=>1,'coupon_id'=>20,'user_id'=>7),array('id'=>2,'coupon_id'=>21,'user_id'=>8));
 $GLOBALS['delete_posts'][20]=(object)array('post_type'=>'shop_coupon');$GLOBALS['delete_posts'][21]=(object)array('post_type'=>'shop_coupon');
+for($i=1;$i<=51;$i++)$GLOBALS['delete_comments'][$i]=(object)array('comment_ID'=>$i,'user_id'=>7);
+$GLOBALS['delete_comments'][52]=(object)array('comment_ID'=>52,'user_id'=>8);
+$GLOBALS['delete_comments'][53]=(object)array('comment_ID'=>53,'user_id'=>0);
 $GLOBALS['delete_options']['mobishop_push_devices_v1']=serialize(array('mine'=>array('user_id'=>7),'other'=>array('user_id'=>8),'guest'=>array('client_id'=>'anonymous')));
 $GLOBALS['delete_options']['mobishop_push_automation_log_v1']=serialize(array('x:user:7'=>123,'x:user:17'=>456));
 wp_schedule_single_event(time()+100,'mobishop_dispatch_recovery_push',array(1,array('target_user_id'=>7)));
@@ -188,19 +209,21 @@ mobishop_auth_assert(!isset($GLOBALS['mobishop_users'][7])&&$GLOBALS['delete_cou
 mobishop_auth_assert($other->owner===8&&$guest->owner===0&&isset($other->meta['_mobishop_push_campaign']),'Other customer and guest orders untouched.');
 mobishop_auth_assert($GLOBALS['delete_orders'][0]->total===123,'Order accounting data retained.');
 mobishop_auth_assert(!get_post(20)&&get_post(21),'Only owned coupon removed, never made public.');
+mobishop_auth_assert(array_keys($GLOBALS['delete_comments'])===array(52,53),'Delete owned reviews; retain another customer and anonymous reviews.');
 mobishop_auth_assert(count($GLOBALS['delete_tables']['wp_mobishop_events'])===1,'Only owned event records removed.');
 $devices=unserialize($GLOBALS['delete_options']['mobishop_push_devices_v1']);
 mobishop_auth_assert(!isset($devices['mine'])&&isset($devices['other'],$devices['guest']),'Other devices retained.');
 mobishop_auth_assert(unserialize($GLOBALS['delete_options']['mobishop_push_automation_log_v1'])===array('x:user:17'=>456),'Exact automation suffix only.');
 deletion_tick();mobishop_auth_assert($GLOBALS['delete_count']===1,'Late watchdog is a no-op.');
 
-foreach(array('read'=>0,'table-read'=>0,'orders'=>0,'delete'=>1,'campaign-read'=>4,'coupon'=>4,'user-delete'=>9,'schedule'=>0) as $flag=>$p) {
+foreach(array('read'=>0,'table-read'=>0,'orders'=>0,'delete'=>1,'campaign-read'=>4,'coupon'=>4,'comment-read'=>9,'comment-delete'=>9,'user-delete'=>9,'schedule'=>0) as $flag=>$p) {
 	deletion_reset();$r=$deletion->request_deletion(deletion_request(deletion_login()));
 	$job=maybe_unserialize($GLOBALS['delete_options']['mobishop_account_deletion_v1_7']);$job['phase']=$p;
 	$GLOBALS['delete_options']['mobishop_account_deletion_v1_7']=serialize($job);
 	$GLOBALS['delete_tables']['wp_mobishop_events']=array(array('user_id'=>7));
 	$GLOBALS['delete_tables']['wp_mobishop_recovery_campaigns']=array(array('id'=>1,'coupon_id'=>20,'user_id'=>7));
 	$GLOBALS['delete_posts'][20]=(object)array('post_type'=>'shop_coupon');
+	if($flag==='comment-delete')$GLOBALS['delete_comments'][1]=(object)array('comment_ID'=>1,'user_id'=>7);
 	$GLOBALS['delete_flags'][$flag]=true;deletion_tick();
 	mobishop_auth_assert(phase()===$p&&isset($GLOBALS['mobishop_users'][7]),"Failure cannot advance or delete user: $flag");
 	if($flag!=='schedule')mobishop_auth_assert((bool)wp_next_scheduled('mobishop_delete_customer_batch',array(7)),"Future retry survives: $flag");
@@ -226,4 +249,14 @@ mobishop_auth_assert(is_wp_error($push->register_device(new WP_REST_Request(arra
 MobiShop_Push_Service::append_history(array('id'=>'after-deletion','target_user_id'=>7));
 mobishop_auth_assert(count(unserialize($GLOBALS['delete_options']['mobishop_push_history']))===1,'Removed customer data cannot reappear after job completion.');
 
-fwrite(STDOUT,"Self-deletion ownership, reauthentication, revocation race, bounded cleanup and failure tests passed.\n");
+// Ledger uncertainty or a pending checkout must fail BEFORE session revocation.
+foreach(array('missing-key','active-payment') as $case){
+	deletion_reset();$login=deletion_login();
+	$GLOBALS['delete_tables']['wp_mobishop_native_checkout50_buyers']=array();
+	if($case==='active-payment'){define('MOBISHOP_NATIVE_CHECKOUT50_HMAC_KEY',str_repeat('a',64));$GLOBALS['delete_flags']['payment']=true;}
+	$r=$deletion->request_deletion(deletion_request($login));
+	mobishop_auth_assert(is_wp_error($r),"Unsafe payment state rejects deletion: $case");
+	mobishop_auth_assert(!is_wp_error($endpoint->authenticate_route(deletion_request($login))),"Customer can resolve checkout: $case");
+	mobishop_auth_assert(empty($GLOBALS['delete_options']),"No accepted/pending deletion: $case");
+}
+fwrite(STDOUT,"Self-deletion ownership, reauthentication, revocation race, bounded cleanup, review erasure, rollout and payment preflight tests passed.\n");

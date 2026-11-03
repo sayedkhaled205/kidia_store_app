@@ -170,7 +170,8 @@ class AccountScreen extends ConsumerWidget {
               ),
             if (session != null &&
                 !AppConfig.isCmsPreview &&
-                AppConfig.commercePlatform == CommercePlatform.wooCommerce)
+                AppConfig.commercePlatform == CommercePlatform.wooCommerce &&
+                ref.watch(accountDeletionAvailabilityProvider).value == true)
               TextButton.icon(
                 key: const Key('account-delete'),
                 onPressed: () => Navigator.of(context).push(

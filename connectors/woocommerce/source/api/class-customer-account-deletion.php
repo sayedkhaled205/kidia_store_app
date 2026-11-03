@@ -28,15 +28,22 @@ final class MobiShop_Customer_Account_Deletion {
 	public function availability( WP_REST_Request $request ) {
 		$auth = $this->auth->authenticate_route( $request );
 		if ( is_wp_error( $auth ) ) return $auth;
-		return self::response( array( 'available' => ! is_multisite() ) );
+		return self::response( array( 'available' => self::enabled() && ! is_multisite() ) );
+	}
+	/** Keep rollout closed until external identity erasure and completion receipts are integrated. */
+	private static function enabled(): bool {
+		return defined( 'MOBISHOP_ACCOUNT_DELETION_ENABLED' ) && true === MOBISHOP_ACCOUNT_DELETION_ENABLED;
 	}
 	public function request_deletion( WP_REST_Request $request ) {
-		if ( is_multisite() ) return self::error( 'unavailable', 409 );
+		if ( ! self::enabled() || is_multisite() ) return self::error( 'unavailable', 409 );
 		if ( 'delete-my-account' !== $request->get_param( 'confirmation' ) ) return self::error( 'confirmation', 400 );
 		// No caller-supplied user ID, email or WordPress admin cookie is a target.
 		$prepared = 0;
 		try {
 			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( &$prepared ): bool {
+				// Fail before revocation: the customer must retain access to resolve
+				// an in-flight checkout, including when its ledger cannot be read.
+				if ( self::has_pending_payment( $id ) ) return false;
 				$prepared = $id;
 				self::save( array( 'userId' => $id, 'phase' => -1, 'cursor' => time() ) );
 				return self::schedule( $id );
@@ -245,6 +252,15 @@ final class MobiShop_Customer_Account_Deletion {
 		} elseif ( 8 === $phase ) {
 			if ( ! self::cancel_events( 'mobishop_dispatch_automation_push', static fn( $args ) => is_array( $args[0] ?? null ) && (int) ( $args[0]['target_user_id'] ?? 0 ) === $id ) ) return false;
 		} elseif ( 9 === $phase ) {
+			// wp_delete_user does not erase comments or product reviews. Ownership
+			// is the authenticated user ID, never a matching editable email.
+			$wpdb->last_error = '';
+			$comments = get_comments( array( 'user_id' => $id, 'number' => self::LIMIT, 'status' => 'all', 'orderby' => 'comment_ID', 'order' => 'ASC' ) );
+			if ( ! is_array( $comments ) || $wpdb->last_error ) throw new RuntimeException( 'Comment lookup unavailable' );
+			foreach ( $comments as $comment ) {
+				if ( (int) $comment->user_id !== $id || ! wp_delete_comment( (int) $comment->comment_ID, true ) || get_comment( (int) $comment->comment_ID ) ) throw new RuntimeException( 'Comment deletion unavailable' );
+			}
+			if ( count( $comments ) ) return false;
 			if ( get_user_by( 'id', $id ) ) {
 				if ( ! function_exists( 'wp_delete_user' ) ) require_once ABSPATH . 'wp-admin/includes/user.php';
 				if ( ! wp_delete_user( $id, 0 ) || get_user_by( 'id', $id ) ) throw new RuntimeException( 'User deletion unavailable' );
