@@ -111,7 +111,7 @@ class WebsiteAuthService {
       final startRequest = _request(
         'start',
         body: {
-          if (provider != null) 'provider': provider,
+          'provider': ?provider,
           'state': state,
           'challenge': sha256.convert(utf8.encode(verifier)).toString(),
         },
