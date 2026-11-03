@@ -11,7 +11,7 @@ workflows:
       cocoapods: default
       ios_signing:
         provisioning_profiles:
-          - profile: kidia_app_store_profile
+          - profile: kidia_app_store_apple_profile
             environment_variable: REGISTERED_IOS_PROFILE
         certificates:
           - kidia_app_store_distribution
@@ -106,7 +106,7 @@ workflows:
       cocoapods: default
       ios_signing:
         provisioning_profiles:
-          - profile: kidia_app_store_profile
+          - profile: kidia_app_store_apple_profile
             environment_variable: REGISTERED_IOS_PROFILE
         certificates:
           - kidia_app_store_distribution
@@ -199,7 +199,7 @@ workflows:
       cocoapods: default
       ios_signing:
         provisioning_profiles:
-          - profile: kidia_app_store_profile
+          - profile: kidia_app_store_apple_profile
             environment_variable: REGISTERED_IOS_PROFILE
         certificates:
           - kidia_app_store_distribution
@@ -617,7 +617,7 @@ workflows:
       cocoapods: default
       ios_signing:
         provisioning_profiles:
-          - profile: kidia_app_store_profile
+          - profile: kidia_app_store_apple_profile
             environment_variable: REGISTERED_IOS_PROFILE
         certificates:
           - kidia_app_store_distribution

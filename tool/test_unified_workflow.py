@@ -72,7 +72,7 @@ class UnifiedWorkflowTests(unittest.TestCase):
             self.assertIn(f'test -s "${name}_PATH"', package)
         self.assertIn('"$PACKAGE_DIR/app-release.ipa"', package)
         self.assertEqual(steps[-1]['name'], 'Mark build successful')
-        self.assertEqual(dual['environment']['ios_signing']['provisioning_profiles'], [{'profile': 'kidia_app_store_profile', 'environment_variable': 'REGISTERED_IOS_PROFILE'}])
+        self.assertEqual(dual['environment']['ios_signing']['provisioning_profiles'], [{'profile': 'kidia_app_store_apple_profile', 'environment_variable': 'REGISTERED_IOS_PROFILE'}])
         self.assertIn('testFlightInternalTestingOnly', scripts)
         # Artifact building does not publish to the public store or notify testers.
         self.assertNotIn('app_store_connect', dual['publishing'])
