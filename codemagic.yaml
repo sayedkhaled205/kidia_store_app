@@ -1054,7 +1054,9 @@ workflows:
           mkdir -p build/ios/simulator-artifacts
           ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip
           python3 tool/test_verify_ios_simulator.py
-          python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json
+          if ! python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json; then
+            echo 'Startup inspection failed; retain diagnostics and run the independent UI fixtures before the final gate.'
+          fi
           printf 'IOS_TEST_DEVICE=%s\n' "$SIMULATOR_ID" >> "$CM_ENV"
       - name: Exercise customer flows on the iOS engine
         script: |
@@ -1062,6 +1064,10 @@ workflows:
           flutter test integration_test/ios_customer_flows_test.dart \
             -d "${IOS_TEST_DEVICE:?}" --reporter expanded \
             2>&1 | tee build/ios/simulator-artifacts/customer-flow-tests.log
+      - name: Validate simulator results
+        script: |
+          set -euo pipefail
+          python3 -c 'import json; r=json.load(open("build/ios/simulator-artifacts/launch-check.json")); assert r["status"] == "startup_no_detected_fatal_errors", r.get("reason", "Startup failed")'
     artifacts:
       - build/ios/simulator-artifacts/Runner-simulator.zip
       - build/ios/simulator-artifacts/launch.png
@@ -1070,3 +1076,5 @@ workflows:
       - build/ios/simulator-artifacts/launch-stderr.log
       - build/ios/simulator-artifacts/launch-screen-text.json
       - build/ios/simulator-artifacts/customer-flow-tests.log
+      - build/ios/simulator-artifacts/native-startup.log
+      - build/ios/simulator-artifacts/native-stack.log

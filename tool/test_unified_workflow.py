@@ -54,6 +54,9 @@ class UnifiedWorkflowTests(unittest.TestCase):
         # Synthetic fixtures assume their own layout; only the launch check
         # above must use the live merchant's compiled design and services.
         self.assertNotIn('--dart-define', flows)
+        final_gate = workflow['scripts'][-1]
+        self.assertEqual(final_gate['name'], 'Validate simulator results')
+        self.assertIn('startup_no_detected_fatal_errors', final_gate['script'])
         for name in ('launch.png', 'launch-check.json', 'launch-stdout.log', 'launch-stderr.log', 'launch-screen-text.json'):
             self.assertIn('build/ios/simulator-artifacts/' + name, workflow['artifacts'])
 

@@ -36,6 +36,8 @@ class SimulatorLaunchTest(unittest.TestCase):
             self.assertEqual(kwargs["timeout"], 60)
             Path(command[-1]).write_text(json.dumps({"lines": self.lines}), encoding="utf-8")
             return subprocess.CompletedProcess(command, 0, "", "")
+        if command[:3] == ["xcrun", "simctl", "spawn"] or command[0] == "sample":
+            return subprocess.CompletedProcess(command, 0, "native startup fixture", "")
         self.fail("Unexpected command: " + str(command))
 
     def check(self, runner=None, sleeper=lambda _: None, encoded_design=""):
@@ -134,6 +136,8 @@ class SimulatorLaunchTest(unittest.TestCase):
         self.lines = ["03:25", "Settings", "Camera", "Calendar", "Photos"]
         with self.assertRaisesRegex(ValueError, "insufficient storefront evidence"):
             self.check()
+        self.assertIn("native startup fixture", (self.artifacts / "native-startup.log").read_text())
+        self.assertIn("native startup fixture", (self.artifacts / "native-stack.log").read_text())
 
     def test_disabled_block_labels_and_permission_buttons_do_not_count(self):
         design = {"home": {"blocks": [{"enabled": False, "data": {"label": "Ghost collection"}},

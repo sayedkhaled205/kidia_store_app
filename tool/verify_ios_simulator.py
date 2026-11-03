@@ -69,6 +69,22 @@ def read_log(path):
     return path.read_text(encoding="utf-8", errors="replace")
 
 
+def capture_native_diagnostics(device, pid, artifact_dir, runner):
+    # Native startup failures can be absent from redirected Dart stdout/stderr.
+    for filename, command in (
+        ("native-startup.log", ["xcrun", "simctl", "spawn", device, "log", "show",
+                                "--last", "2m", "--style", "compact",
+                                "--predicate", 'process == "Runner"']),
+        ("native-stack.log", ["sample", pid, "3"]),
+    ):
+        try:
+            result = runner(command, capture_output=True, text=True, timeout=20)
+            output = (result.stdout + "\n" + result.stderr)[-2 * 1024 * 1024:]
+        except (OSError, subprocess.SubprocessError):
+            output = "Native startup diagnostics unavailable.\n"
+        (artifact_dir / filename).write_text(output, encoding="utf-8")
+
+
 def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sleep, encoded_design=""):
     try:
         device = str(uuid.UUID(device)).upper()
@@ -133,6 +149,7 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
         raise ValueError("Simulator startup error screen detected: " + ", ".join(signals))
     visible_storefront_labels = storefront_evidence(lines, encoded_design)
     if len(visible_storefront_labels) < 2:
+        capture_native_diagnostics(device, pid, artifact_dir, runner)
         raise ValueError("Simulator screen has insufficient storefront evidence; a live PID or system dialog alone is insufficient")
     return {
         "status": "startup_no_detected_fatal_errors", "duration_seconds": 12,
