@@ -1,4 +1,24 @@
 workflows:
+  kidia-testflight-existing-ipa:
+    name: Kidia verified existing IPA upload
+    instance_type: mac_mini_m2
+    max_build_duration: 20
+    integrations:
+      app_store_connect: Kidia TestFlight Build
+    scripts:
+      - name: Verify existing application before upload
+        script: |
+          set -euo pipefail
+          python3 tool/test_verify_ios_signing.py
+          python3 tool/test_prepare_app_store_upload.py
+          python3 tool/prepare_app_store_upload.py
+    artifacts:
+      - build/verified-testflight/app.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: false
+        submit_to_app_store: false
   kidia-ios-release:
     name: Kidia iOS App Store release
     instance_type: mac_mini_m2
