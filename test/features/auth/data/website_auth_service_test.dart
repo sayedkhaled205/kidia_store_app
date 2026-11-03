@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/auth/data/storage/last_login_method_store.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
@@ -20,8 +21,10 @@ void main() {
   int exchangeStatus = 200;
   int configStatus = 200;
   var expired = false;
+  final remembered = <LastLoginMethod>[];
 
   setUp(() {
+    remembered.clear();
     storage = MemoryAuthSessionStore();
     requests = [];
     authorizeOverride = null;
@@ -81,6 +84,9 @@ void main() {
     dio: dio,
     sessions: storage,
     browser: browser,
+    rememberMethod: (method) async {
+      remembered.add(method);
+    },
   );
   String callback() =>
       '${WebsiteAuthService.schemeFor(Uri.parse('https://store.example'))}://auth/complete?code=$code&state=$state';
@@ -92,6 +98,7 @@ void main() {
     expect(requests.first.data['provider'], 'facebook');
     expect(requests.last.data.containsKey('provider'), isFalse);
     expect(storage.value, session);
+    expect(remembered, [LastLoginMethod.facebook]);
   });
   test('unrecognized provider opens no browser or server request', () async {
     await expectLater(
@@ -101,6 +108,7 @@ void main() {
       throwsFormatException,
     );
     expect(requests, isEmpty);
+    expect(remembered, isEmpty);
     expect(storage.value, isNull);
   });
 

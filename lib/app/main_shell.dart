@@ -82,8 +82,7 @@ class _MainShellState extends ConsumerState<MainShell>
     ref.read(mobileAnalyticsProvider).trackInBackground('app_open');
     // Start the public login configuration after the first frame, while the
     // customer browses. Opening sign-in then reuses the same in-flight/result.
-    if (!AppConfig.isCmsPreview &&
-        AppConfig.hasConfiguredStore &&
+    if ((AppConfig.isCmsPreview || AppConfig.hasConfiguredStore) &&
         AppConfig.commercePlatform == CommercePlatform.wooCommerce) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;

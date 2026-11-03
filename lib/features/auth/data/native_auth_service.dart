@@ -14,6 +14,7 @@ import '../domain/repositories/auth_repository.dart';
 import 'native_auth_sdk.dart';
 import 'network/auth_api_transport.dart';
 import 'storage/auth_session_store.dart';
+import 'storage/last_login_method_store.dart';
 
 /// Exchanges native identity proofs only with the configured merchant.
 /// Results remain provisional until the caller explicitly commits one.
@@ -29,6 +30,7 @@ class NativeAuthService
     required AuthSessionStore sessionStore,
     AuthApiTransport? legacyTransport,
     Future<void> Function(AuthSession)? onCommitted,
+    Future<void> Function(LastLoginMethod)? rememberMethod,
     String? platform,
   }) : _store = _validateStore(storeUri),
        _dio = dio,
@@ -36,6 +38,7 @@ class NativeAuthService
        _sessions = sessionStore,
        _legacyTransport = legacyTransport,
        _onCommitted = onCommitted,
+       _rememberMethod = rememberMethod ?? LastLoginMethodStore(storeUri).save,
        _platform =
            platform ??
            (defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android');
@@ -46,6 +49,7 @@ class NativeAuthService
   final AuthSessionStore _sessions;
   final AuthApiTransport? _legacyTransport;
   final Future<void> Function(AuthSession)? _onCommitted;
+  final Future<void> Function(LastLoginMethod) _rememberMethod;
   final String _platform;
   Future<NativeAuthConfig>? _configuration;
   bool _legacy = false;
@@ -122,6 +126,9 @@ class NativeAuthService
   @override
   Future<NativeAuthIdentity> identify(String identifier) {
     final attempt = _restart();
+    attempt.method = identifier.contains('@')
+        ? LastLoginMethod.email
+        : LastLoginMethod.phone;
     _legacyCreateEmail = null;
     return _run(attempt, () async {
       await _wait(_sdk.cancel(), attempt);
@@ -147,6 +154,9 @@ class NativeAuthService
   @override
   Future<NativeAuthResult> password(String identifier, String password) {
     final attempt = _restart();
+    attempt.method = identifier.contains('@')
+        ? LastLoginMethod.email
+        : LastLoginMethod.phone;
     return _run(attempt, () async {
       await _wait(_sdk.cancel(), attempt);
       final configuration = await _wait(config(), attempt);
@@ -187,6 +197,7 @@ class NativeAuthService
         ? null
         : _requireTicket(ticket, NativeAuthStatus.registrationRequired);
     final attempt = continuation?.attempt ?? _restart();
+    attempt.method ??= LastLoginMethod.phone;
     return _run(attempt, () async {
       final configuration = await _wait(config(), attempt);
       if (!configuration.supportsUnverifiedPhoneEnrollment) throw _unavailable;
@@ -230,6 +241,7 @@ class NativeAuthService
     final attempt = continuation != null || resend != null
         ? _attempt
         : _restart();
+    attempt.method ??= LastLoginMethod.phone;
     final boundTicket =
         continuation?.result.ticket ??
         (prior is _PhoneOperation ? prior.ticket : null);
@@ -354,6 +366,7 @@ class NativeAuthService
 
   Future<NativeAuthResult> _google({String? expectedPhone}) {
     final attempt = _restart();
+    attempt.method = LastLoginMethod.google;
     return _run(attempt, () async {
       await _wait(_sdk.cancel(), attempt);
       final configuration = await _wait(config(), attempt);
@@ -493,6 +506,14 @@ class NativeAuthService
       final future = _sessions
           .write(session)
           .then((_) async {
+            final method = owner.method;
+            if (method != null) {
+              unawaited(
+                Future<void>.sync(
+                  () => _rememberMethod(method),
+                ).catchError((Object _) {}),
+              );
+            }
             try {
               await _onCommitted?.call(session);
             } catch (_) {
@@ -765,6 +786,7 @@ class NativeAuthService
 }
 
 class _Attempt {
+  LastLoginMethod? method;
   final verifier = List.generate(
     32,
     (_) => Random.secure().nextInt(256).toRadixString(16).padLeft(2, '0'),

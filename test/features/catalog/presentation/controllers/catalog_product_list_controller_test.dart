@@ -15,6 +15,78 @@ import 'package:mobishop_store_app/features/catalog/presentation/controllers/cat
 void main() {
   group('CatalogProductListController', () {
     test(
+      'products appear before slow filters and filters survive paging',
+      () async {
+        final filters = Completer<CatalogFilterData>();
+        final repository = _FakeCatalogRepository(
+          products: (q) async =>
+              _page(q, items: [_product(q.page)], totalItems: 2, totalPages: 2),
+          filters: (_) => filters.future,
+        );
+        final controller = CatalogProductListController(
+          repository,
+          request: const CatalogProductListRequest(),
+        );
+        addTearDown(controller.dispose);
+        final loading = controller.loadInitial();
+        await Future<void>.delayed(Duration.zero);
+        expect(controller.state.isInitialLoading, false);
+        expect(controller.state.items.single.id, 1);
+        await loading;
+        await controller.loadPage(2);
+        filters.complete(const CatalogFilterData(maximumPriceMinor: '500'));
+        await Future<void>.delayed(Duration.zero);
+        expect(controller.state.items.single.id, 2);
+        expect(controller.state.filterData?.maximumPriceMinor, '500');
+      },
+    );
+    test(
+      'old filters and failed filters cannot overwrite new category products',
+      () async {
+        final pending = <int, Completer<CatalogFilterData>>{};
+        final repository = _FakeCatalogRepository(
+          products: (q) async => _page(
+            q,
+            items: [_product(q.categoryIds.single)],
+            totalItems: 1,
+            totalPages: 1,
+          ),
+          filters: (q) =>
+              (pending[q.categoryIds.single] = Completer<CatalogFilterData>())
+                  .future,
+        );
+        final controller = CatalogProductListController(
+          repository,
+          request: const CatalogProductListRequest(categoryId: 7),
+        );
+        addTearDown(controller.dispose);
+        await controller.loadInitial();
+        await controller.selectChildCategory(8);
+        pending[8]!.complete(const CatalogFilterData(maximumPriceMinor: '800'));
+        await Future<void>.delayed(Duration.zero);
+        pending[7]!.complete(const CatalogFilterData(maximumPriceMinor: '700'));
+        await Future<void>.delayed(Duration.zero);
+        expect(controller.state.filterData?.maximumPriceMinor, '800');
+        await controller.selectChildCategory(9);
+        pending[9]!.completeError(StateError('unavailable'));
+        await Future<void>.delayed(Duration.zero);
+        expect(controller.state.items.single.id, 9);
+        expect(controller.state.error, isNull);
+        expect(controller.state.filterData, isNull);
+      },
+    );
+    test('finishing optional filters after disposal is harmless', () async {
+      final filters = Completer<CatalogFilterData>();
+      final controller = CatalogProductListController(
+        _FakeCatalogRepository(filters: (_) => filters.future),
+        request: const CatalogProductListRequest(),
+      );
+      await controller.loadInitial();
+      controller.dispose();
+      filters.complete(const CatalogFilterData());
+      await Future<void>.delayed(Duration.zero);
+    });
+    test(
       'child selection retains filters and sort across paging and reset',
       () async {
         final repository = _FakeCatalogRepository(
@@ -464,11 +536,12 @@ typedef _ProductsHandler =
     Future<CatalogPage<CatalogProduct>> Function(CatalogProductQuery query);
 
 class _FakeCatalogRepository implements CatalogRepository {
-  _FakeCatalogRepository({_ProductsHandler? products})
+  _FakeCatalogRepository({_ProductsHandler? products, this.filters})
     : _products =
           products ?? ((CatalogProductQuery query) async => _page(query));
 
   final _ProductsHandler _products;
+  final Future<CatalogFilterData> Function(CatalogProductQuery)? filters;
   final List<CatalogProductQuery> productQueries = <CatalogProductQuery>[];
 
   @override
@@ -482,6 +555,7 @@ class _FakeCatalogRepository implements CatalogRepository {
     CatalogProductQuery query, {
     Iterable<String> attributeTaxonomies = const <String>[],
   }) async {
+    if (filters != null) return filters!(query);
     return const CatalogFilterData(
       minimumPriceMinor: '100',
       maximumPriceMinor: '10000',

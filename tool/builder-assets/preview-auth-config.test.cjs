@@ -24,8 +24,8 @@ const {load} = require('./preview-auth-config.js');
   await assert.rejects(load({...state,platform:'shopify'},()=>{calls++;}));
   await assert.rejects(load({...state,store_data:{url:'http://shop.example'}},()=>{calls++;}));
   assert.equal(calls,1);
-  await assert.rejects(load(state,async()=>({ok:false,status:500})));
-  const legacy = await load(state,async()=>({ok:false,status:404}));
+  await assert.rejects(load(state,async()=>({ok:false,status:500}),{fresh:true}));
+  const legacy = await load(state,async()=>({ok:false,status:404}),{fresh:true});
   assert.equal(legacy.methods.google,undefined);
   assert.equal(legacy.methods.email_password,true);
   // Model a browser holding the pre-registration response. A subsequent
@@ -36,15 +36,35 @@ const {load} = require('./preview-auth-config.js');
       email_password:true,phone_otp:true,google:options.cache === 'no-store' && enabled
     }})
   });
-  assert.equal((await load(state,current)).methods.google,true);
+  assert.equal((await load(state,current,{fresh:true})).methods.google,true);
   enabled = false;
-  assert.equal((await load(state,current)).methods.google,false);
+  assert.equal((await load(state,current,{fresh:true})).methods.google,false);
   enabled = true;
-  assert.equal((await load(state,current)).methods.google,true);
+  assert.equal((await load(state,current,{fresh:true})).methods.google,true);
   const secondStore = {...state,store_data:{url:'https://other.example'}};
   assert.equal((await load(secondStore,async (url,options) => {
     assert.equal(new URL(url).origin,'https://other.example');
     return current(url,options);
   })).methods.google,true);
-  console.log('Preview configuration routing and availability checks passed.');
+  let resolve;
+  let slowCalls = 0;
+  const slowState = {...state,store_data:{url:'https://slow.example'}};
+  const slowFetch = () => { slowCalls++; return new Promise(r => {resolve = r;}); };
+  const first = load(slowState, slowFetch);
+  const second = load(slowState, slowFetch);
+  assert.equal(slowCalls,1);
+  resolve({ok:true,status:200,json:async()=>({version:1,enabled:true,methods:{google:true}})});
+  assert.deepEqual(await first,await second);
+  await load(slowState,slowFetch);
+  assert.equal(slowCalls,1);
+  const realNow = Date.now;
+  Date.now = () => realNow() + 31000;
+  try {
+    const expired = await load(slowState,async()=>({ok:true,status:200,json:async()=>({version:1,enabled:true,methods:{google:false}})}));
+    assert.equal(expired.methods.google,false);
+  } finally { Date.now = realNow; }
+  const failedState = {...state,store_data:{url:'https://retry.example'}};
+  await assert.rejects(load(failedState,async()=>{throw new Error('offline');}));
+  assert.equal((await load(failedState,current)).methods.google,true);
+  console.log('Preview configuration routing, concurrent reuse, expiry and retry checks passed.');
 })();

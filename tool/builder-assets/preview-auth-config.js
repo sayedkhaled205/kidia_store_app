@@ -1,7 +1,8 @@
 (function (scope) {
   'use strict';
   const allowedMethods = ['password', 'email_password', 'phone_password', 'phone_otp', 'google', 'facebook', 'registration'];
-  async function load(payload, fetchPublic) {
+  const capabilities = new Map();
+  async function load(payload, fetchPublic, {fresh = false} = {}) {
     if (payload.platform !== 'woocommerce') throw new Error('Unsupported preview authentication platform.');
     const store = payload.store_data || {};
     const url = new URL(store.url || store.home_url || store.website_url || store.base_url || '');
@@ -9,6 +10,23 @@
       throw new Error('Invalid preview store origin.');
     url.pathname = url.pathname.replace(/\/+$/, '') + '/wp-json/mobishop/v1/auth/native/config';
     url.search = '?platform=android';
+    const key = url.href;
+    const cached = capabilities.get(key);
+    if (!fresh && cached && (cached.pending || cached.expires > Date.now())) return cached.promise;
+    const entry = {pending: true, expires: 0, promise: null};
+    entry.promise = request(url, fetchPublic).then(value => {
+      entry.pending = false;
+      entry.expires = Date.now() + 30000;
+      return value;
+    }, error => {
+      if (capabilities.get(key) === entry) capabilities.delete(key);
+      throw error;
+    });
+    if (capabilities.size >= 16) capabilities.delete(capabilities.keys().next().value);
+    capabilities.set(key, entry);
+    return entry.promise;
+  }
+  async function request(url, fetchPublic) {
     // Availability can change after native Google registration. Do not reuse a
     // browser/CDN response from before that registration on a later preview.
     url.searchParams.set('_preview', Date.now().toString(36));

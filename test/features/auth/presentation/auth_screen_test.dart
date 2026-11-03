@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/auth/data/storage/last_login_method_store.dart';
 import '../../../support/viewport_rotation.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
@@ -23,6 +24,40 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets('equal social circles and last successful method hint', (
+    tester,
+  ) async {
+    final actions = _Actions()
+      ..configuration = const NativeAuthConfig(
+        methods: {'email_password': true, 'google': true, 'facebook': true},
+      );
+    await _Fixture(
+      actions: actions,
+    ).pump(tester, lastLogin: LastLoginMethod.google);
+    expect(find.byKey(const Key('auth-last-login')), findsOneWidget);
+    expect(find.text('آخر تسجيل دخول'), findsOneWidget);
+    for (final key in ['auth-google', 'auth-facebook']) {
+      final button = tester.widget<OutlinedButton>(find.byKey(Key(key)));
+      expect(button.style!.visualDensity, VisualDensity.standard);
+      expect(button.style!.fixedSize!.resolve({}), const Size.square(52));
+    }
+    expect(
+      tester.getSize(find.byKey(const Key('auth-google'))),
+      tester.getSize(find.byKey(const Key('auth-facebook'))),
+    );
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('hidden method has no hint and phone hint stays by continue', (
+    tester,
+  ) async {
+    await _Fixture().pump(tester, lastLogin: LastLoginMethod.facebook);
+    expect(find.byKey(const Key('auth-last-login')), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await _Fixture().pump(tester, lastLogin: LastLoginMethod.phone);
+    expect(find.text('آخر تسجيل دخول · الموبايل'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'preview shows configured Facebook without starting authentication',
     (tester) async {
@@ -396,7 +431,7 @@ void main() {
   });
 
   testWidgets(
-    'CMS preview refreshes Google availability on each sign-in visit',
+    'CMS preview refreshes Google availability after short public cache expires',
     (tester) async {
       var googleEnabled = true;
       var requests = 0;
@@ -422,6 +457,7 @@ void main() {
         fixture.router.go('/account');
         await tester.pumpAndSettle();
         googleEnabled = enabled;
+        await tester.pump(const Duration(seconds: 31));
         fixture.router.go('/auth');
         await tester.pumpAndSettle();
         expect(
@@ -1198,6 +1234,7 @@ class _Fixture {
     WidgetTester tester, {
     String route = '/auth',
     String logo = '',
+    LastLoginMethod? lastLogin,
     double logoScale = 1,
     NativeAuthActions? previewActions,
     Size size = const Size(390, 844),
@@ -1234,6 +1271,7 @@ class _Fixture {
       ProviderScope(
         overrides: [
           authControllerProvider.overrideWith(() => auth),
+          lastLoginMethodProvider.overrideWith((_) async => lastLogin),
           nativeAuthActionsProvider.overrideWithValue(
             previewActions ?? actions,
           ),

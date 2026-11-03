@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:mobishop_store_app/features/auth/data/storage/auth_session_store.dart';
+import 'storage/last_login_method_store.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 
 typedef WebsiteAuthBrowser = Future<String> Function(Uri uri);
@@ -54,7 +55,9 @@ class WebsiteAuthService {
     required this.dio,
     required this.sessions,
     WebsiteAuthBrowser? browser,
-  }) : browser = browser ?? ((uri) => _openBrowser(uri, schemeFor(store))) {
+    Future<void> Function(LastLoginMethod)? rememberMethod,
+  }) : _rememberMethod = rememberMethod ?? LastLoginMethodStore(store).save,
+       browser = browser ?? ((uri) => _openBrowser(uri, schemeFor(store))) {
     if (store.scheme != 'https' ||
         store.host.isEmpty ||
         store.userInfo.isNotEmpty ||
@@ -68,6 +71,7 @@ class WebsiteAuthService {
   final Dio dio;
   final AuthSessionStore sessions;
   final WebsiteAuthBrowser browser;
+  final Future<void> Function(LastLoginMethod) _rememberMethod;
   bool _active = false;
 
   static String schemeFor(Uri store) =>
@@ -157,6 +161,13 @@ class WebsiteAuthService {
       if (session.isExpired) throw const FormatException('Expired session.');
       attempt?.beginCommit();
       await sessions.write(session);
+      if (provider == 'facebook') {
+        unawaited(
+          Future<void>.sync(
+            () => _rememberMethod(LastLoginMethod.facebook),
+          ).catchError((Object _) {}),
+        );
+      }
       return session;
     } finally {
       _active = false;

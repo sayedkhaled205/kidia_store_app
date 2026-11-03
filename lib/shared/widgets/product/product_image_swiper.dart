@@ -50,6 +50,7 @@ class _ProductImageSwiperState extends State<ProductImageSwiper> {
     if (!widget.enabled || images.length < 2) {
       return AppNetworkImage(
         imageUrl: images.first,
+        decodeAtDisplaySize: true,
         fit: widget.fit,
         alignment: widget.alignment,
         semanticLabel: widget.semanticLabel,
@@ -60,7 +61,13 @@ class _ProductImageSwiperState extends State<ProductImageSwiper> {
       children: <Widget>[
         PageView.builder(
           scrollBehavior: const MaterialScrollBehavior().copyWith(
-            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse, PointerDeviceKind.stylus, PointerDeviceKind.invertedStylus, PointerDeviceKind.trackpad},
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.stylus,
+              PointerDeviceKind.invertedStylus,
+              PointerDeviceKind.trackpad,
+            },
           ),
           key: ValueKey<String>(
             'product-image-swiper-${images.join('|').hashCode}',
@@ -69,6 +76,7 @@ class _ProductImageSwiperState extends State<ProductImageSwiper> {
           onPageChanged: (int page) => setState(() => _page = page),
           itemBuilder: (BuildContext context, int index) => AppNetworkImage(
             imageUrl: images[index],
+            decodeAtDisplaySize: true,
             fit: widget.fit,
             alignment: widget.alignment,
             semanticLabel: '${widget.semanticLabel} ${index + 1}',

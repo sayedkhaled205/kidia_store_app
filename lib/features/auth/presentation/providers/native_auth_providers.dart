@@ -8,6 +8,13 @@ import 'package:mobishop_store_app/features/auth/data/native_auth_sdk.dart';
 import 'package:mobishop_store_app/features/auth/data/native_auth_service.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/native_auth.dart';
 import 'auth_providers.dart';
+import '../../data/storage/last_login_method_store.dart';
+
+final lastLoginMethodProvider = FutureProvider.autoDispose<LastLoginMethod?>((
+  ref,
+) {
+  return LastLoginMethodStore(Uri.parse(AppConfig.apiBaseUrl)).read();
+});
 
 final nativeAuthActionsProvider = Provider.autoDispose<NativeAuthActions>((
   ref,
@@ -36,10 +43,7 @@ final nativeAuthConfigProvider = FutureProvider.autoDispose<NativeAuthConfig>((
   ref,
 ) async {
   final actions = ref.watch(nativeAuthActionsProvider);
-  // The editor must reflect changed capabilities on every preview visit.
-  if (AppConfig.isCmsPreview || actions is CmsPreviewAuthActions) {
-    return actions.config();
-  }
+  final preview = AppConfig.isCmsPreview || actions is CmsPreviewAuthActions;
   // A first-frame prefetch must survive until the login screen subscribes.
   // Retain only this merchant's public capabilities, never an OTP or session.
   final cache = ref.keepAlive();
@@ -48,7 +52,10 @@ final nativeAuthConfigProvider = FutureProvider.autoDispose<NativeAuthConfig>((
   try {
     final config = await actions.config();
     if (ref.mounted) {
-      expiry = Timer(const Duration(minutes: 5), cache.close);
+      expiry = Timer(
+        preview ? const Duration(seconds: 30) : const Duration(minutes: 5),
+        cache.close,
+      );
     }
     return config;
   } catch (_) {

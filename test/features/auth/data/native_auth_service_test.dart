@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/auth/data/storage/last_login_method_store.dart';
 import 'dart:async';
 
 import 'package:dio/dio.dart';
@@ -79,6 +80,22 @@ Future<void> _until(bool Function() ready) async {
 
 void main() {
   test(
+    'cancelled or provisional sign-in never changes the last method',
+    () async {
+      final h = _Harness();
+      final first = await h.service.password('+201012345678', 'fixture-pass');
+      expect(h.remembered, isEmpty);
+      await h.service.cancel();
+      await expectLater(h.service.commit(first), throwsA(_failure));
+      expect(h.remembered, isEmpty);
+      final second = await h.service.password('+201012345678', 'fixture-pass');
+      await h.service.commit(second);
+      await h.service.commit(second);
+      expect(h.remembered, [LastLoginMethod.phone]);
+    },
+  );
+
+  test(
     'old connector cannot ignore a Google phone constraint and ordinary Google still works',
     () async {
       final h = _Harness()..configStatus = -1;
@@ -103,6 +120,7 @@ void main() {
       expect(h.store.writes, 0);
       await h.service.commit(result);
       expect(h.store.writes, 1);
+      expect(h.remembered, [LastLoginMethod.google]);
     },
   );
   test(
@@ -560,7 +578,9 @@ void main() {
         'valid-password',
       );
       await expectLater(h.service.commit(result), throwsA(_failure));
+      expect(h.remembered, isEmpty);
       await h.service.commit(result);
+      expect(h.remembered, [LastLoginMethod.email]);
       expect(h.store.writes, 2);
       expect(h.posts('password').length, 1);
     },
@@ -823,9 +843,13 @@ class _Harness {
       sessionStore: store,
       legacyTransport: legacy,
       onCommitted: onCommitted,
+      rememberMethod: (method) async {
+        remembered.add(method);
+      },
       platform: 'android',
     );
   }
+  final remembered = <LastLoginMethod>[];
   final dio = Dio();
   final sdk = _Sdk();
   final store = _Store();

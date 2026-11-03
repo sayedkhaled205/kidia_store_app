@@ -7,6 +7,7 @@ import 'package:mobishop_store_app/core/app_design/application_identity_provider
 import 'package:mobishop_store_app/features/auth/application/auth_controller.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/native_auth.dart';
+import 'package:mobishop_store_app/features/auth/data/cms_preview_auth_actions.dart';
 import 'package:mobishop_store_app/features/auth/presentation/auth_screen.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/native_auth_providers.dart';
@@ -42,6 +43,43 @@ ProviderContainer fixture(ConfigActions actions) {
 }
 
 void main() {
+  testWidgets(
+    'preview reuses public flags briefly then reads changed methods',
+    (tester) async {
+      var calls = 0;
+      var google = true;
+      final container = ProviderContainer(
+        overrides: [
+          nativeAuthActionsProvider.overrideWithValue(
+            CmsPreviewAuthActions(() async {
+              calls++;
+              return {
+                'version': 1,
+                'enabled': true,
+                'methods': {'google': google},
+              };
+            }, isArabic: false),
+          ),
+        ],
+      );
+      container.read(nativeAuthConfigProvider.future);
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 10));
+      expect(
+        container.read(nativeAuthConfigProvider).requireValue.allows('google'),
+        true,
+      );
+      expect(calls, 1);
+      google = false;
+      await tester.pump(const Duration(seconds: 21));
+      await container.pump();
+      final refreshed = container.read(nativeAuthConfigProvider.future);
+      await tester.pump();
+      expect((await refreshed).allows('google'), false);
+      expect(calls, 2);
+      container.dispose();
+    },
+  );
   testWidgets(
     'prefetched Google and identifier render on the first login frame',
     (tester) async {

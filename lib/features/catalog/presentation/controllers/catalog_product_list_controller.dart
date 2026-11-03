@@ -424,6 +424,7 @@ class CatalogProductListController extends ChangeNotifier {
   final CatalogProductListRequest request;
   CatalogProductListState _state;
   int _operation = 0;
+  int _filterOperation = 0;
   bool _disposed = false;
   StreamSubscription<int>? _catalogSubscription;
 
@@ -475,6 +476,7 @@ class CatalogProductListController extends ChangeNotifier {
   /// jumping to page one, or shrinking the already loaded infinite list.
   Future<void> refreshSourceData() async {
     if (_disposed || isAwaitingSearch) return;
+    ++_filterOperation;
     if (_state.items.isEmpty || _state.page < 1) {
       await loadInitial(refresh: true);
       return;
@@ -556,6 +558,7 @@ class CatalogProductListController extends ChangeNotifier {
   }
 
   Future<void> loadInitial({bool refresh = false}) async {
+    final filterOperation = ++_filterOperation;
     if (isAwaitingSearch) {
       _replace(
         _state.copyWith(
@@ -593,17 +596,23 @@ class CatalogProductListController extends ChangeNotifier {
       includeFilters: false,
     );
 
+    // Optional filter counts must not delay product rendering or image requests.
+    // Keep a separate epoch so paging does not discard this category's filters.
+    unawaited(
+      _loadFilterData(filterQuery).then((data) {
+        if (!_disposed && filterOperation == _filterOperation) {
+          _replace(_state.copyWith(filterData: data));
+        }
+      }),
+    );
     try {
-      final List<Object?> result = await Future.wait<Object?>(<Future<Object?>>[
-        _repository.getProducts(query),
-        _loadFilterData(filterQuery),
-      ]);
+      final CatalogPage<CatalogProduct> page = await _repository.getProducts(
+        query,
+      );
       if (!_isCurrent(operation)) {
         return;
       }
 
-      final CatalogPage<CatalogProduct> page =
-          result[0] as CatalogPage<CatalogProduct>;
       _replace(
         _state.copyWith(
           items: List<CatalogProduct>.unmodifiable(page.items),
@@ -617,7 +626,6 @@ class CatalogProductListController extends ChangeNotifier {
           isRefreshing: false,
           error: null,
           loadMoreError: null,
-          filterData: result.last,
           availableSizes: _mergeSizeOptions(
             _state.availableSizes,
             _discoverSizeOptions(page.items),
