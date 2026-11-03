@@ -20,6 +20,11 @@ abstract interface class CustomerAccountApiTransport {
   );
 }
 
+abstract interface class CustomerAccountDeletionTransport {
+  Future<Map<String, dynamic>> deletionAvailability();
+  Future<Map<String, dynamic>> requestDeletion();
+}
+
 enum CustomerAccountTransportFailureKind {
   configuration,
   invalidInput,
@@ -52,7 +57,8 @@ class CustomerAccountTransportException implements Exception {
   String toString() => message;
 }
 
-class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
+class DioCustomerAccountApiTransport
+    implements CustomerAccountApiTransport, CustomerAccountDeletionTransport {
   DioCustomerAccountApiTransport({
     required Uri storeUri,
     required this.authTokenReader,
@@ -84,6 +90,18 @@ class DioCustomerAccountApiTransport implements CustomerAccountApiTransport {
   final Uri _storeUri;
   final CustomerAccountAuthTokenReader authTokenReader;
   final Dio _dio;
+
+  @override
+  Future<Map<String, dynamic>> deletionAvailability() =>
+      _request('customer/account/deletion', method: 'GET', authenticated: true);
+
+  @override
+  Future<Map<String, dynamic>> requestDeletion() => _request(
+    'customer/account/deletion',
+    method: 'POST',
+    authenticated: true,
+    body: const {'confirmation': 'delete-my-account'},
+  );
 
   @override
   Future<Map<String, dynamic>> fetchAccount() {

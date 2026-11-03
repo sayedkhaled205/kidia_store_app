@@ -66,6 +66,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$google = $google && function_exists( 'openssl_verify' );
 		return array(
 			'version' => 1, 'enabled' => $enabled,
+			'privacy_policy_url' => function_exists( 'get_privacy_policy_url' ) ? esc_url_raw( get_privacy_policy_url(), array( 'https' ) ) : '',
 			'supports_unverified_phone_enrollment' => $enabled && $this->registration_enabled(),
 			'supports_expected_phone_google' => $enabled && $google,
 			'phone_country_code' => preg_replace( '/\D/', '', (string) ( $s['phone_country_code'] ?? '' ) ),

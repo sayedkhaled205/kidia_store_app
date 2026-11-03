@@ -12,7 +12,13 @@ abstract interface class AuthSessionStore {
   Future<void> clear();
 }
 
-class SecureAuthSessionStore implements AuthSessionStore {
+/// Used after server-side revocation without clearing a replacement account.
+abstract interface class ConditionalAuthSessionStore {
+  Future<bool> clearIfToken(String token);
+}
+
+class SecureAuthSessionStore
+    implements AuthSessionStore, ConditionalAuthSessionStore {
   SecureAuthSessionStore({
     required String storeUrl,
     FlutterSecureStorage? storage,
@@ -31,9 +37,24 @@ class SecureAuthSessionStore implements AuthSessionStore {
 
   final FlutterSecureStorage _storage;
   final String _key;
+  static final Map<String, Future<void>> _pending = {};
+
+  Future<T> _exclusive<T>(Future<T> Function() action) {
+    final result = (_pending[_key] ?? Future<void>.value()).then(
+      (_) => action(),
+    );
+    final settled = result.then<void>((_) {}, onError: (Object _) {});
+    _pending[_key] = settled;
+    settled.whenComplete(() {
+      if (identical(_pending[_key], settled)) _pending.remove(_key);
+    });
+    return result;
+  }
 
   @override
-  Future<AuthSession?> read() async {
+  Future<AuthSession?> read() => _exclusive(_read);
+
+  Future<AuthSession?> _read() async {
     final String? value = await _storage.read(key: _key);
     if (value == null || value.trim().isEmpty) {
       return null;
@@ -45,18 +66,27 @@ class SecureAuthSessionStore implements AuthSessionStore {
       }
       return AuthSession.fromJson(Map<String, dynamic>.from(json));
     } on FormatException {
-      await clear();
+      await _storage.delete(key: _key);
       return null;
     }
   }
 
   @override
   Future<void> write(AuthSession session) {
-    return _storage.write(key: _key, value: jsonEncode(session.toJson()));
+    return _exclusive(
+      () => _storage.write(key: _key, value: jsonEncode(session.toJson())),
+    );
   }
 
   @override
-  Future<void> clear() => _storage.delete(key: _key);
+  Future<void> clear() => _exclusive(() => _storage.delete(key: _key));
+
+  @override
+  Future<bool> clearIfToken(String token) => _exclusive(() async {
+    if ((await _read())?.token != token) return false;
+    await _storage.delete(key: _key);
+    return true;
+  });
 
   static String _storageKey(String storeUrl) {
     final Uri? uri = Uri.tryParse(storeUrl.trim());
@@ -71,15 +101,15 @@ class SecureAuthSessionStore implements AuthSessionStore {
               )
               .toString()
               .replaceFirst(RegExp(r'/$'), '');
-    final String encoded = base64Url.encode(utf8.encode(scope)).replaceAll(
-      '=',
-      '',
-    );
+    final String encoded = base64Url
+        .encode(utf8.encode(scope))
+        .replaceAll('=', '');
     return 'mobishop_auth_session_$encoded';
   }
 }
 
-class MemoryAuthSessionStore implements AuthSessionStore {
+class MemoryAuthSessionStore
+    implements AuthSessionStore, ConditionalAuthSessionStore {
   AuthSession? value;
 
   @override
@@ -93,5 +123,12 @@ class MemoryAuthSessionStore implements AuthSessionStore {
   @override
   Future<void> clear() async {
     value = null;
+  }
+
+  @override
+  Future<bool> clearIfToken(String token) async {
+    if (value?.token != token) return false;
+    value = null;
+    return true;
   }
 }

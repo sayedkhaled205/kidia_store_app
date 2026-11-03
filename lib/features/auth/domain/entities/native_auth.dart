@@ -9,6 +9,7 @@ class NativeAuthConfig {
     this.phoneCountryCode = '',
     this.supportsUnverifiedPhoneEnrollment = false,
     this.supportsExpectedPhoneGoogle = false,
+    this.privacyPolicyUrl = '',
   });
   final bool enabled;
   final Map<String, bool> methods;
@@ -17,6 +18,7 @@ class NativeAuthConfig {
   final String phoneCountryCode;
   final bool supportsUnverifiedPhoneEnrollment;
   final bool supportsExpectedPhoneGoogle;
+  final String privacyPolicyUrl;
 
   String get phoneHint => phoneCountryCode == '20' ? '01XXXXXXXXX' : '';
 
@@ -52,6 +54,9 @@ class NativeAuthConfig {
   factory NativeAuthConfig.fromJson(Map<String, dynamic> json) =>
       NativeAuthConfig(
         enabled: json['enabled'] == true,
+        privacyPolicyUrl: json['privacy_policy_url'] is String
+            ? json['privacy_policy_url'] as String
+            : '',
         supportsUnverifiedPhoneEnrollment:
             json['supports_unverified_phone_enrollment'] == true,
         supportsExpectedPhoneGoogle:

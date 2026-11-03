@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/app/app.dart';
 import 'package:mobishop_store_app/app/app_router.dart';
 import 'package:mobishop_store_app/features/account/presentation/account_screen.dart';
+import 'package:mobishop_store_app/features/account/presentation/customer_support_screen.dart';
+import 'package:mobishop_store_app/core/app_design/app_support_provider.dart';
 import 'package:mobishop_store_app/features/account/presentation/providers/customer_account_providers.dart';
 import 'package:mobishop_store_app/features/auth/application/auth_controller.dart';
 import 'package:mobishop_store_app/features/auth/data/network/auth_api_transport.dart';
@@ -35,6 +37,29 @@ AuthSession fixtureSession({required bool expired}) => AuthSession(
 );
 
 void main() {
+  testWidgets('customer support opens while signed out without an auth gate', (
+    tester,
+  ) async {
+    final router = createAppRouter(initialLocation: '/support');
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authControllerProvider.overrideWith(
+            () => _RetainedSession(fixtureSession(expired: true)),
+          ),
+          appSupportProvider.overrideWithValue(
+            const AppSupport(whatsapp: '', email: 'help@example.invalid'),
+          ),
+        ],
+        child: MobiShopApp(router: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(CustomerSupportScreen), findsOneWidget);
+    expect(find.byType(AuthScreen), findsNothing);
+    expect(find.text('help@example.invalid'), findsOneWidget);
+  });
   // A retained controller can cross expiresAt while the app remains open.
   // Override the state to model that point, NOT an initial repository restore:
   // production restoreSession correctly discards an already expired session.
@@ -44,7 +69,6 @@ void main() {
     '/orders/1',
     '/addresses',
     '/profile',
-    '/support',
   ]) {
     testWidgets('retained expired session must open auth on $route', (
       tester,

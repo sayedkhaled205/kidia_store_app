@@ -40,10 +40,7 @@ final class MobiShop_Central_Push_Actions {
     $payload = MobiShop_Push_Service::dispatch($payload);
    }
    // Read again after dispatch so completed concurrent campaigns are retained.
-   $history = get_option('mobishop_push_history',array());
-   $history = is_array($history) ? $history : array();
-   array_unshift($history,$payload);
-   if (!update_option('mobishop_push_history',array_slice($history,0,100),false)) {
+   if (!MobiShop_Push_Service::append_history($payload)) {
     // Preserve the request lock: delivery may already have happened, so a retry must not resend.
     return new WP_Error('history_failed','Delivery state needs review before retrying this request.',array('status'=>503));
    }

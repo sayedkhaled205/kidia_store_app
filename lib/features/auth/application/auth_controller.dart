@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
 import 'package:mobishop_store_app/features/auth/data/website_auth_service.dart';
+import '../data/storage/auth_session_store.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_identity.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
@@ -13,6 +14,18 @@ class AuthController extends AsyncNotifier<AuthSession?> {
   Future<void>? _signOutOperation;
   String? _signOutToken;
   AuthRepository get _repository => ref.read(authRepositoryProvider);
+
+  /// The deletion endpoint already revoked the captured server session.
+  Future<void> completeAccountDeletion(String token) async {
+    final store = ref.read(authSessionStoreProvider);
+    if (store is! ConditionalAuthSessionStore) {
+      throw StateError('Conditional session cleanup is unavailable.');
+    }
+    await (store as ConditionalAuthSessionStore).clearIfToken(token);
+    if (ref.mounted && state.value?.token == token) {
+      state = const AsyncData<AuthSession?>(null);
+    }
+  }
 
   @override
   Future<AuthSession?> build() => _repository.restoreSession();

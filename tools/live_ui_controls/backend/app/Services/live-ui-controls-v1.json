@@ -252,6 +252,13 @@
     "type": "boolean",
     "default": true
   },
+  "privacy_policy_url": {
+    "group": "خدمة العملاء",
+    "label": "رابط سياسة خصوصية المتجر (HTTPS)",
+    "type": "text",
+    "default": "",
+    "max_length": 2048
+  },
   "support_whatsapp": {
     "group": "خدمة العملاء",
     "label": "رقم واتساب بكود الدولة",

@@ -529,6 +529,79 @@ final class MobiShop_Customer_Auth_Endpoint {
 		return 'mss1_' . hash_hmac( 'sha256', 'mobishop-push-session-scope-v1|' . $session_hash, wp_salt( 'auth' ) );
 	}
 
+	/**
+	 * Verifies the exact session used for this request is fresh, then atomically
+	 * marks a connector-defined deletion pending and revokes every session for the
+	 * user inside the same per-user lock used by login/logout. A concurrent login
+	 * already queued on that lock is re-checked by {@see issue_session_response()}
+	 * once it finally runs, so it can never resurrect a session after this request
+	 * has committed.
+	 *
+	 * @param callable $mark_pending fn( int $user_id ): bool Persists the deletion
+	 *                                intent and reliably schedules its worker. Must
+	 *                                be fail-closed: returning false aborts before
+	 *                                any session is revoked.
+	 * @return array|WP_Error array( 'user_id' => int ) on success.
+	 */
+	public function begin_self_deletion( WP_REST_Request $request, int $max_age_seconds, callable $mark_pending ) {
+		$secure = $this->require_https();
+		if ( is_wp_error( $secure ) ) {
+			return $secure;
+		}
+		$user = $this->user_from_request( $request );
+		if ( ! $user instanceof WP_User ) {
+			return $this->unauthorized_error();
+		}
+
+		$target  = $this->token_hash( $this->token_from_request( $request ) );
+		$user_id = $user->ID;
+		$outcome = 'not_found';
+		$result  = $this->mutate_sessions(
+			$user_id,
+			function ( array $current ) use ( $target, $max_age_seconds, $user_id, $mark_pending, &$outcome ): array {
+				$now = time();
+				$fresh_user = get_user_by( 'id', $user_id );
+				if ( ! $fresh_user instanceof WP_User || ! $this->is_allowed_customer( $fresh_user ) || ! $this->is_customer_ready( $fresh_user ) ) {
+					return $current;
+				}
+				foreach ( $current as $session ) {
+					if ( (int) $session['expires'] <= $now || ! hash_equals( $target, (string) $session['hash'] ) ) {
+						continue;
+					}
+					$created = (int) $session['created'];
+					if ( $created > $now || $created <= 0 || ( $now - $created ) > $max_age_seconds ) {
+						$outcome = 'stale';
+						return $current;
+					}
+					if ( ! $mark_pending( $user_id ) ) {
+						$outcome = 'mark_failed';
+						return $current;
+					}
+					$outcome = 'success';
+					return array();
+				}
+				return $current;
+			}
+		);
+		if ( is_wp_error( $result ) ) {
+			return $result;
+		}
+		if ( 'mark_failed' === $outcome ) {
+			return $this->session_store_error();
+		}
+		if ( 'stale' === $outcome ) {
+			return new WP_Error(
+				'mobishop_account_deletion_reauth',
+				__( 'Sign in again to confirm this request.', 'mobi2app-connector' ),
+				array( 'status' => 403 )
+			);
+		}
+		if ( 'not_found' === $outcome ) {
+			return $this->unauthorized_error();
+		}
+		return array( 'user_id' => $user_id );
+	}
+
 	/** Permission callback for token-protected mobile endpoints. */
 	public function authenticate_route( WP_REST_Request $request ) {
 		return $this->user_from_request( $request ) instanceof WP_User
@@ -590,9 +663,17 @@ final class MobiShop_Customer_Auth_Endpoint {
 			'created' => $now,
 			'expires' => $expires,
 		);
-		$result = $this->mutate_sessions(
+		$blocked = false;
+		$result  = $this->mutate_sessions(
 			$user->ID,
-			static function ( array $current ) use ( $now, $new_session ): array {
+			static function ( array $current ) use ( $now, $new_session, $user, &$blocked ): array {
+				// Re-checked inside the same per-user lock a pending deletion uses to
+				// revoke sessions, so a login already queued for this lock cannot
+				// resurrect a session for a user whose deletion just committed.
+				if ( class_exists( 'MobiShop_Customer_Account_Deletion' ) && MobiShop_Customer_Account_Deletion::is_pending( $user->ID ) ) {
+					$blocked = true;
+					return $current;
+				}
 				$pruned     = array_values(
 					array_filter(
 						$current,
@@ -606,6 +687,13 @@ final class MobiShop_Customer_Auth_Endpoint {
 		);
 		if ( is_wp_error( $result ) ) {
 			return $result;
+		}
+		if ( $blocked ) {
+			return new WP_Error(
+				'mobishop_auth_account_deletion_pending',
+				__( 'This account can no longer sign in.', 'mobi2app-connector' ),
+				array( 'status' => 403 )
+			);
 		}
 		if ( class_exists( 'MobiShop_Analytics' ) ) {
 			MobiShop_Analytics::mark_mobile_customer( $user->ID );
@@ -645,13 +733,21 @@ final class MobiShop_Customer_Auth_Endpoint {
 		}
 
 		$user = get_user_by( 'id', $user_id );
-		return $user instanceof WP_User && $this->is_allowed_customer( $user ) && $this->is_customer_ready( $user )
-			? $user
-			: null;
+		if ( ! $user instanceof WP_User || ! $this->is_allowed_customer( $user ) || ! $this->is_customer_ready( $user ) ) {
+			return null;
+		}
+		// Defense-in-depth: the pending user's sessions are already revoked by the
+		// same locked transaction that sets this flag, but a pending user must
+		// never authenticate even if a stale session row somehow survives.
+		if ( class_exists( 'MobiShop_Customer_Account_Deletion' ) && MobiShop_Customer_Account_Deletion::is_pending( $user_id ) ) {
+			return null;
+		}
+		return $user;
 	}
 
 	/** Readiness filters must inspect the supplied user, without resolving the current user again. */
 	private function is_customer_ready( WP_User $user ): bool {
+		if ( class_exists( 'MobiShop_Customer_Account_Deletion' ) && MobiShop_Customer_Account_Deletion::is_pending( $user->ID ) ) return false;
 		return (bool) apply_filters( 'mobishop_auth_customer_ready', ! get_user_meta( $user->ID, 'kidia_phone_setup_required', true ), $user );
 	}
 

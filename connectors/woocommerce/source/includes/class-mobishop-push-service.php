@@ -277,9 +277,12 @@ final class MobiShop_Push_Service {
 		}
 		$platform = sanitize_key( (string) $request->get_param( 'platform' ) );
 		$platform = in_array( $platform, array( 'android', 'ios', 'web' ), true ) ? $platform : 'android';
-		$devices = self::devices();
 		$key = hash( 'sha256', $token );
 		$client_id = sanitize_text_field( (string) $request->get_param( 'client_id' ) );
+		$user_id = get_current_user_id();
+		try {
+		$devices = self::mutate_customer_option( self::DEVICES_OPTION, static function ( array $devices ) use ( $token, $key, $platform, $client_id, $request, $user_id ): array {
+		if ( ! self::retain_customer( $user_id ) ) throw new RuntimeException( 'Customer unavailable' );
 		// Keep historical registrations, but target only the latest token per installation.
 		foreach ( $devices as $old_key => &$old_device ) {
 			if ( '' !== $client_id && $old_key !== $key && $client_id === ( $old_device['client_id'] ?? '' ) && $platform === ( $old_device['platform'] ?? '' ) ) {
@@ -291,14 +294,16 @@ final class MobiShop_Push_Service {
 		$devices[ $key ] = array(
 			'token'       => $token,
 			'platform'    => $platform,
-			'user_id'     => get_current_user_id(),
+			'user_id'     => $user_id,
 			'client_id'   => $client_id,
 			'locale'      => sanitize_key( (string) $request->get_param( 'locale' ) ),
 			'enabled'     => true,
 			'test'        => rest_sanitize_boolean( $request->get_param( 'test' ) ),
 			'updated_at'  => time(),
 		);
-		update_option( self::DEVICES_OPTION, array_slice( $devices, -5000, null, true ), false );
+		return array_slice( $devices, -5000, null, true );
+		} );
+		} catch ( Throwable $error ) { return new WP_Error( 'mobishop_push_registration_unavailable', 'Device registration is temporarily unavailable.', array( 'status' => 503 ) ); }
 		update_option( 'mobishop_push_registered_devices', count( $devices ), false );
 		return rest_ensure_response( array( 'registered' => true, 'device_id' => $key ) );
 	}
@@ -412,14 +417,14 @@ final class MobiShop_Push_Service {
 		$target_key = absint( $context['target_user_id'] ?? 0 ) > 0
 			? 'user:' . absint( $context['target_user_id'] )
 			: 'client:' . sanitize_key( (string) ( $context['target_client_id'] ?? 'anonymous' ) );
-		$log = get_option( self::AUTOMATION_LOG, array() );
-		$log = is_array( $log ) ? $log : array();
+		try { self::mutate_customer_option( self::AUTOMATION_LOG, function ( array $log ) use ( $trigger, $target_key, $payload, $context ): array {
+		if ( ! self::retain_customer( (int) ( $context['target_user_id'] ?? 0 ) ) ) return $log;
 		$log_key = $trigger . ':' . $target_key;
 		$entry = is_array( $log[ $log_key ] ?? null ) ? $log[ $log_key ] : array( 'count' => 0, 'last' => 0 );
 		$cooldown = max( 1, absint( $payload['automation']['cooldown_hours'] ?? 24 ) ) * HOUR_IN_SECONDS;
 		$max_sends = max( 1, absint( $payload['automation']['max_sends'] ?? 3 ) );
 		if ( absint( $entry['count'] ?? 0 ) >= $max_sends || time() - absint( $entry['last'] ?? 0 ) < $cooldown ) {
-			return;
+			return $log;
 		}
 		$delay = min( 43200, absint( $payload['automation']['delay_minutes'] ?? 30 ) ) * MINUTE_IN_SECONDS;
 		$when = $this->next_allowed_time( time() + $delay, (array) $payload['automation'] );
@@ -431,13 +436,15 @@ final class MobiShop_Push_Service {
 		$entry['count'] = absint( $entry['count'] ?? 0 ) + 1;
 		$entry['last'] = time();
 		$log[ $log_key ] = $entry;
-		update_option( self::AUTOMATION_LOG, array_slice( $log, -5000, null, true ), false );
+		return array_slice( $log, -5000, null, true );
+		} ); } catch ( Throwable $error ) { return; }
 	}
 
 	/** @param array<string,mixed> $payload */
 	public function dispatch_automation( array $payload, string $log_key = '' ): void {
 		unset( $log_key );
 		$user_id = absint( $payload['target_user_id'] ?? 0 );
+		if ( ! self::retain_customer( $user_id ) ) return;
 		if ( $user_id > 0 && ! empty( $payload['automation']['stop_on_purchase'] ) ) {
 			$last_purchase = absint( get_user_meta( $user_id, '_mobishop_last_purchase_at', true ) );
 			if ( $last_purchase >= absint( $payload['automation_triggered_at'] ?? 0 ) ) {
@@ -445,10 +452,7 @@ final class MobiShop_Push_Service {
 			}
 		}
 		$payload = self::dispatch( $payload );
-		$history = get_option( 'mobishop_push_history', array() );
-		$history = is_array( $history ) ? $history : array();
-		array_unshift( $history, $payload );
-		update_option( 'mobishop_push_history', array_slice( $history, 0, 100 ), false );
+		self::append_history( $payload );
 	}
 
 	public function trigger_welcome( int $user_id ): void {
@@ -537,16 +541,40 @@ final class MobiShop_Push_Service {
 		return is_array( $devices ) ? $devices : array();
 	}
 
+	/** Current installs serialize writers and self-deletion; older standalone integrations retain their API. */
+	public static function mutate_customer_option( string $key, callable $mutate ): array {
+		if ( class_exists( 'MobiShop_Customer_Account_Deletion' ) ) return MobiShop_Customer_Account_Deletion::mutate_option( $key, $mutate );
+		$current = get_option( $key, array() );
+		$next = $mutate( is_array( $current ) ? $current : array() );
+		update_option( $key, $next, false );
+		return $next;
+	}
+	private static function retain_customer( int $id ): bool {
+		return ! class_exists( 'MobiShop_Customer_Account_Deletion' ) || MobiShop_Customer_Account_Deletion::can_retain_user( $id );
+	}
+	public static function append_history( array $payload ): bool {
+		try {
+			self::mutate_customer_option( 'mobishop_push_history', static function ( array $history ) use ( $payload ): array {
+				if ( ! self::retain_customer( (int) ( $payload['target_user_id'] ?? 0 ) ) ) return $history;
+				array_unshift( $history, $payload );
+				return array_slice( $history, 0, 100 );
+			} );
+			return true;
+		} catch ( Throwable $error ) { return false; }
+	}
+
 	/** Soft-disable only the token Firebase explicitly rejected, preserving history. */
 	public static function retire_expired_token( string $token ): void {
 		if ( '' === $token ) return;
-		$devices = self::devices();
 		$key = hash( 'sha256', $token );
-		if ( ! isset( $devices[ $key ] ) || ( $devices[ $key ]['token'] ?? '' ) !== $token ) return;
-		$devices[ $key ]['enabled'] = false;
-		$devices[ $key ]['disabled_reason'] = 'token_unregistered';
-		$devices[ $key ]['disabled_at'] = time();
-		update_option( self::DEVICES_OPTION, $devices, false );
+		try { self::mutate_customer_option( self::DEVICES_OPTION, static function ( array $devices ) use ( $key, $token ): array {
+			if ( ! isset( $devices[$key] ) || ( $devices[$key]['token'] ?? '' ) !== $token ) return $devices;
+			$devices[$key]['enabled'] = false;
+			$devices[$key]['disabled_reason'] = 'token_unregistered';
+			$devices[$key]['disabled_at'] = time();
+			return $devices;
+		} ); } catch ( Throwable $error ) { return; }
+
 	}
 
 	/** @return array<string,mixed> */

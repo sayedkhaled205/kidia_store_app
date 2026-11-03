@@ -46,6 +46,7 @@
           !config.methods || typeof config.methods !== 'object' || Array.isArray(config.methods))
         throw new Error('Invalid preview authentication configuration.');
       return {version: 1, enabled: config.enabled,
+        privacy_policy_url: safePublicUrl(config.privacy_policy_url),
         phone_country_code: /^[1-9]\d{0,3}$/.test(String(config.phone_country_code || '')) ? String(config.phone_country_code) : '',
         methods: Object.fromEntries(
         allowedMethods.map(key => [key, config.methods[key] === true])
@@ -53,6 +54,13 @@
     } finally { clearTimeout(timeout); }
   }
   const api = {load};
+  function safePublicUrl(value) {
+    if (typeof value !== 'string' || value.length > 2048) return '';
+    try {
+      const uri = new URL(value);
+      return uri.protocol === 'https:' && !uri.username && !uri.password ? uri.href : '';
+    } catch (_) { return ''; }
+  }
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else scope.KidiaPreviewAuth = api;
 })(typeof window !== 'undefined' ? window : globalThis);

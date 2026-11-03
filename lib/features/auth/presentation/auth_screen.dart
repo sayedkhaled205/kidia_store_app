@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:mobishop_store_app/core/app_design/store_privacy_provider.dart';
+import '../../account/presentation/store_privacy_link.dart';
 import '../data/storage/last_login_method_store.dart';
 import 'package:mobishop_store_app/features/auth/data/cms_preview_auth_actions.dart';
 import 'package:mobishop_store_app/features/auth/data/website_auth_service.dart';
@@ -473,6 +475,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: MobiShopColors.textSecondary),
+                        ),
+                        StorePrivacyLink(
+                          useStorePolicy: false,
+                          policyUri: safeStorePrivacyUri(
+                            config?.privacyPolicyUrl ?? '',
+                          ),
                         ),
                       ],
                     ),

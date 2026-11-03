@@ -1,5 +1,6 @@
 import 'package:mobishop_store_app/core/identity/customer_display_email.dart';
 import 'package:flutter/material.dart';
+import '../store_privacy_link.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -193,12 +194,17 @@ class OdooAccountScreen56 extends ConsumerWidget {
                         leading: Icon(entry.$2),
                         title: Text(odooCopy56(context, entry.$3, entry.$4)),
                         trailing: const Icon(Icons.chevron_right),
-                        onTap: sessionState.isLoading
+                        onTap: sessionState.isLoading && entry.$1 != '/support'
                             ? null
-                            : () => context.push(signedIn ? entry.$1 : '/auth'),
+                            : () => context.push(
+                                signedIn || entry.$1 == '/support'
+                                    ? entry.$1
+                                    : '/auth',
+                              ),
                       ),
                   if (!flat) const Divider(height: 1),
                   const AppLanguageTile(),
+                  const StorePrivacyLink(),
                 ],
               ),
             ),

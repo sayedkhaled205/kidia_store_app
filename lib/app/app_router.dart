@@ -543,25 +543,10 @@ GoRouter createAppRouter({
       ),
       GoRoute(
         path: '/support',
-        builder: (context, state) => Consumer(
-          builder: (context, ref, child) {
-            if (useOdooCustomer) {
-              return const OdooCustomerGate56(child: OdooSupportScreen56());
-            }
-            final AsyncValue<AuthSession?> authState = ref.watch(
-              authControllerProvider,
-            );
-            if (authState.isLoading) {
-              return const _ProtectedAccountLoading();
-            }
-            if (authState.hasError ||
-                authState.asData?.value == null ||
-                authState.asData!.value!.isExpired) {
-              return const AuthScreen(popOnSuccess: false);
-            }
-            return const CustomerSupportScreen();
-          },
-        ),
+        builder: (context, state) =>
+            AppConfig.commercePlatform == CommercePlatform.wooCommerce
+            ? const CustomerSupportScreen()
+            : const OdooSupportScreen56(),
       ),
       GoRoute(
         path: '/social-callback',

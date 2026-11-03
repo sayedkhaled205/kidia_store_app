@@ -5,6 +5,7 @@ import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_radius.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
@@ -16,6 +17,8 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'app_language_tile.dart';
+import 'store_privacy_link.dart';
+import 'account_deletion_screen.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
@@ -160,9 +163,24 @@ class AccountScreen extends ConsumerWidget {
                       ],
                       if (!flat && visibleActions.isNotEmpty) const Divider(),
                       const AppLanguageTile(),
+                      const StorePrivacyLink(),
                     ],
                   ),
                 ),
+              ),
+            if (session != null &&
+                !AppConfig.isCmsPreview &&
+                AppConfig.commercePlatform == CommercePlatform.wooCommerce)
+              TextButton.icon(
+                key: const Key('account-delete'),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        AccountDeletionScreen(userId: session.user.id),
+                  ),
+                ),
+                icon: const Icon(Icons.person_remove_outlined),
+                label: Text(isArabic ? 'حذف الحساب' : 'Delete account'),
               ),
             if (session != null &&
                 pageLayout.element('logout_button').enabled) ...<Widget>[
@@ -215,7 +233,7 @@ class AccountScreen extends ConsumerWidget {
     required AuthSession? session,
     required _AccountAction action,
   }) async {
-    if (session == null) {
+    if (session == null && action.id != 'support') {
       await context.push<bool>('/auth');
       return;
     }

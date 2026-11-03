@@ -93,6 +93,7 @@ require_once MOBISHOP_PATH . 'includes/class-native-checkout-bootstrap50.php';
 require_once MOBISHOP_PATH . 'api/class-store-changes-endpoint.php';
 require_once MOBISHOP_PATH . 'api/class-customer-orders-endpoint.php';
 require_once MOBISHOP_PATH . 'api/class-customer-account-endpoint.php';
+require_once MOBISHOP_PATH . 'api/class-customer-account-deletion.php';
 require_once MOBISHOP_PATH . 'api/class-category-page-endpoint.php';
 require_once MOBISHOP_PATH . 'api/class-store-api-price-compatibility.php';
 require_once MOBISHOP_PATH . 'api/class-discount-rules-prices.php';
@@ -254,6 +255,8 @@ final class MobiShop {
 
 		(new MobiShop_Customer_Account_Endpoint())
 			->register();
+
+		(new MobiShop_Customer_Account_Deletion())->register();
 
 		(new MobiShop_Category_Page_Endpoint())
 			->register();

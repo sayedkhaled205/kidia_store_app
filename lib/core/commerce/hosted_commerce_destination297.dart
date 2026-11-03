@@ -9,7 +9,6 @@ abstract final class HostedCommerceDestination297 {
         '/auth' => '/account/login',
         '/account' || '/profile' || '/orders' => '/account',
         '/addresses' => '/account/addresses',
-        '/support' => '/',
         _ => route.startsWith('/orders/') ? '/account' : null,
       },
       CommercePlatform.odoo => switch (route) {

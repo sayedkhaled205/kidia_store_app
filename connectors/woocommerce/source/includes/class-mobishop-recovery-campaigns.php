@@ -233,10 +233,9 @@ final class MobiShop_Recovery_Campaigns {
 			array( '%s', '%s' ),
 			array( '%d' )
 		);
-		$history = get_option( 'mobishop_push_history', array() );
-		$history = is_array( $history ) ? $history : array();
-		array_unshift( $history, $payload );
-		update_option( 'mobishop_push_history', array_slice( $history, 0, 100 ), false );
+		if ( is_callable( array( 'MobiShop_Push_Service', 'append_history' ) ) ) {
+			MobiShop_Push_Service::append_history( $payload );
+		}
 	}
 
 	/** Attributes a paid order only when the personal campaign coupon matches its owner. */

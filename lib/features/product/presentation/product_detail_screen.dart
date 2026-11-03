@@ -3,6 +3,8 @@ import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/app/hosted_commerce_screen297.dart';
 import 'product_size_chart.dart';
 import 'product_gallery_ratio.dart';
+import 'product_image_gallery.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -66,7 +68,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   late ProductDetailController _controller;
   bool _isWishlisted = false;
   bool _isWishlistMutating = false;
-	bool _footerHidden = false;
+  bool _footerHidden = false;
   int _trackedProductId = 0;
 
   @override
@@ -135,18 +137,23 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         ),
         actions: _buildCmsActions(context, copy),
         body: NotificationListener<ScrollUpdateNotification>(
-		  onNotification: (ScrollUpdateNotification notification) {
-			if (!layout.footer.boolean('hide_on_scroll', false) || notification.scrollDelta == null) return false;
-			final bool hidden = notification.scrollDelta! > 0;
-			if (hidden != _footerHidden) setState(() => _footerHidden = hidden);
-			return false;
-		  },
-		  child: _buildBody(copy, layout),
-		),
+          onNotification: (ScrollUpdateNotification notification) {
+            if (!layout.footer.boolean('hide_on_scroll', false) ||
+                notification.scrollDelta == null) {
+              return false;
+            }
+            final bool hidden = notification.scrollDelta! > 0;
+            if (hidden != _footerHidden) setState(() => _footerHidden = hidden);
+            return false;
+          },
+          child: _buildBody(copy, layout),
+        ),
         bottomNavigationBar:
             layout.element('purchase_bar').enabled &&
-                layout.footer.string('style', 'product_action') == 'product_action' &&
-				!(_footerHidden && layout.footer.boolean('hide_on_scroll', false)) &&
+                layout.footer.string('style', 'product_action') ==
+                    'product_action' &&
+                !(_footerHidden &&
+                    layout.footer.boolean('hide_on_scroll', false)) &&
                 _controller.status == ProductDetailStatus.success &&
                 _controller.product != null
             ? _PurchaseBar(
@@ -156,7 +163,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 copy: copy,
                 onPressed: _handlePurchasePressed,
                 onShare: () => _showShareSheet(_controller.product!),
-                onLike: widget.onWishlistToggle == null || _isWishlistMutating ? null : () => _toggleWishlist(_controller.product!),
+                onLike: widget.onWishlistToggle == null || _isWishlistMutating
+                    ? null
+                    : () => _toggleWishlist(_controller.product!),
                 isLiked: _isWishlisted,
               )
             : null,
@@ -164,10 +173,18 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     );
   }
 
-  List<CmsPageHeaderAction> _buildCmsActions(BuildContext context, _ProductCopy copy) {
+  List<CmsPageHeaderAction> _buildCmsActions(
+    BuildContext context,
+    _ProductCopy copy,
+  ) {
     final CatalogProduct? product = _controller.product;
     return <CmsPageHeaderAction>[
-	  CmsPageHeaderAction(type: 'support', icon: Icons.headset_mic_outlined, tooltip: copy.arabic ? 'خدمة العملاء' : 'Customer service', onPressed: () => context.push('/support')),
+      CmsPageHeaderAction(
+        type: 'support',
+        icon: Icons.headset_mic_outlined,
+        tooltip: copy.arabic ? 'خدمة العملاء' : 'Customer service',
+        onPressed: () => context.push('/support'),
+      ),
       if (product != null)
         CmsPageHeaderAction(
           type: 'share',
@@ -179,10 +196,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         CmsPageHeaderAction(
           key: const Key('product-wishlist-button'),
           type: 'wishlist',
-          icon: _isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          icon: _isWishlisted
+              ? Icons.favorite_rounded
+              : Icons.favorite_border_rounded,
           color: _isWishlisted ? Colors.red : null,
           tooltip: copy.save,
-          onPressed: _isWishlistMutating ? () {} : () => _toggleWishlist(product),
+          onPressed: _isWishlistMutating
+              ? () {}
+              : () => _toggleWishlist(product),
         ),
       CmsPageHeaderAction(
         key: const Key('product-cart-button'),
@@ -366,23 +387,31 @@ class _ProductContentState extends State<_ProductContent> {
     // A tab must point to a section that is actually present, including when
     // the merchant has given that tab a custom label.
     final List<_ProductTabConfig> tabs = _productTabConfigs(tabsSettings)
-        .where((tab) => switch (tab.target) {
-          'reviews' => pageLayout.element('reviews').enabled,
-          'recommend' => pageLayout.element('related_products').enabled,
-          'description' => pageLayout.element('description').enabled,
-          'variations' => !usesHostedOdooCart297 &&
-              pageLayout.element('variations').enabled &&
-              controller.optionGroups.isNotEmpty,
-          _ => pageLayout.element('product_summary').enabled,
-        }).toList(growable: false);
+        .where(
+          (tab) => switch (tab.target) {
+            'reviews' => pageLayout.element('reviews').enabled,
+            'recommend' => pageLayout.element('related_products').enabled,
+            'description' => pageLayout.element('description').enabled,
+            'variations' =>
+              !usesHostedOdooCart297 &&
+                  pageLayout.element('variations').enabled &&
+                  controller.optionGroups.isNotEmpty,
+            _ => pageLayout.element('product_summary').enabled,
+          },
+        )
+        .toList(growable: false);
     final bool summaryBeforeTabs = tabsSettings.boolean('after_summary', false);
     Widget summary() => CmsElementFrame(
       key: overviewKey,
       component: pageLayout.element('product_summary'),
       child: _PatPatProductSummary(
-        product: product, variation: variation, money: money, inStock: inStock,
+        product: product,
+        variation: variation,
+        money: money,
+        inStock: inStock,
         selectedAttributes: controller.selectedAttributeLabels,
-        settings: pageLayout.element('product_summary'), copy: copy,
+        settings: pageLayout.element('product_summary'),
+        copy: copy,
       ),
     );
 
@@ -414,20 +443,25 @@ class _ProductContentState extends State<_ProductContent> {
               page: 'product',
               target: pageLayout.element('image_gallery').id,
               child: _ProductGallery(
-              images: images,
-              productName: product.name,
-              settings: pageLayout.element('image_gallery'),
+                images: images,
+                productName: product.name,
+                settings: pageLayout.element('image_gallery'),
               ),
             ),
           ),
         if (summaryBeforeTabs && pageLayout.element('product_summary').enabled)
-          SliverToBoxAdapter(child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: pageLayout.number('content_horizontal_padding', 20).clamp(0, 40).toDouble(),
-              vertical: 16,
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: pageLayout
+                    .number('content_horizontal_padding', 20)
+                    .clamp(0, 40)
+                    .toDouble(),
+                vertical: 16,
+              ),
+              child: summary(),
             ),
-            child: summary(),
-          )),
+          ),
         if (tabsSettings.enabled && tabs.isNotEmpty)
           SliverPersistentHeader(
             pinned: tabsSettings.boolean('sticky', true),
@@ -437,118 +471,144 @@ class _ProductContentState extends State<_ProductContent> {
               onSelected: openTab,
             ),
           ),
-		SliverPadding(
-		  padding: EdgeInsetsDirectional.fromSTEB(
-			pageLayout.number('content_horizontal_padding', 20).clamp(0, 40).toDouble(),
-			20,
-			pageLayout.number('content_horizontal_padding', 20).clamp(0, 40).toDouble(),
-			12,
-		  ),
+        SliverPadding(
+          padding: EdgeInsetsDirectional.fromSTEB(
+            pageLayout
+                .number('content_horizontal_padding', 20)
+                .clamp(0, 40)
+                .toDouble(),
+            20,
+            pageLayout
+                .number('content_horizontal_padding', 20)
+                .clamp(0, 40)
+                .toDouble(),
+            12,
+          ),
           // These are a bounded set of product sections, not a catalog list.
           // Mount their anchors up front so tabs can reach an off-screen section
           // on the first tap, even after a long product description.
-          sliver: SliverToBoxAdapter(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              if (!summaryBeforeTabs && pageLayout.element('product_summary').enabled)
-                CmsElementFrame(
-                  key: overviewKey,
-                  component: pageLayout.element('product_summary'),
-                  child: _PatPatProductSummary(
-                    product: product,
-                    variation: variation,
-                    money: money,
-                    inStock: inStock,
-                    selectedAttributes: controller.selectedAttributeLabels,
-                    settings: pageLayout.element('product_summary'),
-                    copy: copy,
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                if (!summaryBeforeTabs &&
+                    pageLayout.element('product_summary').enabled)
+                  CmsElementFrame(
+                    key: overviewKey,
+                    component: pageLayout.element('product_summary'),
+                    child: _PatPatProductSummary(
+                      product: product,
+                      variation: variation,
+                      money: money,
+                      inStock: inStock,
+                      selectedAttributes: controller.selectedAttributeLabels,
+                      settings: pageLayout.element('product_summary'),
+                      copy: copy,
+                    ),
                   ),
-                ),
-              if (!usesHostedOdooCart297 && pageLayout.element('variations').enabled && controller.optionGroups.isNotEmpty) ...<Widget>[
-                const SizedBox(height: 24),
-                CmsElementFrame(
-                  key: variationsKey,
-                  component: pageLayout.element('variations'),
-                  child: Column(
-                    children: <Widget>[
-                      for (final ProductOptionGroup group in controller.optionGroups)
-                        _ProductOptionPicker(
-                          group: group,
-                          controller: controller,
-                          copy: copy,
-                          settings: pageLayout.element('variations'),
-                        ),
-                    ],
+                if (!usesHostedOdooCart297 &&
+                    pageLayout.element('variations').enabled &&
+                    controller.optionGroups.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: 24),
+                  CmsElementFrame(
+                    key: variationsKey,
+                    component: pageLayout.element('variations'),
+                    child: Column(
+                      children: <Widget>[
+                        for (final ProductOptionGroup group
+                            in controller.optionGroups)
+                          _ProductOptionPicker(
+                            group: group,
+                            controller: controller,
+                            copy: copy,
+                            settings: pageLayout.element('variations'),
+                          ),
+                      ],
+                    ),
                   ),
+                ],
+                if (!usesHostedOdooCart297 &&
+                    pageLayout.element('purchase_bar').enabled &&
+                    pageLayout
+                        .element('purchase_bar')
+                        .boolean('show_quantity', true)) ...[
+                  const SizedBox(height: 18),
+                  CmsElementFrame(
+                    component: pageLayout.element('purchase_bar'),
+                    child: _QuantitySelector(
+                      controller: controller,
+                      copy: copy,
+                    ),
+                  ),
+                ],
+                if (product.hasVariations &&
+                    controller.selectionComplete &&
+                    controller.selectedVariation == null) ...<Widget>[
+                  const SizedBox(height: 10),
+                  Text(
+                    copy.unavailableCombination,
+                    key: const Key('variation-unavailable-message'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+                SizedBox(
+                  height:
+                      pageLayout
+                              .element('variations')
+                              .string('style', 'chips') ==
+                          'tiles'
+                      ? 12
+                      : 28,
                 ),
-              ],
-              if (!usesHostedOdooCart297 && pageLayout.element('purchase_bar').enabled &&
-                  pageLayout.element('purchase_bar').boolean('show_quantity', true)) ...[
+                if (product.brands.isNotEmpty) ...<Widget>[
+                  _BrandSection(product: product, copy: copy),
+                  const SizedBox(height: 12),
+                ],
+                if (pageLayout.element('description').enabled)
+                  CmsElementFrame(
+                    key: descriptionKey,
+                    component: pageLayout.element('description'),
+                    child: _DetailsSection(
+                      product: product,
+                      copy: copy,
+                      settings: pageLayout.element('description'),
+                    ),
+                  ),
                 const SizedBox(height: 18),
-                CmsElementFrame(
-                  component: pageLayout.element('purchase_bar'),
-                  child: _QuantitySelector(controller: controller, copy: copy),
-                ),
+                if (pageLayout.element('reviews').enabled)
+                  CmsElementFrame(
+                    key: reviewsKey,
+                    component: pageLayout.element('reviews'),
+                    child: _ProductReviewsSummary(
+                      product: product,
+                      settings: pageLayout.element('reviews'),
+                      onPressed: onReviewsRequested == null
+                          ? null
+                          : () => onReviewsRequested(product),
+                    ),
+                  ),
+                if (pageLayout.element('reviews').enabled)
+                  const SizedBox(height: 18),
+                if (pageLayout.element('related_products').enabled)
+                  CmsElementFrame(
+                    key: recommendKey,
+                    component: pageLayout.element('related_products'),
+                    child: _RelatedProductsSection(
+                      repository: repository,
+                      product: product,
+                      settings: pageLayout.element('related_products'),
+                      onMore: onRelatedProductsRequested == null
+                          ? null
+                          : () => onRelatedProductsRequested(product),
+                    ),
+                  ),
+                const SizedBox(height: 32),
               ],
-              if (product.hasVariations &&
-                  controller.selectionComplete &&
-                  controller.selectedVariation == null) ...<Widget>[
-                const SizedBox(height: 10),
-                Text(
-                  copy.unavailableCombination,
-                  key: const Key('variation-unavailable-message'),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-              SizedBox(height: pageLayout.element('variations').string('style', 'chips') == 'tiles' ? 12 : 28),
-              if (product.brands.isNotEmpty) ...<Widget>[
-                _BrandSection(product: product, copy: copy),
-                const SizedBox(height: 12),
-              ],
-              if (pageLayout.element('description').enabled)
-                CmsElementFrame(
-                  key: descriptionKey,
-                  component: pageLayout.element('description'),
-                  child: _DetailsSection(
-                    product: product,
-                    copy: copy,
-                    settings: pageLayout.element('description'),
-                  ),
-                ),
-              const SizedBox(height: 18),
-              if (pageLayout.element('reviews').enabled)
-                CmsElementFrame(
-                  key: reviewsKey,
-                  component: pageLayout.element('reviews'),
-                  child: _ProductReviewsSummary(
-                    product: product,
-                    settings: pageLayout.element('reviews'),
-                    onPressed: onReviewsRequested == null
-                        ? null
-                        : () => onReviewsRequested(product),
-                  ),
-                ),
-              if (pageLayout.element('reviews').enabled)
-                const SizedBox(height: 18),
-              if (pageLayout.element('related_products').enabled)
-                CmsElementFrame(
-                  key: recommendKey,
-                  component: pageLayout.element('related_products'),
-                  child: _RelatedProductsSection(
-                    repository: repository,
-                    product: product,
-                    settings: pageLayout.element('related_products'),
-                    onMore: onRelatedProductsRequested == null
-                        ? null
-                        : () => onRelatedProductsRequested(product),
-                  ),
-                ),
-              const SizedBox(height: 32),
-            ],
-          )),
+            ),
+          ),
         ),
       ],
     );
@@ -587,15 +647,19 @@ class _ProductTabsDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => minExtent;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return PreviewEditRegion(
       page: 'product',
       target: settings.id,
       child: _ProductTabsBar(
-      settings: settings,
-      tabs: tabs,
-      onSelected: onSelected,
-      elevated: overlapsContent,
+        settings: settings,
+        tabs: tabs,
+        onSelected: onSelected,
+        elevated: overlapsContent,
       ),
     );
   }
@@ -608,10 +672,7 @@ class _ProductTabsDelegate extends SliverPersistentHeaderDelegate {
 }
 
 class _ProductTabConfig {
-  const _ProductTabConfig({
-    required this.label,
-    required this.target,
-  });
+  const _ProductTabConfig({required this.label, required this.target});
 
   final String label;
   final String target;
@@ -808,10 +869,14 @@ class _PatPatProductSummary extends StatelessWidget {
                 child: Text(
                   price,
                   key: const Key('product-current-price'),
-                  style: TextStyle(fontSize: priceSize, fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    fontSize: priceSize,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-            if (settings.boolean('show_rating', true) && product.averageRating > 0)
+            if (settings.boolean('show_rating', true) &&
+                product.averageRating > 0)
               _CompactRating(
                 rating: product.averageRating,
                 count: settings.boolean('show_review_count', true)
@@ -836,18 +901,25 @@ class _PatPatProductSummary extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             product.name,
-            style: TextStyle(fontSize: nameSize, height: 1.35, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: nameSize,
+              height: 1.35,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
         if (settings.boolean('show_selected_color', true) &&
-            selectedAttributes.entries.any((entry) => entry.key.toLowerCase().contains('color'))) ...<Widget>[
+            selectedAttributes.entries.any(
+              (entry) => entry.key.toLowerCase().contains('color'),
+            )) ...<Widget>[
           const SizedBox(height: 18),
           Text(
             'Color   ${selectedAttributes.entries.firstWhere((entry) => entry.key.toLowerCase().contains('color')).value}',
             style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
           ),
         ],
-        if (settings.boolean('show_sku', false) && product.sku.isNotEmpty) ...<Widget>[
+        if (settings.boolean('show_sku', false) &&
+            product.sku.isNotEmpty) ...<Widget>[
           const SizedBox(height: 8),
           Text('${copy.sku}: ${product.sku}'),
         ],
@@ -857,7 +929,9 @@ class _PatPatProductSummary extends StatelessWidget {
             inStock ? copy.inStock : copy.outOfStock,
             key: const Key('product-stock-status'),
             style: TextStyle(
-              color: inStock ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.error,
+              color: inStock
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.error,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -874,20 +948,23 @@ class _CompactRating extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          for (int index = 1; index <= 5; index++)
-            Icon(
-              rating >= index ? Icons.star_rounded : Icons.star_border_rounded,
-              size: 19,
-              color: const Color(0xFF1D1D1D),
-            ),
-          if (count != null) ...<Widget>[
-            const SizedBox(width: 6),
-            Text('$count', style: const TextStyle(decoration: TextDecoration.underline)),
-          ],
-        ],
-      );
+    mainAxisSize: MainAxisSize.min,
+    children: <Widget>[
+      for (int index = 1; index <= 5; index++)
+        Icon(
+          rating >= index ? Icons.star_rounded : Icons.star_border_rounded,
+          size: 19,
+          color: const Color(0xFF1D1D1D),
+        ),
+      if (count != null) ...<Widget>[
+        const SizedBox(width: 6),
+        Text(
+          '$count',
+          style: const TextStyle(decoration: TextDecoration.underline),
+        ),
+      ],
+    ],
+  );
 }
 
 class _ProductReviewsSummary extends StatelessWidget {
@@ -909,8 +986,13 @@ class _ProductReviewsSummary extends StatelessWidget {
         ListTile(
           key: const Key('product-reviews-button'),
           contentPadding: EdgeInsets.zero,
-          title: Text('$title (${product.reviewCount})', style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
-          trailing: const Icon(Icons.chevron_right_rounded),
+          title: Text(
+            '$title (${product.reviewCount})',
+            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+          ),
+          trailing: onPressed == null
+              ? null
+              : const Icon(Icons.chevron_right_rounded),
           onTap: onPressed,
         ),
         if (settings.boolean('show_summary', true))
@@ -922,7 +1004,13 @@ class _ProductReviewsSummary extends StatelessWidget {
                   width: 112,
                   child: Column(
                     children: <Widget>[
-                      Text(product.averageRating.toStringAsFixed(1), style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w900)),
+                      Text(
+                        product.averageRating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 44,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                       _CompactRating(rating: product.averageRating),
                     ],
                   ),
@@ -942,25 +1030,43 @@ class _FitSummary extends StatelessWidget {
   final CmsPageComponent settings;
   @override
   Widget build(BuildContext context) => Column(
-        children: <Widget>[
-          _fitRow(Localizations.localeOf(context).languageCode == 'ar' ? 'صغير' : 'Small', settings.number('fit_small_percent', 1).clamp(0, 100) / 100),
-          _fitRow(Localizations.localeOf(context).languageCode == 'ar' ? 'المقاس مناسب' : 'True to size', settings.number('fit_true_percent', 99).clamp(0, 100) / 100),
-          _fitRow(Localizations.localeOf(context).languageCode == 'ar' ? 'كبير' : 'Large', settings.number('fit_large_percent', 0).clamp(0, 100) / 100),
-        ],
-      );
+    children: <Widget>[
+      _fitRow(
+        Localizations.localeOf(context).languageCode == 'ar' ? 'صغير' : 'Small',
+        settings.number('fit_small_percent', 1).clamp(0, 100) / 100,
+      ),
+      _fitRow(
+        Localizations.localeOf(context).languageCode == 'ar'
+            ? 'المقاس مناسب'
+            : 'True to size',
+        settings.number('fit_true_percent', 99).clamp(0, 100) / 100,
+      ),
+      _fitRow(
+        Localizations.localeOf(context).languageCode == 'ar' ? 'كبير' : 'Large',
+        settings.number('fit_large_percent', 0).clamp(0, 100) / 100,
+      ),
+    ],
+  );
 
   Widget _fitRow(String label, double value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(
-          children: <Widget>[
-            SizedBox(width: 88, child: Text(label, textAlign: TextAlign.end)),
-            const SizedBox(width: 8),
-            Expanded(child: LinearProgressIndicator(value: value, minHeight: 5, color: const Color(0xFF1D1D1D), backgroundColor: const Color(0xFFE8E8E8))),
-            const SizedBox(width: 8),
-            SizedBox(width: 32, child: Text('${(value * 100).round()}%')),
-          ],
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      children: <Widget>[
+        SizedBox(width: 88, child: Text(label, textAlign: TextAlign.end)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: LinearProgressIndicator(
+            value: value,
+            minHeight: 5,
+            color: const Color(0xFF1D1D1D),
+            backgroundColor: const Color(0xFFE8E8E8),
+          ),
         ),
-      );
+        const SizedBox(width: 8),
+        SizedBox(width: 32, child: Text('${(value * 100).round()}%')),
+      ],
+    ),
+  );
 }
 
 class _RelatedProductsSection extends StatefulWidget {
@@ -976,7 +1082,8 @@ class _RelatedProductsSection extends StatefulWidget {
   final VoidCallback? onMore;
 
   @override
-  State<_RelatedProductsSection> createState() => _RelatedProductsSectionState();
+  State<_RelatedProductsSection> createState() =>
+      _RelatedProductsSectionState();
 }
 
 class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
@@ -991,7 +1098,8 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
   @override
   void didUpdateWidget(covariant _RelatedProductsSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.product.id != widget.product.id || oldWidget.repository != widget.repository) {
+    if (oldWidget.product.id != widget.product.id ||
+        oldWidget.repository != widget.repository) {
       _products = _load();
     }
   }
@@ -1020,9 +1128,11 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
 
   @override
   Widget build(BuildContext context) => FutureBuilder<List<CatalogProduct>>(
-        future: _products,
-        builder: (BuildContext context, AsyncSnapshot<List<CatalogProduct>> snapshot) {
-          final List<CatalogProduct> products = snapshot.data ?? const <CatalogProduct>[];
+    future: _products,
+    builder:
+        (BuildContext context, AsyncSnapshot<List<CatalogProduct>> snapshot) {
+          final List<CatalogProduct> products =
+              snapshot.data ?? const <CatalogProduct>[];
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
@@ -1035,15 +1145,22 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
                     cmsFooterLabel(
                       widget.settings.string('title', 'You may also like'),
                       Localizations.localeOf(context).languageCode == 'ar'
-                          ? 'قد يعجبك أيضًا' : 'You may also like',
+                          ? 'قد يعجبك أيضًا'
+                          : 'You may also like',
                       const ['You may also like', 'قد يعجبك أيضًا'],
                     ),
-                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ),
               if (snapshot.connectionState == ConnectionState.waiting)
-                const SizedBox(height: 180, child: Center(child: CircularProgressIndicator()))
+                const SizedBox(
+                  height: 180,
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else if (snapshot.hasError)
                 SizedBox(
                   height: 100,
@@ -1052,46 +1169,72 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
                       key: const Key('related-products-retry'),
                       onPressed: _retry,
                       icon: const Icon(Icons.refresh_rounded),
-                      label: Text(Localizations.localeOf(context).languageCode == 'ar' ? 'إعادة المحاولة' : 'Retry'),
+                      label: Text(
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'إعادة المحاولة'
+                            : 'Retry',
+                      ),
                     ),
                   ),
                 )
               else if (products.isNotEmpty)
-                LayoutBuilder(builder: (context, constraints) {
-                  final columns = widget.settings.number('columns', 2).clamp(1, 3).round();
-                  final gap = widget.settings.number('gap', 2).clamp(0, 24).toDouble();
-                  final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-                  return Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    children: products.map((product) => SizedBox(
-                      width: width,
-                      child: CatalogProductCard(
-                      product: product,
-                      fitImageRatio: true,
-                      settings: CmsPageComponent(
-                        id: widget.settings.id,
-                        type: widget.settings.type,
-                        enabled: true,
-                        settings: <String, dynamic>{
-                          'card_style': 'minimal',
-                          'card_radius': 0,
-                          'show_name': false,
-                          'show_rating': false,
-                          'show_badge': true,
-                          ...widget.settings.settings,
-                          'quick_add_enabled': widget.settings.boolean('show_quick_add', true) && widget.settings.boolean('quick_add_enabled', true),
-                        },
-                      ),
-                      onTap: () => context.push('/product/${product.id}'),
-                    ),
-                    )).toList(growable: false),
-                  );
-                }),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final columns = widget.settings
+                        .number('columns', 2)
+                        .clamp(1, 3)
+                        .round();
+                    final gap = widget.settings
+                        .number('gap', 2)
+                        .clamp(0, 24)
+                        .toDouble();
+                    final width =
+                        (constraints.maxWidth - gap * (columns - 1)) / columns;
+                    return Wrap(
+                      spacing: gap,
+                      runSpacing: gap,
+                      children: products
+                          .map(
+                            (product) => SizedBox(
+                              width: width,
+                              child: CatalogProductCard(
+                                product: product,
+                                fitImageRatio: true,
+                                settings: CmsPageComponent(
+                                  id: widget.settings.id,
+                                  type: widget.settings.type,
+                                  enabled: true,
+                                  settings: <String, dynamic>{
+                                    'card_style': 'minimal',
+                                    'card_radius': 0,
+                                    'show_name': false,
+                                    'show_rating': false,
+                                    'show_badge': true,
+                                    ...widget.settings.settings,
+                                    'quick_add_enabled':
+                                        widget.settings.boolean(
+                                          'show_quick_add',
+                                          true,
+                                        ) &&
+                                        widget.settings.boolean(
+                                          'quick_add_enabled',
+                                          true,
+                                        ),
+                                  },
+                                ),
+                                onTap: () =>
+                                    context.push('/product/${product.id}'),
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
+                    );
+                  },
+                ),
             ],
           );
         },
-      );
+  );
 }
 
 class _ProductGallery extends StatefulWidget {
@@ -1155,6 +1298,10 @@ class _ProductGalleryState extends State<_ProductGallery> {
     } else if (_page >= widget.images.length) {
       _page = 0;
     }
+    if (productGalleryConfiguredRatio(oldWidget.settings) !=
+        productGalleryConfiguredRatio(widget.settings)) {
+      _resolveNaturalAspectRatio();
+    }
   }
 
   @override
@@ -1173,10 +1320,14 @@ class _ProductGalleryState extends State<_ProductGallery> {
   }
 
   void _resolveNaturalAspectRatio() {
+    if (productGalleryConfiguredRatio(widget.settings) != null) {
+      _detachImageStream();
+      return;
+    }
     if (_naturalAspectRatio != null || _imageStream != null) return;
     _detachImageStream();
     if (widget.images.isEmpty) return;
-    final ImageStream stream = NetworkImage(
+    final ImageStream stream = CachedNetworkImageProvider(
       widget.images.first.source.toString(),
     ).resolve(createLocalImageConfiguration(context));
     late final ImageStreamListener listener;
@@ -1214,57 +1365,84 @@ class _ProductGalleryState extends State<_ProductGallery> {
       return AspectRatio(
         aspectRatio: widget.settings.number('aspect_ratio', 1).clamp(0.6, 1.8),
         child: AppNetworkImageError(
-          backgroundColor: _cmsColor(widget.settings.string('background_color', '#FFFFFF'), Colors.white),
+          backgroundColor: _cmsColor(
+            widget.settings.string('background_color', '#FFFFFF'),
+            Colors.white,
+          ),
           iconSize: 54,
         ),
       );
     }
 
-    final double aspectRatio = productGalleryAspectRatio(widget.settings, _naturalAspectRatio);
+    final double aspectRatio = productGalleryAspectRatio(
+      widget.settings,
+      _naturalAspectRatio,
+    );
     final BoxFit fit = widget.settings.string('fit', 'contain') == 'cover'
         ? BoxFit.cover
         : BoxFit.contain;
     final bool enableZoom = widget.settings.boolean('enable_zoom', true);
-    final Color galleryBackground = _cmsColor(widget.settings.string('background_color', '#FFFFFF'), Colors.white);
+    final Color galleryBackground = _cmsColor(
+      widget.settings.string('background_color', '#FFFFFF'),
+      Colors.white,
+    );
     final Widget pager = AnimatedSize(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
       child: AspectRatio(
-          aspectRatio: aspectRatio,
-          child: PageView.builder(
+        aspectRatio: aspectRatio,
+        child: PageView.builder(
           scrollBehavior: const MaterialScrollBehavior().copyWith(
-            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse, PointerDeviceKind.stylus, PointerDeviceKind.invertedStylus, PointerDeviceKind.trackpad},
-          ),
-            key: ValueKey<String>(widget.images.first.source.toString()),
-            controller: _pageController,
-            itemCount: widget.images.length == 1 ? 1 : null,
-            onPageChanged: (int page) =>
-                setState(() => _page = page % widget.images.length),
-            itemBuilder: (BuildContext context, int index) {
-              final int imageIndex = index % widget.images.length;
-              final CatalogImage image = widget.images[imageIndex];
-              final Widget imageWidget = AppNetworkImage(
-                  key: Key('product-image-$imageIndex'),
-                  imageUrl: image.source.toString(),
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: fit,
-                  backgroundColor: galleryBackground,
-                  semanticLabel: image.alt.isEmpty
-                      ? widget.productName
-                      : image.alt,
-                );
-              return enableZoom
-                  ? InteractiveViewer(
-                      minScale: 1,
-                      maxScale: 4,
-                      clipBehavior: Clip.hardEdge,
-                      child: imageWidget,
-                    )
-                  : imageWidget;
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.mouse,
+              PointerDeviceKind.stylus,
+              PointerDeviceKind.invertedStylus,
+              PointerDeviceKind.trackpad,
             },
           ),
+          key: ValueKey<String>(widget.images.first.source.toString()),
+          controller: _pageController,
+          itemCount: widget.images.length == 1 ? 1 : null,
+          onPageChanged: (int page) =>
+              setState(() => _page = page % widget.images.length),
+          itemBuilder: (BuildContext context, int index) {
+            final int imageIndex = index % widget.images.length;
+            final CatalogImage image = widget.images[imageIndex];
+            final Widget imageWidget = AppNetworkImage(
+              key: Key('product-image-$imageIndex'),
+              imageUrl: image.source.toString(),
+              width: double.infinity,
+              height: double.infinity,
+              fit: fit,
+              backgroundColor: galleryBackground,
+              semanticLabel: image.alt.isEmpty ? widget.productName : image.alt,
+            );
+            final display = enableZoom
+                ? InteractiveViewer(
+                    minScale: 1,
+                    maxScale: 4,
+                    clipBehavior: Clip.hardEdge,
+                    child: imageWidget,
+                  )
+                : imageWidget;
+            return GestureDetector(
+              key: Key('open-product-image-$imageIndex'),
+              onTap: () =>
+                  Navigator.of(context, rootNavigator: true).push<void>(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ProductImageGallery(
+                        images: List.unmodifiable(widget.images),
+                        productName: widget.productName,
+                        initialIndex: imageIndex,
+                      ),
+                    ),
+                  ),
+              child: display,
+            );
+          },
         ),
+      ),
     );
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1293,37 +1471,40 @@ class _ProductGalleryState extends State<_ProductGallery> {
                   ),
                 ),
               ),
-        if (widget.images.length > 1 &&
-            widget.settings.boolean('show_counter', true))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: _cmsColor(
-                  widget.settings.string('counter_background', '#8A8585'),
-                  const Color(0xFF8A8585),
-                ).withValues(alpha: 0.9),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                child: Text(
-                  '${_page + 1} / ${widget.images.length}',
-                  key: const Key('product-gallery-counter'),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            if (widget.images.length > 1 &&
+                widget.settings.boolean('show_counter', true))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
                     color: _cmsColor(
-                      widget.settings.string('counter_text_color', '#FFFFFF'),
-                      Colors.white,
+                      widget.settings.string('counter_background', '#8A8585'),
+                      const Color(0xFF8A8585),
+                    ).withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
                     ),
-                    fontWeight: FontWeight.w800,
+                    child: Text(
+                      '${_page + 1} / ${widget.images.length}',
+                      key: const Key('product-gallery-counter'),
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: _cmsColor(
+                          widget.settings.string(
+                            'counter_text_color',
+                            '#FFFFFF',
+                          ),
+                          Colors.white,
+                        ),
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
           ],
         ),
         if (widget.images.length > 1 &&
@@ -1338,7 +1519,8 @@ class _ProductGalleryState extends State<_ProductGallery> {
               itemBuilder: (BuildContext context, int index) => InkWell(
                 onTap: () {
                   final int current = _pageController.page?.round() ?? 0;
-                  final int cycleStart = current - (current % widget.images.length);
+                  final int cycleStart =
+                      current - (current % widget.images.length);
                   _pageController.animateToPage(
                     cycleStart + index,
                     duration: const Duration(milliseconds: 220),
@@ -1405,14 +1587,13 @@ class _ProductOptionPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final CmsPageComponent sizeChart = ref
-        .watch(cmsPageLayoutProvider('size_chart'))
-        .asData
-        ?.value
-        .element('size_chart_content') ??
-        CmsPageLayout.fallback(
-          'size_chart',
-        ).element('size_chart_content');
+    final CmsPageComponent sizeChart =
+        ref
+            .watch(cmsPageLayoutProvider('size_chart'))
+            .asData
+            ?.value
+            .element('size_chart_content') ??
+        CmsPageLayout.fallback('size_chart').element('size_chart_content');
     final String? selected = controller.selectedAttributes[group.key];
     final double chipHeight =
         settings?.number('chip_height', 38).clamp(30, 56).toDouble() ?? 38;
@@ -1425,8 +1606,12 @@ class _ProductOptionPicker extends ConsumerWidget {
             children: <Widget>[
               Expanded(
                 child: Text(
-                  selected == null ? group.label : '${group.label}   ${controller.selectedAttributeLabels[group.key] ?? selected}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                  selected == null
+                      ? group.label
+                      : '${group.label}   ${controller.selectedAttributeLabels[group.key] ?? selected}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               if (settings?.boolean('show_size_chart', true) == true &&
@@ -1438,7 +1623,9 @@ class _ProductOptionPicker extends ConsumerWidget {
                     useSafeArea: true,
                     isScrollControlled: true,
                     builder: (BuildContext context) => ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * .85),
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.sizeOf(context).height * .85,
+                      ),
                       child: ProductSizeChart(
                         settings: sizeChart,
                         group: group,
@@ -1453,7 +1640,10 @@ class _ProductOptionPicker extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      Text(settings?.string('size_chart_label', 'Size chart') ?? 'Size chart'),
+                      Text(
+                        settings?.string('size_chart_label', 'Size chart') ??
+                            'Size chart',
+                      ),
                       const Icon(Icons.chevron_right_rounded),
                     ],
                   ),
@@ -1467,10 +1657,8 @@ class _ProductOptionPicker extends ConsumerWidget {
               decoration: InputDecoration(labelText: group.label),
               items: group.values
                   .where(
-                    (ProductOptionValue option) => controller.isOptionAvailable(
-                      group.key,
-                      option.value,
-                    ),
+                    (ProductOptionValue option) =>
+                        controller.isOptionAvailable(group.key, option.value),
                   )
                   .map(
                     (ProductOptionValue option) => DropdownMenuItem<String>(
@@ -1491,39 +1679,43 @@ class _ProductOptionPicker extends ConsumerWidget {
               radius: settings?.number('chip_radius', 8).clamp(0, 32) ?? 8,
             )
           else
-          Wrap(
-            spacing: 6,
-            runSpacing: 5,
-            children: group.values
-                .map((ProductOptionValue option) {
-                  final bool available = controller.isOptionAvailable(
-                    group.key,
-                    option.value,
-                  );
-                  return SizedBox(
-                    height: chipHeight,
-                    child: ChoiceChip(
-                      key: Key('product-option-${group.key}-${option.value}'),
-                      label: Text(option.label),
-                      labelPadding: const EdgeInsets.symmetric(horizontal: 5),
-                      visualDensity: const VisualDensity(
-                        horizontal: -2,
-                        vertical: -2,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          settings?.number('chip_radius', 22).clamp(0, 32) ?? 22,
+            Wrap(
+              spacing: 6,
+              runSpacing: 5,
+              children: group.values
+                  .map((ProductOptionValue option) {
+                    final bool available = controller.isOptionAvailable(
+                      group.key,
+                      option.value,
+                    );
+                    return SizedBox(
+                      height: chipHeight,
+                      child: ChoiceChip(
+                        key: Key('product-option-${group.key}-${option.value}'),
+                        label: Text(option.label),
+                        labelPadding: const EdgeInsets.symmetric(horizontal: 5),
+                        visualDensity: const VisualDensity(
+                          horizontal: -2,
+                          vertical: -2,
                         ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            settings?.number('chip_radius', 22).clamp(0, 32) ??
+                                22,
+                          ),
+                        ),
+                        selected: selected == option.value,
+                        onSelected: available
+                            ? (_) => controller.selectOption(
+                                group.key,
+                                option.value,
+                              )
+                            : null,
                       ),
-                      selected: selected == option.value,
-                      onSelected: available
-                          ? (_) => controller.selectOption(group.key, option.value)
-                          : null,
-                    ),
-                  );
-                })
-                .toList(growable: false),
-          ),
+                    );
+                  })
+                  .toList(growable: false),
+            ),
         ],
       ),
     );
@@ -1531,17 +1723,18 @@ class _ProductOptionPicker extends ConsumerWidget {
 }
 
 class _ProductOptionsSheet extends ConsumerWidget {
-  const _ProductOptionsSheet({
-    required this.controller,
-    required this.copy,
-  });
+  const _ProductOptionsSheet({required this.controller, required this.copy});
 
   final ProductDetailController controller;
   final _ProductCopy copy;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(cmsPageLayoutProvider('product')).asData?.value.element('variations');
+    final settings = ref
+        .watch(cmsPageLayoutProvider('product'))
+        .asData
+        ?.value
+        .element('variations');
     return AnimatedBuilder(
       animation: controller,
       builder: (BuildContext context, Widget? child) {
@@ -1723,7 +1916,8 @@ class _DetailsSection extends StatelessWidget {
           child: Text(description, style: const TextStyle(height: 1.6)),
         ),
       if (showAttributes && detailAttributes.isNotEmpty) ...<Widget>[
-        if (showDescription && description.isNotEmpty) const Divider(height: 24),
+        if (showDescription && description.isNotEmpty)
+          const Divider(height: 24),
         for (final CatalogProductAttribute attribute in detailAttributes)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 5),
@@ -1732,7 +1926,9 @@ class _DetailsSection extends StatelessWidget {
                 Expanded(child: Text(attribute.name)),
                 Flexible(
                   child: Text(
-                    attribute.terms.map((CatalogAttributeTerm term) => term.name).join('، '),
+                    attribute.terms
+                        .map((CatalogAttributeTerm term) => term.name)
+                        .join('، '),
                     textAlign: TextAlign.end,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
@@ -1747,7 +1943,10 @@ class _DetailsSection extends StatelessWidget {
         key: const Key('product-description-section'),
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Text(settings.string('details_label', copy.description), style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+          Text(
+            settings.string('details_label', copy.description),
+            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 12),
           ...content,
         ],
@@ -1843,10 +2042,21 @@ class _PurchaseBar extends StatelessWidget {
       reason = copy.notPurchasable;
     }
 
-    if (!footer.enabled) { return const SizedBox.shrink(); }
-    final Color background = _cmsColor(footer.string('background_color', '#FFFFFF'), Theme.of(context).colorScheme.surface);
-    final Color buttonColor = _cmsColor(footer.string('button_color', '#1F2933'), Theme.of(context).colorScheme.primary);
-    final Color buttonText = _cmsColor(footer.string('button_text_color', '#FFFFFF'), Colors.white);
+    if (!footer.enabled) {
+      return const SizedBox.shrink();
+    }
+    final Color background = _cmsColor(
+      footer.string('background_color', '#FFFFFF'),
+      Theme.of(context).colorScheme.surface,
+    );
+    final Color buttonColor = _cmsColor(
+      footer.string('button_color', '#1F2933'),
+      Theme.of(context).colorScheme.primary,
+    );
+    final Color buttonText = _cmsColor(
+      footer.string('button_text_color', '#FFFFFF'),
+      Colors.white,
+    );
     final Color buttonBorderColor = _cmsColor(
       footer.string('button_border_color', '#1F2933'),
       buttonColor,
@@ -1860,9 +2070,17 @@ class _PurchaseBar extends StatelessWidget {
         .clamp(14, 40)
         .toDouble();
     // Match the navigation footer's icon frame and label spacing.
-    final double footerIconBoxSize = (footerIconSize + 4).clamp(28, 48).toDouble();
-    final double footerLabelSize = footer.number('label_size', 11).clamp(8, 20).toDouble();
-    final double footerIconLabelGap = footer.number('icon_label_gap', 2).clamp(0, 12).toDouble();
+    final double footerIconBoxSize = (footerIconSize + 4)
+        .clamp(28, 48)
+        .toDouble();
+    final double footerLabelSize = footer
+        .number('label_size', 11)
+        .clamp(8, 20)
+        .toDouble();
+    final double footerIconLabelGap = footer
+        .number('icon_label_gap', 2)
+        .clamp(0, 12)
+        .toDouble();
     final footerLayout = footer.json('layout_json');
     final rawRows = footerLayout['rows'];
     final placements = <(String, double, int)>[];
@@ -1875,25 +2093,45 @@ class _PurchaseBar extends StatelessWidget {
         for (final column in columns.take(6)) {
           if (column is! Map) continue;
           final parsed = double.tryParse('${column['width']}');
-          final width = parsed != null && parsed.isFinite && parsed > 0 ? parsed : 100 / columns.length;
-          final items = column['items'] is List ? (column['items'] as List)
-              .map((item) => '$item').where((id) => ['share','like','add_to_cart'].contains(id) && seen.add(id)).toList() : <String>[];
+          final width = parsed != null && parsed.isFinite && parsed > 0
+              ? parsed
+              : 100 / columns.length;
+          final items = column['items'] is List
+              ? (column['items'] as List)
+                    .map((item) => '$item')
+                    .where(
+                      (id) =>
+                          ['share', 'like', 'add_to_cart'].contains(id) &&
+                          seen.add(id),
+                    )
+                    .toList()
+              : <String>[];
           if (items.isEmpty) {
-            placements.add(('',width,indexed.$1));
+            placements.add(('', width, indexed.$1));
           } else {
-            placements.addAll(items.map((id) => (id,width/items.length,indexed.$1)));
+            placements.addAll(
+              items.map((id) => (id, width / items.length, indexed.$1)),
+            );
           }
         }
       }
     }
     if (placements.isEmpty) {
       final legacy = footerLayout['items'];
-      final items = legacy is List ? legacy.map((item) => '$item').toSet().toList() : ['share','like','add_to_cart'];
-      placements.addAll(items.map((id) => (id,100/items.length,0)));
+      final items = legacy is List
+          ? legacy.map((item) => '$item').toSet().toList()
+          : ['share', 'like', 'add_to_cart'];
+      placements.addAll(items.map((id) => (id, 100 / items.length, 0)));
     }
-    final configuredButtonWidth = footer.number('button_width_percent',58).clamp(20,95).toDouble();
-    final addPlacement = placements.where((p) => p.$1 == 'add_to_cart').firstOrNull;
-    final actionRowWidth = placements.where((p) => p.$3 == addPlacement?.$3)
+    final configuredButtonWidth = footer
+        .number('button_width_percent', 58)
+        .clamp(20, 95)
+        .toDouble();
+    final addPlacement = placements
+        .where((p) => p.$1 == 'add_to_cart')
+        .firstOrNull;
+    final actionRowWidth = placements
+        .where((p) => p.$3 == addPlacement?.$3)
         .fold<double>(0, (total, p) => total + p.$2);
     final addToCartColumnWidth = addPlacement != null && actionRowWidth > 0
         ? addPlacement.$2 / actionRowWidth * 100
@@ -1901,137 +2139,250 @@ class _PurchaseBar extends StatelessWidget {
     // The composer owns column widths. Button sizing can only shrink inside
     // its column, never steal space from neighbouring actions.
     final effectivePlacements = placements;
-    final buttonWidthFactor = (configuredButtonWidth/addToCartColumnWidth).clamp(0,1).toDouble();
-	final String buttonStyle = footer.string('button_style', 'filled');
-	final double configuredButtonHeight = footer
-	    .number('button_height', 52)
-	    .clamp(36, 80);
-	// A configured product action must never be silently squeezed back to the
-	// category footer height. Grow the product footer when the button is taller.
+    final buttonWidthFactor = (configuredButtonWidth / addToCartColumnWidth)
+        .clamp(0, 1)
+        .toDouble();
+    final String buttonStyle = footer.string('button_style', 'filled');
+    final double configuredButtonHeight = footer
+        .number('button_height', 52)
+        .clamp(36, 80);
+    // A configured product action must never be silently squeezed back to the
+    // category footer height. Grow the product footer when the button is taller.
     final rowIds = placements.map((p) => p.$3).toSet();
-    final iconHeight = footerIconBoxSize + (footer.boolean('show_labels',true) ? footerIconLabelGap + MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6 : 0) + 8;
-    final minimumRowHeight = configuredButtonHeight > iconHeight ? configuredButtonHeight : iconHeight;
+    final iconHeight =
+        footerIconBoxSize +
+        (footer.boolean('show_labels', true)
+            ? footerIconLabelGap +
+                  MediaQuery.textScalerOf(context).scale(footerLabelSize) * 1.6
+            : 0) +
+        8;
+    final minimumRowHeight = configuredButtonHeight > iconHeight
+        ? configuredButtonHeight
+        : iconHeight;
     final minimumFooterHeight = minimumRowHeight * rowIds.length;
-    final footerHeight = configuredFooterHeight > minimumFooterHeight ? configuredFooterHeight : minimumFooterHeight;
-	final double buttonHeight = configuredButtonHeight;
-	final String buttonShape = footer.string('button_shape', 'custom');
-	final double buttonRadius = switch (buttonShape) {
-	  'rectangle' => 0,
-	  'rounded' => 12,
-	  'pill' => buttonHeight / 2,
-	  _ => footer.number('button_radius', 28).clamp(0, 40),
-	};
-	final double configuredBorderWidth = footer
-	    .number('button_border_width', 0)
-	    .clamp(0, 6);
-	final double buttonBorderWidth = buttonStyle == 'outline' && configuredBorderWidth < 1
-	    ? 1
-	    : configuredBorderWidth;
-	final Color buttonBackground = switch (buttonStyle) {
-	  'outline' => Colors.transparent,
-	  'soft' => buttonColor.withValues(alpha: 0.14),
-	  _ => buttonColor,
-	};
-	final bool awaitingProductOptions =
-	    !usesHostedOdooCart297 && product.hasVariations && !controller.canAddToCart;
-	final Color purchaseButtonBackground = awaitingProductOptions
-	    ? buttonBackground.withValues(alpha: buttonBackground.a * 0.48)
-	    : buttonBackground;
-	final bool purchaseFlowAvailable = product.hasVariations ||
-	    (hasCartConnection && product.isPurchasable && product.isInStock);
-	final bool showButtonIcon = footer.boolean('show_button_icon', true);
-	final ButtonStyle purchaseButtonStyle = FilledButton.styleFrom(
-	  padding: const EdgeInsets.symmetric(horizontal: 8),
-	  minimumSize: Size.zero,
-	  backgroundColor: purchaseButtonBackground,
-	  foregroundColor: buttonText,
-	  disabledBackgroundColor: purchaseButtonBackground.withValues(alpha: 0.42),
-	  disabledForegroundColor: buttonText.withValues(alpha: 0.62),
-	  textStyle: TextStyle(fontSize: footerLabelSize, fontWeight: FontWeight.w600),
-	  side: BorderSide(color: buttonBorderColor, width: buttonBorderWidth),
-	  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(buttonRadius)),
-	);
-	final VoidCallback? purchaseOnPressed = purchaseFlowAvailable
-	    ? controller.isAdding ? () {} : onPressed
-	    : null;
-	final Widget purchaseLabel = FittedBox(fit: BoxFit.scaleDown, child: Text(
-	  controller.isAdding
-	      ? copy.adding
-	      : usesHostedOdooCart297 ? (copy.arabic ? 'متابعة في المتجر' : 'Continue on store')
-          : cmsFooterLabel(footer.string('add_to_cart_label', ''), copy.addToCart, const ['Add to bag', 'Add to cart', 'أضف إلى السلة']),
-      maxLines: 1,
-      softWrap: false,
-	));
-	final footerItems = <(String, double, Widget, int)>[];
-	for (final (String item, double width, int row) in effectivePlacements) {
-	  final double effectiveWidth = width;
-	  Widget? child;
-	  if (item == 'share') {
-		child = _FooterAction(id: 'share', icon: _footerActionIcon('share', footer.string('share_icon_variant', 'upload'), false), label: footer.boolean('show_labels', true) ? cmsFooterLabel(footer.string('share_label', ''), copy.share, const ['Share', 'مشاركة']) : '', color: _cmsColor(footer.string('share_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('share_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onShare);
-	  } else if (item == 'like') {
-		child = _FooterAction(id: 'like', iconKey: const Key('product-wishlist-button'), icon: _footerActionIcon('like', footer.string('like_icon_variant', 'heart'), isLiked), label: footer.boolean('show_labels', true) ? cmsFooterLabel(footer.string('like_label', ''), copy.arabic ? 'المفضلة' : 'Wishlist', const ['Like', 'Wishlist', 'المفضلة']) : '', color: isLiked ? Colors.red : _cmsColor(footer.string('like_color', '#1F2933'), Colors.black87), size: footerIconSize, iconBoxSize: footerIconBoxSize, style: footer.string('like_icon_style', 'outline'), labelSize: footerLabelSize, iconLabelGap: footerIconLabelGap, onPressed: onLike);
-	  } else if (item == 'add_to_cart') {
-		child = Padding(
+    final footerHeight = configuredFooterHeight > minimumFooterHeight
+        ? configuredFooterHeight
+        : minimumFooterHeight;
+    final double buttonHeight = configuredButtonHeight;
+    final String buttonShape = footer.string('button_shape', 'custom');
+    final double buttonRadius = switch (buttonShape) {
+      'rectangle' => 0,
+      'rounded' => 12,
+      'pill' => buttonHeight / 2,
+      _ => footer.number('button_radius', 28).clamp(0, 40),
+    };
+    final double configuredBorderWidth = footer
+        .number('button_border_width', 0)
+        .clamp(0, 6);
+    final double buttonBorderWidth =
+        buttonStyle == 'outline' && configuredBorderWidth < 1
+        ? 1
+        : configuredBorderWidth;
+    final Color buttonBackground = switch (buttonStyle) {
+      'outline' => Colors.transparent,
+      'soft' => buttonColor.withValues(alpha: 0.14),
+      _ => buttonColor,
+    };
+    final bool awaitingProductOptions =
+        !usesHostedOdooCart297 &&
+        product.hasVariations &&
+        !controller.canAddToCart;
+    final Color purchaseButtonBackground = awaitingProductOptions
+        ? buttonBackground.withValues(alpha: buttonBackground.a * 0.48)
+        : buttonBackground;
+    final bool purchaseFlowAvailable =
+        product.hasVariations ||
+        (hasCartConnection && product.isPurchasable && product.isInStock);
+    final bool showButtonIcon = footer.boolean('show_button_icon', true);
+    final ButtonStyle purchaseButtonStyle = FilledButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      minimumSize: Size.zero,
+      backgroundColor: purchaseButtonBackground,
+      foregroundColor: buttonText,
+      disabledBackgroundColor: purchaseButtonBackground.withValues(alpha: 0.42),
+      disabledForegroundColor: buttonText.withValues(alpha: 0.62),
+      textStyle: TextStyle(
+        fontSize: footerLabelSize,
+        fontWeight: FontWeight.w600,
+      ),
+      side: BorderSide(color: buttonBorderColor, width: buttonBorderWidth),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(buttonRadius),
+      ),
+    );
+    final VoidCallback? purchaseOnPressed = purchaseFlowAvailable
+        ? controller.isAdding
+              ? () {}
+              : onPressed
+        : null;
+    final Widget purchaseLabel = FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        controller.isAdding
+            ? copy.adding
+            : usesHostedOdooCart297
+            ? (copy.arabic ? 'متابعة في المتجر' : 'Continue on store')
+            : cmsFooterLabel(
+                footer.string('add_to_cart_label', ''),
+                copy.addToCart,
+                const ['Add to bag', 'Add to cart', 'أضف إلى السلة'],
+              ),
+        maxLines: 1,
+        softWrap: false,
+      ),
+    );
+    final footerItems = <(String, double, Widget, int)>[];
+    for (final (String item, double width, int row) in effectivePlacements) {
+      final double effectiveWidth = width;
+      Widget? child;
+      if (item == 'share') {
+        child = _FooterAction(
+          id: 'share',
+          icon: _footerActionIcon(
+            'share',
+            footer.string('share_icon_variant', 'upload'),
+            false,
+          ),
+          label: footer.boolean('show_labels', true)
+              ? cmsFooterLabel(
+                  footer.string('share_label', ''),
+                  copy.share,
+                  const ['Share', 'مشاركة'],
+                )
+              : '',
+          color: _cmsColor(
+            footer.string('share_color', '#1F2933'),
+            Colors.black87,
+          ),
+          size: footerIconSize,
+          iconBoxSize: footerIconBoxSize,
+          style: footer.string('share_icon_style', 'outline'),
+          labelSize: footerLabelSize,
+          iconLabelGap: footerIconLabelGap,
+          onPressed: onShare,
+        );
+      } else if (item == 'like') {
+        child = _FooterAction(
+          id: 'like',
+          iconKey: const Key('product-wishlist-button'),
+          icon: _footerActionIcon(
+            'like',
+            footer.string('like_icon_variant', 'heart'),
+            isLiked,
+          ),
+          label: footer.boolean('show_labels', true)
+              ? cmsFooterLabel(
+                  footer.string('like_label', ''),
+                  copy.arabic ? 'المفضلة' : 'Wishlist',
+                  const ['Like', 'Wishlist', 'المفضلة'],
+                )
+              : '',
+          color: isLiked
+              ? Colors.red
+              : _cmsColor(
+                  footer.string('like_color', '#1F2933'),
+                  Colors.black87,
+                ),
+          size: footerIconSize,
+          iconBoxSize: footerIconBoxSize,
+          style: footer.string('like_icon_style', 'outline'),
+          labelSize: footerLabelSize,
+          iconLabelGap: footerIconLabelGap,
+          onPressed: onLike,
+        );
+      } else if (item == 'add_to_cart') {
+        child = Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Align(
-		  alignment: Alignment.center,
-		  child: FractionallySizedBox(
-		    widthFactor: buttonWidthFactor,
-		    child: SizedBox(
-		      key: const Key('product-add-to-cart-size'),
-		      width: double.infinity,
-		      height: buttonHeight,
-		      child: showButtonIcon || controller.isAdding
-		          ? FilledButton.icon(
-		              key: const Key('add-to-cart-button'),
-		              style: purchaseButtonStyle,
-		              onPressed: purchaseOnPressed,
-		              icon: controller.isAdding
-		                  ? SizedBox.square(dimension: footerIconSize, child: const CircularProgressIndicator(strokeWidth: 2))
-		                  : Icon(Icons.shopping_bag_outlined, size: footerIconSize),
-		              label: purchaseLabel,
-		            )
-		          : FilledButton(
-		              key: const Key('add-to-cart-button'),
-		              style: purchaseButtonStyle,
-		              onPressed: purchaseOnPressed,
-		              child: purchaseLabel,
-		            ),
-		    ),
-		  ),
-		  ),
-		);
-	  }
-	  if (effectiveWidth > 0) {
-	    footerItems.add((item, effectiveWidth, child ?? const SizedBox.shrink(), row));
-	  }
-	}
+            alignment: Alignment.center,
+            child: FractionallySizedBox(
+              widthFactor: buttonWidthFactor,
+              child: SizedBox(
+                key: const Key('product-add-to-cart-size'),
+                width: double.infinity,
+                height: buttonHeight,
+                child: showButtonIcon || controller.isAdding
+                    ? FilledButton.icon(
+                        key: const Key('add-to-cart-button'),
+                        style: purchaseButtonStyle,
+                        onPressed: purchaseOnPressed,
+                        icon: controller.isAdding
+                            ? SizedBox.square(
+                                dimension: footerIconSize,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Icon(
+                                Icons.shopping_bag_outlined,
+                                size: footerIconSize,
+                              ),
+                        label: purchaseLabel,
+                      )
+                    : FilledButton(
+                        key: const Key('add-to-cart-button'),
+                        style: purchaseButtonStyle,
+                        onPressed: purchaseOnPressed,
+                        child: purchaseLabel,
+                      ),
+              ),
+            ),
+          ),
+        );
+      }
+      if (effectiveWidth > 0) {
+        footerItems.add((
+          item,
+          effectiveWidth,
+          child ?? const SizedBox.shrink(),
+          row,
+        ));
+      }
+    }
     return Material(
-      elevation: footer.string('shadow', 'subtle') == 'none' ? 0 : footer.string('shadow', 'subtle') == 'strong' ? 18 : 8,
+      elevation: footer.string('shadow', 'subtle') == 'none'
+          ? 0
+          : footer.string('shadow', 'subtle') == 'strong'
+          ? 18
+          : 8,
       color: background,
-	  shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(footer.number('top_radius', 0))), side: BorderSide(color: _cmsColor(footer.string('border_color', '#E2E6E4'), Colors.transparent), width: footer.number('border_width', 1))),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(footer.number('top_radius', 0)),
+        ),
+        side: BorderSide(
+          color: _cmsColor(
+            footer.string('border_color', '#E2E6E4'),
+            Colors.transparent,
+          ),
+          width: footer.number('border_width', 1),
+        ),
+      ),
       child: SafeArea(
         top: false,
-		bottom: !AppConfig.isCmsPreview || footer.boolean('safe_area', true),
-		minimum: EdgeInsets.fromLTRB(
+        bottom: !AppConfig.isCmsPreview || footer.boolean('safe_area', true),
+        minimum: EdgeInsets.fromLTRB(
           MediaQuery.sizeOf(context).width *
                   footer.number('side_spacing_percent', 5).clamp(0, 25) /
                   100 +
               footer.number('horizontal_padding', 0).clamp(0, 32),
           footer.number('margin_top', 0).clamp(0, 80) +
-              footer.number('space_up', 0).clamp(0, 80) + 3,
+              footer.number('space_up', 0).clamp(0, 80) +
+              3,
           MediaQuery.sizeOf(context).width *
                   footer.number('side_spacing_percent', 5).clamp(0, 25) /
                   100 +
               footer.number('horizontal_padding', 0).clamp(0, 32),
           footer.number('margin_bottom', 0).clamp(0, 80) +
-              footer.number('space_down', 0).clamp(0, 80) + 3,
+              footer.number('space_down', 0).clamp(0, 80) +
+              3,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            if (controller.addError != null && !awaitingProductOptions) ...<Widget>[
+            if (controller.addError != null &&
+                !awaitingProductOptions) ...<Widget>[
               Text(
                 controller.addError!,
                 key: const Key('add-to-cart-error'),
@@ -2062,30 +2413,53 @@ class _PurchaseBar extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
               ),
-            if (!usesHostedOdooCart297 && footer.boolean('show_quantity', false))
+            if (!usesHostedOdooCart297 &&
+                footer.boolean('show_quantity', false))
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: _QuantitySelector(controller: controller, copy: copy),
               ),
-			SizedBox(
-			  key: const Key('product-footer-size'),
-			  height: footerHeight,
-			  child: LayoutBuilder(
-			    builder: (BuildContext context, BoxConstraints constraints) {
-			      final double availableWidth = constraints.maxWidth;
-              return Column(children: [for (final row in rowIds)
-                Expanded(child: Row(key: Key('product-footer-row-$row'),children: [
-                  for (final placement in footerItems.where((p) => p.$4 == row))
-                    SizedBox(
-                      key: placement.$1.isEmpty ? null : Key('product-footer-column-${placement.$1}'),
-                      width: availableWidth * placement.$2 / footerItems.where((p) => p.$4 == row).fold<double>(0,(sum,p) => sum+p.$2),
-                      child: placement.$3,
-                    ),
-                ])),
-              ]);
-			    },
-			  ),
-			),
+            SizedBox(
+              key: const Key('product-footer-size'),
+              height: footerHeight,
+              child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+                  final double availableWidth = constraints.maxWidth;
+                  return Column(
+                    children: [
+                      for (final row in rowIds)
+                        Expanded(
+                          child: Row(
+                            key: Key('product-footer-row-$row'),
+                            children: [
+                              for (final placement in footerItems.where(
+                                (p) => p.$4 == row,
+                              ))
+                                SizedBox(
+                                  key: placement.$1.isEmpty
+                                      ? null
+                                      : Key(
+                                          'product-footer-column-${placement.$1}',
+                                        ),
+                                  width:
+                                      availableWidth *
+                                      placement.$2 /
+                                      footerItems
+                                          .where((p) => p.$4 == row)
+                                          .fold<double>(
+                                            0,
+                                            (sum, p) => sum + p.$2,
+                                          ),
+                                  child: placement.$3,
+                                ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -2160,7 +2534,11 @@ class _FooterAction extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: color, fontSize: labelSize, height: 1.3),
+                  style: TextStyle(
+                    color: color,
+                    fontSize: labelSize,
+                    height: 1.3,
+                  ),
                 ),
               ),
             ),
@@ -2171,8 +2549,28 @@ class _FooterAction extends StatelessWidget {
   }
 }
 
-IconData _footerActionIcon(String type, String variant, bool selected) => switch (type) { 'share' => variant == 'send' ? Icons.send_outlined : variant == 'share' ? Icons.share_outlined : Icons.ios_share_outlined, 'like' => variant == 'bookmark' ? (selected ? Icons.bookmark : Icons.bookmark_border) : selected ? Icons.favorite_rounded : Icons.favorite_border_rounded, _ => Icons.circle_outlined };
-Color _cmsColor(String value, Color fallback) { final hex=value.replaceFirst('#',''); return RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(hex)?Color(int.parse('FF$hex',radix:16)):fallback; }
+IconData _footerActionIcon(String type, String variant, bool selected) =>
+    switch (type) {
+      'share' =>
+        variant == 'send'
+            ? Icons.send_outlined
+            : variant == 'share'
+            ? Icons.share_outlined
+            : Icons.ios_share_outlined,
+      'like' =>
+        variant == 'bookmark'
+            ? (selected ? Icons.bookmark : Icons.bookmark_border)
+            : selected
+            ? Icons.favorite_rounded
+            : Icons.favorite_border_rounded,
+      _ => Icons.circle_outlined,
+    };
+Color _cmsColor(String value, Color fallback) {
+  final hex = value.replaceFirst('#', '');
+  return RegExp(r'^[0-9A-Fa-f]{6}$').hasMatch(hex)
+      ? Color(int.parse('FF$hex', radix: 16))
+      : fallback;
+}
 
 class _ProductLoading extends StatelessWidget {
   const _ProductLoading({required this.copy});

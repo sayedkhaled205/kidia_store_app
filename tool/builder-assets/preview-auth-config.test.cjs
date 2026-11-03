@@ -21,6 +21,16 @@ const {load} = require('./preview-auth-config.js');
   assert.equal(config.methods.phone_otp,false);
   assert.equal(config.google,undefined);
   assert.equal(config.firebase,undefined);
+  const policyState = {...state,store_data:{url:'https://policy.example'}};
+  for (const [candidate, expected] of [
+    ['https://merchant.example/privacy','https://merchant.example/privacy'],
+    ['javascript:alert(1)',''], ['https://user:secret@merchant.example/privacy','']
+  ]) {
+    const policy = await load(policyState, async()=>({ok:true,status:200,json:async()=>({
+      version:1,enabled:true,methods:{},privacy_policy_url:candidate,
+    })}),{fresh:true});
+    assert.equal(policy.privacy_policy_url,expected);
+  }
   await assert.rejects(load({...state,platform:'shopify'},()=>{calls++;}));
   await assert.rejects(load({...state,store_data:{url:'http://shop.example'}},()=>{calls++;}));
   assert.equal(calls,1);

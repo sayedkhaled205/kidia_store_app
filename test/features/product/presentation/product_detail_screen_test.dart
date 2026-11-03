@@ -1,5 +1,7 @@
 import '../../../support/viewport_rotation.dart';
 import 'package:flutter/material.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
+import 'package:mobishop_store_app/features/product/presentation/product_image_gallery.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -18,131 +20,318 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/product_test_data.dart';
 
 void main() {
-  viewportRotationTests('Product', (tester, size) => tester.pumpWidget(_testApp(ProductDetailScreen(productId: simpleProduct.id, repository: ProductFakeCatalogRepository()))));
+  testWidgets(
+    'tapping the actual product image opens zoom even with inline zoom off',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final product = CatalogProduct(
+        id: 91,
+        name: 'Gallery product',
+        slug: 'gallery',
+        type: 'simple',
+        prices: testMoney,
+        isInStock: true,
+        images: [CatalogImage(source: Uri(), alt: 'Product photo')],
+      );
+      final base = CmsPageLayout.fallback('product');
+      final layout = CmsPageLayout(
+        page: base.page,
+        header: base.header,
+        footer: base.footer,
+        elements: base.elements
+            .map(
+              (e) => CmsPageComponent(
+                id: e.id,
+                type: e.type,
+                enabled: e.enabled,
+                settings: {...e.settings, 'enable_zoom': false},
+              ),
+            )
+            .toList(),
+      );
+      await tester.pumpWidget(
+        _testApp(
+          ProductDetailScreen(
+            productId: 91,
+            repository: ProductFakeCatalogRepository(product: product),
+          ),
+          productLayout: layout,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('open-product-image-0')));
+      await tester.pumpAndSettle();
+      expect(find.byType(ProductImageGallery), findsOneWidget);
+      expect(find.text('1 / 1'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.byType(ProductImageGallery), findsNothing);
+      expect(find.byType(ProductDetailScreen), findsOneWidget);
+    },
+  );
+  viewportRotationTests(
+    'Product',
+    (tester, size) => tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: simpleProduct.id,
+          repository: ProductFakeCatalogRepository(),
+        ),
+      ),
+    ),
+  );
   for (final count in [6, 7]) {
-    testWidgets('compact sizes keep Brand close after $count sizes', (tester) async {
+    testWidgets('compact sizes keep Brand close after $count sizes', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(390, 2000);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      final product = CatalogProduct(id: 88, name: 'Baby set', slug: 'baby', type: 'variable',
-        prices: testMoney, isInStock: true, brands: simpleProduct.brands,
-        attributes: [CatalogProductAttribute(id: 1, name: 'Size', taxonomy: 'pa_size', hasVariations: true,
-          terms: [for(var i=1;i<=count;i++) CatalogAttributeTerm(id:i,name:'${i}Y',slug:'${i}y')])]);
+      final product = CatalogProduct(
+        id: 88,
+        name: 'Baby set',
+        slug: 'baby',
+        type: 'variable',
+        prices: testMoney,
+        isInStock: true,
+        brands: simpleProduct.brands,
+        attributes: [
+          CatalogProductAttribute(
+            id: 1,
+            name: 'Size',
+            taxonomy: 'pa_size',
+            hasVariations: true,
+            terms: [
+              for (var i = 1; i <= count; i++)
+                CatalogAttributeTerm(id: i, name: '${i}Y', slug: '${i}y'),
+            ],
+          ),
+        ],
+      );
       final base = CmsPageLayout.fallback('product');
-      final layout = CmsPageLayout(page: base.page, header: base.header, footer: base.footer,
-        elements: base.elements.map((e) => CmsPageComponent(id:e.id,type:e.type,enabled:e.enabled,
-          settings:{...e.settings, if(e.type=='variations') ...{'style':'tiles','chip_height':52,'chip_radius':8},
-            if(e.type=='purchase_bar') 'show_quantity':false})).toList());
-      await tester.pumpWidget(_testApp(ProductDetailScreen(productId:88,
-        repository: ProductFakeCatalogRepository(product:product,
-          variations:[for(var i=1;i<=count;i++) CatalogVariation(id:i,attributes:[CatalogVariationAttribute(name:'Size',value:'${i}Y')])])),productLayout:layout));
+      final layout = CmsPageLayout(
+        page: base.page,
+        header: base.header,
+        footer: base.footer,
+        elements: base.elements
+            .map(
+              (e) => CmsPageComponent(
+                id: e.id,
+                type: e.type,
+                enabled: e.enabled,
+                settings: {
+                  ...e.settings,
+                  if (e.type == 'variations') ...{
+                    'style': 'tiles',
+                    'chip_height': 52,
+                    'chip_radius': 8,
+                  },
+                  if (e.type == 'purchase_bar') 'show_quantity': false,
+                },
+              ),
+            )
+            .toList(),
+      );
+      await tester.pumpWidget(
+        _testApp(
+          ProductDetailScreen(
+            productId: 88,
+            repository: ProductFakeCatalogRepository(
+              product: product,
+              variations: [
+                for (var i = 1; i <= count; i++)
+                  CatalogVariation(
+                    id: i,
+                    attributes: [
+                      CatalogVariationAttribute(name: 'Size', value: '${i}Y'),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+          productLayout: layout,
+        ),
+      );
       await tester.pumpAndSettle();
-      final first=find.byKey(const Key('product-option-pa_size-1y'));
-      final last=find.byKey(Key('product-option-pa_size-${count}y'));
-      if(count==6) {
-        expect(tester.getTopLeft(last).dy,tester.getTopLeft(first).dy);
+      final first = find.byKey(const Key('product-option-pa_size-1y'));
+      final last = find.byKey(Key('product-option-pa_size-${count}y'));
+      if (count == 6) {
+        expect(tester.getTopLeft(last).dy, tester.getTopLeft(first).dy);
       } else {
-        expect(tester.getTopLeft(last).dy,greaterThan(tester.getTopLeft(first).dy));
+        expect(
+          tester.getTopLeft(last).dy,
+          greaterThan(tester.getTopLeft(first).dy),
+        );
       }
-      final gap=tester.getTopLeft(find.byKey(const Key('product-brand-section'))).dy-tester.getBottomLeft(last).dy;
-      expect(gap,inInclusiveRange(12,32));
-      expect(tester.takeException(),isNull);
+      final gap =
+          tester.getTopLeft(find.byKey(const Key('product-brand-section'))).dy -
+          tester.getBottomLeft(last).dy;
+      expect(gap, inInclusiveRange(12, 32));
+      expect(tester.takeException(), isNull);
     });
   }
 
   for (final customLabel in [false, true]) {
-    testWidgets('disabled reviews hide their navigation target (custom: $customLabel)', (tester) async {
-      _useTallSurface(tester);
-      final base = CmsPageLayout.fallback('product');
-      for (final enabled in [true, false, true]) {
-        final layout = CmsPageLayout(page: base.page, header: base.header, footer: base.footer,
-          elements: base.elements.map((element) => CmsPageComponent(
-            id: element.id, type: element.type,
-            enabled: element.id == 'reviews' ? enabled : element.enabled,
-            settings: {...element.settings,
-              if (customLabel && element.id == 'product_tabs') 'tabs_json': [
-                {'label': 'Overview', 'target': 'overview'},
-                {'label': 'Customer opinions', 'target': 'reviews'},
-              ],
-            },
-          )).toList());
-        await tester.pumpWidget(_testApp(ProductDetailScreen(
-          productId: simpleProduct.id, repository: ProductFakeCatalogRepository()), productLayout: layout));
-        await tester.pumpAndSettle();
-        expect(find.text(customLabel ? 'Customer opinions' : 'Reviews'), enabled ? findsWidgets : findsNothing);
-        expect(find.text('Overview'), findsOneWidget);
-        if (enabled) {
-          await tester.tap(find.text(customLabel ? 'Customer opinions' : 'Reviews').first);
+    testWidgets(
+      'disabled reviews hide their navigation target (custom: $customLabel)',
+      (tester) async {
+        _useTallSurface(tester);
+        final base = CmsPageLayout.fallback('product');
+        for (final enabled in [true, false, true]) {
+          final layout = CmsPageLayout(
+            page: base.page,
+            header: base.header,
+            footer: base.footer,
+            elements: base.elements
+                .map(
+                  (element) => CmsPageComponent(
+                    id: element.id,
+                    type: element.type,
+                    enabled: element.id == 'reviews'
+                        ? enabled
+                        : element.enabled,
+                    settings: {
+                      ...element.settings,
+                      if (customLabel && element.id == 'product_tabs')
+                        'tabs_json': [
+                          {'label': 'Overview', 'target': 'overview'},
+                          {'label': 'Customer opinions', 'target': 'reviews'},
+                        ],
+                    },
+                  ),
+                )
+                .toList(),
+          );
+          await tester.pumpWidget(
+            _testApp(
+              ProductDetailScreen(
+                productId: simpleProduct.id,
+                repository: ProductFakeCatalogRepository(),
+              ),
+              productLayout: layout,
+            ),
+          );
           await tester.pumpAndSettle();
+          expect(
+            find.text(customLabel ? 'Customer opinions' : 'Reviews'),
+            enabled ? findsWidgets : findsNothing,
+          );
+          expect(find.text('Overview'), findsOneWidget);
+          if (enabled) {
+            await tester.tap(
+              find.text(customLabel ? 'Customer opinions' : 'Reviews').first,
+            );
+            await tester.pumpAndSettle();
+          }
+          expect(tester.takeException(), isNull);
         }
-        expect(tester.takeException(), isNull);
-      }
-    });
+      },
+    );
   }
 
-  testWidgets('Recommend reaches an unvisited section after a long description on first tap', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final product = CatalogProduct(
-      id: 404, name: 'Long description product', slug: 'long-product',
-      type: 'simple', prices: testMoney, isInStock: true, isPurchasable: true,
-      description: List.filled(80, 'Detailed product information.').join(' '),
-    );
-    final repository = ProductFakeCatalogRepository(product: product)
-      ..relatedProducts = <CatalogProduct>[variableProduct];
-    await tester.pumpWidget(_testApp(ProductDetailScreen(
-      productId: product.id, repository: repository,
-    )));
-    await tester.pumpAndSettle();
-    final scrollable = find.descendant(
-      of: find.byKey(const Key('product-detail-scroll')),
-      matching: find.byType(Scrollable),
-    ).first;
-    final position = tester.state<ScrollableState>(scrollable).position;
-    expect(position.pixels, 0);
-    // On a physical Android surface the gallery can exceed the viewport.
-    // Reveal only the tabs; the related-products target remains unvisited.
-    await tester.scrollUntilVisible(
-      find.text('Recommend'), 200, scrollable: scrollable,
-    );
-    await tester.tap(find.text('Recommend'));
-    await tester.pumpAndSettle();
-    expect(position.pixels, greaterThan(1000));
-    final target = tester.getRect(find.byKey(const Key('related-products-button')));
-    final viewport = tester.getRect(find.byKey(const Key('product-detail-scroll')));
-    expect(target.top, greaterThanOrEqualTo(viewport.top));
-    expect(target.bottom, lessThan(viewport.bottom));
-    expect(repository.relatedQueries, hasLength(1));
-  });
+  testWidgets(
+    'Recommend reaches an unvisited section after a long description on first tap',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final product = CatalogProduct(
+        id: 404,
+        name: 'Long description product',
+        slug: 'long-product',
+        type: 'simple',
+        prices: testMoney,
+        isInStock: true,
+        isPurchasable: true,
+        description: List.filled(80, 'Detailed product information.').join(' '),
+      );
+      final repository = ProductFakeCatalogRepository(product: product)
+        ..relatedProducts = <CatalogProduct>[variableProduct];
+      await tester.pumpWidget(
+        _testApp(
+          ProductDetailScreen(productId: product.id, repository: repository),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final scrollable = find
+          .descendant(
+            of: find.byKey(const Key('product-detail-scroll')),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      final position = tester.state<ScrollableState>(scrollable).position;
+      expect(position.pixels, 0);
+      // On a physical Android surface the gallery can exceed the viewport.
+      // Reveal only the tabs; the related-products target remains unvisited.
+      await tester.scrollUntilVisible(
+        find.text('Recommend'),
+        200,
+        scrollable: scrollable,
+      );
+      await tester.tap(find.text('Recommend'));
+      await tester.pumpAndSettle();
+      expect(position.pixels, greaterThan(1000));
+      final target = tester.getRect(
+        find.byKey(const Key('related-products-button')),
+      );
+      final viewport = tester.getRect(
+        find.byKey(const Key('product-detail-scroll')),
+      );
+      expect(target.top, greaterThanOrEqualTo(viewport.top));
+      expect(target.bottom, lessThan(viewport.bottom));
+      expect(repository.relatedQueries, hasLength(1));
+    },
+  );
 
-  testWidgets('related products use the repository even in CMS preview', (tester) async {
+  testWidgets('related products use the repository even in CMS preview', (
+    tester,
+  ) async {
     _useTallSurface(tester);
     final repository = ProductFakeCatalogRepository()
       ..relatedProducts = <CatalogProduct>[variableProduct];
-    await tester.pumpWidget(_testApp(ProductDetailScreen(
-      productId: simpleProduct.id,
-      repository: repository,
-    )));
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: simpleProduct.id,
+          repository: repository,
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(repository.relatedQueries, hasLength(1));
-    expect(repository.relatedQueries.single.excludeIds, <int>[simpleProduct.id]);
+    expect(repository.relatedQueries.single.excludeIds, <int>[
+      simpleProduct.id,
+    ]);
     expect(repository.relatedQueries.single.perPage, 4);
-    expect(tester.widget<CatalogProductCard>(find.byType(CatalogProductCard)).product.id,
-      variableProduct.id);
+    expect(
+      tester
+          .widget<CatalogProductCard>(find.byType(CatalogProductCard))
+          .product
+          .id,
+      variableProduct.id,
+    );
     expect(find.text('MobiShop everyday set'), findsNothing);
   });
 
-  testWidgets('failed related products can retry without fabricated fallback', (tester) async {
+  testWidgets('failed related products can retry without fabricated fallback', (
+    tester,
+  ) async {
     _useTallSurface(tester);
     final repository = ProductFakeCatalogRepository()
       ..relatedError = StateError('Catalog unavailable');
-    await tester.pumpWidget(_testApp(ProductDetailScreen(
-      productId: simpleProduct.id,
-      repository: repository,
-    )));
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: simpleProduct.id,
+          repository: repository,
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('related-products-retry')), findsOneWidget);
     expect(find.byType(CatalogProductCard), findsNothing);
@@ -229,12 +418,12 @@ void main() {
     expect(find.byKey(const Key('product-brand-section')), findsOneWidget);
     expect(find.text('MobiShop'), findsOneWidget);
     expect(find.text('Product'), findsNothing);
-	expect(find.byKey(const Key('commerce-app-bar-title')), findsNothing);
+    expect(find.byKey(const Key('commerce-app-bar-title')), findsNothing);
     expect(find.byType(CmsPageAppBar), findsOneWidget);
     expect(find.text('In stock'), findsNothing);
-	expect(find.byKey(const Key('product-tabs')), findsOneWidget);
-	expect(find.byKey(const Key('product-reviews-button')), findsOneWidget);
-	expect(find.byKey(const Key('related-products-button')), findsOneWidget);
+    expect(find.byKey(const Key('product-tabs')), findsOneWidget);
+    expect(find.byKey(const Key('product-reviews-button')), findsOneWidget);
+    expect(find.byKey(const Key('related-products-button')), findsOneWidget);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     expect(
       find.text('Cart connection is not available in this build yet.'),
@@ -334,10 +523,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      find.byKey(const Key('add-to-cart-disabled-reason')),
-      findsNothing,
-    );
+    expect(find.byKey(const Key('add-to-cart-disabled-reason')), findsNothing);
     final FilledButton initialButton = tester.widget<FilledButton>(
       find.byKey(const Key('add-to-cart-button')),
     );
@@ -477,8 +663,8 @@ void main() {
     expect(Directionality.of(productContext), TextDirection.rtl);
     expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
     final Finder heart = find.byKey(const Key('product-wishlist-button'));
-	expect(heart, findsOneWidget);
-	expect(tester.widget<IconButton>(heart).onPressed, isNotNull);
+    expect(heart, findsOneWidget);
+    expect(tester.widget<IconButton>(heart).onPressed, isNotNull);
   });
 
   testWidgets('shows product footer action text in Arabic', (
@@ -507,7 +693,9 @@ void main() {
     expect(find.text('Like'), findsNothing);
     expect(find.text('Add to bag'), findsNothing);
     expect(
-      tester.widget<SizedBox>(find.byKey(const Key('product-footer-size'))).height,
+      tester
+          .widget<SizedBox>(find.byKey(const Key('product-footer-size')))
+          .height,
       84,
     );
     final Size footerSize = tester.getSize(
@@ -525,9 +713,8 @@ void main() {
       addToCartButton.style?.backgroundColor?.resolve(<WidgetState>{}),
       Colors.transparent,
     );
-    final OutlinedBorder? addToCartShape = addToCartButton.style?.shape?.resolve(
-      <WidgetState>{},
-    );
+    final OutlinedBorder? addToCartShape = addToCartButton.style?.shape
+        ?.resolve(<WidgetState>{});
     expect(addToCartShape, isA<RoundedRectangleBorder>());
     expect(
       (addToCartShape! as RoundedRectangleBorder).borderRadius,
@@ -546,9 +733,7 @@ void main() {
     expect(
       tester
           .widget<SizedBox>(
-            find.byKey(
-              const Key('product-footer-icon-label-gap-share'),
-            ),
+            find.byKey(const Key('product-footer-icon-label-gap-share')),
           )
           .height,
       9,
@@ -565,78 +750,169 @@ void main() {
 
   for (final locale in ['ar', 'en']) {
     for (final width in [320.0, 390.0]) {
-      testWidgets('footer honors equal columns and inset at $width in $locale', (tester) async {
-        tester.view.physicalSize = Size(width, 1000);
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.resetPhysicalSize);
-        addTearDown(tester.view.resetDevicePixelRatio);
-        await tester.pumpWidget(_testApp(ProductDetailScreen(
-          productId: simpleProduct.id, repository: ProductFakeCatalogRepository(),
-          onAddToCart: (_) async {},
-        ), locale: Locale(locale), productLayout: _liveStyleProductLayout(
-          layoutJson: {'rows': [{'columns': [
-            {'width': 33.33, 'items': ['share']},
-            {'width': 33.33, 'items': ['like']},
-            {'width': 33.34, 'items': ['add_to_cart']},
-          ]}]}, footerSettings: {'icon_label_gap': 2, 'show_button_icon': true},
-        )));
-        await tester.pumpAndSettle();
-        final share = tester.getRect(find.byKey(const Key('product-footer-column-share')));
-        final like = tester.getRect(find.byKey(const Key('product-footer-column-like')));
-        final buy = tester.getRect(find.byKey(const Key('product-footer-column-add_to_cart')));
-        final button = tester.getRect(find.byKey(const Key('product-add-to-cart-size')));
-        expect(share.width, closeTo(like.width, .1));
-        expect(share.width, closeTo(buy.width, .1));
-        expect(button.left - buy.left, closeTo(4, .1));
-        expect(buy.right - button.right, closeTo(4, .1));
-        expect(button.center.dy, closeTo(buy.center.dy, .1));
-        expect(tester.takeException(), isNull);
-      });
+      testWidgets(
+        'footer honors equal columns and inset at $width in $locale',
+        (tester) async {
+          tester.view.physicalSize = Size(width, 1000);
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          await tester.pumpWidget(
+            _testApp(
+              ProductDetailScreen(
+                productId: simpleProduct.id,
+                repository: ProductFakeCatalogRepository(),
+                onAddToCart: (_) async {},
+              ),
+              locale: Locale(locale),
+              productLayout: _liveStyleProductLayout(
+                layoutJson: {
+                  'rows': [
+                    {
+                      'columns': [
+                        {
+                          'width': 33.33,
+                          'items': ['share'],
+                        },
+                        {
+                          'width': 33.33,
+                          'items': ['like'],
+                        },
+                        {
+                          'width': 33.34,
+                          'items': ['add_to_cart'],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                footerSettings: {'icon_label_gap': 2, 'show_button_icon': true},
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final share = tester.getRect(
+            find.byKey(const Key('product-footer-column-share')),
+          );
+          final like = tester.getRect(
+            find.byKey(const Key('product-footer-column-like')),
+          );
+          final buy = tester.getRect(
+            find.byKey(const Key('product-footer-column-add_to_cart')),
+          );
+          final button = tester.getRect(
+            find.byKey(const Key('product-add-to-cart-size')),
+          );
+          expect(share.width, closeTo(like.width, .1));
+          expect(share.width, closeTo(buy.width, .1));
+          expect(button.left - buy.left, closeTo(4, .1));
+          expect(buy.right - button.right, closeTo(4, .1));
+          expect(button.center.dy, closeTo(buy.center.dy, .1));
+          expect(tester.takeException(), isNull);
+        },
+      );
     }
   }
 
-  testWidgets('product footer keeps two rows and an empty column without losing purchase action', (tester) async {
-    _useTallSurface(tester);
-    ProductPurchaseSelection? captured;
-    await tester.pumpWidget(_testApp(ProductDetailScreen(
-      productId:simpleProduct.id, repository:ProductFakeCatalogRepository(),
-      onAddToCart:(selection) async { captured=selection; },
-    ),productLayout:_liveStyleProductLayout(layoutJson:{'rows':[
-      {'columns':[{'width':25,'items':[]},{'width':75,'items':['share','like']}]},
-      {'columns':[{'width':100,'items':['add_to_cart']}]},
-    ]})));
-    await tester.pumpAndSettle();
-    final share=tester.getRect(find.byKey(const Key('product-footer-column-share')));
-    final like=tester.getRect(find.byKey(const Key('product-footer-column-like')));
-    final buy=tester.getRect(find.byKey(const Key('product-footer-column-add_to_cart')));
-    expect(share.top,like.top);
-    expect(buy.top,greaterThanOrEqualTo(share.bottom));
-    expect(share.width/buy.width,closeTo(.375,.01));
-    final button=tester.getRect(find.byKey(const Key('product-add-to-cart-size')));
-    expect(button.width/buy.width,closeTo(.60,.01));
-    await tester.tap(find.byKey(const Key('add-to-cart-button')));
-    await tester.pumpAndSettle();
-    expect(captured?.quantity,1);
-    expect(tester.takeException(),isNull);
-  });
+  testWidgets(
+    'product footer keeps two rows and an empty column without losing purchase action',
+    (tester) async {
+      _useTallSurface(tester);
+      ProductPurchaseSelection? captured;
+      await tester.pumpWidget(
+        _testApp(
+          ProductDetailScreen(
+            productId: simpleProduct.id,
+            repository: ProductFakeCatalogRepository(),
+            onAddToCart: (selection) async {
+              captured = selection;
+            },
+          ),
+          productLayout: _liveStyleProductLayout(
+            layoutJson: {
+              'rows': [
+                {
+                  'columns': [
+                    {'width': 25, 'items': []},
+                    {
+                      'width': 75,
+                      'items': ['share', 'like'],
+                    },
+                  ],
+                },
+                {
+                  'columns': [
+                    {
+                      'width': 100,
+                      'items': ['add_to_cart'],
+                    },
+                  ],
+                },
+              ],
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final share = tester.getRect(
+        find.byKey(const Key('product-footer-column-share')),
+      );
+      final like = tester.getRect(
+        find.byKey(const Key('product-footer-column-like')),
+      );
+      final buy = tester.getRect(
+        find.byKey(const Key('product-footer-column-add_to_cart')),
+      );
+      expect(share.top, like.top);
+      expect(buy.top, greaterThanOrEqualTo(share.bottom));
+      expect(share.width / buy.width, closeTo(.375, .01));
+      final button = tester.getRect(
+        find.byKey(const Key('product-add-to-cart-size')),
+      );
+      expect(button.width / buy.width, closeTo(.60, .01));
+      await tester.tap(find.byKey(const Key('add-to-cart-button')));
+      await tester.pumpAndSettle();
+      expect(captured?.quantity, 1);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('product purchase button is vertically centered without adding footer height', (tester) async {
-    _useTallSurface(tester);
-    await tester.pumpWidget(_testApp(ProductDetailScreen(
-      productId: simpleProduct.id, repository: ProductFakeCatalogRepository(),
-      onAddToCart: (selection) async {},
-    ), productLayout: _liveStyleProductLayout(footerSettings: {
-      'height': 50, 'button_height': 45.59, 'icon_size': 22,
-      'font_size': 11, 'icon_label_gap': 0,
-    })));
-    await tester.pumpAndSettle();
-    final row = find.byKey(const Key('product-footer-size'));
-    final footer = find.ancestor(of: row, matching: find.byType(Material)).first;
-    final button = find.byKey(const Key('product-add-to-cart-size'));
-    expect(tester.getSize(footer).height, tester.getSize(row).height + 6);
-    expect(tester.getCenter(button).dy, closeTo(tester.getCenter(footer).dy, .01));
-    expect(tester.takeException(), isNull);
-  });
+  testWidgets(
+    'product purchase button is vertically centered without adding footer height',
+    (tester) async {
+      _useTallSurface(tester);
+      await tester.pumpWidget(
+        _testApp(
+          ProductDetailScreen(
+            productId: simpleProduct.id,
+            repository: ProductFakeCatalogRepository(),
+            onAddToCart: (selection) async {},
+          ),
+          productLayout: _liveStyleProductLayout(
+            footerSettings: {
+              'height': 50,
+              'button_height': 45.59,
+              'icon_size': 22,
+              'font_size': 11,
+              'icon_label_gap': 0,
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final row = find.byKey(const Key('product-footer-size'));
+      final footer = find
+          .ancestor(of: row, matching: find.byType(Material))
+          .first;
+      final button = find.byKey(const Key('product-add-to-cart-size'));
+      expect(tester.getSize(footer).height, tester.getSize(row).height + 6);
+      expect(
+        tester.getCenter(button).dy,
+        closeTo(tester.getCenter(footer).dy, .01),
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('centers the configured button width inside its footer column', (
     WidgetTester tester,
@@ -655,11 +931,11 @@ void main() {
               <String, dynamic>{
                 'columns': <Map<String, dynamic>>[
                   <String, dynamic>{
-				    'width': 30,
+                    'width': 30,
                     'items': <String>['share', 'like'],
                   },
                   <String, dynamic>{
-				    'width': 70,
+                    'width': 70,
                     'items': <String>['add_to_cart'],
                   },
                 ],
@@ -695,46 +971,57 @@ void main() {
       ),
     );
   });
-  testWidgets('variable product preserves outline and soft button styles', (tester) async {
+  testWidgets('variable product preserves outline and soft button styles', (
+    tester,
+  ) async {
     _useTallSurface(tester);
     for (final style in ['outline', 'soft']) {
       await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pumpWidget(_testApp(
-        ProductDetailScreen(
-          key: ValueKey(style),
-          productId: variableProduct.id,
-          repository: ProductFakeCatalogRepository(
-            product: variableProduct, variations: testVariations,
+      await tester.pumpWidget(
+        _testApp(
+          ProductDetailScreen(
+            key: ValueKey(style),
+            productId: variableProduct.id,
+            repository: ProductFakeCatalogRepository(
+              product: variableProduct,
+              variations: testVariations,
+            ),
+            onAddToCart: (selection) async {},
           ),
-          onAddToCart: (selection) async {},
+          productLayout: _liveStyleProductLayout(
+            footerSettings: {'button_style': style, 'button_color': '#123456'},
+          ),
         ),
-        productLayout: _liveStyleProductLayout(footerSettings: {
-          'button_style': style,
-          'button_color': '#123456',
-        }),
-      ));
+      );
       await tester.pumpAndSettle();
-      final button = tester.widget<FilledButton>(find.byKey(const Key('add-to-cart-button')));
+      final button = tester.widget<FilledButton>(
+        find.byKey(const Key('add-to-cart-button')),
+      );
       final color = button.style!.backgroundColor!.resolve({})!;
       expect(color.a, closeTo(style == 'outline' ? 0 : 0.14 * 0.48, 0.01));
       expect(tester.takeException(), isNull);
     }
   });
 
-  testWidgets('footer quantity changes the actual purchase selection', (tester) async {
+  testWidgets('footer quantity changes the actual purchase selection', (
+    tester,
+  ) async {
     _useTallSurface(tester);
     ProductPurchaseSelection? purchased;
-    await tester.pumpWidget(_testApp(
-      ProductDetailScreen(
-        productId: simpleProduct.id,
-        repository: ProductFakeCatalogRepository(),
-        onAddToCart: (selection) async { purchased = selection; },
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: simpleProduct.id,
+          repository: ProductFakeCatalogRepository(),
+          onAddToCart: (selection) async {
+            purchased = selection;
+          },
+        ),
+        productLayout: _liveStyleProductLayout(
+          footerSettings: {'show_price': true, 'show_quantity': true},
+        ),
       ),
-      productLayout: _liveStyleProductLayout(footerSettings: {
-        'show_price': true,
-        'show_quantity': true,
-      }),
-    ));
+    );
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('product-footer-price')), findsOneWidget);
     await tester.tap(find.byKey(const Key('quantity-increment')));
@@ -746,11 +1033,7 @@ void main() {
   });
 }
 
-Widget _testApp(
-  Widget home, {
-  Locale? locale,
-  CmsPageLayout? productLayout,
-}) {
+Widget _testApp(Widget home, {Locale? locale, CmsPageLayout? productLayout}) {
   return ProviderScope(
     overrides: [
       // Keep screen tests independent of live store appearance on Android.
@@ -768,7 +1051,10 @@ Widget _testApp(
   );
 }
 
-CmsPageLayout _liveStyleProductLayout({Map<String, dynamic>? layoutJson, Map<String, dynamic> footerSettings = const {}}) {
+CmsPageLayout _liveStyleProductLayout({
+  Map<String, dynamic>? layoutJson,
+  Map<String, dynamic> footerSettings = const {},
+}) {
   final CmsPageLayout fallback = CmsPageLayout.fallback('product');
   return CmsPageLayout(
     page: fallback.page,
@@ -828,4 +1114,3 @@ void _useTallSurface(WidgetTester tester) {
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 }
-
