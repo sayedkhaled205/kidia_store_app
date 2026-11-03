@@ -1,5 +1,10 @@
 """Apply the public login prefetch without replacing the live central builder."""
 def patch(source):
+    ready = "response = await KidiaPreviewAuth.load(previewAuthPayload || await load('home-builder'), window.fetch.bind(window));"
+    if ready in source:
+        assert source.count(ready) == 1 and source.count('let previewAuthPayload = null;') == 1, 'Unexpected prefetched auth bridge'
+        assert source.count('KidiaPreviewAuth.load(previewAuthPayload, window.fetch.bind(window)).catch(() => {});') == 1, 'Missing auth prefetch'
+        return source
     old = "response = await KidiaPreviewAuth.load(await load('home-builder'), window.fetch.bind(window));"
     assert source.count(old) == 1, 'Unexpected auth bridge version'
     source = source.replace(old, "response = await KidiaPreviewAuth.load(previewAuthPayload || await load('home-builder'), window.fetch.bind(window));")
