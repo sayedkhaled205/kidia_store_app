@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.127",
+  "version": "1.46.128",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "81be77de9b951bae36974b2401b29809e3c1fd4187e1fa4aaeca64a4e7183e37",
-      "sha256": "81be77de9b951bae36974b2401b29809e3c1fd4187e1fa4aaeca64a4e7183e37"
+      "source_sha256": "3f01cb278e2727d1ea5254ba62e8aade538a4b39d172631262fd90f137f614a0",
+      "sha256": "3f01cb278e2727d1ea5254ba62e8aade538a4b39d172631262fd90f137f614a0"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2418,8 +2418,8 @@
     "api/class-customer-account-deletion.php": {
       "source": "connectors/woocommerce/source/api/class-customer-account-deletion.php",
       "newline": "lf",
-      "source_sha256": "edc26a5ff207293bee008a7384f13eeffe1051dd7eb7a9edcd5ce31c281e3a1e",
-      "sha256": "edc26a5ff207293bee008a7384f13eeffe1051dd7eb7a9edcd5ce31c281e3a1e"
+      "source_sha256": "4a75f0be29bc209de13e3b6dd3057296cf2cf604e05a243a3c8bb82277293ebb",
+      "sha256": "4a75f0be29bc209de13e3b6dd3057296cf2cf604e05a243a3c8bb82277293ebb"
     },
     "api/class-customer-account-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-account-endpoint.php",
@@ -3006,8 +3006,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "e664a4aaf662538b01886ba7c1a861a2b955fb3b599658f3acdb7a6c85e0f39c",
-      "sha256": "e664a4aaf662538b01886ba7c1a861a2b955fb3b599658f3acdb7a6c85e0f39c"
+      "source_sha256": "9c29dc35db8df60a05ce2110e841e4bbc4f57f7782a2e67419599c0034e99c05",
+      "sha256": "9c29dc35db8df60a05ce2110e841e4bbc4f57f7782a2e67419599c0034e99c05"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -3042,8 +3042,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "ece04fa0a2f534f76b56ae150f585632153ea102b23583afeec17827f6919af5",
-      "sha256": "ece04fa0a2f534f76b56ae150f585632153ea102b23583afeec17827f6919af5"
+      "source_sha256": "5fefd760789bebd1fa605f850a7482b353d581eca534596091a459cbc2e83ab8",
+      "sha256": "5fefd760789bebd1fa605f850a7482b353d581eca534596091a459cbc2e83ab8"
     }
   },
   "baseline_release": {

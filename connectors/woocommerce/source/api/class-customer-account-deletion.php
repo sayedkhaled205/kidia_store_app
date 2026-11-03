@@ -257,7 +257,8 @@ final class MobiShop_Customer_Account_Deletion {
 		return ! is_wp_error( $result ) && true === $result;
 	}
 	public static function run_worker( int $id ): void {
-		if ( $id < 1 || is_multisite() ) return;
+		// Closing rollout also pauses accepted jobs without discarding their retry.
+		if ( $id < 1 || ! self::enabled() || is_multisite() ) return;
 		global $wpdb;
 		$lock = 'mobishop_del_' . md5( $wpdb->options . '|' . $id );
 		if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) ) ) return;

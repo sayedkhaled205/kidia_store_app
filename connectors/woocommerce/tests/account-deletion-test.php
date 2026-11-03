@@ -168,6 +168,16 @@ $gate_login=deletion_login();
 mobishop_auth_assert($deletion->availability(deletion_request($gate_login))->data['available']===false,'Unfinished erasure rollout is unavailable by default.');
 mobishop_auth_assert(is_wp_error($deletion->request_deletion(deletion_request($gate_login))),'Disabled rollout rejects POST.');
 mobishop_auth_assert(!is_wp_error($endpoint->authenticate_route(deletion_request($gate_login))),'Disabled rollout retains login.');
+foreach (array(0, 9) as $paused_phase) {
+	deletion_reset();
+	$paused_job = serialize(array('userId'=>7,'phase'=>$paused_phase,'cursor'=>0,'receiptHash'=>str_repeat('b',64)));
+	$GLOBALS['delete_options']['mobishop_account_deletion_v1_7'] = $paused_job;
+	$paused_order = new DeletionOrder(7); $GLOBALS['delete_orders'][] = $paused_order;
+	deletion_tick();
+	mobishop_auth_assert($GLOBALS['delete_options']['mobishop_account_deletion_v1_7'] === $paused_job, 'Disabled rollout cannot advance an already accepted job.');
+	mobishop_auth_assert($paused_order->owner === 7 && isset($GLOBALS['mobishop_users'][7]) && $GLOBALS['delete_count'] === 0, 'Disabled worker must retain all customer data.');
+	mobishop_auth_assert(wp_next_scheduled('mobishop_delete_customer_batch',array(7)) !== false, 'Disabled worker preserves the pending retry.');
+}
 define('MOBISHOP_ACCOUNT_DELETION_ENABLED',true); // Synthetic fixture only.
 deletion_reset();
 mobishop_auth_assert(is_wp_error($deletion->request_deletion(new DeletionRequest(array('confirmation'=>'delete-my-account')))),'Unauthenticated deletion denied.');
