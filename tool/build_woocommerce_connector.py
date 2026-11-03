@@ -111,6 +111,7 @@ def write_package(manifest: dict, files: dict[str, bytes], output: Path) -> Path
         for name, data in sorted(files.items()):
             relative_path(name)
             info = zipfile.ZipInfo(f'{SLUG}/{name}', date_time=(2026, 1, 1, 0, 0, 0))
+            info.create_system = 3  # Identical ZIP headers on Windows and CI/Linux.
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o100644 << 16
             package.writestr(info, data, compress_type=zipfile.ZIP_DEFLATED, compresslevel=9)

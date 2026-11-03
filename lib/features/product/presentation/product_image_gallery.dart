@@ -25,6 +25,56 @@ class _ProductImageGalleryState extends State<ProductImageGallery> {
   final _transform = TransformationController();
   bool _zoomed = false;
   bool _pinching = false;
+  bool _canPageFromImage = false;
+  Offset _imageDrag = Offset.zero;
+  int _dragPage = 0;
+
+  void _startImageGesture(ScaleStartDetails details) {
+    _canPageFromImage = !_zoomed && !_pinching && details.pointerCount == 1;
+    _imageDrag = Offset.zero;
+    _dragPage = _index;
+    if (details.pointerCount > 1) setState(() => _pinching = true);
+  }
+
+  void _updateImageGesture(ScaleUpdateDetails details) {
+    if (details.pointerCount > 1 || _zoomed) _canPageFromImage = false;
+    if (_canPageFromImage) _imageDrag += details.focalPointDelta;
+  }
+
+  void _endImageGesture(ScaleEndDetails details) {
+    // Scale can win a coarse single-finger move on Android even when pan is
+    // disabled. Complete that swipe here; PageView handles gestures it wins.
+    final distance = _imageDrag.dx.abs();
+    final velocity = details.velocity.pixelsPerSecond.dx;
+    final width = _pages.hasClients ? _pages.position.viewportDimension : 0.0;
+    final shouldPage =
+        details.pointerCount == 0 &&
+        _canPageFromImage &&
+        !_zoomed &&
+        !_pinching &&
+        _dragPage == _index &&
+        width > 0 &&
+        distance > _imageDrag.dy.abs() &&
+        (distance >= width * .35 || (distance >= 24 && velocity.abs() >= 500));
+    _canPageFromImage = false;
+    if (details.pointerCount == 0 && _pinching) {
+      setState(() => _pinching = false);
+    }
+    if (!shouldPage) return;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final forward = rtl ? _imageDrag.dx > 0 : _imageDrag.dx < 0;
+    final next = (_index + (forward ? 1 : -1)).clamp(
+      0,
+      widget.images.length - 1,
+    );
+    if (next != _index) {
+      _pages.animateToPage(
+        next,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
 
   @override
   void initState() {
@@ -105,14 +155,9 @@ class _ProductImageGalleryState extends State<ProductImageGallery> {
                   minScale: 1,
                   maxScale: 5,
                   panEnabled: _zoomed,
-                  onInteractionStart: (details) {
-                    if (details.pointerCount > 1) {
-                      setState(() => _pinching = true);
-                    }
-                  },
-                  onInteractionEnd: (_) {
-                    if (_pinching) setState(() => _pinching = false);
-                  },
+                  onInteractionStart: _startImageGesture,
+                  onInteractionUpdate: _updateImageGesture,
+                  onInteractionEnd: _endImageGesture,
                   child: content,
                 );
               },

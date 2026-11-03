@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
 import 'package:mobishop_store_app/features/product/presentation/product_image_gallery.dart';
@@ -13,56 +14,67 @@ void main() {
     ),
   );
 
-  for (final rtl in [false, true]) {
-    testWidgets(
-      'opens selected original, pages, and returns to product (RTL $rtl)',
-      (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Builder(
-              builder: (context) => Scaffold(
-                body: TextButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => Directionality(
-                        textDirection: rtl
-                            ? TextDirection.rtl
-                            : TextDirection.ltr,
-                        child: ProductImageGallery(
-                          images: images,
-                          productName: 'Product',
-                          initialIndex: 1,
+  for (final slop in [8.0, 18.0]) {
+    for (final rtl in [false, true]) {
+      testWidgets(
+        'opens selected original, pages, and returns to product (RTL $rtl, slop $slop)',
+        (tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  gestureSettings: DeviceGestureSettings(touchSlop: slop),
+                ),
+                child: child!,
+              ),
+              home: Builder(
+                builder: (context) => Scaffold(
+                  body: TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => Directionality(
+                          textDirection: rtl
+                              ? TextDirection.rtl
+                              : TextDirection.ltr,
+                          child: ProductImageGallery(
+                            images: images,
+                            productName: 'Product',
+                            initialIndex: 1,
+                          ),
                         ),
                       ),
                     ),
+                    child: const Text('Product page'),
                   ),
-                  child: const Text('Product page'),
                 ),
               ),
             ),
-          ),
-        );
-        await tester.tap(find.text('Product page'));
-        await _advance(tester);
-        expect(find.text('2 / 3'), findsOneWidget);
-        final image = tester.widget<AppNetworkImage>(
-          find.byKey(const Key('fullscreen-product-image-1')),
-        );
-        expect(image.imageUrl, images[1].source.toString());
-        expect(image.decodeAtDisplaySize, false);
-        await tester.drag(
-          find.byKey(const Key('fullscreen-gallery-pages')),
-          Offset(rtl ? 600 : -600, 0),
-        );
-        await _advance(tester);
-        expect(find.text('3 / 3'), findsOneWidget);
-        await tester.tap(find.byKey(const Key('product-gallery-back')));
-        await _advance(tester);
-        expect(find.text('Product page'), findsOneWidget);
-        expect(find.byType(ProductImageGallery), findsNothing);
-        expect(tester.takeException(), isNull);
-      },
-    );
+          );
+          await tester.tap(find.text('Product page'));
+          await _advance(tester);
+          expect(find.text('2 / 3'), findsOneWidget);
+          final image = tester.widget<AppNetworkImage>(
+            find.byKey(const Key('fullscreen-product-image-1')),
+          );
+          expect(image.imageUrl, images[1].source.toString());
+          expect(image.decodeAtDisplaySize, false);
+          await tester.drag(
+            find.byKey(const Key('fullscreen-gallery-pages')),
+            Offset(
+              tester.getSize(find.byType(PageView)).width * (rtl ? .7 : -.7),
+              0,
+            ),
+          );
+          await _advance(tester);
+          expect(find.text('3 / 3'), findsOneWidget);
+          await tester.tap(find.byKey(const Key('product-gallery-back')));
+          await _advance(tester);
+          expect(find.text('Product page'), findsOneWidget);
+          expect(find.byType(ProductImageGallery), findsNothing);
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
   }
 
   testWidgets(
@@ -70,6 +82,12 @@ void main() {
     (tester) async {
       await tester.pumpWidget(
         MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              gestureSettings: const DeviceGestureSettings(touchSlop: 8),
+            ),
+            child: child!,
+          ),
           home: ProductImageGallery(images: images, productName: 'Product'),
         ),
       );
@@ -89,8 +107,11 @@ void main() {
       await second.moveTo(center + const Offset(140, 0));
       await tester.pump();
       await first.up();
+      // Lifting one finger ends a Scale phase, not the complete gesture.
+      await second.moveTo(center - const Offset(200, 0));
       await second.up();
       await _advance(tester);
+      expect(find.text('1 / 3'), findsOneWidget);
       final viewer = tester.widget<InteractiveViewer>(
         find.byKey(const Key('fullscreen-image-zoom')),
       );
@@ -120,7 +141,7 @@ void main() {
       );
       await tester.drag(
         find.byKey(const Key('fullscreen-gallery-pages')),
-        const Offset(-600, 0),
+        Offset(-tester.getSize(find.byType(PageView)).width * .7, 0),
       );
       await _advance(tester);
       expect(find.text('2 / 3'), findsOneWidget);

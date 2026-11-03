@@ -21,6 +21,7 @@ class ConnectorPackagingTests(unittest.TestCase):
                 self.assertEqual(len(package.namelist()), len(self.files))
                 self.assertEqual(package.read('mobi2app-connector/api/class-website-auth-endpoint.php'), self.files['api/class-website-auth-endpoint.php'])
                 self.assertTrue(all(info.external_attr >> 16 == 0o100644 for info in package.infolist()))
+                self.assertTrue(all(info.create_system == 3 for info in package.infolist()))
                 self.assertTrue(all(name.startswith('mobi2app-connector/') for name in package.namelist()))
             release = json.loads((Path(directory)/'connector-release.json').read_text())
             self.assertEqual(release['version'], self.manifest['version'])
