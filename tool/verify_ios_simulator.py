@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import time
 import uuid
@@ -86,6 +87,7 @@ def capture_native_diagnostics(device, pid, artifact_dir, runner):
 
 
 def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sleep, encoded_design=""):
+    started = time.monotonic()
     try:
         device = str(uuid.UUID(device)).upper()
     except ValueError:
@@ -148,11 +150,50 @@ def verify(device, bundle, artifact_dir, runner=subprocess.run, sleeper=time.sle
     if signals:
         raise ValueError("Simulator startup error screen detected: " + ", ".join(signals))
     visible_storefront_labels = storefront_evidence(lines, encoded_design)
+    initial_storefront_visible = len(visible_storefront_labels) >= 2
+    screen_attempts = 1
+    # A cold debug simulator can still show LaunchScreen at the first capture.
+    # Preserve that result and observe readiness separately; never report this
+    # as a passing startup-performance measurement or accept just a live PID.
+    if not initial_storefront_visible:
+        shutil.copyfile(screenshot, artifact_dir / "launch-initial.png")
+        shutil.copyfile(recognized, artifact_dir / "launch-initial-screen-text.json")
+    while len(visible_storefront_labels) < 2 and screen_attempts < 4 and time.monotonic() - started < 90:
+        sleeper(5)
+        process = runner(["ps", "-p", pid, "-o", "command="], capture_output=True, text=True)
+        command = process.stdout.lower()
+        if process.returncode or device.lower() not in command or "/runner.app/runner" not in command:
+            raise ValueError("The iOS application exited during startup readiness inspection")
+        screenshot.unlink(missing_ok=True)
+        recognized.unlink(missing_ok=True)
+        capture = runner(["xcrun", "simctl", "io", device, "screenshot", str(screenshot)], capture_output=True, text=True)
+        if capture.returncode or not screenshot.is_file() or screenshot.read_bytes()[:8] != b"\x89PNG\r\n\x1a\n":
+            raise ValueError("The simulator startup screenshot could not be captured")
+        ocr = runner([
+            "xcrun", "swift", str(Path(__file__).with_name("ios_launch_ocr.swift")),
+            str(screenshot), str(recognized),
+        ], capture_output=True, text=True, timeout=60)
+        if ocr.returncode or not recognized.is_file():
+            raise ValueError("Simulator startup screen inspection failed")
+        try:
+            lines = json.loads(recognized.read_text(encoding="utf-8"))["lines"]
+            if not isinstance(lines, list) or not lines or any(not isinstance(line, str) for line in lines):
+                raise ValueError()
+        except (ValueError, KeyError, TypeError):
+            raise ValueError("Simulator startup screen inspection returned no usable evidence") from None
+        logs = read_log(stdout) + "\n" + read_log(stderr)
+        signals = fatal_signals(logs + "\n" + "\n".join(lines))
+        if signals:
+            raise ValueError("Simulator startup error detected: " + ", ".join(signals))
+        screen_attempts += 1
+        visible_storefront_labels = storefront_evidence(lines, encoded_design)
     if len(visible_storefront_labels) < 2:
         capture_native_diagnostics(device, pid, artifact_dir, runner)
         raise ValueError("Simulator screen has insufficient storefront evidence; a live PID or system dialog alone is insufficient")
     return {
-        "status": "startup_no_detected_fatal_errors", "duration_seconds": 12,
+        "status": "startup_no_detected_fatal_errors", "duration_seconds": round(time.monotonic() - started, 3),
+        "initial_observation_delay_seconds": 12, "initial_storefront_visible": initial_storefront_visible,
+        "screen_attempts": screen_attempts, "startup_performance_verified": False,
         "bundle_id": bundle, "device_id": device, "process_alive": True,
         "application_logs_checked": True, "flutter_output_captured": flutter_output,
         "screenshot_inspected": True, "storefront_labels_matched": len(visible_storefront_labels),

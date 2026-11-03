@@ -1071,6 +1071,8 @@ workflows:
     artifacts:
       - build/ios/simulator-artifacts/Runner-simulator.zip
       - build/ios/simulator-artifacts/launch.png
+      - build/ios/simulator-artifacts/launch-initial.png
+      - build/ios/simulator-artifacts/launch-initial-screen-text.json
       - build/ios/simulator-artifacts/launch-check.json
       - build/ios/simulator-artifacts/launch-stdout.log
       - build/ios/simulator-artifacts/launch-stderr.log

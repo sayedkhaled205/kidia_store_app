@@ -99,6 +99,8 @@ jobs:
         run: find mobishop/tests -type f -name '*-test.php' -print0 | sort -z | xargs -0 -n1 php
       - name: Check shared account boundaries and website recovery
         run: |
+          php connectors/woocommerce/tests/account-deletion-test.php
+          php connectors/woocommerce/tests/native-apple-auth-test.php
           php connectors/woocommerce/tests/auth-boundary-regressions-test.php
           php connectors/woocommerce/tests/native-auth-completion-race-test.php
           php integrations/woocommerce/kidia-auth/website-auth-logic-regression-test.php

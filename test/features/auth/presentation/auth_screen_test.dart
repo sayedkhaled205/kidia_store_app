@@ -800,6 +800,7 @@ void main() {
         tester,
         route: '/checkout',
         size: const Size(320, 640),
+        viewPadding: const FakeViewPadding(top: 186, bottom: 102),
       );
       await _startOtp(tester);
       expect(find.text('اختار طريقة تانية للدخول'), findsOneWidget);
@@ -810,6 +811,7 @@ void main() {
         find.byKey(const Key('auth-password')),
         'password',
       );
+      await tester.pumpAndSettle();
       await _tap(tester, 'auth-sign-in');
       expect(
         fixture.router.routeInformationProvider.value.uri.path,
@@ -1239,6 +1241,8 @@ Future<void> _tap(WidgetTester tester, String key, {bool settle = true}) async {
 
 Future<void> _identify(WidgetTester tester, String identifier) async {
   await tester.enterText(find.byKey(const Key('auth-email')), identifier);
+  // Finish the caret's automatic scrolling before bringing the action into view.
+  await tester.pumpAndSettle();
   await _tap(tester, 'auth-continue');
 }
 
@@ -1267,9 +1271,16 @@ class _Fixture {
     double logoScale = 1,
     NativeAuthActions? previewActions,
     Size size = const Size(390, 844),
+    FakeViewPadding? viewPadding,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
+    if (viewPadding != null) {
+      tester.view.padding = viewPadding;
+      tester.view.viewPadding = viewPadding;
+      addTearDown(tester.view.resetPadding);
+      addTearDown(tester.view.resetViewPadding);
+    }
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     actions.onCommit = auth.publish;

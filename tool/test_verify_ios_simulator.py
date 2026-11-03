@@ -114,6 +114,55 @@ class SimulatorLaunchTest(unittest.TestCase):
         self.lines = ["Store would like to send you notifications", "Notifications may include alerts", "Don't Allow", "Allow"]
         with self.assertRaisesRegex(ValueError, "insufficient storefront evidence"):
             self.check()
+        self.assertEqual(sum(command[:2] == ["xcrun", "swift"] for command in self.commands), 4)
+
+    def test_slow_debug_start_preserves_initial_capture_without_claiming_performance(self):
+        captures = []
+        def runner(command, **kwargs):
+            if command[:2] == ["xcrun", "swift"]:
+                captures.append(command)
+                self.lines = ["Store logo"] if len(captures) == 1 else ["Home", "Account"]
+            return self.runner(command, **kwargs)
+        result = self.check(runner)
+        self.assertEqual(result["screen_attempts"], 2)
+        self.assertFalse(result["initial_storefront_visible"])
+        self.assertFalse(result["startup_performance_verified"])
+        self.assertEqual(json.loads((self.artifacts / "launch-initial-screen-text.json").read_text())["lines"], ["Store logo"])
+        self.assertEqual(json.loads((self.artifacts / "launch-screen-text.json").read_text())["lines"], ["Home", "Account"])
+
+    def test_crash_after_initial_capture_is_still_a_failure(self):
+        self.lines = ["Store logo"]
+        checks = []
+        def runner(command, **kwargs):
+            if command[0] == "ps":
+                checks.append(command)
+                if len(checks) == 5:
+                    return subprocess.CompletedProcess(command, 1, "", "")
+            return self.runner(command, **kwargs)
+        with self.assertRaisesRegex(ValueError, "exited during startup"):
+            self.check(runner)
+
+    def test_late_error_screen_is_rejected_even_with_storefront_labels(self):
+        captures = []
+        def runner(command, **kwargs):
+            if command[:2] == ["xcrun", "swift"]:
+                captures.append(command)
+                self.lines = ["Store logo"] if len(captures) == 1 else ["Home", "Account", "ProviderException"]
+            return self.runner(command, **kwargs)
+        with self.assertRaisesRegex(ValueError, "startup error detected"):
+            self.check(runner)
+
+    def test_missing_retry_capture_cannot_reuse_initial_screenshot(self):
+        self.lines = ["Store logo"]
+        captures = []
+        def runner(command, **kwargs):
+            if command[:3] == ["xcrun", "simctl", "io"]:
+                captures.append(command)
+                if len(captures) == 2:
+                    return subprocess.CompletedProcess(command, 0, "", "")
+            return self.runner(command, **kwargs)
+        with self.assertRaisesRegex(ValueError, "screenshot could not be captured"):
+            self.check(runner)
 
     def test_error_screen_still_rejected_with_no_flutter_output(self):
         self.logs = ""
