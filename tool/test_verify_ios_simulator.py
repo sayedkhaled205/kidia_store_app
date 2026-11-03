@@ -5,7 +5,7 @@ import subprocess
 import tempfile
 import unittest
 
-from verify_ios_simulator import fatal_signals, storefront_evidence, verify
+from verify_ios_simulator import capture_ready, fatal_signals, storefront_evidence, verify
 
 
 class SimulatorLaunchTest(unittest.TestCase):
@@ -20,6 +20,9 @@ class SimulatorLaunchTest(unittest.TestCase):
         self.errors = ""
         self.lines = ["New arrivals", "Home", "Account"]
         self.commands = []
+        self.container = self.artifacts / "data"
+        (self.container / "Documents").mkdir(parents=True)
+        self.marker = self.container / "Documents" / "app-store-capture-ready-v1.txt"
 
     def runner(self, command, **kwargs):
         self.commands.append(command)
@@ -27,6 +30,10 @@ class SimulatorLaunchTest(unittest.TestCase):
             for flag, content in (("--stdout=", self.logs), ("--stderr=", self.errors)):
                 Path(next(part[len(flag):] for part in command if part.startswith(flag))).write_text(content, encoding="utf-8")
             return subprocess.CompletedProcess(command, 0, self.bundle + ": 12345\n", "")
+        if command[:3] == ["xcrun", "simctl", "get_app_container"]:
+            self.assertEqual(command[-1], "data")
+            self.assertEqual(kwargs["timeout"], 30)
+            return subprocess.CompletedProcess(command, 0, str(self.container), "")
         if command[0] == "ps":
             return subprocess.CompletedProcess(command, 0, "/CoreSimulator/Devices/" + self.device + "/data/Runner.app/Runner\n", "")
         if command[:3] == ["xcrun", "simctl", "io"]:
@@ -49,6 +56,73 @@ class SimulatorLaunchTest(unittest.TestCase):
         self.assertTrue(result["flutter_output_captured"])
         self.assertTrue(result["screenshot_inspected"])
         self.assertIn("live login", result["limitations"])
+
+    def test_capture_waits_for_actual_rendering_instead_of_fixed_twelve_seconds(self):
+        self.lines = ["11:14", "unrecognized Arabic"]
+        self.logs = ""
+        waits = []
+        def sleeper(seconds):
+            waits.append(seconds)
+            if len(waits) == 7:
+                self.marker.write_text(
+                    "APP_STORE_CAPTURE_READY_V1 images=5 text=9", encoding="utf-8")
+        result = verify(self.device, self.bundle, self.artifacts, self.runner, sleeper,
+                        require_capture_ready=True)
+        self.assertTrue(result["capture_content_ready"])
+        self.assertEqual(result["duration_seconds"], 21)
+
+    def test_loading_screen_is_not_accepted_even_with_navigation_labels(self):
+        with self.assertRaisesRegex(ValueError, "did not finish rendering"):
+            verify(self.device, self.bundle, self.artifacts, self.runner, lambda _: None,
+                   require_capture_ready=True)
+
+    def test_readiness_requires_decoded_images_and_text(self):
+        self.assertFalse(capture_ready("APP_STORE_CAPTURE_READY_V1 images=0 text=4"))
+        self.assertFalse(capture_ready("APP_STORE_CAPTURE_READY_V1 images=3 text=0"))
+        self.assertTrue(capture_ready("APP_STORE_CAPTURE_READY_V1 images=4 text=8"))
+
+    def test_stale_marker_and_log_marker_cannot_establish_readiness(self):
+        self.marker.write_text("APP_STORE_CAPTURE_READY_V1 images=9 text=9")
+        self.logs = "APP_STORE_CAPTURE_READY_V1 images=9 text=9"
+        waits = []
+        with self.assertRaisesRegex(ValueError, "did not finish rendering"):
+            verify(self.device, self.bundle, self.artifacts, self.runner, waits.append,
+                   require_capture_ready=True)
+        self.assertEqual(sum(waits), 126)
+        self.assertFalse(self.marker.exists())
+
+    def test_invalid_or_oversized_marker_fails_closed(self):
+        for content in ("APP_STORE_CAPTURE_READY_V1 images=0 text=8",
+                        "APP_STORE_CAPTURE_READY_V1 images=9 text=9\nunexpected",
+                        "APP_STORE_CAPTURE_READY_V1 images=9 text=9" + " " * 4096):
+            with self.subTest(content=content[:60]):
+                def sleeper(_):
+                    self.marker.write_text(content)
+                with self.assertRaisesRegex(ValueError, "did not finish rendering"):
+                    verify(self.device, self.bundle, self.artifacts, self.runner, sleeper,
+                           require_capture_ready=True)
+
+    def test_valid_marker_does_not_bypass_fatal_logs_or_system_dialog(self):
+        for failure in ("logs", "dialog"):
+            with self.subTest(failure=failure):
+                self.logs = "Unhandled Exception" if failure == "logs" else ""
+                self.lines = (["Would Like to Send You Notifications", "Allow", "Home"]
+                              if failure == "dialog" else ["Home", "Account"])
+                def sleeper(_):
+                    self.marker.write_text("APP_STORE_CAPTURE_READY_V1 images=5 text=8")
+                with self.assertRaisesRegex(ValueError, "application logs|System dialog"):
+                    verify(self.device, self.bundle, self.artifacts, self.runner, sleeper,
+                           require_capture_ready=True)
+
+    def test_missing_data_container_is_failure_before_launch(self):
+        def runner(command, **kwargs):
+            if command[:3] == ["xcrun", "simctl", "get_app_container"]:
+                return subprocess.CompletedProcess(command, 1, "", "not installed")
+            return self.runner(command, **kwargs)
+        with self.assertRaisesRegex(ValueError, "data container"):
+            verify(self.device, self.bundle, self.artifacts, runner, lambda _: None,
+                   require_capture_ready=True)
+        self.assertFalse(any(c[:3] == ["xcrun", "simctl", "launch"] for c in self.commands))
 
     def test_immediate_exit_is_failure_but_retains_screenshot(self):
         def runner(command, **kwargs):
@@ -110,7 +184,7 @@ class SimulatorLaunchTest(unittest.TestCase):
     def test_permission_dialog_alone_does_not_pass_on_pid(self):
         self.logs = ""
         self.lines = ["Store would like to send you notifications", "Notifications may include alerts", "Don't Allow", "Allow"]
-        with self.assertRaisesRegex(ValueError, "insufficient storefront evidence"):
+        with self.assertRaisesRegex(ValueError, "System dialog"):
             self.check()
 
     def test_error_screen_still_rejected_with_no_flutter_output(self):
@@ -119,7 +193,7 @@ class SimulatorLaunchTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "error screen"):
             self.check()
 
-    def test_actual_fixed_home_labels_are_recognized_behind_normal_permission_dialog(self):
+    def test_storefront_behind_permission_dialog_cannot_pass(self):
         self.logs = ""
         self.lines = ["03:25", "kidia", "Search products", "Kids Style", "Nursery", "Toys", "Newborn",
                       "Would Like to Send You Notifications", "Don't Allow", "Allow", "Shop now", "NEW ARRIVAL"]
@@ -127,8 +201,8 @@ class SimulatorLaunchTest(unittest.TestCase):
                                      {"type": "hero_slider", "data": {"items": [{"button_label": "Shop now"}]}},
                                      {"type": "product_carousel", "data": {"title": "NEW ARRIVAL"}}]}}
         encoded = base64.b64encode(json.dumps(design).encode()).decode()
-        result = self.check(encoded_design=encoded)
-        self.assertGreaterEqual(result["storefront_labels_matched"], 6)
+        with self.assertRaisesRegex(ValueError, "System dialog"):
+            self.check(encoded_design=encoded)
 
     def test_no_storefront_marker_means_inconclusive_failure_even_with_debug_banner(self):
         self.lines = ["03:25", "Settings", "Camera", "Calendar", "Photos"]
