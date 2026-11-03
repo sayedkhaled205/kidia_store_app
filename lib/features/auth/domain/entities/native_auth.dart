@@ -222,6 +222,10 @@ abstract interface class NativeExistingPhoneGoogleActions {
   Future<NativeAuthResult> googleForPhone(String expectedPhone);
 }
 
+abstract interface class NativeAppleAuthActions {
+  Future<NativeAuthResult> apple();
+}
+
 abstract interface class NativeAuthActions {
   Future<NativeAuthConfig> config();
   Future<NativeAuthIdentity> identify(String identifier);

@@ -64,23 +64,44 @@ abstract interface class NativeGoogleBackend {
   });
 }
 
+abstract interface class NativeAppleAuthSdk {
+  Future<NativeAppleProof> apple(Map<String, dynamic> config);
+}
+
+class NativeAppleProof {
+  const NativeAppleProof(this.idToken, {this.name = ''});
+  final String idToken;
+  final String name;
+}
+
+abstract interface class NativeAppleBackend {
+  Future<NativeAppleProof> authenticate();
+}
+
+typedef NativeAppleBackendFactory =
+    Future<NativeAppleBackend> Function(Map<String, dynamic> options);
+
 typedef NativePhoneBackendFactory =
     Future<NativePhoneBackend> Function(Map<String, dynamic> firebase);
 
-final class FirebaseNativeAuthSdk implements NativeAuthSdk {
+final class FirebaseNativeAuthSdk implements NativeAuthSdk, NativeAppleAuthSdk {
   FirebaseNativeAuthSdk({
     NativePhoneBackendFactory? phoneBackendFactory,
     NativeGoogleBackend? googleBackend,
+    NativeAppleBackendFactory? appleBackendFactory,
     TargetPlatform? platform,
     bool? isWeb,
   }) : _phoneBackendFactory =
            phoneBackendFactory ?? _FirebasePhoneBackend.create,
        _googleBackend = googleBackend ?? _GoogleBackend.instance,
+       _appleBackendFactory =
+           appleBackendFactory ?? _FirebaseAppleBackend.create,
        _platform = platform ?? defaultTargetPlatform,
        _isWeb = isWeb ?? kIsWeb;
 
   final NativePhoneBackendFactory _phoneBackendFactory;
   final NativeGoogleBackend _googleBackend;
+  final NativeAppleBackendFactory _appleBackendFactory;
   final TargetPlatform _platform;
   final bool _isWeb;
   int _generation = 0;
@@ -316,6 +337,39 @@ final class FirebaseNativeAuthSdk implements NativeAuthSdk {
     if (attempt != null) await attempt.backend.signOut();
   }
 
+  @override
+  Future<NativeAppleProof> apple(Map<String, dynamic> config) async {
+    _checkPlatform();
+    if (_platform != TargetPlatform.iOS) {
+      throw const NativeAuthSdkException('native-platform-required');
+    }
+    final options = _firebaseOptions(config);
+    final generation = ++_generation;
+    _phone?.cancel();
+    try {
+      final backend = await _appleBackendFactory(
+        options,
+      ).timeout(const Duration(seconds: 10));
+      _checkCurrent(generation);
+      final proof = await backend.authenticate();
+      _checkCurrent(generation);
+      if (proof.idToken.isEmpty) {
+        throw const NativeAuthSdkException('missing-id-token');
+      }
+      return proof;
+    } catch (error) {
+      if (error is FirebaseAuthException &&
+          [
+            'web-context-cancelled',
+            'canceled',
+            'cancelled',
+          ].contains(error.code)) {
+        throw const NativeAuthSdkException('cancelled');
+      }
+      throw _safeError(error);
+    }
+  }
+
   static Object _safeError(Object error) {
     if (error is NativeAuthSdkException) return error;
     if (error is FirebaseAuthException) {
@@ -447,6 +501,36 @@ final class _FirebasePhoneBackend implements NativePhoneBackend {
 
   @override
   Future<void> signOut() => _exclusive(auth.signOut);
+}
+
+final class _FirebaseAppleBackend implements NativeAppleBackend {
+  _FirebaseAppleBackend(this.backend);
+  final _FirebasePhoneBackend backend;
+
+  static Future<NativeAppleBackend> create(
+    Map<String, dynamic> options,
+  ) async => _FirebaseAppleBackend(
+    await _FirebasePhoneBackend.create(options) as _FirebasePhoneBackend,
+  );
+
+  @override
+  Future<NativeAppleProof> authenticate() => backend._exclusive(() async {
+    try {
+      final provider = AppleAuthProvider()
+        ..addScope('email')
+        ..addScope('name');
+      final credential = await backend.auth.signInWithProvider(provider);
+      final token = await credential.user?.getIdToken(true);
+      if (token == null || token.isEmpty) {
+        throw const NativeAuthSdkException('missing-id-token');
+      }
+      return NativeAppleProof(token, name: credential.user?.displayName ?? '');
+    } finally {
+      // The merchant session is committed separately. Never retain a provider
+      // session after success, failure or a late/cancelled result.
+      await backend.auth.signOut();
+    }
+  });
 }
 
 final class _GoogleBackend implements NativeGoogleBackend {

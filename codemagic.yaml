@@ -106,12 +106,15 @@ workflows:
       cocoapods: default
       ios_signing:
         provisioning_profiles:
-          - kidia_app_store_profile
+          - profile: kidia_app_store_profile
+            environment_variable: REGISTERED_IOS_PROFILE
         certificates:
           - kidia_app_store_distribution
       vars:
         IOS_BUNDLE_ID: app.mobishop.d983d98ad8afd98ad8a7d8b3d8aad988d8b1
         APPLE_TEAM_ID: AC7BML9GL6
+        IOS_SIGNING_PROFILE_UUID: 9a94234d-1cf0-4084-849e-695f3e56550c
+        IOS_SIGNING_CERTIFICATE_SHA256: d03d24813406cefc2d3c445a044c5a9808d55b24ba34b36604232ea098c2b324
         STORE_URL: https://staging.kidiastore.com
         STORE_NAME: كيديا ستور
         STORE_LOCALE: ar
@@ -121,6 +124,7 @@ workflows:
       - name: Configure and test iOS store identity
         script: |
           set -euo pipefail
+          python3 tool/verify_ios_signing.py --profile "${REGISTERED_IOS_PROFILE:?}"
           python3 tool/test_configure_ios_store.py
           python3 tool/configure_ios_store.py
           flutter pub get
@@ -175,6 +179,9 @@ workflows:
           codesign -d --entitlements :- "$APP" > /tmp/kidia-signed-entitlements.plist
           test "$(/usr/libexec/PlistBuddy -c 'Print aps-environment' /tmp/kidia-signed-entitlements.plist)" = production
           test "$(/usr/libexec/PlistBuddy -c 'Print application-identifier' /tmp/kidia-signed-entitlements.plist)" = "$APPLE_TEAM_ID.$IOS_BUNDLE_ID"
+          IPA_FILES=(build/ios/ipa/*.ipa)
+          test "${#IPA_FILES[@]}" = 1
+          python3 tool/verify_ios_signing.py --ipa "${IPA_FILES[0]}"
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
@@ -192,11 +199,14 @@ workflows:
       cocoapods: default
       ios_signing:
         provisioning_profiles:
-          - kidia_app_store_profile
+          - profile: kidia_app_store_profile
+            environment_variable: REGISTERED_IOS_PROFILE
         certificates:
           - kidia_app_store_distribution
       vars:
         APPLE_TEAM_ID: AC7BML9GL6
+        IOS_SIGNING_PROFILE_UUID: 9a94234d-1cf0-4084-849e-695f3e56550c
+        IOS_SIGNING_CERTIFICATE_SHA256: d03d24813406cefc2d3c445a044c5a9808d55b24ba34b36604232ea098c2b324
         MOBISHOP_ANDROID_BUILD_MODE: release
         MOBISHOP_REQUIRE_RELEASE_SIGNING: "true"
     cache:
@@ -233,6 +243,7 @@ workflows:
           set -euo pipefail
           test "${IOS_BUNDLE_ID:?}" = app.mobishop.d983d98ad8afd98ad8a7d8b3d8aad988d8b1
           test -n "${BUILD_VERSION_NAME:?}"
+          python3 tool/verify_ios_signing.py --profile "${REGISTERED_IOS_PROFILE:?}"
           python3 tool/test_configure_ios_store.py
           python3 tool/configure_ios_store.py
       - name: Install Flutter dependencies
@@ -314,6 +325,9 @@ workflows:
           codesign -d --entitlements :- "$APP" > /tmp/mobishop-signed-entitlements.plist
           test "$(/usr/libexec/PlistBuddy -c 'Print aps-environment' /tmp/mobishop-signed-entitlements.plist)" = production
           test "$(/usr/libexec/PlistBuddy -c 'Print application-identifier' /tmp/mobishop-signed-entitlements.plist)" = "$APPLE_TEAM_ID.$IOS_BUNDLE_ID"
+          IPA_FILES=(build/ios/ipa/*.ipa)
+          test "${#IPA_FILES[@]}" = 1
+          python3 tool/verify_ios_signing.py --ipa "${IPA_FILES[0]}"
       - name: Package application build files
         script: |
           set -euo pipefail
@@ -1041,6 +1055,17 @@ workflows:
           ditto -c -k --keepParent build/ios/iphonesimulator/Runner.app build/ios/simulator-artifacts/Runner-simulator.zip
           python3 tool/test_verify_ios_simulator.py
           python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json
+          printf 'IOS_TEST_DEVICE=%s\n' "$SIMULATOR_ID" >> "$CM_ENV"
+      - name: Exercise customer flows on the iOS engine
+        script: |
+          set -euo pipefail
+          flutter test integration_test/ios_customer_flows_test.dart \
+            -d "${IOS_TEST_DEVICE:?}" --reporter expanded \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=$STORE_NAME" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            2>&1 | tee build/ios/simulator-artifacts/customer-flow-tests.log
     artifacts:
       - build/ios/simulator-artifacts/Runner-simulator.zip
       - build/ios/simulator-artifacts/launch.png
@@ -1048,3 +1073,4 @@ workflows:
       - build/ios/simulator-artifacts/launch-stdout.log
       - build/ios/simulator-artifacts/launch-stderr.log
       - build/ios/simulator-artifacts/launch-screen-text.json
+      - build/ios/simulator-artifacts/customer-flow-tests.log

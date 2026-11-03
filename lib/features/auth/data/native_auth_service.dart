@@ -22,7 +22,8 @@ class NativeAuthService
     implements
         NativeAuthActions,
         NativePhoneEnrollmentActions,
-        NativeExistingPhoneGoogleActions {
+        NativeExistingPhoneGoogleActions,
+        NativeAppleAuthActions {
   NativeAuthService({
     required Uri storeUri,
     required Dio dio,
@@ -361,6 +362,37 @@ class NativeAuthService
   Future<NativeAuthResult> google() => _google();
 
   @override
+  Future<NativeAuthResult> apple() {
+    final attempt = _restart();
+    attempt.method = LastLoginMethod.apple;
+    return _run(attempt, () async {
+      await _wait(_sdk.cancel(), attempt);
+      final configuration = await _wait(config(), attempt);
+      final sdk = _sdk;
+      if (_legacy ||
+          _platform != 'ios' ||
+          !configuration.allows('apple') ||
+          sdk is! NativeAppleAuthSdk) {
+        throw _unavailable;
+      }
+      final proof = await _wait(
+        (sdk as NativeAppleAuthSdk).apple(_sdkConfig(configuration)),
+        attempt,
+      );
+      if (proof.idToken.isEmpty) {
+        throw const FormatException('Missing native proof.');
+      }
+      return _result(
+        await _post('apple', attempt, {
+          'id_token': proof.idToken,
+          'name': proof.name,
+        }),
+        attempt,
+      );
+    });
+  }
+
+  @override
   Future<NativeAuthResult> googleForPhone(String expectedPhone) =>
       _google(expectedPhone: expectedPhone);
 
@@ -574,6 +606,7 @@ class NativeAuthService
       'phone/enroll',
       'phone/confirm',
       'google',
+      'apple',
       'select',
       'register',
     }.contains(action)) {

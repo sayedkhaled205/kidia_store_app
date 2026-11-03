@@ -141,7 +141,8 @@ function maybe_serialize( $value ) { return is_array( $value ) || is_object( $va
 function wp_cache_delete( $key, $group = '' ) {}
 function wp_schedule_single_event( $timestamp, $hook, $args = array() ) { return true; }
 function get_user_meta( $id, $key = '', $single = false ) { $value = $GLOBALS['native_meta'][(int) $id][$key] ?? null; return $value === null ? ( $single ? '' : array() ) : $value; }
-function update_user_meta( $id, $key, $value ) { $GLOBALS['native_meta'][(int) $id][$key] = $value; return true; }
+function update_user_meta( $id, $key, $value ) { if (($GLOBALS['native_fail_meta'] ?? '') === $key) return false; $GLOBALS['native_meta'][(int) $id][$key] = $value; return true; }
+function wp_delete_user( $id, $reassign = 0 ) { unset($GLOBALS['native_users'][(int)$id], $GLOBALS['native_meta'][(int)$id]); return true; }
 function delete_user_meta( $id, $key, $value = '' ) { unset( $GLOBALS['native_meta'][(int) $id][$key] ); return true; }
 function get_current_user_id() { return $GLOBALS['website_user'] ?? 0; }
 function wp_get_session_token() { return $GLOBALS['website_session'] ?? 'browser-session'; }

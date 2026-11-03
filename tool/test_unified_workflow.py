@@ -46,7 +46,11 @@ class UnifiedWorkflowTests(unittest.TestCase):
         self.assertIn('set -euo pipefail', launch)
         # Retain the simulator binary for diagnosis even if the health gate fails.
         self.assertLess(launch.index('ditto -c -k'), launch.index('tool/verify_ios_simulator.py'))
-        self.assertEqual(launch.strip().splitlines()[-1], 'python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json')
+        self.assertIn('python3 tool/verify_ios_simulator.py --device "$SIMULATOR_ID" --report build/ios/simulator-artifacts/launch-check.json', launch)
+        flows = next(step['script'] for step in workflow['scripts'] if step['name'] == 'Exercise customer flows on the iOS engine')
+        self.assertIn('set -euo pipefail', flows)
+        self.assertIn('flutter test integration_test/ios_customer_flows_test.dart', flows)
+        self.assertIn('-d "${IOS_TEST_DEVICE:?}"', flows)
         for name in ('launch.png', 'launch-check.json', 'launch-stdout.log', 'launch-stderr.log', 'launch-screen-text.json'):
             self.assertIn('build/ios/simulator-artifacts/' + name, workflow['artifacts'])
 
@@ -62,7 +66,7 @@ class UnifiedWorkflowTests(unittest.TestCase):
             self.assertIn(f'test -s "${name}_PATH"', package)
         self.assertIn('"$PACKAGE_DIR/app-release.ipa"', package)
         self.assertEqual(steps[-1]['name'], 'Mark build successful')
-        self.assertEqual(dual['environment']['ios_signing']['provisioning_profiles'], ['kidia_app_store_profile'])
+        self.assertEqual(dual['environment']['ios_signing']['provisioning_profiles'], [{'profile': 'kidia_app_store_profile', 'environment_variable': 'REGISTERED_IOS_PROFILE'}])
         self.assertIn('testFlightInternalTestingOnly', scripts)
         # Artifact building does not publish to the public store or notify testers.
         self.assertNotIn('app_store_connect', dual['publishing'])
@@ -78,6 +82,18 @@ class UnifiedWorkflowTests(unittest.TestCase):
         self.assertIn('${IOS_BUNDLE_ID:?}', scripts)
         self.assertIn('${BUILD_VERSION_NAME:?}', scripts)
         self.assertIn('python3 tool/configure_ios_store.py', scripts)
+
+    def test_every_ipa_checks_registered_profile_and_exported_signature(self):
+        workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
+        for name, workflow in workflows.items():
+            steps = workflow['scripts']
+            builds = [i for i, step in enumerate(steps) if 'flutter build ipa ' in step['script']]
+            if not builds:
+                continue
+            before = '\n'.join(step['script'] for step in steps[:builds[0]])
+            after = '\n'.join(step['script'] for step in steps[builds[-1] + 1:])
+            self.assertTrue('tool/verify_ios_signing.py --profile ' in before or 'tool/verify_ios_signing.py --install' in before, name)
+            self.assertIn('tool/verify_ios_signing.py --ipa ', after, name)
 
     def test_android_qa_is_explicit_and_dual_releases_cannot_downgrade(self):
         workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']

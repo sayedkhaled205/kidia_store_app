@@ -17,6 +17,7 @@ import subprocess
 import tempfile
 import uuid
 import zipfile
+from native_auth_build import apple_required, from_environment
 
 
 class SigningError(ValueError):
@@ -30,6 +31,10 @@ def identity(environment):
         "profile": environment.get("IOS_SIGNING_PROFILE_UUID", ""),
         "certificate": environment.get("IOS_SIGNING_CERTIFICATE_SHA256", "").upper(),
     }
+    try:
+        fields["apple_signin_required"] = apple_required(from_environment(environment))
+    except (ValueError, TypeError):
+        raise SigningError("The native Apple authentication build configuration is invalid.") from None
     if not re.fullmatch(r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+", fields["bundle"]):
         raise SigningError("A registered iOS bundle identifier is required.")
     if not re.fullmatch(r"[A-Z0-9]{10}", fields["team"]):
@@ -67,6 +72,8 @@ def validate_profile(profile, expected, now=None):
 
 
 def validate_entitlements(entitlements, expected):
+    if expected.get("apple_signin_required") and entitlements.get("com.apple.developer.applesignin") != ["Default"]:
+        raise SigningError("The signing identity is missing the required Sign in with Apple capability.")
     if entitlements.get("application-identifier") != expected["team"] + "." + expected["bundle"]:
         raise SigningError("The signing identity belongs to another application.")
     if entitlements.get("com.apple.developer.team-identifier") != expected["team"]:

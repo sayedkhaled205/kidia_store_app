@@ -5,6 +5,7 @@ import os
 import plistlib
 import re
 from pathlib import Path
+from native_auth_build import apple_required, from_environment
 
 
 def _google_auth_settings(bundle, native_auth=None, google_services_plist=None):
@@ -92,6 +93,7 @@ def _apply_google_auth(info, settings):
 
 
 def configure(root, bundle, team, name, signing_required=True, native_auth=None, google_services_plist=None):
+    apple = apple_required(native_auth)
     if not re.fullmatch(r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+", bundle):
         raise ValueError("Invalid iOS bundle identifier")
     if signing_required and not re.fullmatch(r"[A-Z0-9]{10}", team or ""):
@@ -115,6 +117,18 @@ def configure(root, bundle, team, name, signing_required=True, native_auth=None,
     info["CFBundleDisplayName"] = name
     info["CFBundleName"] = name
     _apply_google_auth(info, _google_auth_settings(bundle, native_auth, google_services_plist))
+    entitlements_path = root / "ios/Runner/Runner.entitlements"
+    if apple and not entitlements_path.exists():
+        raise ValueError("Apple sign-in requires the Runner entitlements file")
+    if entitlements_path.exists():
+        entitlements = plistlib.loads(entitlements_path.read_bytes())
+        if not isinstance(entitlements, dict):
+            raise ValueError("Invalid Runner entitlements")
+        if apple:
+            entitlements["com.apple.developer.applesignin"] = ["Default"]
+        else:
+            entitlements.pop("com.apple.developer.applesignin", None)
+        entitlements_path.write_bytes(plistlib.dumps(entitlements, sort_keys=False))
     project.write_text(source, encoding="utf-8")
     info_path.write_bytes(plistlib.dumps(info, sort_keys=False))
 
@@ -125,8 +139,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # These values are public OAuth client settings, supplied by the store's
     # authenticated native build configuration. They do not enable a provider.
-    native_auth_json = os.environ.get("NATIVE_AUTH_CONFIG_JSON")
-    native_auth = json.loads(native_auth_json) if native_auth_json else None
+    native_auth = from_environment(os.environ)
     google_services_plist = os.environ.get("NATIVE_AUTH_GOOGLE_SERVICES_PLIST") or None
     configure(Path.cwd(), os.environ["IOS_BUNDLE_ID"],
               None if args.simulator else os.environ["APPLE_TEAM_ID"],

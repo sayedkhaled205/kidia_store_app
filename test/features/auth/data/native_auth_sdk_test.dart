@@ -82,6 +82,79 @@ class GoogleBackend implements NativeGoogleBackend {
 }
 
 void main() {
+  final appleConfig = <String, dynamic>{
+    'firebase': {
+      'apiKey': 'public-fixture',
+      'projectId': 'merchant',
+      'messagingSenderId': '123',
+      'appId': '1:123:ios:fixture',
+      'iosBundleId': 'app.fixture',
+    },
+  };
+  test('Apple rejects web and Android before opening a provider', () async {
+    for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+      final sdk = FirebaseNativeAuthSdk(
+        platform: platform,
+        isWeb: platform == TargetPlatform.iOS,
+      );
+      await expectLater(
+        sdk.apple(appleConfig),
+        throwsA(sdkError('native-platform-required')),
+      );
+    }
+  });
+  test('Apple rejects a web Firebase registration on native iOS', () async {
+    final sdk = FirebaseNativeAuthSdk(
+      platform: TargetPlatform.iOS,
+      isWeb: false,
+    );
+    await expectLater(
+      sdk.apple(config),
+      throwsA(sdkError('phone-native-registration-required')),
+    );
+  });
+  test(
+    'Apple uses configured merchant identity and ignores late cancelled proof',
+    () async {
+      final pending = Completer<NativeAppleProof>();
+      Map<String, dynamic>? received;
+      final sdk = FirebaseNativeAuthSdk(
+        platform: TargetPlatform.iOS,
+        isWeb: false,
+        appleBackendFactory: (options) async {
+          received = options;
+          return _AppleBackend(pending.future);
+        },
+      );
+      final action = sdk.apple(appleConfig);
+      final check = expectLater(action, throwsA(sdkError('cancelled')));
+      await settle();
+      expect(received!['projectId'], 'merchant');
+      await sdk.cancel();
+      pending.complete(const NativeAppleProof('late'));
+      await check;
+    },
+  );
+  test('Apple returns nonempty proof and optional first-login name', () async {
+    final sdk = FirebaseNativeAuthSdk(
+      platform: TargetPlatform.iOS,
+      isWeb: false,
+      appleBackendFactory: (_) async => _AppleBackend(
+        Future.value(const NativeAppleProof('proof', name: 'Fixture')),
+      ),
+    );
+    expect((await sdk.apple(appleConfig)).name, 'Fixture');
+    final empty = FirebaseNativeAuthSdk(
+      platform: TargetPlatform.iOS,
+      isWeb: false,
+      appleBackendFactory: (_) async =>
+          _AppleBackend(Future.value(const NativeAppleProof(''))),
+    );
+    await expectLater(
+      empty.apple(appleConfig),
+      throwsA(sdkError('missing-id-token')),
+    );
+  });
   testWidgets(
     'silent SMS start fails after twenty seconds and ignores late proof',
     (tester) async {
@@ -418,4 +491,11 @@ void main() {
       expect(google.calls, 0);
     },
   );
+}
+
+class _AppleBackend implements NativeAppleBackend {
+  _AppleBackend(this.result);
+  final Future<NativeAppleProof> result;
+  @override
+  Future<NativeAppleProof> authenticate() => result;
 }

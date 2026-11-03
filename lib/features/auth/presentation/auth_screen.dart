@@ -7,6 +7,7 @@ import 'package:mobishop_store_app/features/auth/data/website_auth_service.dart'
 import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -132,6 +133,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         [_AuthStep.identifier, _AuthStep.password].contains(_step) &&
         _expectedGooglePhone == null &&
         config?.allows('facebook') == true;
+    final showApple =
+        !kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.iOS &&
+        [_AuthStep.identifier, _AuthStep.password].contains(_step) &&
+        _expectedGooglePhone == null &&
+        config?.allows('apple') == true &&
+        _actions is NativeAppleAuthActions;
     final copy = AuthCopy.of(context);
     final lastLogin = ref.watch(lastLoginMethodProvider).value;
     final branding = ref.watch(applicationIdentity58Provider);
@@ -321,7 +329,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                     : copy.resendOtp,
                               ),
                             ),
-                          if (showGoogle || showFacebook) ...[
+                          if (showGoogle || showFacebook || showApple) ...[
                             if (hasIdentifier) ...[
                               const SizedBox(height: 28),
                               Center(
@@ -353,6 +361,63 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               textDirection: TextDirection.ltr,
                               children: [
+                                if (showApple) ...[
+                                  _loginOption(
+                                    last: lastLogin == LastLoginMethod.apple,
+                                    copy: copy,
+                                    child: Tooltip(
+                                      message: copy.continueWithApple,
+                                      child: OutlinedButton(
+                                        key: const Key('auth-apple'),
+                                        onPressed: _busy
+                                            ? null
+                                            : () => _perform((flow) async {
+                                                _otpEpoch++;
+                                                setState(() {
+                                                  _challenge = null;
+                                                  _otpTicket = null;
+                                                  _continuation = null;
+                                                  _canRetryCode = false;
+                                                });
+                                                _registrationDetailsCollected =
+                                                    false;
+                                                final result =
+                                                    await (_actions
+                                                            as NativeAppleAuthActions)
+                                                        .apple();
+                                                if (_active(flow)) {
+                                                  _identity = null;
+                                                  await _acceptResult(
+                                                    result,
+                                                    flow,
+                                                  );
+                                                }
+                                              }),
+                                        style: OutlinedButton.styleFrom(
+                                          fixedSize: const Size.square(52),
+                                          minimumSize: const Size.square(52),
+                                          padding: EdgeInsets.zero,
+                                          visualDensity: VisualDensity.standard,
+                                          tapTargetSize:
+                                              MaterialTapTargetSize.shrinkWrap,
+                                          backgroundColor: Colors.black,
+                                          foregroundColor: Colors.white,
+                                          side: BorderSide.none,
+                                          shape: const CircleBorder(),
+                                        ),
+                                        child: Semantics(
+                                          label: copy.continueWithApple,
+                                          child: const Icon(
+                                            Icons.apple,
+                                            size: 28,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (showGoogle || showFacebook)
+                                    const SizedBox(width: 12),
+                                ],
                                 if (showGoogle)
                                   _loginOption(
                                     last: lastLogin == LastLoginMethod.google,

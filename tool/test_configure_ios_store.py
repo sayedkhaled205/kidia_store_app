@@ -3,9 +3,42 @@ import tempfile
 import unittest
 from pathlib import Path
 from configure_ios_store import configure, _google_auth_settings, _apply_google_auth
+from native_auth_build import apple_required, from_environment
 
 
 class StoreIdentityTest(unittest.TestCase):
+    def test_apple_capability_requires_boolean_and_explicit_input(self):
+        for value in ([], {"methods": []}, {"methods": {"apple": "true"}}, {"methods": {"apple": 1}}):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                apple_required(value)
+        for env in ({"APPLE_SIGN_IN_REQUIRED": "true"}, {"APPLE_SIGN_IN_REQUIRED": "true", "NATIVE_AUTH_CONFIG_JSON": "{}"}, {"APPLE_SIGN_IN_REQUIRED": "1"}):
+            with self.subTest(env=env), self.assertRaises(ValueError):
+                from_environment(env)
+
+    def test_apple_entitlement_is_explicit_and_missing_file_fails_without_writes(self):
+        for enabled, has_file, signed in ((True, True, True), (False, True, True), (True, False, True), (True, True, False)):
+            with self.subTest(enabled=enabled, has_file=has_file, signed=signed), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                project = root / "ios/Runner.xcodeproj/project.pbxproj"
+                project.parent.mkdir(parents=True)
+                project.write_text("PRODUCT_BUNDLE_IDENTIFIER = com.example.mobishopStoreApp;\n" * 3)
+                info = root / "ios/Runner/Info.plist"
+                info.parent.mkdir()
+                info.write_bytes(plistlib.dumps({"CFBundleVersion": "$(FLUTTER_BUILD_NUMBER)"}))
+                entitlement = info.parent / "Runner.entitlements"
+                if has_file:
+                    entitlement.write_bytes(plistlib.dumps({"aps-environment": "production", "com.apple.developer.applesignin": ["Default"]}))
+                before = (project.read_bytes(), info.read_bytes())
+                if not has_file:
+                    with self.assertRaises(ValueError):
+                        configure(root, "com.customer.store", "AB12345678", "Store", native_auth={"methods": {"apple": enabled}})
+                    self.assertEqual((project.read_bytes(), info.read_bytes()), before)
+                    continue
+                configure(root, "com.customer.store", "AB12345678" if signed else None, "Store", signing_required=signed, native_auth={"methods": {"apple": enabled}})
+                result = plistlib.loads(entitlement.read_bytes())
+                self.assertEqual(result["aps-environment"], "production")
+                self.assertEqual(result.get("com.apple.developer.applesignin"), ["Default"] if enabled else None)
+
     def test_identity_and_reject_partial_rewrite(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

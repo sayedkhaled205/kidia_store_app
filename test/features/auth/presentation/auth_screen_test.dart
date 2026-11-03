@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +25,33 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets(
+    'Apple shown on iOS only and name-only registration has no password step',
+    (tester) async {
+      final actions = _Actions()
+        ..configuration = const NativeAuthConfig(methods: {'apple': true});
+      await _Fixture(
+        actions: actions,
+      ).pump(tester, lastLogin: LastLoginMethod.apple);
+      expect(find.byKey(const Key('auth-apple')), findsOneWidget);
+      await _tap(tester, 'auth-apple');
+      expect(find.byKey(const Key('auth-create-password')), findsNothing);
+      expect(find.byKey(const Key('auth-confirm-password')), findsNothing);
+      expect(actions.googleCalls, 0);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+  testWidgets('Android never offers Apple from a misconfigured server', (
+    tester,
+  ) async {
+    final actions = _Actions()
+      ..configuration = const NativeAuthConfig(
+        methods: {'email_password': true, 'apple': true},
+      );
+    await _Fixture(actions: actions).pump(tester);
+    expect(find.byKey(const Key('auth-apple')), findsNothing);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
   testWidgets('equal social circles and last successful method hint', (
     tester,
   ) async {
@@ -1341,7 +1369,18 @@ class _EnrollmentActions extends _Actions
   }
 }
 
-class _Actions implements NativeAuthActions, NativeExistingPhoneGoogleActions {
+class _Actions
+    implements
+        NativeAuthActions,
+        NativeExistingPhoneGoogleActions,
+        NativeAppleAuthActions {
+  @override
+  Future<NativeAuthResult> apple() async => const NativeAuthResult(
+    status: NativeAuthStatus.registrationRequired,
+    ticket: 'apple-fixture',
+    fields: ['name'],
+    expiresIn: 300,
+  );
   NativeAuthConfig configuration = const NativeAuthConfig(
     phoneCountryCode: '20',
     supportsExpectedPhoneGoogle: true,

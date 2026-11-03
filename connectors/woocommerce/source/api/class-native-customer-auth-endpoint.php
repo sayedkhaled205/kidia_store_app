@@ -28,7 +28,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 	}
 
 	public function routes(): void {
-		foreach ( array( 'config' => 'config', 'identify' => 'identify', 'password' => 'password', 'phone/verify' => 'phone_verify', 'phone/enroll' => 'phone_enroll', 'phone/confirm' => 'phone_confirm', 'select' => 'select', 'google' => 'google', 'register' => 'register_customer' ) as $route => $method ) {
+		foreach ( array( 'config' => 'config', 'identify' => 'identify', 'password' => 'password', 'phone/verify' => 'phone_verify', 'phone/enroll' => 'phone_enroll', 'phone/confirm' => 'phone_confirm', 'select' => 'select', 'google' => 'google', 'apple' => 'apple', 'register' => 'register_customer' ) as $route => $method ) {
 			register_rest_route( 'mobishop/v1', '/auth/native/' . $route, array(
 				'methods' => $route === 'config' ? 'GET' : 'POST',
 				'callback' => array( $this, $method ), 'permission_callback' => '__return_true',
@@ -64,6 +64,10 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$enabled = wp_is_using_https();
 		$phone = $phone && function_exists( 'openssl_verify' );
 		$google = $google && function_exists( 'openssl_verify' );
+		$apple = $platform === 'ios' && ! empty( $s['apple_enabled'] ) && ! empty( $s['ios_apple_native_ready'] )
+			&& function_exists( 'openssl_verify' ) && preg_match( '/^[a-z][a-z0-9-]{3,62}$/', $project )
+			&& ( $f['projectId'] ?? '' ) === $project && ! empty( $f['apiKey'] ) && ! empty( $f['messagingSenderId'] )
+			&& ! empty( $f['iosBundleId'] ) && strpos( (string) ( $f['appId'] ?? '' ), ':ios:' ) !== false;
 		return array(
 			'version' => 1, 'enabled' => $enabled,
 			'privacy_policy_url' => function_exists( 'get_privacy_policy_url' ) ? esc_url_raw( get_privacy_policy_url(), array( 'https' ) ) : '',
@@ -71,11 +75,11 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			'supports_expected_phone_google' => $enabled && $google,
 			'phone_country_code' => preg_replace( '/\D/', '', (string) ( $s['phone_country_code'] ?? '' ) ),
 			'methods' => array( 'password' => $enabled, 'email_password' => $enabled, 'phone_password' => $enabled,
-				'phone_otp' => $enabled && (bool) $phone, 'google' => $enabled && $google,
+				'phone_otp' => $enabled && (bool) $phone, 'google' => $enabled && $google, 'apple' => $enabled && $apple,
 				'facebook' => $enabled && class_exists( 'MobiShop_Website_Auth_Endpoint' ) && ( new MobiShop_Website_Auth_Endpoint( $this->issue, $this->allowed ) )->facebook_enabled(),
 				'registration' => $enabled && $this->registration_enabled() && ( $phone || ( $google && ! $this->requires_phone() ) ),
 				'email_registration' => $enabled && $this->registration_enabled() && (bool) $phone ),
-			'firebase' => $enabled && $phone ? $f : null,
+			'firebase' => $enabled && ( $phone || $apple ) ? $f : null,
 			'google' => $enabled && $google ? array( 'server_client_id' => $client, 'ios_client_id' => $platform === 'ios' ? $g['ios_client_id'] : null ) : null,
 		);
 	}
@@ -346,6 +350,73 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return $this->finish( $user, $row['proof'], $request );
 	}
 
+	/** Apple/Firebase subject is a separate identity, never a Google subject or an email match. */
+	public function apple( WP_REST_Request $request ) {
+		if ( $error = $this->guard( 'apple', 20 ) ) return $error;
+		$c = $this->capabilities( $request );
+		if ( ! $c['methods']['apple'] ) return $this->error( 'unavailable', 503 );
+		if ( ! $this->verifier( $request ) ) return $this->error( 'invalid_proof', 401 );
+		$claims = $this->jwt( $request->get_param( 'id_token' ), self::FIREBASE_CERTS );
+		$project = $c['firebase']['projectId'];
+		$subjects = $claims['firebase']['identities']['apple.com'] ?? null;
+		if ( ! $claims || ! $this->fresh( $claims, true ) || strlen( $claims['sub'] ) > 128
+			|| ( $claims['aud'] ?? null ) !== $project || ( $claims['iss'] ?? null ) !== 'https://securetoken.google.com/' . $project
+			|| ( $claims['firebase']['sign_in_provider'] ?? null ) !== 'apple.com'
+			|| ! is_array( $subjects ) || count( $subjects ) !== 1 || ! is_string( $subjects[0] )
+			|| ! preg_match( '/^[A-Za-z0-9._-]{1,255}$/D', $subjects[0] ) ) return $this->error( 'invalid_proof', 401 );
+		$proof = array( 'kind' => 'apple', 'apple_subject' => $subjects[0], 'firebase_project' => $project, 'firebase_uid' => $claims['sub'] );
+		$id = $this->apple_user( $proof );
+		if ( $id ) {
+			$user = get_user_by( 'id', $id );
+			return $this->proof_allows( $user, $proof ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
+		}
+		if ( ( $claims['email_verified'] ?? null ) !== true || ! is_string( $claims['email'] ?? null ) || ! is_email( $claims['email'] ) ) return $this->error( 'invalid_proof', 401 );
+		$proof['email'] = strtolower( $claims['email'] );
+		// A matching email alone must not transfer an existing merchant account.
+		if ( email_exists( $proof['email'] ) ) return $this->error( 'additional_proof_required', 403 );
+		return $this->registration_ticket( $proof, $request );
+	}
+
+	private function apple_key( array $proof ): string {
+		return hash( 'sha256', $proof['firebase_project'] . '|' . $proof['apple_subject'] );
+	}
+	private function apple_user( array $proof ): int {
+		$ids = get_users( array( 'meta_key' => '_mobishop_apple_identity', 'meta_value' => $this->apple_key( $proof ), 'fields' => 'ID', 'number' => 2 ) );
+		return count( $ids ) > 1 ? -1 : ( count( $ids ) === 1 ? (int) $ids[0] : 0 );
+	}
+	private function register_apple( array $row, string $ticket, WP_REST_Request $request ) {
+		$p = $row['proof'];
+		$c = $this->capabilities( $request );
+		if ( ! $c['methods']['apple'] || ! $this->registration_enabled() || $c['firebase']['projectId'] !== $p['firebase_project'] ) return $this->error( 'registration_disabled', 403 );
+		$name = sanitize_text_field( (string) $request->get_param( 'name' ) );
+		if ( $name === '' || strlen( $name ) > 120 ) return $this->error( 'invalid_profile', 400 );
+		$locks = $this->lock( array( 'apple-link:' . $this->apple_key( $p ), 'register:email:' . $p['email'] ) );
+		if ( $locks === null ) return $this->error( 'retry', 409 );
+		try {
+			if ( $this->apple_user( $p ) || email_exists( $p['email'] ) ) return $this->error( 'account_conflict', 409 );
+			if ( ! $this->consume( $ticket, $row ) ) return $this->error( 'invalid_ticket', 401 );
+			$id = wp_insert_user( array( 'user_login' => 'mobile_' . bin2hex( random_bytes( 12 ) ), 'user_email' => $p['email'],
+				'user_pass' => wp_generate_password( 64, true, true ), 'display_name' => $name, 'first_name' => $name, 'role' => 'customer' ) );
+			if ( is_wp_error( $id ) ) return $this->error( 'registration_failed', 409 );
+			update_user_meta( $id, '_mobishop_apple_identity', $this->apple_key( $p ) );
+			update_user_meta( $id, '_mobishop_apple_subject', $p['apple_subject'] );
+			update_user_meta( $id, '_mobishop_firebase_project', $p['firebase_project'] );
+			update_user_meta( $id, '_mobishop_firebase_uid', $p['firebase_uid'] );
+			update_user_meta( $id, '_mobishop_app_registered_at', gmdate( 'c' ) );
+			// Apple proves the account; shipping contact details belong at checkout.
+			delete_user_meta( $id, 'kidia_phone_setup_required' );
+			$user = get_user_by( 'id', (int) $id );
+			if ( ! $this->proof_allows( $user, $p ) || get_user_meta( $id, '_mobishop_apple_subject', true ) !== $p['apple_subject'] ) {
+				// Only roll back the customer created above, still under both locks.
+				// A partial identity write must not reserve this email forever.
+				if ( ! function_exists( 'wp_delete_user' ) ) require_once ABSPATH . 'wp-admin/includes/user.php';
+				wp_delete_user( (int) $id, 0 );
+				return $this->error( 'registration_failed', 503 );
+			}
+			return $this->finish( $user, $p, $request );
+		} finally { $this->unlock( $locks ); }
+	}
+
 	private function complete_proof( array $users, array $proof, WP_REST_Request $request ) {
 		if ( count( $users ) > 50 ) return $this->error( 'account_conflict', 409 );
 		if ( ! $users ) return $this->registration_ticket( $proof, $request );
@@ -365,7 +436,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401 );
 		if ( ! empty( $proof['expected_phone'] ) && ! $this->google_matches_phone( $user, $proof['expected_phone'] ) ) return $this->error( 'google_phone_mismatch', 403 );
 		if ( $proof['kind'] === 'google_phone' && $this->google_user( $proof['sub'] ) !== $user->ID && ! $this->link_google( $user->ID, $proof['sub'] ) ) return $this->error( 'account_conflict', 409 );
-		if ( ! $this->ready( $user ) ) {
+		if ( $proof['kind'] !== 'apple' && ! $this->ready( $user ) ) {
 			$proof['user_id'] = (int) $user->ID;
 			return $this->registration_ticket( $proof, $request );
 		}
@@ -399,9 +470,9 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 	private function registration_ticket( array $proof, WP_REST_Request $request ) {
 		if ( empty( $proof['user_id'] ) && ! $this->registration_enabled() ) return $this->error( 'registration_disabled', 403 );
 		if ( $proof['kind'] === 'password' && empty( $proof['user_id'] ) ) return $this->error( 'invalid_proof', 401 );
-		$fields = array( 'name', 'password' );
+		$fields = $proof['kind'] === 'apple' ? array( 'name' ) : array( 'name', 'password' );
 		// Email-originated registrations always require a verified phone, even if require_phone is globally off.
-		if ( empty( $proof['phone'] ) && empty( $proof['unverified_phone'] ) ) $fields[] = 'phone';
+		if ( $proof['kind'] !== 'apple' && empty( $proof['phone'] ) && empty( $proof['unverified_phone'] ) ) $fields[] = 'phone';
 		$ticket = $this->ticket( 'register', $proof, $request );
 		if ( is_wp_error( $ticket ) ) return $ticket;
 		return $this->response( array( 'status' => 'registration_required', 'ticket' => $ticket, 'expires_in' => self::TTL, 'fields' => $fields ) );
@@ -413,6 +484,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$row = $this->read_ticket( $ticket, $request );
 		if ( ! $row || $row['purpose'] !== 'register' ) return $this->error( 'invalid_ticket', 401 );
 		$p = $row['proof'];
+		if ( $p['kind'] === 'apple' ) return $this->register_apple( $row, $ticket, $request );
 		$name = sanitize_text_field( (string) $request->get_param( 'name' ) );
 		$password = $request->get_param( 'password' );
 		$email = strtolower( trim( (string) $request->get_param( 'email' ) ) );
@@ -496,6 +568,9 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( ! empty( $p['user_id'] ) && (int) $p['user_id'] !== $user->ID ) return false;
 		if ( in_array( $p['kind'], array( 'phone', 'google_phone' ), true ) ) return $this->user_phone( $user, $p['phone'] ) === $p['phone'];
 		if ( $p['kind'] === 'google' ) return $this->google_user( $p['sub'] ) === $user->ID;
+		if ( $p['kind'] === 'apple' ) return $this->apple_user( $p ) === $user->ID
+			&& get_user_meta( $user->ID, '_mobishop_firebase_project', true ) === $p['firebase_project']
+			&& get_user_meta( $user->ID, '_mobishop_firebase_uid', true ) === $p['firebase_uid'];
 		return in_array( (int) $user->ID, $p['ids'] ?? array(), true )
 			&& hash_equals( (string) ( $p['password_versions'][ $user->ID ] ?? '' ), $this->hash( $user->user_pass ) )
 			&& ( $p['identity']['kind'] === 'phone' ? $this->user_phone( $user, $p['identity']['identifier'], true ) === $p['identity']['identifier'] : strtolower( $user->user_email ) === $p['identity']['identifier'] );

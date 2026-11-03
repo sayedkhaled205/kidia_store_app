@@ -37,6 +37,29 @@ class SigningIsolationTest(unittest.TestCase):
     def test_accepts_exact_store_profile(self):
         validate_profile(self.profile, self.expected, self.now)
 
+    def test_apple_required_checks_profile_and_signed_entitlements(self):
+        env = dict(self.env, NATIVE_AUTH_CONFIG_JSON='{"methods":{"apple":true}}', APPLE_SIGN_IN_REQUIRED="true")
+        expected = identity(env)
+        self.assertTrue(expected["apple_signin_required"])
+        for bad in (None, [], "Default", ["Other"]):
+            with self.subTest(bad=bad):
+                self.profile["Entitlements"]["com.apple.developer.applesignin"] = bad
+                with self.assertRaises(SigningError):
+                    validate_profile(self.profile, expected, self.now)
+                with self.assertRaises(SigningError):
+                    validate_entitlements(self.profile["Entitlements"], expected)
+        self.profile["Entitlements"]["com.apple.developer.applesignin"] = ["Default"]
+        validate_profile(self.profile, expected, self.now)
+        validate_entitlements(self.profile["Entitlements"], expected)
+
+    def test_required_apple_configuration_cannot_be_omitted_or_malformed(self):
+        for raw in (None, '{}', '{"methods":{"apple":false}}', '{"methods":{"apple":"true"}}', 'not-json'):
+            env = dict(self.env, APPLE_SIGN_IN_REQUIRED="true")
+            if raw is not None:
+                env["NATIVE_AUTH_CONFIG_JSON"] = raw
+            with self.subTest(raw=raw), self.assertRaises(SigningError):
+                identity(env)
+
     def test_other_customer_profile_rejected(self):
         self.profile["Entitlements"]["application-identifier"] = "AB12345678.com.another.store"
         with self.assertRaises(SigningError):

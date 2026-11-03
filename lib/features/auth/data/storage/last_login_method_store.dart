@@ -3,7 +3,7 @@ import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 
-enum LastLoginMethod { google, facebook, phone, email }
+enum LastLoginMethod { google, facebook, phone, email, apple }
 
 /// A local display hint only: never an identifier, credential or proof.
 class LastLoginMethodStore {

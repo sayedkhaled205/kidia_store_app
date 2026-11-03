@@ -23,6 +23,7 @@ const _configuration = {
     'phone_password': true,
     'phone_otp': true,
     'google': true,
+    'apple': true,
     'registration': true,
   },
   'firebase': {'projectId': 'merchant-fixture'},
@@ -79,6 +80,68 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
+  test(
+    'Apple commits once and remembers only the accepted merchant session',
+    () async {
+      final h = _Harness(platform: 'ios');
+      final result = await h.service.apple();
+      expect(h.posts('apple').single.data['id_token'], 'apple-proof');
+      expect(h.store.writes, 0);
+      expect(h.remembered, isEmpty);
+      await h.service.commit(result);
+      await h.service.commit(result);
+      expect(h.store.writes, 1);
+      expect(h.remembered, [LastLoginMethod.apple]);
+    },
+  );
+  test(
+    'Apple is unavailable on Android even when server advertises it',
+    () async {
+      final h = _Harness();
+      await expectLater(h.service.apple(), throwsA(_failure));
+      expect(h.posts('apple'), isEmpty);
+      expect(h.sdk.appleCalls, 0);
+    },
+  );
+  test('Cancelled Apple cannot commit a late provider response', () async {
+    final h = _Harness(platform: 'ios');
+    final pending = Completer<NativeAppleProof>();
+    h.sdk.appleResult = pending.future;
+    final action = h.service.apple();
+    final failure = expectLater(action, throwsA(_failure));
+    await _until(() => h.sdk.appleCalls == 1);
+    await h.service.cancel();
+    pending.complete(const NativeAppleProof('late-proof'));
+    await failure;
+    await _flush();
+    expect(h.posts('apple'), isEmpty);
+    expect(h.store.writes, 0);
+  });
+  test(
+    'Apple registration can collect name without password or phone',
+    () async {
+      final h = _Harness(platform: 'ios');
+      h.handler = (r) async => h.response(
+        r,
+        r.uri.path.endsWith('/apple')
+            ? {
+                ..._registration(),
+                'fields': ['name'],
+              }
+            : _session(),
+      );
+      final start = await h.service.apple();
+      final result = await h.service.register(
+        start.ticket,
+        name: 'Fixture',
+        password: '',
+      );
+      expect(h.sdk.challenges, isEmpty);
+      expect(h.posts('register').single.data['password'], '');
+      await h.service.commit(result);
+      expect(h.remembered, [LastLoginMethod.apple]);
+    },
+  );
   test(
     'cancelled or provisional sign-in never changes the last method',
     () async {
@@ -813,7 +876,10 @@ void main() {
 }
 
 class _Harness {
-  _Harness({Future<void> Function(AuthSession)? onCommitted}) {
+  _Harness({
+    Future<void> Function(AuthSession)? onCommitted,
+    String platform = 'android',
+  }) {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (request, callback) async {
@@ -846,7 +912,7 @@ class _Harness {
       rememberMethod: (method) async {
         remembered.add(method);
       },
-      platform: 'android',
+      platform: platform,
     );
   }
   final remembered = <LastLoginMethod>[];
@@ -868,7 +934,16 @@ class _Harness {
       .toList();
 }
 
-class _Sdk implements NativeAuthSdk {
+class _Sdk implements NativeAuthSdk, NativeAppleAuthSdk {
+  int appleCalls = 0;
+  Future<NativeAppleProof>? appleResult;
+  @override
+  Future<NativeAppleProof> apple(Map<String, dynamic> config) async {
+    appleCalls++;
+    return appleResult ??
+        Future.value(const NativeAppleProof('apple-proof', name: 'Fixture'));
+  }
+
   final automatic = <Completer<String?>>[];
   final challenges = <NativePhoneChallenge>[];
   final resendTokens = <int?>[];

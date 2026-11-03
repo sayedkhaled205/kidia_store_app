@@ -14,6 +14,8 @@ class AuthCopy {
   final bool isArabic;
   final AppUiControls controls;
   String get lastLogin => isArabic ? 'آخر تسجيل دخول' : 'Last login';
+  String get continueWithApple =>
+      isArabic ? 'المتابعة باستخدام Apple' : 'Continue with Apple';
 
   String get identifier =>
       isArabic ? 'رقم الموبايل أو البريد الإلكتروني' : 'Phone number or email';
