@@ -45,6 +45,17 @@ class ConnectorPackagingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Required connector module missing'):
             builder.verify_features(files, self.manifest)
 
+    def test_deletion_module_and_loader_must_ship_together(self):
+        files = dict(self.files)
+        del files['api/class-customer-account-deletion.php']
+        with self.assertRaisesRegex(ValueError, 'Required connector module missing'):
+            builder.verify_features(files, self.manifest)
+        files = dict(self.files)
+        key = 'includes/class-mobishop.php'
+        files[key] = files[key].replace(b'class-customer-account-deletion.php', b'missing.php')
+        with self.assertRaisesRegex(ValueError, 'registration missing'):
+            builder.verify_features(files, self.manifest)
+
     def test_central_modules_must_ship_together(self):
         for missing in ['includes/central/bootstrap.php', 'includes/central/store-data.php', 'includes/central/kidia-push-admin-bridge.php', 'includes/central/kidia-builder-application-bridge.php']:
             with self.subTest(missing=missing):
