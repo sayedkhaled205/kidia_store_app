@@ -51,6 +51,9 @@ class UnifiedWorkflowTests(unittest.TestCase):
         self.assertIn('set -euo pipefail', flows)
         self.assertIn('flutter test integration_test/ios_customer_flows_test.dart', flows)
         self.assertIn('-d "${IOS_TEST_DEVICE:?}"', flows)
+        # Synthetic fixtures assume their own layout; only the launch check
+        # above must use the live merchant's compiled design and services.
+        self.assertNotIn('--dart-define', flows)
         for name in ('launch.png', 'launch-check.json', 'launch-stdout.log', 'launch-stderr.log', 'launch-screen-text.json'):
             self.assertIn('build/ios/simulator-artifacts/' + name, workflow['artifacts'])
 

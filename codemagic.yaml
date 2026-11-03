@@ -1061,10 +1061,6 @@ workflows:
           set -euo pipefail
           flutter test integration_test/ios_customer_flows_test.dart \
             -d "${IOS_TEST_DEVICE:?}" --reporter expanded \
-            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
-            --dart-define="STORE_URL=$STORE_URL" \
-            --dart-define="STORE_NAME=$STORE_NAME" \
-            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
             2>&1 | tee build/ios/simulator-artifacts/customer-flow-tests.log
     artifacts:
       - build/ios/simulator-artifacts/Runner-simulator.zip
