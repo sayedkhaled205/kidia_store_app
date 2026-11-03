@@ -6,6 +6,10 @@ final class MobiShop_Customer_Account_Deletion {
 	private const PREFIX = 'mobishop_account_deletion_v1_';
 	private const HOOK = 'mobishop_delete_customer_batch';
 	private const LIMIT = 50;
+	private const RECEIPT_PREFIX = 'mobishop_deletion_receipt_v1_';
+	private const RECEIPT_CURSOR = 'mobishop_deletion_receipt_cursor_v1';
+	private const RECEIPT_TTL = 2592000;
+	private const RECEIPT_CLEANUP = 'mobishop_cleanup_deletion_receipts';
 	private MobiShop_Customer_Auth_Endpoint $auth;
 
 	public function __construct() { $this->auth = new MobiShop_Customer_Auth_Endpoint(); }
@@ -16,6 +20,8 @@ final class MobiShop_Customer_Account_Deletion {
 		} );
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
 		add_action( self::HOOK, array( self::class, 'run_worker' ) );
+		add_action( self::RECEIPT_CLEANUP, array( self::class, 'cleanup_receipts' ) );
+		if ( ! wp_next_scheduled( self::RECEIPT_CLEANUP, array() ) ) wp_schedule_event( time() + 60, 'mobishop_deletion_minute', self::RECEIPT_CLEANUP, array() );
 		add_filter( 'wp_authenticate_user', array( self::class, 'deny_pending_login' ), 99 );
 		add_filter( 'determine_current_user', array( self::class, 'deny_pending_cookie' ), 99 );
 	}
@@ -24,6 +30,30 @@ final class MobiShop_Customer_Account_Deletion {
 			array( 'methods' => 'GET', 'callback' => array( $this, 'availability' ), 'permission_callback' => array( $this->auth, 'authenticate_route' ) ),
 			array( 'methods' => 'POST', 'callback' => array( $this, 'request_deletion' ), 'permission_callback' => array( $this->auth, 'authenticate_route' ) ),
 		) );
+		register_rest_route( 'mobishop/v1', '/customer/account/deletion/status', array(
+			array( 'methods' => 'POST', 'callback' => array( $this, 'deletion_status' ), 'permission_callback' => '__return_true' ),
+		) );
+	}
+	public function deletion_status( WP_REST_Request $request ) {
+		if ( ! is_ssl() ) return self::error( 'https', 400 );
+		$body = $request->get_json_params();
+		$receipt = is_array( $body ) ? ( $body['receipt'] ?? '' ) : '';
+		if ( ! self::valid_receipt( $receipt ) ) return self::response( array( 'status' => 'unknown' ) );
+		try {
+			$hash = self::receipt_hash( $receipt );
+			$record = self::receipt_record( $hash );
+			$status = 'unknown';
+			if ( $record ) {
+				$job = self::job( (int) $record['userId'] );
+				if ( $job && ( $job['receiptHash'] ?? '' ) === $hash && (int) $job['phase'] >= 0 ) $status = 'pending';
+				else {
+					// Completion is saved before job removal; do not use a stale prepared receipt.
+					$record = self::receipt_record( $hash );
+					if ( $record && 'completed' === $record['status'] && $record['expires'] > time() ) $status = 'completed';
+				}
+			}
+			return self::response( array( 'status' => $status ) );
+		} catch ( Throwable $error ) { return self::error( 'status_unavailable', 503 ); }
 	}
 	public function availability( WP_REST_Request $request ) {
 		$auth = $this->auth->authenticate_route( $request );
@@ -36,28 +66,38 @@ final class MobiShop_Customer_Account_Deletion {
 	}
 	public function request_deletion( WP_REST_Request $request ) {
 		if ( ! self::enabled() || is_multisite() ) return self::error( 'unavailable', 409 );
-		if ( 'delete-my-account' !== $request->get_param( 'confirmation' ) ) return self::error( 'confirmation', 400 );
+		if ( ! is_ssl() ) return self::error( 'https', 400 );
+		$body = $request->get_json_params();
+		if ( ! is_array( $body ) || 'delete-my-account' !== ( $body['confirmation'] ?? '' ) ) return self::error( 'confirmation', 400 );
+		$receipt = $body['receipt'] ?? '';
+		if ( ! self::valid_receipt( $receipt ) ) return self::error( 'receipt', 400 );
+		$hash = self::receipt_hash( $receipt );
 		// No caller-supplied user ID, email or WordPress admin cookie is a target.
 		$prepared = 0;
 		try {
-			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( &$prepared ): bool {
+			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( &$prepared, $hash ): bool {
 				// Fail before revocation: the customer must retain access to resolve
 				// an in-flight checkout, including when its ledger cannot be read.
 				if ( self::has_pending_payment( $id ) ) return false;
+				// Never reset an accepted job or overwrite another account's capability.
+				if ( self::job( $id ) ) return false;
+				$record = array( 'userId' => $id, 'status' => 'prepared', 'expires' => time() + self::RECEIPT_TTL );
+				if ( ! add_option( self::RECEIPT_PREFIX . $hash, $record, '', false ) ) return false;
 				$prepared = $id;
-				self::save( array( 'userId' => $id, 'phase' => -1, 'cursor' => time() ) );
+				if ( self::receipt_record( $hash ) !== $record ) throw new RuntimeException( 'Receipt persistence unavailable' );
+				self::save( array( 'userId' => $id, 'phase' => -1, 'cursor' => time(), 'receiptHash' => $hash ) );
 				return self::schedule( $id );
 			} );
 			if ( is_wp_error( $result ) ) {
-				self::cancel_prepared( $prepared );
+				self::cancel_prepared( $prepared, $hash );
 				return $result;
 			}
 			// Only a VERIFIED session revocation opens the worker's ready barrier.
-			self::save( array( 'userId' => $prepared, 'phase' => 0, 'cursor' => 0 ) );
+			self::save( array( 'userId' => $prepared, 'phase' => 0, 'cursor' => 0, 'receiptHash' => $hash ) );
 			if ( class_exists( 'WP_Session_Tokens' ) ) WP_Session_Tokens::get_instance( $prepared )->destroy_all();
 			return self::response( array( 'status' => 'pending', 'user_id' => $prepared ), 202 );
 		} catch ( Throwable $error ) {
-			self::cancel_prepared( $prepared );
+			self::cancel_prepared( $prepared, $hash );
 			return self::error( 'unavailable', 503 );
 		}
 	}
@@ -103,11 +143,15 @@ final class MobiShop_Customer_Account_Deletion {
 		}
 		if ( self::job( (int) $job['userId'] ) !== $job ) throw new RuntimeException( 'Job verification unavailable' );
 	}
-	private static function cancel_prepared( int $id ): void {
+	private static function cancel_prepared( int $id, string $hash ): void {
 		if ( $id < 1 ) return;
 		try {
 			$job = self::job( $id );
-			if ( $job && -1 === (int) $job['phase'] ) self::remove_job( $job );
+			if ( $job && -1 === (int) $job['phase'] && ( $job['receiptHash'] ?? '' ) === $hash ) self::remove_job( $job );
+			if ( ! self::job( $id ) ) {
+				$record = self::receipt_record( $hash );
+				if ( $record && (int) $record['userId'] === $id && 'prepared' === $record['status'] ) self::remove_receipt( $hash, $record );
+			}
 		} catch ( Throwable $error ) { /* The prepared job expires without deleting customer data. */ }
 	}
 	private static function remove_job( array $job ): void {
@@ -123,6 +167,51 @@ final class MobiShop_Customer_Account_Deletion {
 		wp_cache_delete( 'alloptions', 'options' );
 		wp_cache_delete( 'notoptions', 'options' );
 	}
+
+	private static function valid_receipt( $value ): bool {
+		return is_string( $value ) && (bool) preg_match( '/^[a-f0-9]{64}$/', $value );
+	}
+	private static function receipt_hash( string $receipt ): string {
+		global $wpdb;
+		return hash_hmac( 'sha256', home_url( '/' ) . '|' . $wpdb->options . '|' . $receipt, wp_salt( 'auth' ) );
+	}
+	private static function receipt_record( string $hash ): ?array {
+		$raw = self::raw_option( self::RECEIPT_PREFIX . $hash );
+		if ( null === $raw ) return null;
+		$value = maybe_unserialize( $raw );
+		if ( ! is_array( $value ) || ! isset( $value['userId'], $value['status'], $value['expires'] ) || (int) $value['userId'] < 1 || ! in_array( $value['status'], array( 'prepared', 'completed' ), true ) ) throw new RuntimeException( 'Invalid receipt' );
+		return $value;
+	}
+	private static function remove_receipt( string $hash, array $record ): void {
+		global $wpdb;
+		$key = self::RECEIPT_PREFIX . $hash;
+		$removed = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND BINARY option_value = BINARY %s", $key, maybe_serialize( $record ) ) );
+		self::clear_option_cache( $key );
+		if ( false === $removed ) throw new RuntimeException( 'Receipt cleanup unavailable' );
+	}
+	/** Keyset pagination prevents the first live receipts from starving older results. */
+	public static function cleanup_receipts(): void {
+		global $wpdb;
+		try {
+			$cursor = self::raw_option( self::RECEIPT_CURSOR ) ?? '';
+			$wpdb->last_error = '';
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name > %s ORDER BY option_name ASC LIMIT 20", $wpdb->esc_like( self::RECEIPT_PREFIX ) . '%', $cursor ), ARRAY_A );
+			if ( ! is_array( $rows ) || $wpdb->last_error ) return;
+			foreach ( $rows as $row ) {
+				$hash = substr( $row['option_name'], strlen( self::RECEIPT_PREFIX ) );
+				$record = self::receipt_record( $hash );
+				if ( ! $record || $record['expires'] > time() ) continue;
+				$job = self::job( (int) $record['userId'] );
+				if ( $job && ( $job['receiptHash'] ?? '' ) === $hash ) continue;
+				self::remove_receipt( $hash, $record );
+			}
+			$next = count( $rows ) < 20 ? '' : end( $rows )['option_name'];
+			$old = self::raw_option( self::RECEIPT_CURSOR );
+			if ( null === $old ) add_option( self::RECEIPT_CURSOR, $next, '', false );
+			else self::cas( self::RECEIPT_CURSOR, $old, $next );
+		} catch ( Throwable $error ) { /* Next scheduled batch retries safely. */ }
+	}
+
 	private static function cas( string $key, string $old, string $new ): bool {
 		if ( $old === $new ) return self::raw_option( $key ) === $old;
 		global $wpdb;
@@ -176,14 +265,23 @@ final class MobiShop_Customer_Account_Deletion {
 			$job = self::job( $id );
 			if ( ! $job ) { wp_clear_scheduled_hook( self::HOOK, array( $id ) ); return; }
 			if ( -1 === (int) $job['phase'] && time() - (int) $job['cursor'] > 900 ) {
-				self::remove_job( $job ); // Interrupted request never became accepted.
+				self::cancel_prepared( $id, $job['receiptHash'] ?? '' ); // Interrupted request never became accepted.
 				return;
 			}
 			if ( ! self::schedule( $id ) || -1 === (int) $job['phase'] ) return;
 			$user = get_user_by( 'id', $id );
 			if ( $user && ! self::ordinary_customer( $user ) ) return;
 			if ( self::has_pending_payment( $id ) ) return;
-			if ( self::process( $job ) ) self::remove_job( $job );
+			if ( self::process( $job ) ) {
+				$hash = $job['receiptHash'] ?? '';
+				if ( $hash !== '' ) {
+					$record = self::receipt_record( $hash );
+					if ( ! $record || (int) $record['userId'] !== $id ) throw new RuntimeException( 'Deletion receipt changed' );
+					$completed = array( 'userId' => $id, 'status' => 'completed', 'expires' => time() + self::RECEIPT_TTL );
+					if ( ! self::cas( self::RECEIPT_PREFIX . $hash, maybe_serialize( $record ), maybe_serialize( $completed ) ) ) throw new RuntimeException( 'Completion receipt unavailable' );
+				}
+				self::remove_job( $job );
+			}
 			else self::save( $job );
 		} catch ( Throwable $error ) {
 			// The pre-scheduled retry handles transient failures and process crashes.

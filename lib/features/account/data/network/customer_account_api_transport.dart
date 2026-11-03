@@ -22,7 +22,11 @@ abstract interface class CustomerAccountApiTransport {
 
 abstract interface class CustomerAccountDeletionTransport {
   Future<Map<String, dynamic>> deletionAvailability();
-  Future<Map<String, dynamic>> requestDeletion();
+  Future<Map<String, dynamic>> requestDeletion({
+    required String receipt,
+    required String expectedSession,
+  });
+  Future<Map<String, dynamic>> deletionStatus(String receipt);
 }
 
 enum CustomerAccountTransportFailureKind {
@@ -96,11 +100,23 @@ class DioCustomerAccountApiTransport
       _request('customer/account/deletion', method: 'GET', authenticated: true);
 
   @override
-  Future<Map<String, dynamic>> requestDeletion() => _request(
+  Future<Map<String, dynamic>> requestDeletion({
+    required String receipt,
+    required String expectedSession,
+  }) => _request(
     'customer/account/deletion',
     method: 'POST',
     authenticated: true,
-    body: const {'confirmation': 'delete-my-account'},
+    expectedSession: expectedSession,
+    body: {'confirmation': 'delete-my-account', 'receipt': receipt},
+  );
+
+  @override
+  Future<Map<String, dynamic>> deletionStatus(String receipt) => _request(
+    'customer/account/deletion/status',
+    method: 'POST',
+    authenticated: false,
+    body: {'receipt': receipt},
   );
 
   @override
@@ -144,8 +160,16 @@ class DioCustomerAccountApiTransport
     required String method,
     required bool authenticated,
     Map<String, String>? body,
+    String? expectedSession,
   }) async {
     final String token = authenticated ? authTokenReader()?.trim() ?? '' : '';
+    if (expectedSession != null && token != expectedSession) {
+      throw const CustomerAccountTransportException(
+        kind: CustomerAccountTransportFailureKind.unauthorized,
+        message: 'The account changed before confirmation was sent.',
+        statusCode: 401,
+      );
+    }
     if (authenticated && token.isEmpty) {
       throw const CustomerAccountTransportException(
         kind: CustomerAccountTransportFailureKind.unauthorized,

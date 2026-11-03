@@ -11,11 +11,17 @@ $GLOBALS['delete_comments'] = array();
 $GLOBALS['delete_flags'] = array();
 $GLOBALS['delete_count'] = 0;
 function maybe_serialize( $value ) { return is_array( $value ) ? serialize( $value ) : $value; }
+function is_ssl() { return empty($GLOBALS['delete_flags']['http']); }
+class DeletionRequest extends WP_REST_Request {
+  public function get_json_params() { return array('confirmation'=>$this->get_param('confirmation'),'receipt'=>$this->get_param('receipt')); }
+}
+class QueryOnlyDeletionRequest extends DeletionRequest { public function get_json_params(){return null;} }
 function get_current_user_id(){return 7;}
 function rest_sanitize_boolean($v){return (bool)$v;}
 function rest_ensure_response($v){return new WP_REST_Response($v);}
 function is_multisite() { return ! empty( $GLOBALS['delete_flags']['multisite'] ); }
 function add_option( $key, $value, $deprecated = '', $autoload = false ) {
+	if(isset($GLOBALS['delete_claim_race']) && str_starts_with($key,'mobishop_deletion_receipt_v1_')) { $f=$GLOBALS['delete_claim_race'];unset($GLOBALS['delete_claim_race']);$f($key); }
 	if ( isset( $GLOBALS['delete_options'][$key] ) || ! empty( $GLOBALS['delete_flags']['save'] ) ) return false;
 	$GLOBALS['delete_options'][$key] = maybe_serialize( $value ); return true;
 }
@@ -75,6 +81,8 @@ class DeletionDb extends Mobishop_WPDB_Stub {
 	function get_var(string $q) {
 		$this->last_error=''; [$sql,$a]=$this->prepared[$q]??array($q,array());
 		if(str_starts_with($sql,'SELECT option_value')) {
+			if(isset($GLOBALS['delete_before_option_read'])) { $f=$GLOBALS['delete_before_option_read'];$f($a[0]); }
+			if(!empty($GLOBALS['delete_flags']['receipt-read-once'])&&str_starts_with($a[0],'mobishop_deletion_receipt_v1_')) {unset($GLOBALS['delete_flags']['receipt-read-once']);$this->last_error='Synthetic one-time receipt read failure';return null;}
 			if(!empty($GLOBALS['delete_flags']['read'])) {$this->last_error='Synthetic option failure'; return null;}
 			return $GLOBALS['delete_options'][$a[0]]??null;
 		}
@@ -88,6 +96,11 @@ class DeletionDb extends Mobishop_WPDB_Stub {
 	}
 	function get_results(string $q,$output) {
 		$this->last_error=''; [$sql,$a]=$this->prepared[$q]??array($q,array());
+		if(str_starts_with($sql,'SELECT option_name, option_value')) {
+			$rows=array();$options=$GLOBALS['delete_options'];ksort($options);
+			foreach($options as $key=>$value) if(str_starts_with($key,'mobishop_deletion_receipt_v1_')&&$key>$a[1]) $rows[]=array('option_name'=>$key,'option_value'=>$value);
+			return array_slice($rows,0,20);
+		}
 		if(str_starts_with($sql,'SELECT id, coupon_id')) {
 			if(!empty($GLOBALS['delete_flags']['campaign-read'])) {$this->last_error='Synthetic read failure'; return null;}
 			return array_slice(array_values(array_filter($GLOBALS['delete_tables']['wp_mobishop_recovery_campaigns'],fn($r)=>$r['user_id']===$a[0])),0,50);
@@ -135,10 +148,10 @@ function deletion_reset() {
 }
 function deletion_login() {
 	$GLOBALS['mobishop_transients']=array();
-	return $GLOBALS['endpoint']->login(new WP_REST_Request(array('email'=>'customer@example.com','password'=>'correct-password')));
+	return $GLOBALS['endpoint']->login(new DeletionRequest(array('email'=>'customer@example.com','password'=>'correct-password')));
 }
 function deletion_request($login,$params=array()) {
-	return new WP_REST_Request(array_merge(array('confirmation'=>'delete-my-account'),$params),array('X-MobiShop-Session'=>$login->data['token']));
+	return new DeletionRequest(array_merge(array('confirmation'=>'delete-my-account','receipt'=>str_repeat('a',64)),$params),array('X-MobiShop-Session'=>$login->data['token']));
 }
 function deletion_tick() {
 	foreach($GLOBALS['delete_cron'] as $t=>&$hooks) unset($hooks['mobishop_delete_customer_batch']);
@@ -157,7 +170,7 @@ mobishop_auth_assert(is_wp_error($deletion->request_deletion(deletion_request($g
 mobishop_auth_assert(!is_wp_error($endpoint->authenticate_route(deletion_request($gate_login))),'Disabled rollout retains login.');
 define('MOBISHOP_ACCOUNT_DELETION_ENABLED',true); // Synthetic fixture only.
 deletion_reset();
-mobishop_auth_assert(is_wp_error($deletion->request_deletion(new WP_REST_Request(array('confirmation'=>'delete-my-account')))),'Unauthenticated deletion denied.');
+mobishop_auth_assert(is_wp_error($deletion->request_deletion(new DeletionRequest(array('confirmation'=>'delete-my-account')))),'Unauthenticated deletion denied.');
 foreach(array('confirmation','multisite','schedule','save','revocation','stale','future','revoked-before-lock','promoted-before-lock') as $case) {
 	deletion_reset();$login=deletion_login();$params=array();
 	if($case==='confirmation')$params['confirmation']='anything';
@@ -238,14 +251,14 @@ mobishop_auth_assert(unserialize($GLOBALS['delete_options']['mobishop_push_devic
 
 // A request resolves its customer before deletion, then reaches the writer late.
 $push=new MobiShop_Push_Service();
-$late=$push->register_device(new WP_REST_Request(array('token'=>str_repeat('x',32),'platform'=>'android','client_id'=>'fixture')));
+$late=$push->register_device(new DeletionRequest(array('token'=>str_repeat('x',32),'platform'=>'android','client_id'=>'fixture')));
 mobishop_auth_assert(is_wp_error($late),'A pending customer cannot reinsert a device after its cleanup phase.');
 MobiShop_Push_Service::append_history(array('id'=>'late-mine','target_user_id'=>7));
 MobiShop_Push_Service::append_history(array('id'=>'other-event','target_user_id'=>8));
 mobishop_auth_assert(unserialize($GLOBALS['delete_options']['mobishop_push_history'])===array(array('id'=>'other-event','target_user_id'=>8)),'Late personal history is rejected; other customer update survives.');
 for($i=0;$i<25&&MobiShop_Customer_Account_Deletion::is_pending(7);$i++)deletion_tick();
 mobishop_auth_assert(!isset($GLOBALS['mobishop_users'][7]),'Deletion completes after race test.');
-mobishop_auth_assert(is_wp_error($push->register_device(new WP_REST_Request(array('token'=>str_repeat('z',32),'platform'=>'android')))),'A resolved but now deleted customer cannot register again.');
+mobishop_auth_assert(is_wp_error($push->register_device(new DeletionRequest(array('token'=>str_repeat('z',32),'platform'=>'android')))),'A resolved but now deleted customer cannot register again.');
 MobiShop_Push_Service::append_history(array('id'=>'after-deletion','target_user_id'=>7));
 mobishop_auth_assert(count(unserialize($GLOBALS['delete_options']['mobishop_push_history']))===1,'Removed customer data cannot reappear after job completion.');
 
@@ -259,4 +272,50 @@ foreach(array('missing-key','active-payment') as $case){
 	mobishop_auth_assert(!is_wp_error($endpoint->authenticate_route(deletion_request($login))),"Customer can resolve checkout: $case");
 	mobishop_auth_assert(empty($GLOBALS['delete_options']),"No accepted/pending deletion: $case");
 }
-fwrite(STDOUT,"Self-deletion ownership, reauthentication, revocation race, bounded cleanup, review erasure, rollout and payment preflight tests passed.\n");
+function deletion_status($receipt=null){global $deletion;return $deletion->deletion_status(new DeletionRequest(array('receipt'=>$receipt??str_repeat('a',64))));}
+function receipt_key(){return 'mobishop_deletion_receipt_v1_'.hash_hmac('sha256',home_url('/').'|wp_options|'.str_repeat('a',64),wp_salt('auth'));}
+deletion_reset();$login=deletion_login();
+$r=$deletion->request_deletion(deletion_request($login));
+mobishop_auth_assert($r->status===202 && deletion_status()->data===array('status'=>'pending'),'Lost acceptance response recovers without a session or customer data.');
+mobishop_auth_assert(str_contains(deletion_status()->headers['Cache-Control'],'no-store'),'Receipt response is not cached.');
+$job=maybe_unserialize($GLOBALS['delete_options']['mobishop_account_deletion_v1_7']);$job['phase']=9;
+$GLOBALS['delete_options']['mobishop_account_deletion_v1_7']=serialize($job);
+$GLOBALS['delete_flags']['save']=true;deletion_tick();
+mobishop_auth_assert(!isset($GLOBALS['mobishop_users'][7])&&MobiShop_Customer_Account_Deletion::is_pending(7),'Lost completion write keeps retry job after user erasure.');
+mobishop_auth_assert(deletion_status()->data['status']==='pending','Incomplete receipt never reports success.');
+unset($GLOBALS['delete_flags']['save']);deletion_tick();
+mobishop_auth_assert(deletion_status()->data===array('status'=>'completed')&&!MobiShop_Customer_Account_Deletion::is_pending(7),'Completion is durable before job removal.');
+mobishop_auth_assert(deletion_status(str_repeat('b',64))->data['status']==='unknown','Unrelated capability learns nothing.');
+$GLOBALS['delete_flags']['read']=true;
+mobishop_auth_assert(deletion_status()->get_error_data()['status']===503,'Database errors are not a false unknown result.');
+unset($GLOBALS['delete_flags']['read']);$GLOBALS['delete_flags']['http']=true;
+mobishop_auth_assert(is_wp_error(deletion_status()),'Receipt bearer must use HTTPS.');unset($GLOBALS['delete_flags']['http']);
+mobishop_auth_assert($deletion->deletion_status(new QueryOnlyDeletionRequest(array('receipt'=>str_repeat('a',64))))->data['status']==='unknown','Query-string receipt is ignored.');
+deletion_reset();$login=deletion_login();
+$GLOBALS['delete_claim_race']=function($key){$GLOBALS['delete_options'][$key]=serialize(array('userId'=>8,'status'=>'completed','expires'=>time()-1));};
+mobishop_auth_assert(is_wp_error($deletion->request_deletion(deletion_request($login))),'Atomic capability claim cannot overwrite another owner, including expired completion.');
+mobishop_auth_assert(!is_wp_error($endpoint->authenticate_route(deletion_request($login))),'Claim collision preserves session.');
+mobishop_auth_assert(maybe_unserialize($GLOBALS['delete_options'][receipt_key()])['userId']===8,'Concurrent owner remains unchanged.');
+deletion_reset();$login=deletion_login();$GLOBALS['delete_flags']['schedule']=true;
+mobishop_auth_assert(is_wp_error($deletion->request_deletion(deletion_request($login)))&&deletion_status()->data['status']==='unknown','Failed preparation is not accepted and can be retried.');
+deletion_reset();
+$login=deletion_login();$GLOBALS['delete_flags']['receipt-read-once']=true;
+mobishop_auth_assert(is_wp_error($deletion->request_deletion(deletion_request($login))),'Transient receipt verification failure rejects preparation.');
+mobishop_auth_assert(empty($GLOBALS['delete_options']),'Failed receipt verification cleans its own atomic claim.');
+mobishop_auth_assert($deletion->request_deletion(deletion_request($login))->status===202,'Same receipt can retry after failed preparation.');
+$GLOBALS['delete_before_option_read']=function($key){
+	if($key!=='mobishop_account_deletion_v1_7')return;
+	unset($GLOBALS['delete_before_option_read']);
+	$job=maybe_unserialize($GLOBALS['delete_options'][$key]);$job['phase']=9;$GLOBALS['delete_options'][$key]=serialize($job);
+	deletion_tick();
+};
+mobishop_auth_assert(deletion_status()->data['status']==='completed','Completion between receipt and job reads cannot become unknown.');
+
+deletion_reset();
+for($i=0;$i<25;$i++) $GLOBALS['delete_options']['mobishop_deletion_receipt_v1_'.sprintf('%064x',$i)]=serialize(array('userId'=>7,'status'=>'completed','expires'=>time()+100));
+$expired='mobishop_deletion_receipt_v1_'.str_repeat('f',64);$GLOBALS['delete_options'][$expired]=serialize(array('userId'=>7,'status'=>'completed','expires'=>time()-1));
+MobiShop_Customer_Account_Deletion::cleanup_receipts();
+mobishop_auth_assert(isset($GLOBALS['delete_options'][$expired]),'Cleanup first batch is bounded.');
+MobiShop_Customer_Account_Deletion::cleanup_receipts();
+mobishop_auth_assert(!isset($GLOBALS['delete_options'][$expired]),'Keyset cursor reaches expiry past first 20 live receipts.');
+fwrite(STDOUT,"Self-deletion ownership, recovery receipts, race protection, completion failure, cleanup, revocation and rollout tests passed.\n");

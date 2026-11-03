@@ -18,7 +18,9 @@ class StorePrivacyLink extends ConsumerWidget {
   final bool useStorePolicy;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uri = useStorePolicy ? ref.watch(storePrivacyProvider) : policyUri;
+    final uri = useStorePolicy
+        ? ref.watch(storePrivacyProvider) ?? policyUri
+        : policyUri;
     if (uri == null) return const SizedBox.shrink();
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     return TextButton(

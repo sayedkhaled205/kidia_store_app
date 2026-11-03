@@ -160,7 +160,7 @@ class _WordmarkImageState extends State<WordmarkImage> {
   }
 
   void _resolve() {
-    _stream?.removeListener(_listener!);
+    _detachStream();
     final generation = ++_generation;
     _failed = false;
     _image?.dispose();
@@ -220,9 +220,22 @@ class _WordmarkImageState extends State<WordmarkImage> {
   @override
   void dispose() {
     _generation++;
-    _stream?.removeListener(_listener!);
+    _detachStream();
     _image?.dispose();
     super.dispose();
+  }
+
+  void _detachStream() {
+    final stream = _stream;
+    final listener = _listener;
+    if (stream == null || listener == null) return;
+    // Match Flutter Image's disposal behavior: a pending cached request may
+    // fail after the screen closes. Do not turn that expected failure into an
+    // unhandled error or retain the widget with a permanent stream listener.
+    stream.completer?.addEphemeralErrorListener((error, stack) {});
+    stream.removeListener(listener);
+    _stream = null;
+    _listener = null;
   }
 
   @override

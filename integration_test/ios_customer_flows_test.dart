@@ -1,4 +1,4 @@
-// Exercise the same customer-flow contracts on the native iOS engine.
+// Exercise the same customer-flow contracts on native Android and iOS engines.
 // Fixtures deliberately avoid changing live customers, orders or payments.
 import 'package:integration_test/integration_test.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,6 +20,8 @@ import '../test/features/checkout/presentation/checkout_screen_test.dart'
     as checkout;
 import '../test/features/auth/presentation/checkout_auth_gate_test.dart'
     as checkout_auth;
+import '../test/features/page_builder/presentation/wordmark_bounds_test.dart'
+    as wordmark;
 
 void main() {
   // The native test runner may have already initialized this binding.
@@ -46,4 +48,5 @@ void main() {
   catalog.main();
   checkout.main();
   checkout_auth.main();
+  wordmark.main();
 }

@@ -542,7 +542,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               ?.copyWith(color: MobiShopColors.textSecondary),
                         ),
                         StorePrivacyLink(
-                          useStorePolicy: false,
                           policyUri: safeStorePrivacyUri(
                             config?.privacyPolicyUrl ?? '',
                           ),

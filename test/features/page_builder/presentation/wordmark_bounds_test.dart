@@ -1,9 +1,39 @@
 import 'dart:typed_data';
+import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/shared/widgets/common/wordmark_image.dart';
 
 void main() {
+  testWidgets('late logo failure after closing screen is handled', (
+    tester,
+  ) async {
+    final old = CachedNetworkImageProvider.defaultCacheManager;
+    final cache = _DelayedLogoCache();
+    CachedNetworkImageProvider.defaultCacheManager = cache;
+    addTearDown(() {
+      CachedNetworkImageProvider.defaultCacheManager = old;
+      PaintingBinding.instance.imageCache.clear();
+    });
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: WordmarkImage(
+          url: 'https://merchant.example/late-logo.png',
+          width: 160,
+          height: 56,
+          fallback: Text('Merchant'),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pumpWidget(const SizedBox.shrink());
+    cache.result.addError(StateError('Synthetic late image failure'));
+    await cache.result.close();
+    await tester.pump();
+    expect(tester.takeException(), null);
+  });
   test(
     'saved logo geometry has the same aspect in native and web previews',
     () {
@@ -71,4 +101,17 @@ void main() {
       );
     }
   });
+}
+
+class _DelayedLogoCache implements BaseCacheManager {
+  final result = StreamController<FileResponse>();
+  @override
+  Stream<FileResponse> getFileStream(
+    String url, {
+    String? key,
+    Map<String, String>? headers,
+    bool withProgress = false,
+  }) => result.stream;
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

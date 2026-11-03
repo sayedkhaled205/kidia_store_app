@@ -1,4 +1,6 @@
 import '../../../support/viewport_rotation.dart';
+import 'package:mobishop_store_app/core/app_design/store_privacy_provider.dart';
+import 'package:mobishop_store_app/features/account/presentation/store_privacy_link.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:flutter/material.dart';
@@ -70,6 +72,13 @@ void main() {
       ProviderScope(
         overrides: [
           authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
+          storePrivacyProvider.overrideWithValue(
+            Uri.parse('https://merchant.example/privacy'),
+          ),
+          storePrivacyLauncherProvider.overrideWithValue((uri) async {
+            expect(uri.toString(), 'https://merchant.example/privacy');
+            return true;
+          }),
           cmsPageLayoutProvider('account').overrideWith(
             (ref) async => CmsPageLayout.fromJson({
               'page': 'account',
@@ -97,6 +106,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('تسجيل الدخول / إنشاء حساب'), findsOneWidget);
     expect(find.text('Sign in / Create account'), findsNothing);
+    expect(find.byKey(const Key('store-privacy-policy')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('store-privacy-policy')));
     expect(tester.takeException(), isNull);
   });
   for (final selected in ['orders', 'addresses', 'profile', 'support']) {
