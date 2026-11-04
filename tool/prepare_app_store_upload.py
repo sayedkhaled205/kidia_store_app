@@ -18,6 +18,7 @@ def prepare(environment, output, opener=urlopen, verifier=verify_ipa):
     # leave an old publishable IPA behind, even if a runner restores its cache.
     output.unlink(missing_ok=True)
     expected = identity(environment)
+    print('Upload identity configuration validated.', flush=True)
     url = environment.get('SIGNED_IPA_URL', '')
     parsed = urlsplit(url)
     checksum = environment.get('SIGNED_IPA_SHA256', '')
@@ -40,6 +41,7 @@ def prepare(environment, output, opener=urlopen, verifier=verify_ipa):
                 digest.update(chunk)
         if digest.hexdigest() != checksum:
             raise SigningError('The application artifact differs from the verified build.')
+        print('Existing artifact checksum validated.', flush=True)
         with zipfile.ZipFile(candidate) as archive:
             names = [n for n in archive.namelist()
                      if re.fullmatch(r'Payload/[^/]+\.app/Info\.plist', n)]
@@ -50,6 +52,7 @@ def prepare(environment, output, opener=urlopen, verifier=verify_ipa):
                 or str(info.get('CFBundleVersion')) != version
                 or info.get('CFBundleShortVersionString') != environment.get('BUILD_VERSION_NAME')):
             raise SigningError('The application identity or version differs from the requested upload.')
+        print('Application version validated; checking the exported signature.', flush=True)
         verifier(candidate, environment)
         output.parent.mkdir(parents=True, exist_ok=True)
         # Do not expose an upload artifact until signature and merchant checks pass.
@@ -62,6 +65,10 @@ def prepare(environment, output, opener=urlopen, verifier=verify_ipa):
 if __name__ == '__main__':
     try:
         prepare(os.environ, Path('build/verified-testflight/app.ipa'))
-    except Exception:
+    except SigningError as error:
+        # SigningError messages are fixed validation text without secret inputs.
+        raise SystemExit(str(error)) from None
+    except Exception as error:
         # Provider download URLs can contain temporary credentials; never echo them.
-        raise SystemExit('The existing application could not be verified for upload.') from None
+        raise SystemExit('The existing application could not be verified for upload ('
+                         + type(error).__name__ + ').') from None
