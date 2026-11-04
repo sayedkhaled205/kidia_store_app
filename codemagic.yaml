@@ -46,6 +46,11 @@ workflows:
         PUSH_CONFIG_URL: https://kidiastore.com/wp-json/mobishop/v1/push/config
         APP_ICON_URL: https://kidiastore.com/wp-content/uploads/2025/05/cropped-cropped-2-6-1.png
     scripts:
+      - name: Freeze public iOS sign-in configuration
+        script: |
+          set -euo pipefail
+          python3 tool/test_prepare_native_auth_build.py
+          python3 tool/prepare_native_auth_build.py --output "${CM_BUILD_DIR:?}/.mobishop-native-auth.json" --env-file "${CM_ENV:?}"
       - name: Configure and test iOS store identity
         script: |
           set -euo pipefail
@@ -141,6 +146,11 @@ workflows:
         PUSH_CONFIG_URL: https://staging.kidiastore.com/wp-json/mobishop/v1/push/config
         APP_ICON_URL: https://staging.kidiastore.com/wp-content/uploads/2025/05/cropped-cropped-2-6-1.png
     scripts:
+      - name: Freeze public iOS sign-in configuration
+        script: |
+          set -euo pipefail
+          python3 tool/test_prepare_native_auth_build.py
+          python3 tool/prepare_native_auth_build.py --output "${CM_BUILD_DIR:?}/.mobishop-native-auth.json" --env-file "${CM_ENV:?}"
       - name: Configure and test iOS store identity
         script: |
           set -euo pipefail
@@ -235,6 +245,11 @@ workflows:
         - $HOME/Library/Caches/CocoaPods
         - $HOME/.gradle/caches
     scripts:
+      - name: Freeze public iOS sign-in configuration
+        script: |
+          set -euo pipefail
+          python3 tool/test_prepare_native_auth_build.py
+          python3 tool/prepare_native_auth_build.py --output "${CM_BUILD_DIR:?}/.mobishop-native-auth.json" --env-file "${CM_ENV:?}"
       - name: Validate customer build configuration
         script: |
           if [ -z "${STORE_URL:-}" ]; then
@@ -444,6 +459,11 @@ workflows:
         - $HOME/Library/Caches/CocoaPods
         - $HOME/.gradle/caches
     scripts:
+      - name: Freeze public iOS sign-in configuration
+        script: |
+          set -euo pipefail
+          python3 tool/test_prepare_native_auth_build.py
+          python3 tool/prepare_native_auth_build.py --output "${CM_BUILD_DIR:?}/.mobishop-native-auth.json" --env-file "${CM_ENV:?}"
       - name: Validate customer build configuration
         script: |
           if [ -z "${STORE_URL:-}" ]; then
@@ -650,6 +670,11 @@ workflows:
         - $HOME/Library/Caches/CocoaPods
         - $HOME/.gradle/caches
     scripts:
+      - name: Freeze public iOS sign-in configuration
+        script: |
+          set -euo pipefail
+          python3 tool/test_prepare_native_auth_build.py
+          python3 tool/prepare_native_auth_build.py --output "${CM_BUILD_DIR:?}/.mobishop-native-auth.json" --env-file "${CM_ENV:?}"
       - name: Validate customer build configuration
         script: |
           set -euo pipefail
@@ -1017,6 +1042,11 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Freeze public iOS sign-in configuration
+        script: |
+          set -euo pipefail
+          python3 tool/test_prepare_native_auth_build.py
+          python3 tool/prepare_native_auth_build.py --output "${CM_BUILD_DIR:?}/.mobishop-native-auth.json" --env-file "${CM_ENV:?}"
       - name: Validate public customer configuration
         script: |
           set -euo pipefail
