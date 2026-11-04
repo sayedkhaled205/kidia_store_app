@@ -11,6 +11,8 @@ class UnifiedWorkflowTests(unittest.TestCase):
         workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
         for name, workflow in workflows.items():
             steps = workflow['scripts']
+            if not any('flutter build ' in step['script'] for step in steps):
+                continue  # Upload-only workflows verify an existing signed artifact.
             checks = [i for i, step in enumerate(steps) if step['name'] == 'Verify merchant and platform contracts']
             self.assertEqual(len(checks), 1, name)
             script = steps[checks[0]]['script']
@@ -25,6 +27,8 @@ class UnifiedWorkflowTests(unittest.TestCase):
         workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
         for name, workflow in workflows.items():
             steps = workflow['scripts']
+            if not any('flutter build ' in step['script'] for step in steps):
+                continue
             checks = [i for i, step in enumerate(steps) if step['name'] == 'Validate actual compiled customer design']
             self.assertEqual(len(checks), 1, name)
             preflight = steps[checks[0]]['script']
@@ -39,6 +43,19 @@ class UnifiedWorkflowTests(unittest.TestCase):
                 for value in ('--dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json"', '--dart-define="STORE_URL=$STORE_URL"'):
                     self.assertIn(value, preflight)
                     self.assertIn(value, step['script'])
+
+    def test_existing_ipa_upload_verifies_artifact_without_rebuilding_or_submitting(self):
+        workflow = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']['kidia-testflight-existing-ipa']
+        scripts = '\n'.join(step['script'] for step in workflow['scripts'])
+        self.assertNotIn('flutter build ', scripts)
+        self.assertIn('set -euo pipefail', scripts)
+        self.assertIn('python3 tool/test_verify_ios_signing.py', scripts)
+        self.assertIn('python3 tool/test_prepare_app_store_upload.py', scripts)
+        self.assertIn('python3 tool/prepare_app_store_upload.py', scripts)
+        self.assertEqual(workflow['artifacts'], ['build/verified-testflight/app.ipa'])
+        publisher = workflow['publishing']['app_store_connect']
+        self.assertIs(publisher['submit_to_testflight'], False)
+        self.assertIs(publisher['submit_to_app_store'], False)
 
     def test_simulator_success_requires_log_and_screen_validation(self):
         workflow = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']['mobishop-ios-simulator-check']
