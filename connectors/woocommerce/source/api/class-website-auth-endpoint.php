@@ -168,28 +168,37 @@ final class MobiShop_Website_Auth_Endpoint {
 		if ( ! $bound || ! is_user_logged_in() ) return;
 		list( $id, $row ) = $bound;
 		$user = wp_get_current_user();
+		nocache_headers();
+		$this->browser_headers();
 		if ( ! ( $this->allowed )( $user ) ) {
-			$this->cookie( '', time() - 3600 );
-			wp_die( 'استخدم حساب عميل للدخول إلى التطبيق، وليس حساب إدارة المتجر.' );
+			if ( $this->handle_switch( $id ) ) {
+				wp_safe_redirect( $this->destination( $row ) ); exit;
+			}
+			if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) === 'POST'
+				&& (string) ( $_POST['choice'] ?? '' ) === 'switch' ) {
+				wp_die( 'ارجع للتطبيق وابدأ محاولة دخول جديدة.' );
+			}
+			$this->confirmation( $id, $user, true ); exit;
 		}
 		// Let the website finish any required phone/profile setup first.
 		if ( ! $this->customer_ready( $user ) ) return;
-		nocache_headers();
-		$this->browser_headers();
 		// A pre-existing browser session needs an explicit confirmation. A fresh
 		// verified phone/email/Google login already identifies the chosen account.
 		if ( (int) $row['user'] !== $user->ID ) {
+			if ( $this->handle_switch( $id ) ) {
+				wp_safe_redirect( $this->destination( $row ) ); exit;
+			}
 			if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) === 'POST'
-				&& in_array( (string) ( $_POST['choice'] ?? '' ), array( 'continue', 'switch' ), true )
+				&& (string) ( $_POST['choice'] ?? '' ) === 'switch' ) {
+				wp_die( 'ارجع للتطبيق وابدأ محاولة دخول جديدة.' );
+			}
+			if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) === 'POST'
+				&& (string) ( $_POST['choice'] ?? '' ) === 'continue'
 				&& wp_verify_nonce( (string) ( $_POST['_wpnonce'] ?? '' ), 'mobishop_continue_' . $id ) ) {
-				if ( ( $_POST['choice'] ?? '' ) === 'switch' ) {
-					wp_logout();
-					wp_safe_redirect( $this->destination( $row ) ); exit;
-				}
 				$this->verified( $user );
 				$row = $this->read( $id );
 			} else {
-				$this->confirmation( $id, $user ); exit;
+				$this->confirmation( $id, $user, false ); exit;
 			}
 		}
 		if ( ! $row || (int) $row['user'] !== $user->ID || $row['code'] !== '' ) wp_die( 'ارجع للتطبيق وابدأ محاولة دخول جديدة.' );
@@ -206,15 +215,42 @@ final class MobiShop_Website_Auth_Endpoint {
 		exit;
 	}
 
+	/** State-bound, nonce-validated request to drop the current browser identity and retry with another account. */
+	private function handle_switch( string $id ): bool {
+		if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) !== 'POST' ) return false;
+		if ( (string) ( $_POST['choice'] ?? '' ) !== 'switch' ) return false;
+		if ( ! wp_verify_nonce( (string) ( $_POST['_wpnonce'] ?? '' ), 'mobishop_continue_' . $id ) ) return false;
+		$bound = $this->bound();
+		if ( ! $bound || $bound[0] !== $id ) return false;
+		$row = $bound[1];
+		if ( $row['code'] !== '' ) return false;
+		$next = $row;
+		$next['user'] = 0;
+		// MySQL reports zero changed rows for an identical update. An admin has
+		// no captured user, so record the switch to make the CAS meaningful too.
+		$next['switches'] = (int) ( $row['switches'] ?? 0 ) + 1;
+		// Only log the browser out once the captured proof is cleared, keeping the pending binding intact.
+		if ( ! $this->change( $id, $row, $next ) ) return false;
+		wp_logout();
+		return true;
+	}
+
 	private function browser_headers(): void {
 		header( 'Referrer-Policy: no-referrer' );
 		header( 'X-Frame-Options: DENY' );
 		header( "Content-Security-Policy: frame-ancestors 'none'" );
 	}
 
-	private function confirmation( string $id, WP_User $user ): void {
+	private function confirmation( string $id, WP_User $user, bool $privileged ): void {
 		header( 'Content-Type: text/html; charset=utf-8' );
-		echo '<!doctype html><html lang="ar" dir="rtl"><meta name="viewport" content="width=device-width,initial-scale=1"><title>متابعة الدخول</title><style>body{font-family:system-ui;background:#f3f8f6;color:#244f47;margin:0;padding:24px}main{max-width:420px;margin:10vh auto;padding:28px;background:white;border:1px solid #d6e7e1;border-radius:24px;text-align:center}button{display:block;width:100%;border:0;border-radius:28px;padding:15px;margin:16px 0;font:inherit;background:#50aa9b;color:white}button+button{background:#edf6f3;color:#244f47}</style><main><h2>متابعة الدخول إلى التطبيق</h2><p>' . esc_html( $user->display_name ) . '</p><form method="post">';
+		echo '<!doctype html><html lang="ar" dir="rtl"><meta name="viewport" content="width=device-width,initial-scale=1"><title>متابعة الدخول</title><style>body{font-family:system-ui;background:#f3f8f6;color:#244f47;margin:0;padding:24px}main{max-width:420px;margin:10vh auto;padding:28px;background:white;border:1px solid #d6e7e1;border-radius:24px;text-align:center}p.note{font-size:13px;color:#5a776f}button{display:block;width:100%;border:0;border-radius:28px;padding:15px;margin:16px 0;font:inherit;background:#50aa9b;color:white}button+button{background:#edf6f3;color:#244f47}</style><main><h2>متابعة الدخول إلى التطبيق</h2><p>' . esc_html( $user->display_name ) . '</p>';
+		if ( $privileged ) {
+			echo '<p class="note">هذا حساب إدارة المتجر ولا يمكن استخدامه في التطبيق. اضغط لاستخدام حساب عميل آخر، وسيتم تسجيل خروجك من المتجر في هذا المتصفح فقط.</p><form method="post">';
+			wp_nonce_field( 'mobishop_continue_' . $id );
+			echo '<button name="choice" value="switch">استخدام حساب آخر</button></form></main></html>';
+			return;
+		}
+		echo '<p class="note">اختيار "استخدام حساب آخر" سيسجل خروجك من المتجر في هذا المتصفح فقط.</p><form method="post">';
 		wp_nonce_field( 'mobishop_continue_' . $id );
 		echo '<button name="choice" value="continue">متابعة بهذا الحساب</button><button name="choice" value="switch">استخدام حساب آخر</button></form></main></html>';
 	}

@@ -515,15 +515,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         child: Semantics(
                                           label: copy.continueWithFacebook,
                                           child: ExcludeSemantics(
-                                            child: ClipOval(
-                                              child: Transform.scale(
-                                                scale: 1.2,
-                                                child: const Icon(
-                                                  Icons.facebook,
-                                                  color: Color(0xFF1877F2),
-                                                  size: 52,
-                                                ),
+                                            child: CustomPaint(
+                                              key: const Key(
+                                                'auth-facebook-brand',
                                               ),
+                                              size: const Size.square(52),
+                                              painter: _FacebookMark(),
                                             ),
                                           ),
                                         ),
@@ -1106,7 +1103,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     required bool last,
     required AuthCopy copy,
   }) => SizedBox(
-    width: 116,
+    width: 84,
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1788,6 +1785,47 @@ class _StoreMark extends StatelessWidget {
       ),
     );
   }
+}
+
+// The Material glyph has font padding and an open lower edge. Paint the round
+// button explicitly so its visible diameter matches Google and Apple exactly.
+class _FacebookMark extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawCircle(
+      size.center(Offset.zero),
+      size.shortestSide / 2,
+      Paint()..color = const Color(0xFF1877F2),
+    );
+    canvas.save();
+    canvas.scale(size.width / 24, size.height / 24);
+    // Facebook 'f' contour from the existing Material facebook icon.
+    canvas.drawPath(
+      Path()
+        ..moveTo(13, 21)
+        ..lineTo(13, 15)
+        ..lineTo(16, 15)
+        ..lineTo(16, 12)
+        ..lineTo(13, 12)
+        ..lineTo(13, 10)
+        ..cubicTo(13, 9.45, 13.45, 9, 14, 9)
+        ..lineTo(16, 9)
+        ..lineTo(16, 6)
+        ..lineTo(13.5, 6)
+        ..cubicTo(11.57, 6, 10, 7.57, 10, 9.5)
+        ..lineTo(10, 12)
+        ..lineTo(8, 12)
+        ..lineTo(8, 15)
+        ..lineTo(10, 15)
+        ..lineTo(10, 21)
+        ..close(),
+      Paint()..color = Colors.white,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _LoginHintPointer extends CustomPainter {

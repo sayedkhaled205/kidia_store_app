@@ -14,6 +14,10 @@ function wc_get_page_id( $page ) { return $GLOBALS['woo_account_id'] ?? 20; }
 function maybe_serialize( $value ) { return serialize($value); }
 function wp_schedule_single_event( $time, $hook, $args ) {}
 function is_user_logged_in() { return $GLOBALS['web_logged_in'] ?? false; }
+function wp_verify_nonce($nonce, $action) { return $nonce === 'valid-'.$action; }
+function wp_logout() { $GLOBALS['web_logged_in']=false; $GLOBALS['web_logouts']=($GLOBALS['web_logouts']??0)+1; }
+function wp_nonce_field($action) { echo '<input type="hidden" name="_wpnonce" value="valid-'.$action.'">'; }
+function esc_html($value) { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
 
 // Simulate compare-and-swap against a persistent option store, including races.
 $wpdb = new class {
@@ -190,6 +194,47 @@ web_assert($options[$key]['user']===0, 'Losing browser-binding update does not a
 $options[$key]['code']=str_repeat('a',64);
 $bridge->verified(get_user_by('id',7));
 web_assert($options[$key]['user']===0, 'Issued callback cannot be reassigned to another login');
+
+// A privileged browser session can explicitly switch, but can never continue
+// into the app. A pending request and its PKCE/binding survive the switch.
+$switch = new ReflectionMethod($bridge, 'handle_switch');
+$confirm = new ReflectionMethod($bridge, 'confirmation');
+$admin = get_user_by('id',8);
+$admin->display_name = '<Admin fixture>';
+ob_start(); $confirm->invoke($bridge, $id, $admin, true); $html=ob_get_clean();
+web_assert(str_contains($html, 'value="switch"') && !str_contains($html, 'value="continue"'), 'Admin gets switch only, never customer continuation');
+web_assert(str_contains($html, '&lt;Admin fixture&gt;') && !str_contains($html, '<Admin fixture>'), 'Confirmation escapes the displayed account');
+ob_start(); $confirm->invoke($bridge, $id, get_user_by('id',7), false); $html=ob_get_clean();
+web_assert(str_contains($html, 'value="switch"') && str_contains($html, 'value="continue"'), 'Customer retains both confirmation choices');
+[$id,$state,$verifier]=start_web($bridge); $key='_mobishop_web_login_'.$id;
+$secret=bin2hex(random_bytes(32));
+$options[$key]['binding']=hash('sha256',$secret);
+$options[$key]['provider']='facebook';
+$_COOKIE['__Host-mobishop_login']=$id.'.'.$secret;
+$before_switch=$options[$key]; $GLOBALS['web_logouts']=0; $GLOBALS['web_logged_in']=true;
+$_POST=['choice'=>'switch','_wpnonce'=>'valid-mobishop_continue_'.$id];
+$_SERVER['REQUEST_METHOD']='GET';
+web_assert(!$switch->invoke($bridge,$id), 'GET cannot log a browser out');
+$_SERVER['REQUEST_METHOD']='POST'; $_POST['_wpnonce']='invalid';
+web_assert(!$switch->invoke($bridge,$id), 'Invalid CSRF proof cannot switch');
+$_POST['_wpnonce']='valid-mobishop_continue_'.$id;
+$_COOKIE['__Host-mobishop_login']=$id.'.'.str_repeat('f',64);
+web_assert(!$switch->invoke($bridge,$id), 'Different browser cannot switch attempt');
+$_COOKIE['__Host-mobishop_login']=$id.'.'.$secret;
+$wpdb->race=true;
+web_assert(!$switch->invoke($bridge,$id), 'Losing CAS cannot switch');
+web_assert($GLOBALS['web_logouts']===0 && $options[$key]===$before_switch, 'Rejected switches preserve browser identity and request');
+web_assert($switch->invoke($bridge,$id), 'Admin with no captured customer can explicitly switch');
+web_assert($GLOBALS['web_logouts']===1 && $options[$key]['user']===0 && $options[$key]!==$before_switch, 'Switch performs a real database update even when user was zero');
+foreach (['provider','state','challenge','binding','expires','code'] as $field) web_assert($options[$key][$field]===$before_switch[$field], 'Switch preserves '.$field);
+web_assert(str_contains($destination->invoke($bridge,$options[$key]),'loginSocial=facebook'), 'Switched browser restarts selected provider');
+$options[$key]['user']=7;
+web_assert($switch->invoke($bridge,$id) && $options[$key]['user']===0, 'Switch clears previous customer authorization');
+$options[$key]['code']=str_repeat('a',64);
+web_assert(!$switch->invoke($bridge,$id) && $GLOBALS['web_logouts']===2, 'Issued callback cannot be switched');
+$options[$key]['code']=''; $options[$key]['expires']=time()-1;
+web_assert(!$switch->invoke($bridge,$id) && $GLOBALS['web_logouts']===2, 'Expired attempt cannot log browser out');
+unset($_POST,$_COOKIE['__Host-mobishop_login']); $_SERVER['REQUEST_METHOD']='GET';
 
 // Shared IP limit is enforced before persisting another request.
 $rate='mobishop_web_rate_'.hash_hmac('sha256',$_SERVER['REMOTE_ADDR'],wp_salt());

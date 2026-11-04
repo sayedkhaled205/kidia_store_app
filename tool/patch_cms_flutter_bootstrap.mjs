@@ -10,12 +10,13 @@ const cacheSuffix =
   '(window.__mobishopPreviewVersion?"?v="+encodeURIComponent(window.__mobishopPreviewVersion):"")';
 
 for (const asset of ["canvaskit.js", "canvaskit.wasm"]) {
-  const original = `c(s,"${asset}")`;
-  const replacement = `c(s,"${asset}"+${cacheSuffix})`;
-  if (!source.includes(original)) {
+  // Flutter minifier identifiers vary between SDK releases.
+  const call = new RegExp(`\\b[A-Za-z_$][\\w$]*\\([A-Za-z_$][\\w$]*,"${asset.replaceAll('.', '\\.') }"\\)`, 'g');
+  const matches = source.match(call);
+  if (!matches || matches.length !== 1) {
     throw new Error(`Could not find ${asset} in generated Flutter bootstrap.`);
   }
-  source = source.replaceAll(original, replacement);
+  source = source.replace(call, value => value.slice(0, -1) + '+' + cacheSuffix + ')');
 }
 
 const loaderCall =
