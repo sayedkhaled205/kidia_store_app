@@ -24,7 +24,7 @@ void main() {
           initialLocation: '/home',
           routes: [
             StatefulShellRoute.indexedStack(
-              builder: (_, __, shell) => MainShell(navigationShell: shell),
+              builder: (_, _, shell) => MainShell(navigationShell: shell),
               branches: [
                 for (final path in [
                   '/home',
@@ -34,7 +34,7 @@ void main() {
                 ])
                   StatefulShellBranch(
                     routes: [
-                      GoRoute(path: path, builder: (_, __) => const SizedBox()),
+                      GoRoute(path: path, builder: (_, _) => const SizedBox()),
                     ],
                   ),
               ],
