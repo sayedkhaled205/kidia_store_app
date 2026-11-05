@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.133
+Stable tag: 1.46.134
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,6 +61,12 @@ No. Store checkout is handled by the payment methods configured in WooCommerce, 
 Yes. Application language, direction, typography, and other visual settings can be configured from the builder.
 
 == Changelog ==
+
+= 1.46.134 =
+
+* Sync authenticated customer wishlists across devices using atomic changes.
+* Restore verified store owners own shopping history and saved addresses without granting staff privileges.
+
 
 = 1.46.107 =
 * Use FlyCart Discount Rules prices in the mobile catalogue and preserve automatic gift quantity limits.
