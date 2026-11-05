@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/account/presentation/account_deletion_screen.dart';
 import 'package:mobishop_store_app/features/account/presentation/store_privacy_body_loader.dart';
 import '../../../support/viewport_rotation.dart';
 import 'package:mobishop_store_app/core/app_design/store_privacy_provider.dart';
@@ -32,6 +33,8 @@ void main() {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         authRepositoryProvider.overrideWithValue(_SignedInRepository()),
+        accountDeletionAvailabilityProvider.overrideWith((ref) async => true),
+        accountDeletionReceiptProvider.overrideWith((ref) async => null),
         storePrivacyProvider.overrideWithValue(Uri.parse('https://merchant.example/privacy')),
         cmsPageLayoutProvider('account').overrideWith((ref) async {
           final base = CmsPageLayout.fallback('account');
@@ -46,7 +49,7 @@ void main() {
         home: const Scaffold(body: AccountScreen(), bottomNavigationBar: SafeArea(child: SizedBox(height: 64)))),
     ));
     await tester.pumpAndSettle();
-    for (final key in ['account-action-orders', 'account-action-addresses', 'account-action-profile', 'account-action-support', 'account-language', 'account-sign-out']) {
+    for (final key in ['account-action-orders', 'account-action-addresses', 'account-action-profile', 'account-action-support', 'account-language', 'account-delete', 'account-sign-out']) {
       expect(find.byKey(Key(key)).hitTestable(), findsOneWidget, reason: key);
     }
     expect(tester.takeException(), isNull);

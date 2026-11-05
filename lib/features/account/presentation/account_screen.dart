@@ -131,7 +131,7 @@ class AccountScreen extends ConsumerWidget {
               ),
             ],
             if (menuSettings.enabled)
-              SizedBox(height: compactIos ? 12 : MobiShopSpacing.lg),
+              SizedBox(height: compactIos ? 8 : MobiShopSpacing.lg),
             if (menuSettings.enabled)
               CmsElementFrame(
                 component: menuSettings,
@@ -163,7 +163,15 @@ class AccountScreen extends ConsumerWidget {
                           const Divider(),
                       ],
                       if (!flat && visibleActions.isNotEmpty) const Divider(),
-                      const AppLanguageTile(),
+                      if (compactIos)
+                        Theme(
+                          data: Theme.of(context).copyWith(
+                            visualDensity: const VisualDensity(vertical: -2),
+                          ),
+                          child: const AppLanguageTile(),
+                        )
+                      else
+                        const AppLanguageTile(),
                     ],
                   ),
                 ),
@@ -201,7 +209,7 @@ class AccountScreen extends ConsumerWidget {
               ),
             if (session != null &&
                 pageLayout.element('logout_button').enabled) ...<Widget>[
-              SizedBox(height: compactIos ? 8 : MobiShopSpacing.lg),
+              SizedBox(height: compactIos ? 4 : MobiShopSpacing.lg),
               CmsElementFrame(
                 component: pageLayout.element('logout_button'),
                 child: Center(
@@ -339,7 +347,7 @@ class _AccountHeader extends StatelessWidget {
         padding: EdgeInsets.symmetric(
           horizontal: MobiShopSpacing.md,
           vertical: Theme.of(context).platform == TargetPlatform.iOS
-              ? 12
+              ? 8
               : MobiShopSpacing.md,
         ),
         child: Row(
@@ -464,7 +472,7 @@ class _AccountActionTile extends StatelessWidget {
         vertical: MobiShopSpacing.xs,
       ),
       minTileHeight: flat
-          ? (Theme.of(context).platform == TargetPlatform.iOS ? 56 : 64)
+          ? (Theme.of(context).platform == TargetPlatform.iOS ? 52 : 64)
           : null,
       leading: flat
           ? Icon(action.icon, size: 24, color: MobiShopColors.textPrimary)
