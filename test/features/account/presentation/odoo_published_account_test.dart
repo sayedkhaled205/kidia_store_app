@@ -1,3 +1,6 @@
+import 'package:mobishop_store_app/core/app_design/store_privacy_provider.dart';
+import 'package:mobishop_store_app/features/account/presentation/store_privacy_body_loader.dart';
+import 'package:mobishop_store_app/features/account/data/privacy_page_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -137,6 +140,13 @@ void main() {
   ) async {
     final container = ProviderContainer(
       overrides: [
+        storePrivacyProvider.overrideWithValue(
+          Uri.parse('https://store.test/policy'),
+        ),
+        storePrivacyBodyLoaderProvider.overrideWithValue(
+          (_) async =>
+              parsePrivacyPage('<article><p>Store privacy text</p></article>'),
+        ),
         odooCustomerSession51Provider.overrideWith(_Guest.new),
         authRepositoryProvider.overrideWith(
           (_) => throw StateError('No Woo authentication'),
@@ -171,6 +181,14 @@ void main() {
       find.byKey(const Key('odoo-login')),
       'buyer@example.com',
     );
+    final policy = find.byKey(const Key('store-privacy-policy'));
+    await tester.ensureVisible(policy);
+    await tester.tap(policy);
+    await tester.pumpAndSettle();
+    expect(find.text('Store privacy text', findRichText: true), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('buyer@example.com'), findsOneWidget);
     await show('Published title');
     await tester.pumpAndSettle();
     expect(find.text('First title'), findsNothing);
