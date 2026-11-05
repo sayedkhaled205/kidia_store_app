@@ -273,7 +273,6 @@ class _MainShellState extends ConsumerState<MainShell>
                 bottom:
                     !AppConfig.isCmsPreview ||
                     footer.boolean('safe_area', true),
-                minimum: const EdgeInsets.only(bottom: 6),
                 child: Padding(
                   padding: EdgeInsets.only(
                     top:
