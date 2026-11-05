@@ -51,6 +51,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('checkout-billing-address1')), findsNothing);
     expect(find.byKey(const Key('checkout-address-selected-home')), findsOneWidget);
+    expect(find.textContaining('Suite 4'), findsOneWidget);
     // Read rendered colors, including inherited text styles. Brand-colored
     // button text on a brand-colored address card was difficult to read.
     for (final id in ['home', 'work']) {

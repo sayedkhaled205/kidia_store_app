@@ -141,6 +141,11 @@ class _CategoryLayoutView extends StatefulWidget {
 }
 
 class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
+  double _contentTopInset(double value) =>
+      Theme.of(context).platform == TargetPlatform.iOS
+          ? (value - 4).clamp(0, double.infinity).toDouble()
+          : value;
+
   final List<int> _categoryPath = <int>[];
   int _sidebarRootIndex = 0;
   int? _tabRootId;
@@ -289,7 +294,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       child: ListView.separated(
         key: Key('category-layout-${_settings.categoryLayout}'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsetsDirectional.fromSTEB(16, 14, 16, 24),
+        padding: EdgeInsetsDirectional.fromSTEB(16, _contentTopInset(14), 16, 24),
         itemCount: nodes.length,
         separatorBuilder: (_, _) => SizedBox(height: _settings.cardGap),
         itemBuilder: (BuildContext context, int index) {
@@ -352,7 +357,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: <Widget>[
           SliverPadding(
-            padding: EdgeInsetsDirectional.fromSTEB(16, 14, 16, 12),
+            padding: EdgeInsetsDirectional.fromSTEB(16, _contentTopInset(14), 16, 12),
             sliver: SliverLayoutBuilder(
               builder: (context, constraints) => SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -422,7 +427,10 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
           return SingleChildScrollView(
             key: const Key('category-layout-sidebar'),
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.all(_settings.cardGap),
+            padding: EdgeInsets.fromLTRB(
+              _settings.cardGap, _contentTopInset(_settings.cardGap),
+              _settings.cardGap, _settings.cardGap,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 minHeight: (constraints.maxHeight - (_settings.cardGap * 2))
@@ -485,7 +493,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       children: [
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.fromLTRB(16, _contentTopInset(8), 16, 8),
           child: Row(
             children: [
               for (final root in widget.tree.roots)
@@ -540,7 +548,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       child: ListView.separated(
         key: Key('category-layout-${_settings.categoryLayout}'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        padding: EdgeInsets.fromLTRB(16, _contentTopInset(14), 16, 24),
         itemCount: nodes.length,
         separatorBuilder: (_, _) => split
             ? SizedBox(height: _settings.cardGap)
@@ -578,7 +586,7 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
       child: ListView.separated(
         key: const Key('category-layout-grouped_shelves'),
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        padding: EdgeInsets.fromLTRB(16, _contentTopInset(8), 16, 24),
         itemCount: nodes.length,
         separatorBuilder: (_, _) => const SizedBox(height: 22),
         itemBuilder: (context, index) {

@@ -679,6 +679,7 @@ class _SavedCheckoutAddresses92 extends StatelessWidget {
                           Text(
                             [
                                   address.values['address_1'],
+                                  address.values['address_2'],
                                   address.values['city'],
                                   address.values['phone'],
                                 ]

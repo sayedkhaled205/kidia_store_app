@@ -46,6 +46,12 @@ class SavedCheckoutAddress92 {
     return rows
         .where((row) {
           final values = {...defaults, ...row.values};
+          // Selecting a saved address inherits blank contact fields too.
+          for (final key in const ['email', 'phone']) {
+            if (values[key]?.trim().isEmpty ?? true) {
+              values[key] = defaults[key] ?? '';
+            }
+          }
           final keys =
               values.keys
                   .where((key) => values[key]!.trim().isNotEmpty)
