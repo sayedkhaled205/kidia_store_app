@@ -64,6 +64,11 @@ final class MobiShop_Storefront_Admin {
 			if ( ! $shopper instanceof WP_User || $shopper->ID === $owner->ID || $shopper->user_login !== $login
 				|| (int) get_user_meta( $shopper->ID, self::marker(), true ) !== (int) $owner->ID
 				|| ! self::clean_customer( $shopper ) ) return $error;
+			// Registration hooks can mark this generated shopper as a new sign-up.
+			// Only discard that marker after verifying both the owner and the isolated customer.
+			if ( 'account' === get_user_meta( $shopper->ID, 'kidia_phone_setup_required', true ) ) {
+				delete_user_meta( $shopper->ID, 'kidia_phone_setup_required', 'account' );
+			}
 			return $shopper;
 		} finally {
 			$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );

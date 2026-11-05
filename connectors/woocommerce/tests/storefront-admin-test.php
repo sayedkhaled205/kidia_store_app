@@ -75,6 +75,11 @@ function get_user_meta($id, $key, $single = false) {
     $v = $GLOBALS['fixture_meta'][$id][$key] ?? null;
     return $single ? ($v ?? '') : ($v === null ? [] : [$v]);
 }
+function delete_user_meta($id, $key, $value) {
+    if (get_user_meta($id, $key, true) !== $value) return false;
+    unset($GLOBALS['fixture_meta'][$id][$key]);
+    return true;
+}
 function wp_insert_user($row) {
     if (username_exists($row['user_login']) || (!empty($row['user_email']) && email_exists($row['user_email']))) {
         return new WP_Error('duplicate');
@@ -83,6 +88,8 @@ function wp_insert_user($row) {
     $GLOBALS['fixture_users'][$id] = new WP_User($id,$row['user_login'],$row['user_email'] ?? '',
         [$row['role']],['read'=>true],$row['display_name'] ?? 'Customer',$row['user_pass']);
     foreach ($row['meta_input'] ?? [] as $key=>$val) add_user_meta($id,$key,$val);
+    // The website's user_register hook marks newly inserted customers for onboarding.
+    update_user_meta($id, 'kidia_phone_setup_required', 'account');
     return $id;
 }
 function reset_storefront_fixture() {
@@ -118,10 +125,19 @@ verify_storefront($shadow->roles === ['customer'] && empty($shadow->allcaps['man
 verify_storefront($shadow->user_email !== $owner->user_email, 'No duplicated WordPress recovery address');
 verify_storefront((int)get_user_meta($shadow->ID,'_mobishop_storefront_owner_4',true) === 10, 'Private site-specific binding');
 verify_storefront(MobiShop_Storefront_Admin::contact_email($shadow) === $owner->user_email, 'Validated alias exposes contact email to its own shopper');
+verify_storefront(get_user_meta($shadow->ID,'kidia_phone_setup_required',true) === '', 'Fresh verified owner shopper is not waiting for new-customer onboarding');
+update_user_meta($shadow->ID,'kidia_phone_setup_required','account'); // Created by a previous connector.
+update_user_meta(11,'kidia_phone_setup_required','account');
 $again = MobiShop_Storefront_Admin::resolve($owner);
 verify_storefront($again instanceof WP_User && $again->ID === $shadow->ID && count($GLOBALS['fixture_users']) === 5, 'Repeated login has one stable shopper');
 verify_storefront(MobiShop_Storefront_Admin::valid_session_user($shadow), 'Fresh shopper is session-eligible');
 verify_storefront(MobiShop_Storefront_Admin::contact_email(get_userdata(11)) === '', 'Ordinary customer never gains owner email');
+
+verify_storefront(get_user_meta($shadow->ID,'kidia_phone_setup_required',true) === '', 'Existing verified owner shopper is repaired on next sign-in');
+verify_storefront(get_user_meta(11,'kidia_phone_setup_required',true) === 'account', 'Ordinary customer retains required onboarding');
+update_user_meta($shadow->ID,'kidia_phone_setup_required','otp');
+MobiShop_Storefront_Admin::resolve($owner);
+verify_storefront(get_user_meta($shadow->ID,'kidia_phone_setup_required',true) === 'otp', 'Explicit OTP requirement is preserved');
 
 $original = clone $GLOBALS['fixture_users'][10];
 foreach (['user_email' => 'later@example.test','user_pass'=>'rotated-fixture-hash','roles'=>['customer']] as $field=>$newValue) {
