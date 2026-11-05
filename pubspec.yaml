@@ -56,6 +56,8 @@ dependencies:
   webview_flutter_android: 4.14.1
   firebase_auth: ^6.7.0
   google_sign_in: 7.2.0
+  google_sign_in_android: 7.2.18
+  html: 0.15.6
   kashier_flutter_sdk:
     path: packages/kashier_flutter_sdk
   flutter_facebook_auth: 7.3.2

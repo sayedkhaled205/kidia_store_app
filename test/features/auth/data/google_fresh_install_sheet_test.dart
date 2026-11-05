@@ -2,9 +2,8 @@
 // customer must be offered eligible accounts even without prior authorization.
 // ignore_for_file: depend_on_referenced_packages, implementation_imports
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_sign_in_android/google_sign_in_android.dart';
+import 'package:mobishop_store_app/features/auth/data/android_google_account_picker.dart';
 import 'package:google_sign_in_android/src/messages.g.dart';
-import 'package:google_sign_in_platform_interface/google_sign_in_platform_interface.dart';
 
 class _Credentials extends GoogleSignInApi {
   final requests = <GetCredentialRequestParams>[];
@@ -28,20 +27,19 @@ class _Credentials extends GoogleSignInApi {
 
 void main() {
   test(
-    'fresh Android install tries all eligible accounts in the sheet',
+    'Google button requests all eligible accounts on the first sheet',
     () async {
       final host = _Credentials();
-      final android = GoogleSignInAndroid(api: host);
-      await android.init(
-        const InitParameters(
-          serverClientId: 'fixture.apps.googleusercontent.com',
-        ),
+      final token = await pickAndroidGoogleAccount(
+        'fixture.apps.googleusercontent.com',
+        host: host,
       );
-      final result = await android.attemptLightweightAuthentication(
-        const AttemptLightweightAuthenticationParameters(),
+      expect(token, 'fixture-proof');
+      expect(host.requests, hasLength(1));
+      expect(
+        host.requests.single.serverClientId,
+        'fixture.apps.googleusercontent.com',
       );
-      expect(result?.user.email, 'fixture@example.com');
-      expect(host.requests, hasLength(2));
       expect(host.requests.every((r) => !r.useButtonFlow), isTrue);
       expect(
         host.requests.last.googleIdOptionParams.filterToAuthorized,

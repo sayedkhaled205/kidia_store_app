@@ -1,3 +1,5 @@
+import 'package:mobishop_store_app/features/account/presentation/store_privacy_body_loader.dart';
+import 'package:mobishop_store_app/features/account/data/privacy_page_parser.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,29 +26,40 @@ void main() {
       'https://store.test/privacy',
     );
   });
-  testWidgets('privacy is actionable and failed launch stays recoverable', (
-    tester,
-  ) async {
-    final policy = Uri.parse('https://store.test/privacy');
-    final opened = <Uri>[];
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          storePrivacyProvider.overrideWithValue(policy),
-          storePrivacyLauncherProvider.overrideWithValue((uri) async {
-            opened.add(uri);
-            return false;
-          }),
-        ],
-        child: const MaterialApp(home: Scaffold(body: StorePrivacyLink())),
-      ),
-    );
-    await tester.tap(find.byKey(const Key('store-privacy-policy')));
-    await tester.pumpAndSettle();
-    expect(opened, [policy]);
-    expect(
-      find.text('Unable to open the privacy policy. Please retry.'),
-      findsOneWidget,
-    );
-  });
+  testWidgets(
+    'privacy is actionable and reader retries then returns to prior route',
+    (tester) async {
+      final policy = Uri.parse('https://store.test/privacy');
+      final opened = <Uri>[];
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            storePrivacyProvider.overrideWithValue(policy),
+            storePrivacyBodyLoaderProvider.overrideWithValue((uri) async {
+              opened.add(uri);
+              if (opened.length == 1) throw const FormatException('offline');
+              return parsePrivacyPage(
+                '<nav>Site menu</nav><article><h2>Our policy</h2><p>Merchant contact</p></article>',
+              );
+            }),
+          ],
+          child: const MaterialApp(home: Scaffold(body: StorePrivacyLink())),
+        ),
+      );
+      await tester.tap(find.byKey(const Key('store-privacy-policy')));
+      await tester.pumpAndSettle();
+      expect(opened, [policy]);
+      expect(
+        find.text('Unable to load the privacy policy. Please retry.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('store-privacy-retry')));
+      await tester.pumpAndSettle();
+      expect(find.text('Merchant contact', findRichText: true), findsOneWidget);
+      expect(find.text('Site menu', findRichText: true), findsNothing);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('store-privacy-policy')), findsOneWidget);
+    },
+  );
 }

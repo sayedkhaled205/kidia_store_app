@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../core/commerce/hosted_commerce_destination297.dart';
 import '../core/config/app_config.dart';
+import '../features/account/presentation/store_privacy_link.dart';
 
 typedef HostedCommerceLauncher297 = Future<bool> Function(Uri destination);
 final hostedCommerceLauncher297Provider = Provider<HostedCommerceLauncher297>(
@@ -140,6 +141,8 @@ class _HostedCommerceScreen297State
                       )
                     : Text(ar ? 'متابعة في المتجر' : 'Continue on store'),
               ),
+              if (widget.route == '/account' || widget.route == '/auth')
+                const StorePrivacyLink(),
             ],
           ),
         ),

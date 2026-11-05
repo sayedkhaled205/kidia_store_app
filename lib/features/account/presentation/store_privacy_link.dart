@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'store_privacy_screen.dart';
 import '../../../core/app_design/store_privacy_provider.dart';
-
-final storePrivacyLauncherProvider = Provider<Future<bool> Function(Uri)>(
-  (ref) =>
-      (uri) => launchUrl(uri, mode: LaunchMode.externalApplication),
-);
 
 class StorePrivacyLink extends ConsumerWidget {
   const StorePrivacyLink({
@@ -25,25 +20,9 @@ class StorePrivacyLink extends ConsumerWidget {
     final ar = Localizations.localeOf(context).languageCode == 'ar';
     return TextButton(
       key: const Key('store-privacy-policy'),
-      onPressed: () async {
-        var opened = false;
-        try {
-          opened = await ref.read(storePrivacyLauncherProvider)(uri);
-        } catch (_) {
-          /* Keep the account screen usable when no browser is available. */
-        }
-        if (!opened && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                ar
-                    ? 'تعذر فتح سياسة الخصوصية. حاول مرة أخرى.'
-                    : 'Unable to open the privacy policy. Please retry.',
-              ),
-            ),
-          );
-        }
-      },
+      onPressed: () => Navigator.of(context).push<void>(
+        MaterialPageRoute(builder: (_) => StorePrivacyScreen(uri: uri)),
+      ),
       child: Text(
         ar ? 'سياسة الخصوصية' : 'Privacy Policy',
         style: const TextStyle(decoration: TextDecoration.underline),

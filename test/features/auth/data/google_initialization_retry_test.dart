@@ -49,6 +49,9 @@ void main() {
       GoogleSignInPlatform.instance = platform;
       addTearDown(() => GoogleSignInPlatform.instance = old);
       final sdk = FirebaseNativeAuthSdk(
+        googleBackend: GoogleAccountPickerBackend(
+          androidPicker: (_) async => null,
+        ),
         platform: TargetPlatform.android,
         isWeb: false,
       );

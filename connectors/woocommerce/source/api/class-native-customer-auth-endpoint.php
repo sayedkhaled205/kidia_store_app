@@ -15,9 +15,11 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 	private $issue;
 	private $allowed;
 	private $trusted_website_phone_project;
+	private $shopping_profile;
 
-	public function __construct( callable $issue, callable $allowed, ?string $trusted_website_phone_project = null ) {
+	public function __construct( callable $issue, callable $allowed, ?string $trusted_website_phone_project = null, ?callable $shopping_profile = null ) {
 		$this->issue = $issue;
+		$this->shopping_profile = $shopping_profile;
 		$this->allowed = $allowed;
 		$this->trusted_website_phone_project = $trusted_website_phone_project;
 	}
@@ -159,6 +161,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			$user = wp_authenticate( $identity['identifier'], $password );
 			// Authentication may upgrade the stored password hash or alter account policy.
 			if ( $user instanceof WP_User ) $user = get_user_by( 'id', $user->ID );
+			if ( $this->can_shop_as_owner( $user ) && strtolower( $user->user_email ) === $identity['identifier'] ) return $this->owner_session( $user, 'password' );
 			if ( $user instanceof WP_User && $this->eligible( $user ) && strtolower( $user->user_email ) === $identity['identifier'] ) $matched[] = $user;
 		} else {
 			$candidates = $this->phone_users( $identity['identifier'], true );
@@ -360,6 +363,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$linked = $this->google_user( $proof['sub'] );
 		if ( $linked ) {
 			$user = get_user_by( 'id', $linked );
+			if ( $this->can_shop_as_owner( $user ) && $expected_phone === null ) return $this->owner_session( $user, 'google' );
 			if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401, 'google_customer_policy' );
 			if ( $expected_phone !== null && ! $this->google_matches_phone( $user, $expected_phone ) ) return $this->error( 'google_phone_mismatch', 403 );
 			return $this->complete_proof( array( $user ), $proof, $request );
@@ -369,6 +373,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$user = get_user_by( 'email', $email );
 		if ( $user ) {
 			if ( $expected_phone !== null && ! $this->google_matches_phone( $user, $expected_phone ) ) return $this->error( 'google_phone_mismatch', 403 );
+			if ( $this->can_shop_as_owner( $user ) && $expected_phone === null ) return $this->owner_session( $user, 'google' );
 			if ( ! $this->eligible( $user ) || ! $this->link_google( $user->ID, $proof['sub'] ) ) return $this->error( 'account_conflict', 409 );
 			return $this->complete_proof( array( $user ), $proof, $request );
 		}
@@ -507,6 +512,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( $linked === -1 ) return $this->error( 'account_conflict', 409 );
 		if ( $linked ) {
 			$user = get_user_by( 'id', $linked );
+			if ( $this->can_shop_as_owner( $user ) ) return $this->owner_session( $user, 'facebook' );
 			return $this->proof_allows( $user, $proof ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
 		}
 		// Facebook is never authoritative for an arbitrary existing email: no auto-link.
@@ -837,6 +843,23 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( is_wp_error( $owners ) ) return false;
 		if ( $owners ) return in_array( (int) $user->ID, array_map( static fn( $owner ) => (int) $owner->ID, $owners ), true );
 		return $this->user_phone( $user, $phone, true ) === $phone;
+	}
+
+	private function can_shop_as_owner( $user ): bool {
+		return $this->shopping_profile !== null && MobiShop_Storefront_Admin::accepts( $user );
+	}
+
+	private function owner_session( WP_User $owner, string $method ) {
+		$customer = ( $this->shopping_profile )( $owner );
+		if ( is_wp_error( $customer ) ) return $customer;
+		if ( ! $this->eligible( $customer ) || $customer->ID === $owner->ID ) return $this->error( 'invalid_credentials', 401 );
+		$result = ( $this->issue )( $customer );
+		if ( $result instanceof WP_REST_Response && $result->get_status() < 300 ) {
+			$result->set_data( array( 'status' => 'authenticated' ) + $result->get_data() );
+			update_user_meta( $customer->ID, '_mobishop_app_last_login_at', gmdate( 'c' ) );
+			update_user_meta( $customer->ID, '_mobishop_app_last_auth_method', $method );
+		}
+		return $result;
 	}
 
 	private function eligible( $user ): bool {

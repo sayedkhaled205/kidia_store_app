@@ -110,6 +110,13 @@ final class MobiShop_Customer_Account_Endpoint {
 				$expected[ $field ] = $user[ $field ];
 			}
 		}
+		$owner_email = $this->shopping_contact_email( (int) $customer->get_id() );
+		if ( $owner_email !== '' && array_key_exists( 'email', $values ) ) {
+			if ( ! is_string( $values['email'] ) || strcasecmp( trim( $values['email'] ), $owner_email ) !== 0 ) {
+				return new WP_Error( 'mobishop_shopping_email_managed', __( 'This shopping profile uses the email of your store account.', 'mobi2app-connector' ), array( 'status' => 409 ) );
+			}
+			unset( $values['email'] );
+		}
 		if ( array_key_exists( 'email', $values ) ) {
 			$email = sanitize_email( (string) $values['email'] );
 			if ( ! is_email( $email ) ) {
@@ -239,6 +246,12 @@ final class MobiShop_Customer_Account_Endpoint {
 		);
 	}
 
+	private function shopping_contact_email( int $id ): string {
+		if ( ! class_exists( 'MobiShop_Storefront_Admin' ) ) return '';
+		$user = get_user_by( 'id', $id );
+		return $user instanceof WP_User ? MobiShop_Storefront_Admin::contact_email( $user ) : '';
+	}
+
 	private function profile_payload( $customer ): array {
 		$customer_id = (int) $customer->get_id();
 		$billing_phone = is_callable( array( $customer, 'get_billing_phone' ) )
@@ -255,7 +268,7 @@ final class MobiShop_Customer_Account_Endpoint {
 		if ( '' === trim( $phone ) ) $phone = (string) get_user_meta( $customer_id, 'kidia_unverified_phone', true );
 		return array(
 			'id'           => $customer_id,
-			'email'        => sanitize_email( (string) $customer->get_email() ),
+			'email'        => $this->shopping_contact_email( $customer_id ) ?: sanitize_email( (string) $customer->get_email() ),
 			'first_name'   => sanitize_text_field( (string) $customer->get_first_name() ),
 			'last_name'    => sanitize_text_field( (string) $customer->get_last_name() ),
 			'display_name' => sanitize_text_field( (string) $customer->get_display_name() ),

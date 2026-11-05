@@ -576,7 +576,7 @@ packages:
     source: hosted
     version: "7.2.0"
   google_sign_in_android:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: google_sign_in_android
       sha256: "312e74b3e839896ff30ed98310da4cc24dbfa19ad060b1612f7718d5afa66480"
@@ -616,7 +616,7 @@ packages:
     source: hosted
     version: "2.0.2"
   html:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: html
       sha256: "6d1264f2dffa1b1101c25a91dff0dc2daee4c18e87cd8538729773c073dbf602"

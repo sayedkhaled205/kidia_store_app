@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "slug": "mobi2app-connector",
-  "version": "1.46.131",
+  "version": "1.46.132",
   "files": {
     "SOURCE-BUILD.txt": {
       "source": "connectors/woocommerce/source/SOURCE-BUILD.txt",
       "newline": "lf",
-      "source_sha256": "1544dcbbee495335511d10ff839b1101fe0186801553e1d0a63e70c41520f9fb",
-      "sha256": "1544dcbbee495335511d10ff839b1101fe0186801553e1d0a63e70c41520f9fb"
+      "source_sha256": "703c8040288d9488d33efdfb6f1dd2e40b596fc803c389557c6e8ed9677ce2a9",
+      "sha256": "703c8040288d9488d33efdfb6f1dd2e40b596fc803c389557c6e8ed9677ce2a9"
     },
     "admin/assets/theme-previews/beauty.webp": {
       "source": "mobishop/admin/assets/theme-previews/beauty.webp",
@@ -2424,14 +2424,14 @@
     "api/class-customer-account-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-account-endpoint.php",
       "newline": "lf",
-      "source_sha256": "6c1fc149151bfbc1dd740cf5f9001534494d5689dc62d40705a9a6434659edf5",
-      "sha256": "6c1fc149151bfbc1dd740cf5f9001534494d5689dc62d40705a9a6434659edf5"
+      "source_sha256": "92a7539ad9fc212ae4abf339e3a2d85805f42b80b697543c4fc498230dfaed44",
+      "sha256": "92a7539ad9fc212ae4abf339e3a2d85805f42b80b697543c4fc498230dfaed44"
     },
     "api/class-customer-auth-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-auth-endpoint.php",
       "newline": "lf",
-      "source_sha256": "61eded56c51649ff5f95b3c2f1b6fc104848091d9ffd8a2cd5183e6871606a74",
-      "sha256": "61eded56c51649ff5f95b3c2f1b6fc104848091d9ffd8a2cd5183e6871606a74"
+      "source_sha256": "6838a99bed1ccaf4b9b3a922169eb1a426fbca5aea8bdf6907ff864bb75d4dde",
+      "sha256": "6838a99bed1ccaf4b9b3a922169eb1a426fbca5aea8bdf6907ff864bb75d4dde"
     },
     "api/class-customer-orders-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-orders-endpoint.php",
@@ -2466,8 +2466,8 @@
     "api/class-native-customer-auth-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-native-customer-auth-endpoint.php",
       "newline": "lf",
-      "source_sha256": "974724d113e480c48fe8942d5c2dd9bba7d9984c9da298656c3d4d91f26416ea",
-      "sha256": "974724d113e480c48fe8942d5c2dd9bba7d9984c9da298656c3d4d91f26416ea"
+      "source_sha256": "d172af75802a79a4329c4b4c06a554439d85108b8b1c219169703da9b37c41e0",
+      "sha256": "d172af75802a79a4329c4b4c06a554439d85108b8b1c219169703da9b37c41e0"
     },
     "api/class-native-payment92.php": {
       "source": "connectors/woocommerce/source/api/class-native-payment92.php",
@@ -2516,6 +2516,12 @@
       "newline": "lf",
       "source_sha256": "f799b9a04b02c65e87152914f2b7ab6215089bb822cbba08106a46b116220b7c",
       "sha256": "f799b9a04b02c65e87152914f2b7ab6215089bb822cbba08106a46b116220b7c"
+    },
+    "api/class-storefront-admin.php": {
+      "source": "connectors/woocommerce/source/api/class-storefront-admin.php",
+      "newline": "lf",
+      "source_sha256": "3a20acd58490815e8ad9838f45ff6fd6bf55d312a91892f2111833b6fe8fd028",
+      "sha256": "3a20acd58490815e8ad9838f45ff6fd6bf55d312a91892f2111833b6fe8fd028"
     },
     "api/class-website-auth-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-website-auth-endpoint.php",
@@ -3006,8 +3012,8 @@
     "mobi2app-connector.php": {
       "source": "connectors/woocommerce/source/mobi2app-connector.php",
       "newline": "lf",
-      "source_sha256": "cc33a2f28d103bee3e5b7ce38212cc8f807c0360a3660dc77e250f09beed481a",
-      "sha256": "cc33a2f28d103bee3e5b7ce38212cc8f807c0360a3660dc77e250f09beed481a"
+      "source_sha256": "3081fe3014ce37292b78ccb232356d7089d150ec5eb8803dd3bdc94ddc6a6d31",
+      "sha256": "3081fe3014ce37292b78ccb232356d7089d150ec5eb8803dd3bdc94ddc6a6d31"
     },
     "public/assets/vendor/qrcode.LICENSE": {
       "source": "mobishop/public/assets/vendor/qrcode.LICENSE",
@@ -3042,8 +3048,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "f82f1c34ad5e6c18b2cb193bd2618c5f1748e2bc51f8583fe910123eaf07ebec",
-      "sha256": "f82f1c34ad5e6c18b2cb193bd2618c5f1748e2bc51f8583fe910123eaf07ebec"
+      "source_sha256": "e58031220dc9a55e02cb2a652e26bfc7af8f711ab5b7393ea0b69c43a4d7ae48",
+      "sha256": "e58031220dc9a55e02cb2a652e26bfc7af8f711ab5b7393ea0b69c43a4d7ae48"
     }
   },
   "baseline_release": {

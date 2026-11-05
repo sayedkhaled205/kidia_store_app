@@ -1,3 +1,4 @@
+import 'android_google_account_picker.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -118,7 +119,7 @@ final class FirebaseNativeAuthSdk
     bool? isWeb,
   }) : _phoneBackendFactory =
            phoneBackendFactory ?? _FirebasePhoneBackend.create,
-       _googleBackend = googleBackend ?? _GoogleBackend.instance,
+       _googleBackend = googleBackend ?? GoogleAccountPickerBackend.instance,
        _appleBackendFactory =
            appleBackendFactory ?? _FirebaseAppleBackend.create,
        _facebookBackend = facebookBackend ?? _FacebookBackend.instance,
@@ -640,9 +641,10 @@ final class _FirebaseAppleBackend implements NativeAppleBackend {
   });
 }
 
-final class _GoogleBackend implements NativeGoogleBackend {
-  _GoogleBackend();
-  static final instance = _GoogleBackend();
+final class GoogleAccountPickerBackend implements NativeGoogleBackend {
+  GoogleAccountPickerBackend({this.androidPicker = pickAndroidGoogleAccount});
+  static final instance = GoogleAccountPickerBackend();
+  final Future<String?> Function(String) androidPicker;
   Future<void>? _initialized;
   String? _configuration;
   bool _busy = false;
@@ -675,23 +677,11 @@ final class _GoogleBackend implements NativeGoogleBackend {
       if (!google.supportsAuthenticate()) {
         throw const NativeAuthSdkException('native-platform-required');
       }
-      GoogleSignInAccount? account;
+      String? token;
       if (defaultTargetPlatform == TargetPlatform.android) {
-        // Credential Manager's bottom sheet uses the app's registered branding.
-        // Keep cancellation distinct from an unavailable sheet: dismissing it
-        // must not immediately open a second account picker.
-        try {
-          account = await google.attemptLightweightAuthentication(
-            reportAllExceptions: true,
-          );
-        } on GoogleSignInException catch (error) {
-          if (error.code != GoogleSignInExceptionCode.uiUnavailable) rethrow;
-        }
+        token = await androidPicker(serverClientId);
       }
-      // The explicit flow also lets users add an account when none are eligible
-      // for the sheet. iOS retains its native Google authentication flow.
-      account ??= await google.authenticate();
-      final token = account.authentication.idToken;
+      token ??= (await google.authenticate()).authentication.idToken;
       if (token == null || token.isEmpty) {
         throw const NativeAuthSdkException('missing-id-token');
       }

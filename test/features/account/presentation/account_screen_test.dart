@@ -1,6 +1,6 @@
+import 'package:mobishop_store_app/features/account/presentation/store_privacy_body_loader.dart';
 import '../../../support/viewport_rotation.dart';
 import 'package:mobishop_store_app/core/app_design/store_privacy_provider.dart';
-import 'package:mobishop_store_app/features/account/presentation/store_privacy_link.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
 import 'package:flutter/material.dart';
@@ -75,9 +75,9 @@ void main() {
           storePrivacyProvider.overrideWithValue(
             Uri.parse('https://merchant.example/privacy'),
           ),
-          storePrivacyLauncherProvider.overrideWithValue((uri) async {
+          storePrivacyBodyLoaderProvider.overrideWithValue((uri) async {
             expect(uri.toString(), 'https://merchant.example/privacy');
-            return true;
+            return [];
           }),
           cmsPageLayoutProvider('account').overrideWith(
             (ref) async => CmsPageLayout.fromJson({
@@ -240,30 +240,28 @@ void main() {
     });
   }
 
-  testWidgets(
-    'preview account uses the selected application name',
-    (tester) async {
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
-            previewIdentityProvider.overrideWith(
-              (ref) => Stream.value({'app_name': 'كيديا ستور'}),
-            ),
-          ],
-          child: MaterialApp(
-            locale: const Locale('ar'),
-            supportedLocales: const [Locale('ar')],
-            localizationsDelegates: GlobalMaterialLocalizations.delegates,
-            home: const AccountScreen(),
+  testWidgets('preview account uses the selected application name', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
+          previewIdentityProvider.overrideWith(
+            (ref) => Stream.value({'app_name': 'كيديا ستور'}),
           ),
+        ],
+        child: MaterialApp(
+          locale: const Locale('ar'),
+          supportedLocales: const [Locale('ar')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          home: const AccountScreen(),
         ),
-      );
-      await tester.pumpAndSettle();
-      expect(find.text('تابع طلباتك وبياناتك على كيديا ستور'), findsOneWidget);
-    },
-    skip: !AppConfig.isCmsPreview,
-  );
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('تابع طلباتك وبياناتك على كيديا ستور'), findsOneWidget);
+  }, skip: !AppConfig.isCmsPreview);
 
   testWidgets(
     'private signed-out account actions require the same auth screen',

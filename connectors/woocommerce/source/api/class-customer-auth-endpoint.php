@@ -7,6 +7,8 @@
 
 defined( 'ABSPATH' ) || exit;
 
+require_once __DIR__ . '/class-storefront-admin.php';
+
 final class MobiShop_Customer_Auth_Endpoint {
 
 	private const SESSION_META_KEY = '_mobishop_customer_sessions_v1';
@@ -21,13 +23,14 @@ final class MobiShop_Customer_Auth_Endpoint {
 		require_once __DIR__ . '/class-native-customer-auth-endpoint.php';
 		$native = new MobiShop_Native_Customer_Auth_Endpoint(
 			fn( WP_User $user ) => $this->issue_session_response( $user ),
-			fn( WP_User $user ): bool => $this->is_allowed_customer( $user )
+			fn( WP_User $user ): bool => $this->is_allowed_customer( $user ),
+			null, array( 'MobiShop_Storefront_Admin', 'resolve' )
 		);
 		$native->register();
 		require_once __DIR__ . '/class-website-auth-endpoint.php';
 		$website = new MobiShop_Website_Auth_Endpoint(
-			fn( WP_User $user ) => $this->issue_session_response( $user ),
-			fn( WP_User $user ): bool => $this->is_allowed_customer( $user )
+			fn( WP_User $user ) => $this->issue_verified_session( $user ),
+			fn( WP_User $user ): bool => $this->is_allowed_customer( $user ) || MobiShop_Storefront_Admin::accepts( $user )
 		);
 		$website->register();
 		add_action(
@@ -196,7 +199,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 			$email,
 			(string) $request->get_param( 'password' )
 		);
-		if ( is_wp_error( $user ) || ! $user instanceof WP_User || ! $this->is_allowed_customer( $user ) ) {
+		if ( is_wp_error( $user ) || ! $user instanceof WP_User || ( ! $this->is_allowed_customer( $user ) && ! MobiShop_Storefront_Admin::accepts( $user ) ) ) {
 			return new WP_Error(
 				'mobishop_auth_invalid_credentials',
 				__( 'The email address or password is incorrect.', 'mobi2app-connector' ),
@@ -204,7 +207,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 			);
 		}
 
-		return $this->issue_session_response( $user );
+		return $this->issue_verified_session( $user );
 	}
 
 	/** Create the same WooCommerce customer account used by the website. */
@@ -341,7 +344,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 		$request_key = $this->social_key( 'request', $request_id );
 		$pending     = get_transient( $request_key );
 		$user        = get_user_by( 'id', (int) $user_id );
-		if ( ! is_array( $pending ) || ! $user instanceof WP_User || ! $this->is_allowed_customer( $user ) ) {
+		if ( ! is_array( $pending ) || ! $user instanceof WP_User || ( ! $this->is_allowed_customer( $user ) && ! MobiShop_Storefront_Admin::accepts( $user ) ) ) {
 			return;
 		}
 		$provider_id = is_object( $provider ) && is_callable( array( $provider, 'getId' ) )
@@ -435,7 +438,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 		}
 
 		$user = get_user_by( 'id', (int) ( $handoff['user_id'] ?? 0 ) );
-		if ( ! $user instanceof WP_User || ! $this->is_allowed_customer( $user ) ) {
+		if ( ! $user instanceof WP_User || ( ! $this->is_allowed_customer( $user ) && ! MobiShop_Storefront_Admin::accepts( $user ) ) ) {
 			return $this->unauthorized_error();
 		}
 
@@ -451,7 +454,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 		if ( $this->is_social_secret( $request_id ) ) {
 			delete_transient( $this->social_key( 'request', $request_id ) );
 		}
-		return $this->issue_session_response( $user );
+		return $this->issue_verified_session( $user );
 	}
 
 	/** Return the profile attached to a valid mobile session. */
@@ -628,8 +631,17 @@ final class MobiShop_Customer_Auth_Endpoint {
 		return $user instanceof WP_User ? $user->ID : $user_id;
 	}
 
+	private function issue_verified_session( WP_User $user ) {
+		if ( MobiShop_Storefront_Admin::accepts( $user ) ) {
+			$user = MobiShop_Storefront_Admin::resolve( $user );
+			if ( is_wp_error( $user ) ) return $user;
+		}
+		return $this->issue_session_response( $user );
+	}
+
 	/** Issue a random, revocable, expiring customer session. */
 	private function issue_session_response( WP_User $user ) {
+		if ( ! $this->is_allowed_customer( $user ) ) return $this->unauthorized_error();
 		// Apply the store's required profile step to every session entry point,
 		// including the older email and browser social endpoints.
 		if ( ! $this->is_customer_ready( $user ) ) {
@@ -865,6 +877,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 
 	/** Keep elevated WordPress accounts out of the customer token surface. */
 	private function is_allowed_customer( WP_User $user ): bool {
+		if ( ! MobiShop_Storefront_Admin::valid_session_user( $user ) ) return false;
 		// Do not call user_can() while determine_current_user is resolving a
 		// mobile token. Capability filters installed by another plugin may ask
 		// for the current user again, recursively re-entering this method until
@@ -892,7 +905,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 	private function customer_payload( WP_User $user ): array {
 		return array(
 			'id'           => $user->ID,
-			'email'        => sanitize_email( $user->user_email ),
+			'email'        => MobiShop_Storefront_Admin::contact_email( $user ) ?: sanitize_email( $user->user_email ),
 			'display_name' => sanitize_text_field( $user->display_name ),
 			'first_name'   => sanitize_text_field( (string) get_user_meta( $user->ID, 'first_name', true ) ),
 			'last_name'    => sanitize_text_field( (string) get_user_meta( $user->ID, 'last_name', true ) ),

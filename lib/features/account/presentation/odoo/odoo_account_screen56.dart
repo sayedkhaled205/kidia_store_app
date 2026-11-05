@@ -523,6 +523,7 @@ class _OdooSignInScreen56State extends ConsumerState<OdooSignInScreen56> {
                       ),
                     ),
                   ),
+                  const StorePrivacyLink(),
                 ],
               ),
             ),

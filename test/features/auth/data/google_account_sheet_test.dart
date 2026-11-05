@@ -55,7 +55,21 @@ void main() {
         GoogleSignInPlatform.instance = old;
         debugDefaultTargetPlatformOverride = null;
       });
-      final sdk = FirebaseNativeAuthSdk(isWeb: false);
+      final sdk = FirebaseNativeAuthSdk(
+        isWeb: false,
+        googleBackend: GoogleAccountPickerBackend(
+          androidPicker: (_) async {
+            platform.calls.add('sheet');
+            if (platform.sheetError case final code?) {
+              if (code == GoogleSignInExceptionCode.uiUnavailable) return null;
+              throw GoogleSignInException(code: code);
+            }
+            return platform.sheetResult == null
+                ? null
+                : (platform.sheetResult!.authenticationTokens.idToken ?? '');
+          },
+        ),
+      );
       const config = {
         'google': {'server_client_id': 'merchant.apps.googleusercontent.com'},
       };
@@ -66,11 +80,11 @@ void main() {
       platform.calls.clear();
       platform.sheetResult = null;
       expect(await sdk.google(config), 'test-proof');
-      expect(
-        platform.calls,
-        ['sheet', 'explicit', 'clear'],
-        reason: 'No eligible account must allow adding another account',
-      );
+      expect(platform.calls, [
+        'sheet',
+        'explicit',
+        'clear',
+      ], reason: 'No eligible account must allow adding another account');
 
       platform.calls.clear();
       platform.sheetError = GoogleSignInExceptionCode.uiUnavailable;
