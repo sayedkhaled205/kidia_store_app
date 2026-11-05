@@ -273,6 +273,10 @@ class _MainShellState extends ConsumerState<MainShell>
                 bottom:
                     !AppConfig.isCmsPreview ||
                     footer.boolean('safe_area', true),
+                // The app already reserves the device's home-indicator inset.
+                minimum: EdgeInsets.only(
+                  bottom: View.of(context).viewPadding.bottom > 0 ? 0 : 6,
+                ),
                 child: Padding(
                   padding: EdgeInsets.only(
                     top:
