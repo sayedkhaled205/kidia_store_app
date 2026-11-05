@@ -1,3 +1,5 @@
+import 'package:mobishop_store_app/core/commerce/store_policy_discovery.dart'
+    show publicOdooPrivacyLink;
 import 'package:mobishop_store_app/features/account/presentation/store_privacy_body_loader.dart';
 import 'package:mobishop_store_app/features/account/data/privacy_page_parser.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +10,23 @@ import 'package:mobishop_store_app/features/account/presentation/store_privacy_l
 import 'package:mobishop_store_app/features/auth/domain/entities/native_auth.dart';
 
 void main() {
+  test('Odoo discovers only a real merchant policy link', () {
+    final origin = Uri.parse('https://shop.test/ar/');
+    expect(
+      publicOdooPrivacyLink(
+        '<footer><a href="https://identity.test">Privacy Policy</a><a href="/sale">Offers</a></footer>',
+        origin,
+      ),
+      isNull,
+    );
+    expect(
+      publicOdooPrivacyLink(
+        '<footer><a href="privacy">سياسة الخصوصية</a></footer>',
+        origin,
+      ),
+      Uri.parse('https://shop.test/ar/privacy'),
+    );
+  });
   test('policy is a safe HTTPS merchant URL, not a guessed route', () {
     for (final bad in [
       '',

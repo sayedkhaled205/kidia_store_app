@@ -76,8 +76,11 @@ void main() {
         const Size.square(52));
     final google = tester.getRect(find.byKey(const Key('auth-google')));
     final facebook = tester.getRect(find.byKey(const Key('auth-facebook')));
-    expect(facebook.left - google.right, closeTo(44, 0.1));
+    expect(facebook.left - google.right, closeTo(36, 0.1));
     expect(facebook.center.dy, google.center.dy);
+    final mark = tester.getRect(find.byKey(const Key('auth-google-brand')));
+    expect(mark.size, const Size.square(28));
+    expect(mark.center, google.center);
     expect(tester.takeException(), isNull);
   });
   testWidgets('hidden method has no hint and phone hint stays by continue', (
@@ -427,8 +430,8 @@ void main() {
     expect(image.image, const AssetImage('assets/branding/google-g.png'));
     expect(image.color, isNull);
     expect(image.fit, BoxFit.contain);
-    expect(image.width, 24);
-    expect(image.height, 24);
+    expect(image.width, 28);
+    expect(image.height, 28);
     expect(
       find.descendant(
         of: find.byKey(const Key('auth-google')),

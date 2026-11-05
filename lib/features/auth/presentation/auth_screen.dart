@@ -473,7 +473,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                           padding: EdgeInsets.zero,
                                           backgroundColor: Colors.white,
                                           side: const BorderSide(
-                                            color: Color(0xFFEEEEEE),
+                                            color: Color(0xFFDADCE0),
+                                            width: 1.5,
                                           ),
                                           shape: const CircleBorder(),
                                         ),
@@ -482,8 +483,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                           child: Image.asset(
                                             'assets/branding/google-g.png',
                                             key: const Key('auth-google-brand'),
-                                            width: 24,
-                                            height: 24,
+                                            width: 28,
+                                            height: 28,
                                             fit: BoxFit.contain,
                                             excludeFromSemantics: true,
                                           ),
@@ -492,7 +493,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                     ),
                                   ),
                                 if (showGoogle && showFacebook)
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 4),
                                 if (showFacebook)
                                   _loginOption(
                                     last: lastLogin == LastLoginMethod.facebook,

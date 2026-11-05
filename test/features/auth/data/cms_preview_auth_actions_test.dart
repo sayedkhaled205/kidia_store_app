@@ -11,6 +11,7 @@ void main() {
           'version': 1,
           'enabled': true,
           'phone_country_code': '20',
+          'privacy_policy_url': 'https://store.test/privacy/',
           'methods': {
             'google': true,
             'phone_otp': true,
@@ -25,6 +26,7 @@ void main() {
       expect(config.allows('google'), isTrue);
       expect(config.supportsPhone, isTrue);
       expect(config.phoneHint, '01XXXXXXXXX');
+      expect(config.privacyPolicyUrl, 'https://store.test/privacy/');
       expect(config.google, isEmpty);
       expect(config.firebase, isEmpty);
       final previewOnly = isA<AuthRepositoryException>().having(

@@ -24,6 +24,7 @@ class CmsPreviewAuthActions implements NativeAuthActions {
     // Only public availability and phone-format hints belong in the preview.
     return NativeAuthConfig.fromJson({
       'enabled': json['enabled'],
+      'privacy_policy_url': json['privacy_policy_url'],
       'methods': json['methods'],
       'phone_country_code': json['phone_country_code'],
     });

@@ -20,7 +20,11 @@ class PrivacyPageFetcher {
       ),
     );
     try {
-      final store = safeStorePrivacyUri(AppConfig.apiBaseUrl);
+      // The preview runs on the builder domain. Read a matching public article
+      // from the merchant origin, just as the installed Woo app does.
+      final store = AppConfig.isCmsPreview
+          ? policy.resolve('/')
+          : safeStorePrivacyUri(AppConfig.apiBaseUrl);
       if (AppConfig.commercePlatform == CommercePlatform.wooCommerce &&
           store != null &&
           store.origin == policy.origin &&
