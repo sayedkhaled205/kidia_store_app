@@ -112,7 +112,7 @@ final class MobiShop_Test_Order {
 	}
 
 	public function is_paid(): bool { return in_array($this->status, ['processing','completed'], true); }
-	public function needs_payment(): bool { return in_array($this->status, ['pending','failed'], true); }
+	public function needs_payment(): bool { return $GLOBALS['mobishop_needs_payment_override'] ?? in_array($this->status, ['pending','failed'], true); }
 	public function get_payment_method(): string { return $GLOBALS['mobishop_payment_method'] ?? 'card'; }
 	public function get_order_key(): string { return 'wc_order_fixture' . $this->id; }
 	public function get_checkout_payment_url(): string { return $GLOBALS['mobishop_payment_url'] ?? ('https://shop.example/store/checkout/order-pay/' . $this->id . '/?pay_for_order=true&key=' . $this->get_order_key()); }
@@ -412,3 +412,13 @@ mobishop_orders_assert($cancel instanceof WP_Error, 'Foreign historical order ca
 $GLOBALS['fixture_data_owner'] = 0;
 mobishop_orders_assert($endpoint->get_orders(new WP_REST_Request()) instanceof WP_Error, 'Invalid shopper mapping cannot fall back to unscoped history');
 echo "Owner shopping history regression passed.\n";
+
+$GLOBALS['mobishop_current_user_id'] = 7;
+$GLOBALS['fixture_data_owner'] = 7;
+$GLOBALS['mobishop_owned_order'] = new MobiShop_Test_Order(101,7,'101','checkout-draft','100',[]);
+$GLOBALS['mobishop_needs_payment_override'] = true;
+$draft = $endpoint->get_order(new WP_REST_Request(['id'=>101]));
+mobishop_orders_assert($draft->data['order']['needs_payment'] === true, 'Keep actual Woo unpaid predicate without claiming confirmed checkout');
+mobishop_orders_assert($draft->data['order']['payment_url'] === '' && $draft->data['order']['payment_endpoint_path'] === '', 'Unconfirmed checkout draft must not expose continuation credentials');
+unset($GLOBALS['mobishop_needs_payment_override']);
+echo "Checkout draft payment continuation regression passed.\n";

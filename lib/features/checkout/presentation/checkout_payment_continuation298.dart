@@ -128,7 +128,11 @@ class _CheckoutPaymentContinuation298State
             if (!resolved) ...[
               const SizedBox(height: 12),
               Text(
-                state == CheckoutPaymentState298.unavailable
+                controller.order?.status == 'checkout-draft'
+                    ? (ar
+                          ? 'محاولة إتمام الطلب لسه ما اتأكدتش. راجع الطلب قبل أي محاولة دفع جديدة.'
+                          : 'Checkout has not been confirmed. Review this order before trying another payment.')
+                    : state == CheckoutPaymentState298.unavailable
                     ? (ar
                           ? 'طلبك محفوظ. تحقق من الاتصال وتسجيل الدخول، ثم حاول مرة أخرى أو راجع طلباتك.'
                           : 'Your order is saved. Check your connection and sign-in, then retry or review your orders.')

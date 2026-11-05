@@ -16,6 +16,7 @@ abstract final class CheckoutPaymentPolicy298 {
   static Uri? destination(Uri store, CustomerOrder order) {
     final uri = order.paymentUri;
     if (order.id <= 0 ||
+        order.status == 'checkout-draft' ||
         order.isPaid != false ||
         order.needsPayment != true ||
         uri == null ||
@@ -130,7 +131,11 @@ class CheckoutPaymentController298 extends ChangeNotifier {
       'bacs',
       'cheque',
     }.contains(fresh.paymentMethod);
-    state = const {'cancelled', 'refunded', 'trash'}.contains(fresh.status)
+    // Woo's needs_payment() can be true for an unconfirmed checkout draft.
+    // A draft is not an eligible order/payment hand-off.
+    state = fresh.status == 'checkout-draft'
+        ? CheckoutPaymentState298.unavailable
+        : const {'cancelled', 'refunded', 'trash'}.contains(fresh.status)
         ? CheckoutPaymentState298.closed
         : fresh.isPaid! && !offline
         ? CheckoutPaymentState298.paid

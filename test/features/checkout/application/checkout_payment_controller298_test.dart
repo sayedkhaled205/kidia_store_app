@@ -29,6 +29,25 @@ CustomerOrder paymentOrder298({
 
 void main() {
   final store = Uri.parse('https://store.example');
+  test('unconfirmed checkout draft never offers or launches payment', () async {
+    final draft = paymentOrder298(status: 'checkout-draft');
+    expect(CheckoutPaymentPolicy298.destination(store, draft), isNull);
+    var launches = 0;
+    final controller = CheckoutPaymentController298(
+      orderId: draft.id,
+      storeUri: store,
+      readOrder: (_) async => draft,
+      launch: (_) async { launches++; return true; },
+      sessionIsCurrent: () => true,
+    );
+    addTearDown(controller.dispose);
+    await controller.refresh();
+    expect(controller.state, CheckoutPaymentState298.unavailable);
+    expect(controller.canPay, false);
+    await controller.openPayment();
+    expect(launches, 0);
+    expect(controller.openFailed, false);
+  });
   test('same store order pay is the only allowed destination', () {
     expect(
       CheckoutPaymentPolicy298.destination(store, paymentOrder298()),

@@ -21,6 +21,25 @@ import '../application/checkout_payment_controller298_test.dart'
     show paymentOrder298;
 
 void main() {
+  testWidgets('checkout draft shows verification warning without payment action', (tester) async {
+    final controller = CheckoutPaymentController298(
+      orderId: 730,
+      storeUri: Uri.parse('https://store.example'),
+      sessionIsCurrent: () => true,
+      readOrder: (_) async => paymentOrder298(status: 'checkout-draft'),
+      launch: (_) async => throw StateError('Draft must never launch payment'),
+    );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [checkoutPaymentController298Provider.overrideWith((ref, id) => controller)],
+      child: const MaterialApp(home: Scaffold(body: CheckoutPaymentContinuation298(orderId: 730))),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Checkout has not been confirmed. Review this order before trying another payment.'), findsOneWidget);
+    expect(find.byKey(const Key('checkout-continue-payment')), findsNothing);
+    expect(find.byKey(const Key('checkout-payment-open-failed')), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets(
     'an existing pending order can resume payment from order history',
     (tester) async {

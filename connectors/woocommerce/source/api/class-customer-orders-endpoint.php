@@ -291,7 +291,7 @@ final class MobiShop_Customer_Orders_Endpoint {
 		$cancellation_type = $this->cancellation_type( $order );
 		$is_paid = is_callable( array( $order, 'is_paid' ) ) && (bool) $order->is_paid();
 		$needs_payment = is_callable( array( $order, 'needs_payment' ) ) && (bool) $order->needs_payment();
-		$payment_url = ! $is_paid && $needs_payment ? $this->payment_url( $order ) : '';
+		$payment_url = 'checkout-draft' !== $status && ! $is_paid && $needs_payment ? $this->payment_url( $order ) : '';
 		return array(
 			'id'            => (int) $order->get_id(),
 			'number'        => sanitize_text_field( (string) $order->get_order_number() ),
