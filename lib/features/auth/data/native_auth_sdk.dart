@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart' as fb;
 
 /// Native identity proof only. The merchant API exchanges this proof for its
 /// own customer session; Firebase is never the app's customer session store.
@@ -78,17 +79,41 @@ abstract interface class NativeAppleBackend {
   Future<NativeAppleProof> authenticate();
 }
 
+abstract interface class NativeFacebookAuthSdk {
+  Future<NativeFacebookProof> facebook(
+    Map<String, dynamic> config, {
+    required String nonce,
+  });
+}
+
+class NativeFacebookProof {
+  const NativeFacebookProof(this.token, {required this.limited});
+  final String token;
+  final bool limited;
+}
+
+abstract interface class NativeFacebookBackend {
+  Future<NativeFacebookProof> authenticate({
+    required String appId,
+    required String nonce,
+    required bool limited,
+  });
+}
+
 typedef NativeAppleBackendFactory =
     Future<NativeAppleBackend> Function(Map<String, dynamic> options);
 
 typedef NativePhoneBackendFactory =
     Future<NativePhoneBackend> Function(Map<String, dynamic> firebase);
 
-final class FirebaseNativeAuthSdk implements NativeAuthSdk, NativeAppleAuthSdk {
+final class FirebaseNativeAuthSdk
+    implements NativeAuthSdk, NativeAppleAuthSdk, NativeFacebookAuthSdk {
   FirebaseNativeAuthSdk({
     NativePhoneBackendFactory? phoneBackendFactory,
     NativeGoogleBackend? googleBackend,
     NativeAppleBackendFactory? appleBackendFactory,
+    NativeFacebookBackend? facebookBackend,
+    this.facebookAppId = const String.fromEnvironment('NATIVE_FACEBOOK_APP_ID'),
     TargetPlatform? platform,
     bool? isWeb,
   }) : _phoneBackendFactory =
@@ -96,12 +121,15 @@ final class FirebaseNativeAuthSdk implements NativeAuthSdk, NativeAppleAuthSdk {
        _googleBackend = googleBackend ?? _GoogleBackend.instance,
        _appleBackendFactory =
            appleBackendFactory ?? _FirebaseAppleBackend.create,
+       _facebookBackend = facebookBackend ?? _FacebookBackend.instance,
        _platform = platform ?? defaultTargetPlatform,
        _isWeb = isWeb ?? kIsWeb;
 
   final NativePhoneBackendFactory _phoneBackendFactory;
   final NativeGoogleBackend _googleBackend;
   final NativeAppleBackendFactory _appleBackendFactory;
+  final NativeFacebookBackend _facebookBackend;
+  final String facebookAppId;
   final TargetPlatform _platform;
   final bool _isWeb;
   int _generation = 0;
@@ -338,6 +366,40 @@ final class FirebaseNativeAuthSdk implements NativeAuthSdk, NativeAppleAuthSdk {
   }
 
   @override
+  Future<NativeFacebookProof> facebook(
+    Map<String, dynamic> config, {
+    required String nonce,
+  }) async {
+    _checkPlatform();
+    final options = config['facebook'];
+    if (options is! Map ||
+        !RegExp(r'^[1-9][0-9]{0,63}$').hasMatch(facebookAppId) ||
+        options['app_id'] != facebookAppId ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(nonce)) {
+      throw const NativeAuthSdkException(
+        'facebook-native-registration-required',
+      );
+    }
+    final generation = ++_generation;
+    _phone?.cancel();
+    try {
+      final proof = await _facebookBackend.authenticate(
+        appId: facebookAppId,
+        nonce: nonce,
+        limited: _platform == TargetPlatform.iOS,
+      );
+      _checkCurrent(generation);
+      if (proof.token.isEmpty ||
+          proof.limited != (_platform == TargetPlatform.iOS)) {
+        throw const NativeAuthSdkException('invalid-facebook-proof');
+      }
+      return proof;
+    } catch (error) {
+      throw _safeError(error);
+    }
+  }
+
+  @override
   Future<NativeAppleProof> apple(Map<String, dynamic> config) async {
     _checkPlatform();
     if (_platform != TargetPlatform.iOS) {
@@ -384,6 +446,51 @@ final class FirebaseNativeAuthSdk implements NativeAuthSdk, NativeAppleAuthSdk {
     }
     // Provider error strings can contain account data; never surface/log them.
     return const NativeAuthSdkException('identity-provider-unavailable');
+  }
+}
+
+final class _FacebookBackend implements NativeFacebookBackend {
+  static final instance = _FacebookBackend();
+  bool _busy = false;
+
+  @override
+  Future<NativeFacebookProof> authenticate({
+    required String appId,
+    required String nonce,
+    required bool limited,
+  }) async {
+    if (_busy) throw const NativeAuthSdkException('operation-in-progress');
+    _busy = true;
+    try {
+      final result = await fb.FacebookAuth.instance.login(
+        permissions: const ['public_profile', 'email'],
+        loginBehavior: fb.LoginBehavior.nativeWithFallback,
+        loginTracking: fb.LoginTracking.limited,
+        nonce: nonce,
+      );
+      if (result.status == fb.LoginStatus.cancelled) {
+        throw const NativeAuthSdkException('cancelled');
+      }
+      final token = result.accessToken;
+      if (result.status != fb.LoginStatus.success ||
+          token == null ||
+          token.tokenString.isEmpty) {
+        throw const NativeAuthSdkException('identity-provider-unavailable');
+      }
+      if ((limited && (token is! fb.LimitedToken || token.nonce != nonce)) ||
+          (!limited &&
+              (token is! fb.ClassicToken || token.applicationId != appId))) {
+        throw const NativeAuthSdkException('invalid-facebook-proof');
+      }
+      return NativeFacebookProof(token.tokenString, limited: limited);
+    } finally {
+      // Clear only this SDK's cached proof, never the Facebook app's account.
+      try {
+        await fb.FacebookAuth.instance.logOut();
+      } finally {
+        _busy = false;
+      }
+    }
   }
 }
 

@@ -80,7 +80,8 @@ add_action(
 );
 
 add_filter( 'nsl_google_auto_link_allowed', '__return_true', 20 );
-add_filter( 'nsl_facebook_auto_link_allowed', '__return_true', 20 );
+// Existing provider links still sign in; a matching email alone cannot create a new link.
+add_filter( 'nsl_facebook_auto_link_allowed', '__return_false', 20 );
 
 add_filter(
 	'woocommerce_get_myaccount_page_permalink',

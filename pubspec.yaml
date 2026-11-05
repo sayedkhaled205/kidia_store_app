@@ -58,6 +58,7 @@ dependencies:
   google_sign_in: 7.2.0
   kashier_flutter_sdk:
     path: packages/kashier_flutter_sdk
+  flutter_facebook_auth: 7.3.2
 
 dev_dependencies:
   file: ^7.0.1

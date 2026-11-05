@@ -907,6 +907,10 @@ workflows:
           set -euo pipefail
           python3 tool/test_verify_android_signing.py
           python3 tool/verify_android_signing.py --prepare --env-file "${CM_ENV:?}"
+      - name: Freeze public native authentication settings
+        script: |
+          set -euo pipefail
+          python3 tool/prepare_native_auth_build.py --output "${CM_BUILD_DIR:?}/.mobishop-native-auth.json" --env-file "${CM_ENV:?}"
       - name: Install Flutter dependencies
         script: flutter pub get
       - name: Generate selected store app icons

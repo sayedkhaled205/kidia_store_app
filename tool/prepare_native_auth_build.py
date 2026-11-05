@@ -1,4 +1,4 @@
-"""Freeze public iOS SDK settings before configuration and signing validation."""
+"""Freeze public native SDK settings before configuration and signing validation."""
 import argparse
 import json
 import os
@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-from native_auth_build import apple_required
+from native_auth_build import apple_required, facebook_settings
 from native_build_defines81 import PLATFORMS, load_json, origin
 
 
@@ -40,7 +40,8 @@ def prepare(environment, output, fetcher=fetch_public_config):
     if raw:
         config = load_json(raw)
     elif platform == 'woocommerce':
-        config = fetcher(store + '/wp-json/mobishop/v1/auth/native/config?platform=ios')
+        target = 'ios' if environment.get('IOS_BUNDLE_ID') else 'android'
+        config = fetcher(store + '/wp-json/mobishop/v1/auth/native/config?platform=' + target)
         if (not isinstance(config, dict) or config.get('version') != 1
                 or type(config.get('enabled')) is not bool
                 or not isinstance(config.get('methods'), dict)):
@@ -55,6 +56,19 @@ def prepare(environment, output, fetcher=fetch_public_config):
     # Retain only public inputs actually consumed by configure_ios_store. Never
     # copy sessions, provider secrets or customer data into a build snapshot.
     selected = {'methods': {'apple': apple_required(config)}}
+    facebook = facebook_settings(config)
+    if platform == 'woocommerce' and environment.get('IOS_BUNDLE_ID') and environment.get('ANDROID_APPLICATION_ID') and not raw:
+        android = fetcher(store + '/wp-json/mobishop/v1/auth/native/config?platform=android')
+        if (not isinstance(android, dict) or android.get('version') != 1
+                or type(android.get('enabled')) is not bool or not isinstance(android.get('methods'), dict)):
+            raise ValueError('Invalid public Android authentication configuration.')
+        android_facebook = facebook_settings(android)
+        if facebook and android_facebook and facebook != android_facebook:
+            raise ValueError('Facebook identities must match across the store build.')
+        facebook = facebook or android_facebook
+    if facebook:
+        selected['methods']['facebook_native'] = True
+        selected['facebook'] = facebook
     for section, keys in (
         ('google', ('ios_client_id', 'server_client_id', 'ios_bundle_id')),
         ('firebase', ('iosBundleId', 'projectId')),
@@ -71,16 +85,18 @@ def prepare(environment, output, fetcher=fetch_public_config):
             raise ValueError('Invalid public iOS client setting.')
     # Reuse the existing bundle/client validation before writing any snapshot.
     from configure_ios_store import _google_auth_settings
-    google = _google_auth_settings(environment['IOS_BUNDLE_ID'], selected,
+    google = (_google_auth_settings(environment['IOS_BUNDLE_ID'], selected,
                                   environment.get('NATIVE_AUTH_GOOGLE_SERVICES_PLIST') or None)
-    if config.get('methods', {}).get('google') is True and google is None:
+              if environment.get('IOS_BUNDLE_ID') else None)
+    if environment.get('IOS_BUNDLE_ID') and config.get('methods', {}).get('google') is True and google is None:
         raise ValueError('Enabled Google sign-in requires its iOS client settings.')
     if google:
         selected['google']['ios_client_id'] = google['client']
         if google['server']:
             selected['google']['server_client_id'] = google['server']
     value = {'version': 1, 'store_url': store, 'platform': platform,
-             'ios_bundle_id': environment['IOS_BUNDLE_ID'], 'config': selected}
+             'ios_bundle_id': environment.get('IOS_BUNDLE_ID'),
+             'android_application_id': environment.get('ANDROID_APPLICATION_ID'), 'config': selected}
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(value, ensure_ascii=True), encoding='utf-8')
     return value
@@ -100,8 +116,8 @@ def main():
             target.write('\nNATIVE_AUTH_CONFIG_FILE=' + path + '\n')
     except Exception:
         # Do not echo URLs, response bodies or provider inputs on failed reads.
-        raise SystemExit('Native iOS sign-in configuration could not be frozen; no build was started.') from None
-    print('Public iOS sign-in configuration frozen for this store and bundle.')
+        raise SystemExit('Native sign-in configuration could not be frozen; no build was started.') from None
+    print('Public native sign-in configuration frozen for this store and app identity.')
 
 
 if __name__ == '__main__':

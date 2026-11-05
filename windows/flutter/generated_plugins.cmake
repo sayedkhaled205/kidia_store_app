@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   desktop_webview_window
+  facebook_auth_desktop
   firebase_auth
   firebase_core
   flutter_inappwebview_windows

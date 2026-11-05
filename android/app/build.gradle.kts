@@ -17,6 +17,12 @@ val loginDefines = (project.findProperty("dart-defines") as? String).orEmpty()
     .map { String(Base64.getDecoder().decode(it), Charsets.UTF_8).split('=', limit = 2) }
     .filter { it.size == 2 }.associate { it[0] to it[1] }
 val loginHost = URI(loginDefines["STORE_URL"] ?: loginDefines["WOOCOMMERCE_BASE_URL"] ?: "https://unconfigured.invalid").host.orEmpty().lowercase()
+val facebookAppId = loginDefines["NATIVE_FACEBOOK_APP_ID"].orEmpty()
+val facebookClientToken = loginDefines["NATIVE_FACEBOOK_CLIENT_TOKEN"].orEmpty()
+require((facebookAppId.isEmpty() && facebookClientToken.isEmpty()) ||
+    (facebookAppId.matches(Regex("[1-9][0-9]{0,63}")) && facebookClientToken.matches(Regex("[A-Za-z0-9_-]{16,512}")))) {
+    "Native Facebook requires matching public build settings."
+}
 val loginSuffix = MessageDigest.getInstance("SHA-256").digest(loginHost.toByteArray(Charsets.UTF_8))
     .take(8).joinToString("") { "%02x".format(it.toInt() and 0xff) }
 val releaseKeyNames = listOf("CM_KEYSTORE_PATH", "CM_KEYSTORE_PASSWORD", "CM_KEY_ALIAS", "CM_KEY_PASSWORD")
@@ -64,6 +70,7 @@ android {
     defaultConfig {
         applicationId = storeApplicationId.get()
         manifestPlaceholders["mobishopLoginScheme"] = "mobishop-login-$loginSuffix"
+        manifestPlaceholders["facebookAppEnabled"] = facebookAppId.isNotEmpty().toString()
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // flutter_secure_storage 10 uses Android Keystore ciphers available
@@ -73,6 +80,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         resValue("string", "app_name", storeAppName.get())
+        resValue("string", "facebook_app_id", facebookAppId)
+        resValue("string", "facebook_client_token", facebookClientToken)
+        resValue("string", "facebook_login_protocol_scheme", "fb$facebookAppId")
     }
 
     signingConfigs {

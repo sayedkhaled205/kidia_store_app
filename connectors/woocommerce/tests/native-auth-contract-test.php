@@ -230,6 +230,10 @@ function wp_update_user( $data ) {
 }
 function wp_remote_get( $url, $args = array() ) {
     $GLOBALS['native_http'][] = array( 'url' => $url, 'args' => $args );
+    if (isset($GLOBALS['native_http_handler'])) {
+        $handled = ($GLOBALS['native_http_handler'])($url, $args);
+        if ($handled !== null) return $handled;
+    }
     if ( ! in_array( $url, array( 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com', 'https://www.googleapis.com/oauth2/v1/certs' ), true ) ) throw new RuntimeException( 'Untrusted signing key URL: ' . $url );
     return array( 'response' => array( 'code' => 200 ), 'headers' => array( 'cache-control' => 'public,max-age=3600' ), 'body' => json_encode( array( 'fixture-kid' => $GLOBALS['native_public_key'] ) ) );
 }
@@ -242,7 +246,15 @@ $wpdb = new class {
     public $users = 'wp_users';
     public $usermeta = 'wp_usermeta';
     public $prefix = 'wp_';
+    public $last_error = '';
     public $race = false;
+    public function get_col($prepared) {
+        list($sql,$args) = $prepared;
+        if (!str_contains($sql,'social_users') || !isset($GLOBALS['native_facebook_rows'])) throw new RuntimeException('Unexpected mapping query in isolated auth test.');
+        $this->last_error = '';
+        $rows = array_filter($GLOBALS['native_facebook_rows'], static fn($row) => $row['type'] === $args[0] && $row['subject'] === $args[1]);
+        return array_slice(array_column($rows,'id'),0,2);
+    }
     public function prepare( $sql, ...$args ) {
         if (str_starts_with($sql,'EXISTS')) {
             $values = count($args)===1 && is_array($args[0]) ? $args[0] : $args;

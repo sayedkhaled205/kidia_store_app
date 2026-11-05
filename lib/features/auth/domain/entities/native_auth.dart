@@ -6,6 +6,7 @@ class NativeAuthConfig {
     this.methods = const {},
     this.firebase = const {},
     this.google = const {},
+    this.facebook = const {},
     this.phoneCountryCode = '',
     this.supportsUnverifiedPhoneEnrollment = false,
     this.supportsExpectedPhoneGoogle = false,
@@ -15,6 +16,7 @@ class NativeAuthConfig {
   final Map<String, bool> methods;
   final Map<String, dynamic> firebase;
   final Map<String, dynamic> google;
+  final Map<String, dynamic> facebook;
   final String phoneCountryCode;
   final bool supportsUnverifiedPhoneEnrollment;
   final bool supportsExpectedPhoneGoogle;
@@ -77,6 +79,9 @@ class NativeAuthConfig {
             : const {},
         google: json['google'] is Map
             ? Map<String, dynamic>.from(json['google'] as Map)
+            : const {},
+        facebook: json['facebook'] is Map
+            ? Map<String, dynamic>.from(json['facebook'] as Map)
             : const {},
       );
 }
@@ -224,6 +229,10 @@ abstract interface class NativeExistingPhoneGoogleActions {
 
 abstract interface class NativeAppleAuthActions {
   Future<NativeAuthResult> apple();
+}
+
+abstract interface class NativeFacebookAuthActions {
+  Future<NativeAuthResult> facebook();
 }
 
 abstract interface class NativeAuthActions {

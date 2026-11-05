@@ -5,7 +5,7 @@ import os
 import plistlib
 import re
 from pathlib import Path
-from native_auth_build import apple_required, from_environment
+from native_auth_build import apple_required, from_environment, facebook_settings
 
 
 def _google_auth_settings(bundle, native_auth=None, google_services_plist=None):
@@ -117,6 +117,32 @@ def configure(root, bundle, team, name, signing_required=True, native_auth=None,
     info["CFBundleDisplayName"] = name
     info["CFBundleName"] = name
     _apply_google_auth(info, _google_auth_settings(bundle, native_auth, google_services_plist))
+    info['FacebookAutoLogAppEventsEnabled'] = False
+    info['FacebookAdvertiserIDCollectionEnabled'] = False
+    facebook = facebook_settings(native_auth)
+    if facebook:
+        for key, value in (('FacebookAppID', facebook['app_id']), ('FacebookClientToken', facebook['client_token'])):
+            if key in info and info[key] != value:
+                raise ValueError('Existing Facebook configuration belongs to another app')
+            info[key] = value
+        info['FacebookDisplayName'] = name
+        scheme = 'fb' + facebook['app_id']
+        entries = info.setdefault('CFBundleURLTypes', [])
+        if not isinstance(entries, list) or any(not isinstance(entry, dict)
+                or not isinstance(entry.get('CFBundleURLSchemes', []), list)
+                or any(not isinstance(s, str) for s in entry.get('CFBundleURLSchemes', [])) for entry in entries):
+            raise ValueError('Invalid existing iOS URL scheme configuration')
+        schemes = [s for entry in entries for s in entry.get('CFBundleURLSchemes', [])]
+        if any(s.startswith('fb') and s != scheme for s in schemes):
+            raise ValueError('Existing Facebook callback belongs to another app')
+        if scheme not in schemes:
+            entries.append({'CFBundleTypeRole': 'Editor', 'CFBundleURLName': 'com.mobishop.native-facebook-auth', 'CFBundleURLSchemes': [scheme]})
+        queries = info.setdefault('LSApplicationQueriesSchemes', [])
+        if not isinstance(queries, list) or any(not isinstance(q, str) for q in queries):
+            raise ValueError('Invalid existing iOS query scheme configuration')
+        for query in ('fbapi', 'fb-messenger-share-api', 'fbauth2', 'fbshareextension'):
+            if query not in queries:
+                queries.append(query)
     entitlements_path = root / "ios/Runner/Runner.entitlements"
     if apple and not entitlements_path.exists():
         raise ValueError("Apple sign-in requires the Runner entitlements file")

@@ -23,6 +23,7 @@ class NativeAuthService
         NativeAuthActions,
         NativePhoneEnrollmentActions,
         NativeExistingPhoneGoogleActions,
+        NativeFacebookAuthActions,
         NativeAppleAuthActions {
   NativeAuthService({
     required Uri storeUri,
@@ -362,6 +363,55 @@ class NativeAuthService
   Future<NativeAuthResult> google() => _google();
 
   @override
+  Future<NativeAuthResult> facebook() {
+    final attempt = _restart();
+    attempt.method = LastLoginMethod.facebook;
+    return _run(attempt, () async {
+      await _wait(_sdk.cancel(), attempt);
+      final configuration = await _wait(config(), attempt);
+      final sdk = _sdk;
+      if (_legacy ||
+          !configuration.allows('facebook_native') ||
+          sdk is! NativeFacebookAuthSdk) {
+        throw _unavailable;
+      }
+      final challenge = await _post('facebook/challenge', attempt, {});
+      final ticket = challenge['ticket'];
+      final nonce = challenge['nonce'];
+      final ttl = challenge['expires_in'];
+      if (ticket is! String ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(ticket) ||
+          nonce is! String ||
+          !RegExp(r'^[a-f0-9]{64}$').hasMatch(nonce) ||
+          ttl is! int ||
+          ttl <= 0 ||
+          ttl > 300) {
+        throw const FormatException('Invalid Facebook challenge.');
+      }
+      final proof = await _wait(
+        (sdk as NativeFacebookAuthSdk).facebook(
+          _sdkConfig(configuration),
+          nonce: nonce,
+        ),
+        attempt,
+      );
+      if (proof.token.isEmpty || (proof.limited && _platform != 'ios')) {
+        throw const FormatException('Invalid Facebook proof.');
+      }
+      return _result(
+        await _post('facebook', attempt, {
+          'ticket': ticket,
+          if (proof.limited)
+            'id_token': proof.token
+          else
+            'access_token': proof.token,
+        }),
+        attempt,
+      );
+    });
+  }
+
+  @override
   Future<NativeAuthResult> apple() {
     final attempt = _restart();
     attempt.method = LastLoginMethod.apple;
@@ -579,6 +629,7 @@ class NativeAuthService
   Map<String, dynamic> _sdkConfig(NativeAuthConfig value) => {
     'firebase': value.firebase,
     'google': value.google,
+    'facebook': value.facebook,
   };
 
   Future<Map<String, dynamic>> _post(
@@ -607,6 +658,8 @@ class NativeAuthService
       'phone/confirm',
       'google',
       'apple',
+      'facebook/challenge',
+      'facebook',
       'select',
       'register',
     }.contains(action)) {

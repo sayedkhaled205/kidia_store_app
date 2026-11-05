@@ -1,6 +1,21 @@
 """Validate the public native-auth capability used by iOS configuration/signing."""
 import json
+import re
 from pathlib import Path
+
+
+def facebook_settings(config):
+    if not config or config.get('methods', {}).get('facebook_native') is not True:
+        return None
+    source = config.get('facebook')
+    if (not isinstance(source, dict)
+            or not isinstance(source.get('app_id'), str)
+            or not re.fullmatch(r'[1-9][0-9]{0,63}', source['app_id'])
+            or not isinstance(source.get('client_token'), str)
+            or not re.fullmatch(r'[A-Za-z0-9_-]{16,512}', source['client_token'])):
+        raise ValueError('Native Facebook requires public app ID and client token.')
+    # The Meta app secret remains exclusively on the merchant server.
+    return {key: source[key] for key in ('app_id', 'client_token')}
 
 
 def apple_required(config=None, required=False):
@@ -35,6 +50,7 @@ def from_environment(environment):
                 or value.get("store_url") != origin(environment.get("STORE_URL", ""), clean=platform != "woocommerce")
                 or value.get("platform") != platform
                 or value.get("ios_bundle_id") != environment.get("IOS_BUNDLE_ID")
+                or value.get("android_application_id") != environment.get("ANDROID_APPLICATION_ID")
                 or not isinstance(value.get("config"), dict)):
             raise ValueError("Frozen native authentication configuration belongs to another build")
         config = value["config"]

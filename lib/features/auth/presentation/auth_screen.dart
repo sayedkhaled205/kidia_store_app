@@ -132,7 +132,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final showFacebook =
         [_AuthStep.identifier, _AuthStep.password].contains(_step) &&
         _expectedGooglePhone == null &&
-        config?.allows('facebook') == true;
+        (config?.allows('facebook') == true ||
+            config?.allows('facebook_native') == true);
     final showApple =
         !kIsWeb &&
         defaultTargetPlatform == TargetPlatform.iOS &&
@@ -1677,6 +1678,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
     await _actions!.cancel();
     if (!_active(flow)) return;
+    final actions = _actions;
+    if (ref.read(nativeAuthConfigProvider).value?.allows('facebook_native') ==
+            true &&
+        actions is NativeFacebookAuthActions) {
+      try {
+        final result = await (actions as NativeFacebookAuthActions).facebook();
+        if (_active(flow)) await _acceptResult(result, flow);
+        return;
+      } on AuthRepositoryException catch (error) {
+        // A previously installed binary may predate this store's SDK setup.
+        // Only that local readiness failure may use the existing website flow.
+        if (error.code != 'facebook-native-registration-required' ||
+            ref.read(nativeAuthConfigProvider).value?.allows('facebook') !=
+                true) {
+          rethrow;
+        }
+        if (!_active(flow)) return;
+      }
+    }
     final attempt = WebsiteAuthAttempt();
     _websiteAttempt = attempt;
     try {

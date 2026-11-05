@@ -187,6 +187,11 @@ def native_defines(environment):
         reject("STORE_PLATFORM must be woocommerce, shopify or odoo.")
     store_origin = origin(environment.get("STORE_URL", ""), clean=platform != "woocommerce")
     result = {"STORE_PLATFORM": platform}
+    from native_auth_build import from_environment, facebook_settings
+    facebook = facebook_settings(from_environment(environment))
+    if facebook:
+        result['NATIVE_FACEBOOK_APP_ID'] = facebook['app_id']
+        result['NATIVE_FACEBOOK_CLIENT_TOKEN'] = facebook['client_token']
     if environment.get("MOBISHOP_ANDROID_BUILD_MODE") == "qa":
         result["APP_TEST_BUILD"] = True
     bundle = environment.get("APP_DESIGN_BUNDLE", "")
