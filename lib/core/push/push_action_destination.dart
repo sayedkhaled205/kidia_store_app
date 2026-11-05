@@ -3,9 +3,8 @@ import 'app_page_link.dart';
 
 /// Resolve the builder notification contract without permitting arbitrary schemes.
 final class PushActionDestination {
-  const PushActionDestination({this.location, this.externalUrl});
-  final String? location;
-  final Uri? externalUrl;
+  const PushActionDestination({required this.location});
+  final String location;
 
   static PushActionDestination? fromData(Map<String, dynamic> data) {
     String value(String key) =>
@@ -55,18 +54,11 @@ final class PushActionDestination {
           ).toString(),
         );
       case 'external':
-        final uri = Uri.tryParse(value('action_url'));
-        if (uri == null ||
-            !['http', 'https'].contains(uri.scheme) ||
-            uri.host.isEmpty ||
-            uri.userInfo.isNotEmpty) {
-          return null;
-        }
-        final page = AppPageLink.location(uri, AppConfig.apiBaseUrl);
-        if (uri.queryParameters.containsKey('mobishop_page')) {
-          return page == null ? null : PushActionDestination(location: page);
-        }
-        return PushActionDestination(externalUrl: uri);
+        final route = AppPageLink.fromStoreUrl(
+          value('action_url'),
+          AppConfig.apiBaseUrl,
+        );
+        return route == null ? null : PushActionDestination(location: route);
       default:
         return null;
     }

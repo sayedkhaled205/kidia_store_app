@@ -145,11 +145,12 @@ class _SupportContent extends ConsumerWidget {
   }
 
   Future<void> _open(BuildContext context, Uri uri) async {
-    final bool opened = await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    );
-    if (!opened && context.mounted) {
+    try {
+      if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    } catch (_) {
+      // Display the same feedback if the device has no app for this contact.
+    }
+    if (context.mounted) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(
@@ -166,7 +167,11 @@ class _SupportContent extends ConsumerWidget {
 
   Uri _whatsappUri(String phone) {
     final String digits = phone.replaceAll(RegExp(r'[^0-9]'), '');
-    return Uri.https('wa.me', '/$digits');
+    return Uri(
+      scheme: 'whatsapp',
+      host: 'send',
+      queryParameters: {'phone': digits},
+    );
   }
 }
 

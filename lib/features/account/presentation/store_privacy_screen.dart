@@ -1,7 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../domain/privacy_page_block.dart';
 import 'store_privacy_body_loader.dart';
@@ -9,8 +8,9 @@ import 'store_privacy_body_loader.dart';
 /// Full scrollable screen showing the merchant's real published privacy
 /// page content (not a browser/webview and not site navigation chrome).
 class StorePrivacyScreen extends ConsumerStatefulWidget {
-  const StorePrivacyScreen({required this.uri, super.key});
+  const StorePrivacyScreen({required this.uri, this.documentTitle, super.key});
   final Uri uri;
+  final String? documentTitle;
 
   @override
   ConsumerState<StorePrivacyScreen> createState() => _StorePrivacyScreenState();
@@ -44,7 +44,9 @@ class _StorePrivacyScreenState extends ConsumerState<StorePrivacyScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(ar ? 'سياسة الخصوصية' : 'Privacy Policy'),
+        title: Text(
+          widget.documentTitle ?? (ar ? 'سياسة الخصوصية' : 'Privacy Policy'),
+        ),
       ),
       body: FutureBuilder<List<PrivacyBlock>>(
         future: _future,
@@ -77,9 +79,13 @@ class _StorePrivacyScreenState extends ConsumerState<StorePrivacyScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              ar
-                  ? 'تعذر تحميل سياسة الخصوصية. حاول مرة أخرى.'
-                  : 'Unable to load the privacy policy. Please retry.',
+              widget.documentTitle == null
+                  ? (ar
+                        ? 'تعذر تحميل سياسة الخصوصية. حاول مرة أخرى.'
+                        : 'Unable to load the privacy policy. Please retry.')
+                  : (ar
+                        ? 'تعذر تحميل الصفحة. حاول مرة أخرى.'
+                        : 'Unable to load the page. Please retry.'),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -143,10 +149,37 @@ class _StorePrivacyScreenState extends ConsumerState<StorePrivacyScreen> {
   }
 
   InlineSpan _span(PrivacyTextSpan span, TextStyle? style) {
-    final link = span.linkUri;
-    if (link == null) return TextSpan(text: span.text, style: style);
+    // Only the primary policy may link to another published store policy.
+    // Its article is read natively. Other anchors and all child links are text.
+    final target = span.linkUri;
+    final link = target == null ? null : widget.uri.resolveUri(target);
+    if (widget.documentTitle != null ||
+        link == null ||
+        link.scheme != 'https' ||
+        link.userInfo.isNotEmpty ||
+        link.origin != widget.uri.origin ||
+        link.hasQuery ||
+        link.hasFragment ||
+        !const {
+          'refund_returns',
+          'refund-policy',
+          'returns',
+          'return-policy',
+          'store-terms',
+          'terms-of-service',
+          'terms-and-conditions',
+        }.contains(
+          link.pathSegments.lastWhere((s) => s.isNotEmpty, orElse: () => ''),
+        )) {
+      return TextSpan(text: span.text, style: style);
+    }
     final recognizer = TapGestureRecognizer()
-      ..onTap = () => launchUrl(link, mode: LaunchMode.externalApplication);
+      ..onTap = () => Navigator.of(context).push<void>(
+        MaterialPageRoute(
+          builder: (_) =>
+              StorePrivacyScreen(uri: link, documentTitle: span.text.trim()),
+        ),
+      );
     _recognizers.add(recognizer);
     return TextSpan(
       text: span.text,

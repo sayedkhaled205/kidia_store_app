@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/core/push/push_action_destination.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,25 @@ import 'package:mobishop_store_app/core/push/foreground_push_notice.dart';
 import 'package:mobishop_store_app/core/push/native_push_actions_host.dart';
 
 void main() {
+  test(
+    'website pushes cannot leave the app, while native destinations still work',
+    () {
+      expect(
+        PushActionDestination.fromData({
+          'destination': 'external',
+          'action_url': 'https://example.org/deal',
+        }),
+        isNull,
+      );
+      expect(
+        PushActionDestination.fromData({
+          'destination': 'product',
+          'destination_id': '42',
+        })?.location,
+        '/product/42',
+      );
+    },
+  );
   testWidgets(
     'foreground content overlays current page and tap uses validated route',
     (tester) async {

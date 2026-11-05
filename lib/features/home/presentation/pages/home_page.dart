@@ -17,7 +17,7 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/preview_focus_frame.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:mobishop_store_app/core/push/app_page_link.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -349,7 +349,17 @@ class _HomePageState extends ConsumerState<HomePage> {
         return;
 
       case 'external':
-        unawaited(_openExternalUrl(context, value));
+        final route = AppPageLink.fromStoreUrl(value, AppConfig.apiBaseUrl);
+        if (route != null) {
+          context.push(route);
+        } else {
+          _showMessage(
+            context,
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? 'هذه الوجهة غير متاحة داخل التطبيق.'
+                : 'This destination is unavailable in the app.',
+          );
+        }
         return;
 
       default:
@@ -360,32 +370,6 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   static void _showMissingActionValue(BuildContext context) {
     _showMessage(context, 'بيانات الوجهة غير مكتملة.');
-  }
-
-  static Future<void> _openExternalUrl(
-    BuildContext context,
-    String value,
-  ) async {
-    final Uri? uri = Uri.tryParse(value);
-
-    if (uri == null ||
-        !uri.hasScheme ||
-        (uri.scheme != 'https' && uri.scheme != 'http')) {
-      _showMessage(context, 'الرابط الخارجي غير صالح.');
-      return;
-    }
-
-    bool launched = false;
-
-    try {
-      launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } on Object {
-      launched = false;
-    }
-
-    if (!launched && context.mounted) {
-      _showMessage(context, 'تعذر فتح الرابط الخارجي.');
-    }
   }
 
   static void _showMessage(BuildContext context, String message) {

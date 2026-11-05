@@ -148,7 +148,6 @@ Uri? _safeContentLink(String? href) {
   if (href == null) return null;
   final uri = Uri.tryParse(href.trim());
   if (uri == null) return null;
-  return uri.scheme == 'http' || uri.scheme == 'https' || uri.scheme == 'mailto'
-      ? uri
-      : null;
+  if (uri.hasAuthority && uri.scheme != 'https') return null;
+  return uri.scheme.isEmpty || uri.scheme == 'https' ? uri : null;
 }

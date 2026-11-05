@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:mobishop_store_app/core/commerce/store_policy_discovery.dart'
     show publicOdooPrivacyLink;
 import 'package:mobishop_store_app/features/account/presentation/store_privacy_body_loader.dart';
@@ -81,4 +82,44 @@ void main() {
       expect(find.byKey(const Key('store-privacy-policy')), findsOneWidget);
     },
   );
+  testWidgets('policy articles open inside the reader and other anchors are text', (
+    tester,
+  ) async {
+    final privacy = Uri.parse('https://store.test/privacy/');
+    final opened = <Uri>[];
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          storePrivacyProvider.overrideWithValue(privacy),
+          storePrivacyBodyLoaderProvider.overrideWithValue((uri) async {
+            opened.add(uri);
+            return parsePrivacyPage(
+              uri == privacy
+                  ? '<article><p><a href="/refund_returns/">Returns</a></p><p><a href="https://elsewhere.test/store-terms">Outside</a></p><p><a href="/my-account/">My account</a></p></article>'
+                  : '<article><p><a href="/refund_returns/">Nested link</a></p></article>',
+            );
+          }),
+        ],
+        child: const MaterialApp(home: Scaffold(body: StorePrivacyLink())),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('store-privacy-policy')));
+    await tester.pumpAndSettle();
+    TextSpan span(String text) {
+      final widget = tester
+          .widgetList<SelectableText>(find.byType(SelectableText))
+          .firstWhere((e) => e.textSpan?.toPlainText() == text);
+      return widget.textSpan!.children!.single as TextSpan;
+    }
+
+    expect(span('Outside').recognizer, isNull);
+    expect(span('My account').recognizer, isNull);
+    (span('Returns').recognizer! as TapGestureRecognizer).onTap!();
+    await tester.pumpAndSettle();
+    expect(opened, [privacy, privacy.resolve('/refund_returns/')]);
+    expect(span('Nested link').recognizer, isNull);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(span('Returns').recognizer, isNotNull);
+  });
 }

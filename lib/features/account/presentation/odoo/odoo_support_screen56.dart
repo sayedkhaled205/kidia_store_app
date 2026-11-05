@@ -26,7 +26,14 @@ class OdooSupportScreen56 extends ConsumerWidget {
                 leading: const Icon(Icons.chat_outlined),
                 title: Text(odooCopy56(context, 'واتساب', 'WhatsApp')),
                 subtitle: Text(support.whatsapp),
-                onTap: () => _open(context, Uri.https('wa.me', '/$phone')),
+                onTap: () => _open(
+                  context,
+                  Uri(
+                    scheme: 'whatsapp',
+                    host: 'send',
+                    queryParameters: {'phone': phone},
+                  ),
+                ),
               ),
             ),
           if (email.isNotEmpty && !email.contains(RegExp(r'[\r\n]')))

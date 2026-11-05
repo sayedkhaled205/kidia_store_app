@@ -1,5 +1,10 @@
 /// Public storefront URL carrying an app-only destination, without session data.
 final class AppPageLink {
+  static String? fromStoreUrl(String value, String storeUrl) {
+    final uri = Uri.tryParse(value);
+    return uri == null ? null : location(uri, storeUrl);
+  }
+
   static String? location(Uri link, String storeUrl) {
     final store = Uri.tryParse(storeUrl);
     if (store == null ||

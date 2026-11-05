@@ -2744,11 +2744,9 @@ class _ProductShareSheet extends StatelessWidget {
                   label: 'Facebook',
                   icon: const Icon(Icons.facebook_rounded),
                   color: const Color(0xFF1877F2),
-                  onTap: () => _open(
-                    Uri.parse(
-                      'https://www.facebook.com/sharer/sharer.php?u=${Uri.encodeComponent(_link)}',
-                    ),
-                  ),
+                  onTap: () async {
+                    await Share.share(_message, subject: product.name);
+                  },
                 ),
                 _ShareAction(
                   key: const Key('share-whatsapp'),
@@ -2757,7 +2755,7 @@ class _ProductShareSheet extends StatelessWidget {
                   color: const Color(0xFF25D366),
                   onTap: () => _open(
                     Uri.parse(
-                      'https://wa.me/?text=${Uri.encodeComponent(_message)}',
+                      'whatsapp://send?text=${Uri.encodeComponent(_message)}',
                     ),
                   ),
                 ),
@@ -2803,9 +2801,12 @@ class _ProductShareSheet extends StatelessWidget {
   }
 
   Future<void> _open(Uri uri) async {
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      await Share.share(_message, subject: product.name);
+    try {
+      if (await launchUrl(uri, mode: LaunchMode.externalApplication)) return;
+    } catch (_) {
+      // The dedicated app may not be installed.
     }
+    await Share.share(_message, subject: product.name);
   }
 }
 

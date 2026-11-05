@@ -79,6 +79,7 @@ class PrivacyPageFetcher {
             ? null
             : safeStorePrivacyUri(uri.resolve(location).toString());
         if (next == null ||
+            next.origin != initial.origin ||
             ![301, 302, 303, 307, 308].contains(response.statusCode)) {
           break;
         }

@@ -4,7 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:mobishop_store_app/core/push/app_page_link.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_money.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
@@ -25,21 +25,14 @@ import 'package:mobishop_store_app/shared/widgets/product/product_image_swiper.d
 String? wishlistRecommendationRoute(CmsPageComponent settings, int productId) {
   final String type = settings.string('action_type', 'product');
   final String value = settings.string('action_value', '').trim();
+  if (type == 'url') {
+    return AppPageLink.fromStoreUrl(value, AppConfig.apiBaseUrl);
+  }
   if (type == 'category') {
     final int? id = int.tryParse(value);
     return id != null && id > 0 ? '/categories/$id' : null;
   }
   return type == 'product' ? '/product/$productId' : null;
-}
-
-Uri? wishlistRecommendationUrl(CmsPageComponent settings) {
-  if (settings.string('action_type', 'product') != 'url') return null;
-  final Uri? uri = Uri.tryParse(settings.string('action_value', '').trim());
-  return uri != null &&
-          <String>{'https', 'http'}.contains(uri.scheme) &&
-          uri.host.isNotEmpty
-      ? uri
-      : null;
 }
 
 /// Presentation-only removal control. The screen still owns persistence and
@@ -945,15 +938,10 @@ class _WishlistRecommendationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final String actionType = settings.string('action_type', 'product');
     final String? route = wishlistRecommendationRoute(settings, product.id);
-    final Uri? url = wishlistRecommendationUrl(settings);
     final VoidCallback? configuredTap = actionType == 'product'
         ? onTap
         : route != null
         ? () => context.go(route)
-        : url != null
-        ? () {
-            launchUrl(url, mode: LaunchMode.externalApplication);
-          }
         : null;
     return CatalogProductCard(
       product: product,

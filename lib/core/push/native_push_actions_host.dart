@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'push_action_destination.dart';
 import 'push_notification_service.dart';
 import 'foreground_push_notice.dart';
@@ -84,18 +83,7 @@ class _NativePushActionsHostState extends State<NativePushActionsHost> {
   Future<void> _open(Map<String, dynamic> data) async {
     if (!mounted) return;
     final destination = PushActionDestination.fromData(data);
-    if (destination?.location != null) {
-      widget.router.go(destination!.location!);
-    } else if (destination?.externalUrl != null) {
-      try {
-        await launchUrl(
-          destination!.externalUrl!,
-          mode: LaunchMode.externalApplication,
-        );
-      } on Object {
-        /* An unavailable browser must not crash the app. */
-      }
-    }
+    if (destination != null) widget.router.go(destination.location);
   }
 
   @override
