@@ -1043,7 +1043,7 @@ workflows:
     max_build_duration: 60
     environment:
       flutter: 3.47.8
-      xcode: latest
+      xcode: 26.5
       cocoapods: default
       vars:
         STORE_URL: "https://kidiastore.com"
