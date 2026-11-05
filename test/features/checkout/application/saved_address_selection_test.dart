@@ -68,7 +68,7 @@ void main() {
               SavedCheckoutAddress92(
                 id: 'billing',
                 label: 'Billing',
-                values: {...values, 'email': cart.billingAddress.email},
+                values: {...values, 'phone': cart.billingAddress.phone, 'email': cart.billingAddress.email},
               ),
               SavedCheckoutAddress92(
                 id: 'shipping',
