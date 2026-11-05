@@ -5,6 +5,8 @@ workflows:
     max_build_duration: 20
     integrations:
       app_store_connect: Kidia TestFlight Build
+    environment:
+      xcode: 26.5
     scripts:
       - name: Verify existing application before upload
         script: |
