@@ -197,7 +197,23 @@ final class MobiShop_Attribute_Stock_Filter {
 		}
 		$matching_variant = "EXISTS (SELECT 1 FROM {$wpdb->posts} msav INNER JOIN {$stock} msas ON msas.product_id=msav.ID WHERE msav.post_parent={$wpdb->posts}.ID AND msav.post_status='publish' AND msav.post_type='product_variation' AND {$stock_test} AND " . implode( ' AND ', $conditions ) . ')';
 		$parent_conditions[] = "({$matching_variant} OR {$other_products})";
-		$clauses['where'] .= ' AND ' . implode( ' AND ', $parent_conditions );
+		$predicate = implode( ' AND ', $parent_conditions );
+		$woof_query = $query->get( 'mobishop_catalog_website' ) || 'product_count' === $query->get( 'woof_query' );
+		if ( $size && $woof_query && $this->is_website_catalog( $query ) ) {
+			// WOOF repeats the same variation checks for each category count in this request.
+			static $request_matches = array();
+			$key = md5( $wpdb->posts . '.' . $predicate );
+			if ( ! array_key_exists( $key, $request_matches ) ) {
+				$ids = $wpdb->get_col( "SELECT {$wpdb->posts}.ID FROM {$wpdb->posts} WHERE {$wpdb->posts}.post_type='product' AND {$predicate} LIMIT 10001" );
+				$request_matches[$key] = false;
+				if ( ! $wpdb->last_error && is_array( $ids ) && count( $ids ) <= 10000 ) {
+					$request_matches[$key] = $ids ? "{$wpdb->posts}.ID IN (" . implode( ',', array_map( 'absint', $ids ) ) . ')' : '1=0';
+				}
+			}
+			if ( false !== $request_matches[$key] ) $predicate = $request_matches[$key];
+			$query->set( 'mobishop_stock_predicate_applied', true );
+		}
+		$clauses['where'] .= ' AND ' . $predicate;
 		return $clauses;
 	}
 }

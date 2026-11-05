@@ -2400,8 +2400,8 @@
     "api/class-attribute-stock-filter.php": {
       "source": "connectors/woocommerce/source/api/class-attribute-stock-filter.php",
       "newline": "lf",
-      "source_sha256": "90af389d331f130c8b093b17ddbee912eaa13bbaac0ac2136b61893bb433c5ad",
-      "sha256": "90af389d331f130c8b093b17ddbee912eaa13bbaac0ac2136b61893bb433c5ad"
+      "source_sha256": "3a82d4ac193bee2c16cbc3d01d75ca5d2fed469c71b1128ec0f50889a0d6ec1a",
+      "sha256": "3a82d4ac193bee2c16cbc3d01d75ca5d2fed469c71b1128ec0f50889a0d6ec1a"
     },
     "api/class-category-page-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-category-page-endpoint.php",

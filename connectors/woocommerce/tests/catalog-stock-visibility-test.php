@@ -59,7 +59,15 @@ class CatalogStockFixtureQuery {
 $db = new PDO( 'sqlite::memory:' );
 $wpdb = new class( $db ) {
 	public $posts = 'posts', $prefix = '', $postmeta = 'postmeta', $term_relationships = 'term_relationships', $term_taxonomy = 'term_taxonomy';
+	public $stock_queries = array(), $last_error = '', $simulate = '';
 	public function __construct( private PDO $db ) {}
+	public function get_col( $sql ) {
+		$this->stock_queries[] = $sql;
+		$this->last_error = $this->simulate === 'error' ? 'Synthetic database failure' : '';
+		if ( $this->last_error ) return array();
+		if ( $this->simulate === 'overflow' ) return range( 1, 10001 );
+		return $this->db->query( $sql )->fetchAll( PDO::FETCH_COLUMN );
+	}
 	public function prepare( $sql, ...$args ) {
 		return preg_replace_callback( '/%[sdf]/', function ( $match ) use ( &$args ) {
 			$value = array_shift( $args );
@@ -160,3 +168,46 @@ check( '' === $clauses( catalog( $base ) ), 'hide-out-of-stock off preserves nor
 check( array(2,3,6) === ids( catalog( $base, array(), $size ) ), 'original selected-size behavior preserved with option off' );
 $admin = true;
 check( '' === $clauses( catalog( $base, array(), $size ) ), 'administrator product lists excluded' );
+$admin = false;
+$hide = 'yes';
+if ( $api ) {
+	check( ! $wpdb->stock_queries, 'Store API never materializes WOOF counter IDs' );
+	return;
+}
+
+// The WOOF product list and its per-category recounts must share only the stock/price test.
+$count_args = array( 'post_type' => 'product', 'wc_query' => 'product_query', 'woof_query' => 'product_count' );
+$before = count( $wpdb->stock_queries );
+$limits = array( 'min_price' => '9', 'max_price' => '20' );
+$listing = catalog( $base, $limits, $size );
+$predicate = $clauses( $listing );
+check( $listing->get( 'mobishop_stock_predicate_applied' ) && str_contains( $predicate, 'posts.ID IN' ), 'WOOF size list uses the bounded materialized IDs' );
+$counter = catalog( $count_args, $limits, $size );
+$outer = array( 'where' => ' AND posts.ID>=6', 'orderby' => 'posts.ID DESC', 'limits' => 'LIMIT 1' );
+$count_clauses = apply_filters( 'posts_clauses', $outer, $counter );
+$sql = "SELECT ID FROM posts WHERE post_type='product'" . $count_clauses['where'];
+check( $counter->get( 'mobishop_stock_predicate_applied' ) && count( $wpdb->stock_queries ) === $before + 1, 'list and category counter compute the same IDs once' );
+check( $db->query( "SELECT COUNT(*) FROM ($sql)" )->fetchColumn() == 1 && $db->query( "$sql ORDER BY " . $count_clauses['orderby'] . ' ' . $count_clauses['limits'] )->fetchColumn() == 6, 'category count, order and pagination keep their own constraints' );
+$cheap = catalog( $count_args, array( 'max_price' => '0' ), $size );
+check( array(2) === ids( $cheap ) && count( $wpdb->stock_queries ) === $before + 2, 'different price bound has its own match list' );
+$missing = catalog( $count_args, $limits, array( array( 'taxonomy' => 'pa_size', 'terms' => array(22) ) ) );
+check( ! ids( $missing ) && ! ids( $missing ) && count( $wpdb->stock_queries ) === $before + 3, 'different size and empty matches cache independently' );
+$db->exec( 'CREATE TABLE second_posts AS SELECT * FROM posts WHERE ID IN (2,21)' );
+$wpdb->posts = 'second_posts';
+$tenant_where = $clauses( catalog( $count_args, $limits, $size ) );
+check( $db->query( "SELECT COUNT(*) FROM second_posts WHERE post_type='product'" . $tenant_where )->fetchColumn() == 0 && count( $wpdb->stock_queries ) === $before + 4, 'switching store tables cannot reuse another store’s IDs' );
+$wpdb->posts = 'posts';
+foreach ( array( 'error' => '8', 'overflow' => '7' ) as $mode => $minimum ) {
+	$wpdb->simulate = $mode;
+	$q = catalog( $count_args, array( 'min_price' => $minimum ), $size );
+	$n = count( $wpdb->stock_queries );
+	$full = $clauses( $q );
+	check( str_contains( $full, 'msav.post_parent' ) && ids( $q ) === array(5,6) && count( $wpdb->stock_queries ) === $n + 1, "$mode falls back to full SQL without repeating the materialization" );
+}
+$wpdb->simulate = '';
+check( ! array_filter( $wpdb->stock_queries, fn( $sql ) => !str_ends_with( rtrim( $sql ), 'LIMIT 10001' ) ), 'every materialization stops at 10001 database rows' );
+$n = count( $wpdb->stock_queries );
+$clauses( catalog( $base ) );
+$normal_size = catalog( array( 'post_type'=>'product', 'wc_query'=>'product_query' ), $limits, $size );
+$clauses( $normal_size );
+check( count( $wpdb->stock_queries ) === $n && ! $normal_size->get( 'mobishop_stock_predicate_applied' ), 'no-size WOOF and ordinary WooCommerce size queries retain direct SQL' );

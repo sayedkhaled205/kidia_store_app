@@ -12,7 +12,8 @@ use App\Services\LiveAppDesign as Design;
 use App\Services\LiveAppUiControls as Controls;
 use Illuminate\Support\Facades\DB;
 function check($value, $message) { if (!$value) throw new RuntimeException($message); }
-check(count(Controls::schema()) === 112, '112 controls exposed');
+$schema = Controls::schema();
+check(array_key_exists('privacy_policy_url', $schema) && count($schema) === 113, '112 editable controls plus the legacy privacy field');
 foreach ([['unknown'=>true],['auth_title_size'=>999],['cart_pulse_enabled'=>'false'],['auth_title_en'=>'<script>'],['auth_title_en'=>str_repeat('x',121)],['support_contact_email'=>'https://buyer@example.com'],['support_whatsapp'=>'javascript:alert(1)']] as $bad) {
     try { Controls::normalize($bad); throw new RuntimeException('Unsafe value accepted'); }
     catch (Illuminate\Validation\ValidationException) {}
@@ -81,5 +82,5 @@ try {
     check($changed->headers->get('ETag') === $etag, 'Body and ETag agree');
     Design::publish($store,(int)$store->user_id,$two['revision'],null,true);
     check(Design::query($store)->orderByDesc('id')->first()->bundle === $original, 'Rollback restores prior settings');
-    echo "PASS: 112 controls, bounds, default compatibility, draft isolation, owner scope, conflicts, publish, rollback\n";
+    echo "PASS: 112 editable controls and legacy privacy field, bounds, draft isolation, owner scope, conflicts, publish, rollback\n";
 } finally { DB::rollBack(); echo "All test data rolled back.\n"; }

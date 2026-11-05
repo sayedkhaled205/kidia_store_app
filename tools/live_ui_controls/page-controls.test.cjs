@@ -4,8 +4,10 @@ const {pageKeys, valueOf, mergeChanges, decoratePacket, draftKey, draftChanges, 
 const schema = JSON.parse(fs.readFileSync(require('node:path').join(__dirname, 'schema.json'), 'utf8'));
 const pages = ['account-builder', 'home-builder', 'checkout-builder','catalog-builder','product-builder'];
 const mapped = pages.flatMap(page => pageKeys(page, schema));
-assert.equal(mapped.length, Object.keys(schema).length);
-assert.equal(new Set(mapped).size, 112);
+const legacyPolicyKey = 'privacy_policy_url';
+assert.ok(Object.hasOwn(schema, legacyPolicyKey), 'Older published designs can retain their saved policy field');
+const editable = Object.keys(schema).filter(key => key !== legacyPolicyKey);
+assert.deepEqual([...mapped].sort(), editable.sort(), 'Every editable field maps exactly once and the legacy policy stays out of the editor');
 assert.equal(pageKeys('account-builder', schema).length, 31);
 assert.equal(pageKeys('home-builder', schema).length, 7);
 assert.equal(pageKeys('checkout-builder', schema).length, 56);
@@ -19,6 +21,8 @@ assert.equal(inputValue({value:'0',valueAsNumber:0},schema.cart_item_image_radiu
 assert.equal(inputValue({value:'compact'},schema.cart_layout),'compact');
 const baseline = {logout_height:38, auth_title_en:''};
 assert.deepEqual(mergeChanges(schema, baseline, {logout_height:40}, {cart_pulse_scale:1.5}), {logout_height:40, cart_pulse_scale:1.5});
+const oldPolicy = {[legacyPolicyKey]:'https://store.example/privacy'};
+assert.deepEqual(mergeChanges(schema, baseline, {logout_height:40}, oldPolicy), {...oldPolicy, logout_height:40});
 assert.throws(() => mergeChanges(schema, baseline, {logout_height:40}, {logout_height:42}));
 assert.deepEqual(mergeChanges(schema, baseline, {logout_height:40}, {logout_height:40}), {logout_height:40});
 assert.deepEqual(mergeChanges(schema, {auth_title_en:'Welcome'}, {auth_title_en:''}, {auth_title_en:'Welcome',logout_height:42}), {auth_title_en:'',logout_height:42});
@@ -40,4 +44,4 @@ assert.notEqual(draftKey('merchant-a','account-builder'), draftKey('merchant-b',
 assert.notEqual(draftKey('merchant-a','account-builder'), draftKey('merchant-a','home-builder'));
 assert.deepEqual(draftChanges(schema, {logout_height:38,auth_title_en:''}, {logout_height:42,auth_title_en:'',unknown:1}), {logout_height:42});
 console.log('PASS draft preview preserves layouts, typed controls and merchant/screen isolation');
-console.log('PASS: all 112 controls mapped once; defaults, inherited sizes, zero radius, choices, page isolation, concurrent edits and reset');
+console.log('PASS: 112 editable controls mapped exactly once, legacy policy retained, defaults, choices, page isolation, concurrent edits and reset');

@@ -49,7 +49,7 @@ allowlisting, owner/concurrency checks and transaction-only backend publication.
 CI also checks that generated server/mobile schema copies match and rebuilds the
 preview from committed Flutter source to prevent stale preview deployments.
 
-The shared schema now contains 112 controls. Controlled pressure tests exercise
+The Builder maps 112 editable controls. The shared schema retains one additional field, `privacy_policy_url`, for older designs. The app reads the connected store's policy automatically. Controlled pressure tests exercise
 500 overlapping refresh calls, 50 successive releases, offline retention and
 background suspension for each platform. They are client simulation tests, not
 a production throughput or physical-device benchmark. Within one home hydration,

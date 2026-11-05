@@ -12,6 +12,8 @@ namespace {
     function expectSame($actual, $expected): void {
         if ($actual !== $expected) throw new \RuntimeException('Normalization contract failed');
     }
+    $legacyPolicy = ['privacy_policy_url'=>'https://store.example/privacy'];
+    expectSame(LiveAppUiControls::normalize($legacyPolicy), $legacyPolicy);
     expectSame(LiveAppUiControls::normalize([
         'cart_layout' => 'compact', 'cart_coupon_display' => 'expanded',
         'cart_summary_display' => 'theme', 'cart_item_image_radius' => 0,

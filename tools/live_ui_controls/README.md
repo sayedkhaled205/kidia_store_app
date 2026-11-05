@@ -1,6 +1,6 @@
 # Published page UI controls
 
-The 112 fields in `schema.json` extend the existing live-design release. They are
+The Builder exposes 112 editable controls. The schema also retains `privacy_policy_url` for older designs. The app reads the connected store's policy automatically. The editable controls are
 stored in the authenticated Builder draft at `builder.ui_controls_v1`, and are
 only exposed publicly after the owner publishes a release. Saving is separate
 from publishing. Each save checks a digest under a store row lock so an old tab
