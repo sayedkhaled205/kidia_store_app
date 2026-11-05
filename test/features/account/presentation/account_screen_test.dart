@@ -23,6 +23,35 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/native_a
 import '../../auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  testWidgets('iPhone account menu and sign out stay reachable above navigation', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.padding = const FakeViewPadding(top: 44, bottom: 34);
+    tester.view.viewPadding = const FakeViewPadding(top: 44, bottom: 34);
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(_SignedInRepository()),
+        storePrivacyProvider.overrideWithValue(Uri.parse('https://merchant.example/privacy')),
+        cmsPageLayoutProvider('account').overrideWith((ref) async {
+          final base = CmsPageLayout.fallback('account');
+          return CmsPageLayout(page: base.page, header: base.header, footer: base.footer,
+            elements: [for (final element in base.elements) CmsPageComponent(
+              id: element.id, type: element.type, enabled: element.enabled,
+              settings: {...element.settings, if (element.id == 'account_menu') 'compact_family': true},
+            )]);
+        }),
+      ],
+      child: MaterialApp(theme: ThemeData(platform: TargetPlatform.iOS),
+        home: const Scaffold(body: AccountScreen(), bottomNavigationBar: SafeArea(child: SizedBox(height: 64)))),
+    ));
+    await tester.pumpAndSettle();
+    for (final key in ['account-action-orders', 'account-action-addresses', 'account-action-profile', 'account-action-support', 'account-language', 'account-sign-out']) {
+      expect(find.byKey(Key(key)).hitTestable(), findsOneWidget, reason: key);
+    }
+    expect(tester.takeException(), isNull);
+  });
+
   viewportRotationTests(
     'Account',
     (tester, size) => tester.pumpWidget(

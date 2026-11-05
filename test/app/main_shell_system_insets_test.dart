@@ -58,7 +58,7 @@ void main() {
                     enabled: true,
                     settings: {
                       ...base.footer.settings,
-                      'height': 50,
+                      'height': 64,
                       'margin_bottom': 0,
                       'space_down': 0,
                     },
@@ -73,14 +73,23 @@ void main() {
         final footer = find.byKey(const Key('cms-bottom-navigation-size'));
         final expectedBottom = 844 - (bottom > 0 ? bottom : 6);
         expect(tester.getRect(footer).bottom, expectedBottom);
+        final ios = Theme.of(tester.element(footer)).platform == TargetPlatform.iOS;
+        expect(tester.getSize(footer).height, closeTo(ios ? 60.8 : 64, .01));
+        expect(tester.getSize(find.byKey(const Key('cms-bottom-nav-home'))).height, greaterThanOrEqualTo(48));
+        await tester.tap(find.byKey(const Key('cms-bottom-nav-categories')));
+        await tester.pumpAndSettle();
+        expect(tester.getSize(footer).height, closeTo(ios ? 60.8 : 64, .01));
+        expect(tester.getRect(footer).bottom, expectedBottom);
         final account = find.byKey(const Key('cms-bottom-nav-account'));
         await tester.tap(account);
         await tester.pumpAndSettle();
         expect(router.routeInformationProvider.value.uri.path, '/account');
+        expect(tester.getSize(footer).height, 64);
         expect(tester.getRect(footer).bottom, expectedBottom);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
       },
+      variant: TargetPlatformVariant({TargetPlatform.iOS, TargetPlatform.android}),
     );
   }
 }

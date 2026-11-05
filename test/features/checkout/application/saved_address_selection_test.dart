@@ -35,6 +35,10 @@ void main() {
           'values': {...values, 'phone': '5550101'},
         },
         {
+          'id': 'unit',
+          'values': {...values, 'address_2': 'Unit 2'},
+        },
+        {
           'id': 'company',
           'values': {...values, 'company': 'Company'},
         },
@@ -46,6 +50,7 @@ void main() {
       expect(rows.map((row) => row.id), [
         'first',
         'phone',
+        'unit',
         'company',
         'custom',
       ]);
@@ -68,7 +73,7 @@ void main() {
               SavedCheckoutAddress92(
                 id: 'shipping',
                 label: 'Shipping',
-                values: values,
+                values: {...values, 'phone': '', 'email': ' '},
               ),
               SavedCheckoutAddress92(
                 id: 'other',

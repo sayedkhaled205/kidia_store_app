@@ -74,6 +74,7 @@ class AccountScreen extends ConsumerWidget {
     final CmsPageComponent menuSettings = pageLayout.element('account_menu');
     final List<_AccountAction> visibleActions = _visibleActions(menuSettings);
     final bool flat = menuSettings.boolean('compact_family', false);
+    final bool compactIos = Theme.of(context).platform == TargetPlatform.iOS;
 
     return CmsPageScaffold(
       layout: pageLayout,
@@ -91,9 +92,9 @@ class AccountScreen extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsetsDirectional.fromSTEB(
             cmsContentHorizontalPadding(pageLayout),
-            MobiShopSpacing.md,
+            compactIos ? 8 : MobiShopSpacing.md,
             cmsContentHorizontalPadding(pageLayout),
-            MobiShopSpacing.xl,
+            compactIos ? 16 : MobiShopSpacing.xl,
           ),
           children: <Widget>[
             if (summarySettings.enabled)
@@ -130,7 +131,7 @@ class AccountScreen extends ConsumerWidget {
               ),
             ],
             if (menuSettings.enabled)
-              const SizedBox(height: MobiShopSpacing.lg),
+              SizedBox(height: compactIos ? 12 : MobiShopSpacing.lg),
             if (menuSettings.enabled)
               CmsElementFrame(
                 component: menuSettings,
@@ -200,7 +201,7 @@ class AccountScreen extends ConsumerWidget {
               ),
             if (session != null &&
                 pageLayout.element('logout_button').enabled) ...<Widget>[
-              const SizedBox(height: MobiShopSpacing.lg),
+              SizedBox(height: compactIos ? 8 : MobiShopSpacing.lg),
               CmsElementFrame(
                 component: pageLayout.element('logout_button'),
                 child: Center(
@@ -335,7 +336,12 @@ class _AccountHeader extends StatelessWidget {
             : BorderSide.none,
       ),
       child: Padding(
-        padding: const EdgeInsets.all(MobiShopSpacing.md),
+        padding: EdgeInsets.symmetric(
+          horizontal: MobiShopSpacing.md,
+          vertical: Theme.of(context).platform == TargetPlatform.iOS
+              ? 12
+              : MobiShopSpacing.md,
+        ),
         child: Row(
           children: <Widget>[
             Container(
@@ -457,7 +463,9 @@ class _AccountActionTile extends StatelessWidget {
         horizontal: MobiShopSpacing.md,
         vertical: MobiShopSpacing.xs,
       ),
-      minTileHeight: flat ? 64 : null,
+      minTileHeight: flat
+          ? (Theme.of(context).platform == TargetPlatform.iOS ? 56 : 64)
+          : null,
       leading: flat
           ? Icon(action.icon, size: 24, color: MobiShopColors.textPrimary)
           : Container(

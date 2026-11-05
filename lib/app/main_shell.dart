@@ -210,7 +210,11 @@ class _MainShellState extends ConsumerState<MainShell>
                   footer.number('icon_label_gap', 3).clamp(0, 12)
             : 0) +
         8;
-    final footerHeight = footer.number('height', 64).clamp(48, 100).toDouble();
+    final compactIosFooter = !AppConfig.isCmsPreview &&
+        Theme.of(context).platform == TargetPlatform.iOS &&
+        (page == 'home' || page == 'category');
+    final footerHeight = footer.number('height', 64).clamp(48, 100).toDouble() *
+        (compactIosFooter ? .95 : 1);
     final requiredHeight =
         minimumRowHeight.clamp(48, double.infinity).toDouble() * rowCount;
     final Color activeColor = _cmsColor(
