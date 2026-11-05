@@ -30,3 +30,9 @@ Runtime files (lib, assets, ios and package metadata) are unchanged except:
 
 Regression tests live in the application's checkout tests. Remove this local
 snapshot when an upstream release fixes the race and passes those tests.
+
+- `lib/src/ui/card/expiry_mask.dart`: retains the remaining `MM/YY` visual hint
+  while typing in inline and recovery-sheet expiry fields, including the slash
+  after the first digit. The overlay ignores input and accessibility selection;
+  the existing formatter, editable value, cursor, validator and payment payload
+  remain unchanged. No card data is persisted or logged.

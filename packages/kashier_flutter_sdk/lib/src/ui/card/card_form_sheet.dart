@@ -17,6 +17,7 @@ import '../kashier_localizations.dart';
 import 'card_brand_icon.dart';
 import 'card_number_formatter.dart';
 import 'expiry_formatter.dart';
+import 'expiry_mask.dart';
 
 /// Stripe-inspired card input form (Screen 2A).
 ///
@@ -425,28 +426,36 @@ class _CardFormSheetState extends State<CardFormSheet> {
                           children: [
                             // Expiry
                             Expanded(
-                              child: TextFormField(
+                              child: ExpiryMask(
                                 controller: _expiryController,
-                                focusNode: _expiryFocus,
-                                enabled: !_loading,
-                                keyboardType: TextInputType.number,
-                                textDirection: TextDirection.ltr,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
                                 style: const TextStyle(
-                                  fontSize: 15,
-                                  color: KashierColors.contentPrimary,
-                                ),
-                                inputFormatters: [
-                                  FilteringTextInputFormatter.allow(
-                                    RegExp(r'[\d/]'),
+                                    fontSize: 15,
+                                    color: KashierColors.contentPrimary),
+                                hintColor: KashierColors.placeholder,
+                                child: TextFormField(
+                                  controller: _expiryController,
+                                  focusNode: _expiryFocus,
+                                  enabled: !_loading,
+                                  keyboardType: TextInputType.number,
+                                  textDirection: TextDirection.ltr,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: KashierColors.contentPrimary,
                                   ),
-                                  ExpiryFormatter(),
-                                ],
-                                onChanged: _onExpiryChanged,
-                                onTap: () =>
-                                    setState(() => _expiryTouched = true),
-                                decoration: _containerFieldDecoration(
-                                  hint:
-                                      KashierLocalizations.expiryHint(context),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                      RegExp(r'[\d/]'),
+                                    ),
+                                    ExpiryFormatter(),
+                                  ],
+                                  onChanged: _onExpiryChanged,
+                                  onTap: () =>
+                                      setState(() => _expiryTouched = true),
+                                  decoration: _containerFieldDecoration(
+                                    hint: 'MM/YY',
+                                  ),
                                 ),
                               ),
                             ),

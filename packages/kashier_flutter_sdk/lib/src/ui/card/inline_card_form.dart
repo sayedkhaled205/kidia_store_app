@@ -15,6 +15,7 @@ import '../kashier_payment_overlay.dart';
 import '../kashier_payment_provider.dart';
 import 'card_number_formatter.dart';
 import 'expiry_formatter.dart';
+import 'expiry_mask.dart';
 import 'three_ds_webview_sheet.dart';
 
 /// The merchant can validate/submit the SDK form, never read its card fields.
@@ -232,8 +233,8 @@ class _KashierInlineCardFormState extends State<KashierInlineCardForm> {
             List<TextInputFormatter>? formatters,
             bool secret = false,
             TextInputType keyboard = TextInputType.number,
-            IconData? icon}) =>
-        TextFormField(
+            IconData? icon}) {
+      final input = TextFormField(
           key: ValueKey('inline-card-$id'),
           controller: controller,
           enabled: widget.enabled && !_paying,
@@ -250,6 +251,19 @@ class _KashierInlineCardFormState extends State<KashierInlineCardForm> {
           style: const TextStyle(fontSize: 16),
           decoration: decoration(label, icon: icon, hint: hint),
         );
+      return id == 'expiry'
+          ? ExpiryMask(
+              controller: controller,
+              // Material 3 adds OutlineInputBorder.gapPadding to the input.
+              padding: EdgeInsets.symmetric(
+                  horizontal: 16 + (Theme.of(context).useMaterial3 ? 4 : 0),
+                  vertical: 19),
+              style: const TextStyle(fontSize: 16),
+              hintColor: const Color(0xff757575),
+              child: input,
+            )
+          : input;
+    }
     return Form(
       key: _formKey,
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -272,7 +286,7 @@ class _KashierInlineCardFormState extends State<KashierInlineCardForm> {
             controller: _expiry,
             label:
                 copy('Expiration date (MM / YY)', 'تاريخ الانتهاء (MM / YY)'),
-            hint: 'MM / YY',
+            hint: 'MM/YY',
             formatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[\d/]')),
               ExpiryFormatter()
