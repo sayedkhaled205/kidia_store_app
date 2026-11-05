@@ -65,6 +65,10 @@ jobs:
           php connectors/woocommerce/tests/native-website-payment-contract-test.php
           php connectors/woocommerce/tests/native-payment92-test.php
           php connectors/woocommerce/tests/order-source98-test.php
+          php connectors/woocommerce/tests/app-badges-test.php
+          php connectors/woocommerce/tests/customer-source-contract-test.php
+          php connectors/woocommerce/tests/catalog-stock-visibility-test.php web
+          php connectors/woocommerce/tests/catalog-stock-visibility-test.php api
           php connectors/woocommerce/tests/kids-branding301-contract-test.php
           php connectors/woocommerce/tests/kids-tail301-contract-test.php
           php connectors/woocommerce/tests/product-outline-contract-test.php

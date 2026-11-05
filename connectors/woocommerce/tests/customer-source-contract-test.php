@@ -6,12 +6,13 @@ $GLOBALS['allowed']=true; $GLOBALS['admin']=true; $GLOBALS['pagenow']='users.php
 function __($s,$domain=''){return $s;} function determine_locale(){return 'ar';}
 function get_user_meta($id,$key,$single=true){return $GLOBALS['meta'][$id][$key]??'';}
 function current_user_can(...$args){return $GLOBALS['allowed'];} function is_admin(){return $GLOBALS['admin'];}
+function wp_doing_ajax(){return false;} function is_multisite(){return false;}
 function sanitize_key($s){return preg_replace('/[^a-z0-9_-]/','',strtolower($s));} function wp_unslash($s){return $s;}
 function esc_html($s){return htmlspecialchars($s,ENT_QUOTES,'UTF-8');} function esc_attr($s){return esc_html($s);}
 function selected($a,$b,$echo=true){return $a===$b?'selected="selected"':'';}
 function add_filter(...$a){} function add_action(...$a){}
 class Query { public $values=[]; function get($k){return $this->values[$k]??null;} function set($k,$v){$this->values[$k]=$v;} }
-require __DIR__.'/../source/includes/class-mobishop-customer-source.php';
+require (getenv('MOBISHOP_CONNECTOR_TEST_ROOT') ?: __DIR__.'/../source').'/includes/class-mobishop-customer-source.php';
 $n=0; function check($v,$m){global $n; if(!$v)throw new Exception($m);$n++;}
 check(str_contains(MobiShop_Customer_Source::cell('', 'mobishop_app_customer',7),'حساب من التطبيق'),'Registration badge');
 check(str_contains(MobiShop_Customer_Source::cell('', 'mobishop_app_customer',8),'دخل من التطبيق'),'Login badge');
