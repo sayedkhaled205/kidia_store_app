@@ -171,6 +171,12 @@ void main() {
                   required: true,
                 ),
                 CheckoutFieldDefinition(
+                  key: 'billing_phone1',
+                  group: CheckoutFieldGroup.billing,
+                  type: CheckoutFieldType.text,
+                  label: 'Alternate phone',
+                ),
+                CheckoutFieldDefinition(
                   key: 'billing_postcode',
                   group: CheckoutFieldGroup.billing,
                   type: CheckoutFieldType.hidden,
@@ -189,6 +195,16 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('VAT number *'), findsOneWidget);
+    for (final entry in {
+      'billing_phone1': TextInputType.phone,
+      'billing_vat_number': TextInputType.text,
+    }.entries) {
+      final editor = tester.widget<EditableText>(find.descendant(
+        of: find.byKey(Key('checkout-dynamic-${entry.key}')),
+        matching: find.byType(EditableText),
+      ));
+      expect(editor.keyboardType, entry.value);
+    }
     expect(
       find.byKey(const Key('checkout-dynamic-billing_postcode')),
       findsNothing,

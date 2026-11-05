@@ -1,5 +1,6 @@
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'dart:math' as math;
+import 'package:mobishop_store_app/shared/forms/phone_input_field.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -978,6 +979,9 @@ class _DynamicCheckoutField extends StatelessWidget {
       keyboardType: switch (field.type) {
         CheckoutFieldType.email => TextInputType.emailAddress,
         CheckoutFieldType.telephone => TextInputType.phone,
+        CheckoutFieldType.text
+            when isPhoneInputField(field.key, field.autocomplete) =>
+          TextInputType.phone,
         _ => TextInputType.text,
       },
       autofillHints: field.autocomplete.isEmpty

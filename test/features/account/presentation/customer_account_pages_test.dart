@@ -139,6 +139,7 @@ void main() {
       ),
     );
     expect(phoneEditor.controller.text, '01000000000');
+    expect(phoneEditor.keyboardType, TextInputType.phone);
   });
 
   testWidgets('profile page loads the real customer fields', (
@@ -325,7 +326,7 @@ final CustomerAccount _account = CustomerAccount(
     ),
     CustomerAddressField(
       key: 'billing_phone',
-      type: CustomerAddressFieldType.telephone,
+      type: CustomerAddressFieldType.text,
       addressType: CustomerAddressType.billing,
       label: 'رقم الهاتف',
       required: true,

@@ -7,6 +7,7 @@ import 'package:mobishop_store_app/core/theme/mobishop_spacing.dart';
 import 'package:mobishop_store_app/features/account/domain/entities/customer_account.dart';
 import 'package:mobishop_store_app/features/account/domain/repositories/customer_account_repository.dart';
 import 'package:mobishop_store_app/features/account/presentation/customer_phone_format.dart';
+import 'package:mobishop_store_app/shared/forms/phone_input_field.dart';
 import 'package:mobishop_store_app/features/account/presentation/providers/customer_account_providers.dart';
 import 'package:mobishop_store_app/features/cart/presentation/widgets/cart_icon_button.dart';
 
@@ -466,6 +467,9 @@ class _AddressField extends StatelessWidget {
       keyboardType: switch (field.type) {
         CustomerAddressFieldType.email => TextInputType.emailAddress,
         CustomerAddressFieldType.telephone => TextInputType.phone,
+        CustomerAddressFieldType.text
+            when isPhoneInputField(field.key, field.autocomplete) =>
+          TextInputType.phone,
         _ => TextInputType.text,
       },
       autofillHints: field.autocomplete.isEmpty
