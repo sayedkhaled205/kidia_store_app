@@ -390,3 +390,25 @@ foreach(['processing','completed','cancelled','refunded'] as $status) {
     mobishop_orders_assert($result->data['order']['is_paid'] === in_array($status,['processing','completed'],true), 'Payment success uses Woo predicate, not mere order existence.');
 }
 fwrite(STDOUT, "CUSTOMER_ORDERS_CONTRACT_OK history/cancel/read ownership, configured localized paths and unsafe payment URLs; no external effects.\n");
+
+// Model the validated identity mapping separately exercised by storefront-admin-test.
+class MobiShop_Storefront_Admin {
+    public static function data_owner_id(int $id): int { return $GLOBALS['fixture_data_owner'] ?? $id; }
+}
+$GLOBALS['mobishop_current_user_id'] = 70;
+$GLOBALS['fixture_data_owner'] = 7;
+$history = $endpoint->get_orders(new WP_REST_Request());
+mobishop_orders_assert($GLOBALS['mobishop_order_query']['customer'] === [70,7], 'Owner shopper query includes both stable shopper and historical owner');
+mobishop_orders_assert(count($history->data['orders']) === 1 && $history->data['orders'][0]['id'] === 101, 'Own historical order visible; foreign injected order remains excluded');
+$detail = $endpoint->get_order(new WP_REST_Request(['id'=>101]));
+mobishop_orders_assert($detail instanceof WP_REST_Response, 'Own historical detail accepts verified mapping');
+$cancel = $endpoint->cancel_order(new WP_REST_Request(['id'=>101]));
+mobishop_orders_assert($cancel instanceof WP_REST_Response, 'Own historical cancellation preserves customer cancellation rules');
+$GLOBALS['fixture_data_owner'] = 8;
+$detail = $endpoint->get_order(new WP_REST_Request(['id'=>101]));
+mobishop_orders_assert($detail instanceof WP_Error, 'Different owner cannot access historical detail');
+$cancel = $endpoint->cancel_order(new WP_REST_Request(['id'=>101]));
+mobishop_orders_assert($cancel instanceof WP_Error, 'Foreign historical order cannot be cancelled');
+$GLOBALS['fixture_data_owner'] = 0;
+mobishop_orders_assert($endpoint->get_orders(new WP_REST_Request()) instanceof WP_Error, 'Invalid shopper mapping cannot fall back to unscoped history');
+echo "Owner shopping history regression passed.\n";

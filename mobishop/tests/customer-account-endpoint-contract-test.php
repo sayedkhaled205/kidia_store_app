@@ -91,7 +91,7 @@ class WC_Customer {
 	private array $data;
 
 	public function __construct( private int $id ) {
-		$this->data = $GLOBALS['mobishop_customer'];
+		$this->data = $GLOBALS['mobishop_customers'][$id] ?? $GLOBALS['mobishop_customer'];
 	}
 
 	public function get_id(): int {
@@ -129,7 +129,8 @@ class WC_Customer {
 		if ( $GLOBALS['mobishop_skip_customer_save'] ) {
 			return;
 		}
-		$GLOBALS['mobishop_customer'] = $this->data;
+		if (isset($GLOBALS['mobishop_customers'][$this->id])) $GLOBALS['mobishop_customers'][$this->id] = $this->data;
+		else $GLOBALS['mobishop_customer'] = $this->data;
 	}
 }
 
@@ -235,7 +236,7 @@ function mobishop_account_assert( bool $condition, string $message ): void {
 	}
 }
 
-require dirname( __DIR__ ) . '/api/class-customer-account-endpoint.php';
+require (getenv('MOBISHOP_ACCOUNT_TEST_ROOT') ?: dirname( __DIR__ ) . '/api') . '/class-customer-account-endpoint.php';
 
 $endpoint = new MobiShop_Customer_Account_Endpoint();
 $endpoint->register_routes();

@@ -29,6 +29,19 @@ final class MobiShop_Storefront_Admin {
 		return $owner === 0 || ( $user->user_login === self::login( $owner ) && self::clean_customer( $user ) );
 	}
 
+	/** Resolve data ownership only from the verified, site-bound shopping principal.
+	 * Never replace WordPress's current user: the session retains customer capabilities.
+	 */
+	public static function data_owner_id( int $customer_id ): int {
+		$user = get_user_by( 'id', $customer_id );
+		if ( ! $user instanceof WP_User ) return 0;
+		if ( ! str_starts_with( (string) $user->user_login, 'mobishop_shop_' ) ) return $customer_id;
+		$owner_id = (int) get_user_meta( $customer_id, self::marker(), true );
+		if ( $owner_id <= 0 || $user->user_login !== self::login( $owner_id ) || ! self::clean_customer( $user ) ) return 0;
+		$owner = get_user_by( 'id', $owner_id );
+		return self::accepts( $owner ) ? $owner_id : 0;
+	}
+
 	public static function contact_email( WP_User $user ): string {
 		if ( ! str_starts_with( (string) ( $user->user_login ?? '' ), 'mobishop_shop_' ) || ! self::valid_session_user( $user ) ) return '';
 		$owner = get_user_by( 'id', (int) get_user_meta( $user->ID, self::marker(), true ) );

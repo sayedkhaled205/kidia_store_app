@@ -167,4 +167,17 @@ reset_storefront_fixture();
 $GLOBALS['wpdb']->busy = true;
 verify_storefront(is_wp_error(MobiShop_Storefront_Admin::resolve(get_userdata(10))), 'Unavailable creation lock fails closed');
 verify_storefront(count($GLOBALS['fixture_users']) === 4 && $GLOBALS['wpdb']->held === 0, 'Contention never creates or releases another worker lock');
+reset_storefront_fixture();
+$shadow = MobiShop_Storefront_Admin::resolve(get_userdata(10));
+verify_storefront(MobiShop_Storefront_Admin::data_owner_id($shadow->ID) === 10, 'Verified customer principal resolves only its historical data owner');
+verify_storefront(MobiShop_Storefront_Admin::data_owner_id(11) === 11, 'Ordinary customer data ownership unchanged');
+$GLOBALS['fixture_meta'][$shadow->ID]['_mobishop_storefront_owner_4']='13';
+verify_storefront(MobiShop_Storefront_Admin::data_owner_id($shadow->ID) === 0, 'Forged marker fails closed for data access');
+$GLOBALS['fixture_meta'][$shadow->ID]['_mobishop_storefront_owner_4']='10';
+$GLOBALS['fixture_users'][10]->roles=['customer'];
+verify_storefront(MobiShop_Storefront_Admin::data_owner_id($shadow->ID) === 0, 'Owner removed from administrator role invalidates historic access');
+$GLOBALS['fixture_users'][10]->roles=['administrator'];
+$GLOBALS['fixture_users'][$shadow->ID]->allcaps['edit_posts']=true;
+verify_storefront(MobiShop_Storefront_Admin::data_owner_id($shadow->ID) === 0, 'Privileged shopper cannot resolve data owner');
+
 echo 'Storefront administrator isolation: '.$checks." checks passed.\n";

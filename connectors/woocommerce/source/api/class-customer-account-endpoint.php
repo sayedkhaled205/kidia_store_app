@@ -91,7 +91,9 @@ final class MobiShop_Customer_Account_Endpoint {
 		if ( is_wp_error( $customer ) ) {
 			return $customer;
 		}
-		return $this->response( $this->account_payload( $customer ) );
+		$address_customer = $this->address_customer( $customer );
+		if ( is_wp_error( $address_customer ) ) return $address_customer;
+		return $this->response( $this->account_payload( $customer, $address_customer ) );
 	}
 
 	/** Update the same fields exposed by WooCommerce's edit-account screen. */
@@ -168,6 +170,8 @@ final class MobiShop_Customer_Account_Endpoint {
 		if ( is_wp_error( $customer ) ) {
 			return $customer;
 		}
+		$customer = $this->address_customer( $customer );
+		if ( is_wp_error( $customer ) ) return $customer;
 		$type = sanitize_key( (string) $request->get_param( 'type' ) );
 		if ( ! in_array( $type, array( 'billing', 'shipping' ), true ) ) {
 			return new WP_Error(
@@ -237,11 +241,19 @@ final class MobiShop_Customer_Account_Endpoint {
 		return new WC_Customer( $customer_id );
 	}
 
-	private function account_payload( $customer ): array {
+	private function address_customer( $customer ) {
+		$id = (int) $customer->get_id();
+		$owner = class_exists( 'MobiShop_Storefront_Admin' )
+			? MobiShop_Storefront_Admin::data_owner_id( $id ) : $id;
+		if ( $owner <= 0 ) return new WP_Error( 'mobishop_auth_unauthorized', __( 'The customer session is missing or expired.', 'mobi2app-connector' ), array( 'status' => 401 ) );
+		return $owner === $id ? $customer : new WC_Customer( $owner );
+	}
+
+	private function account_payload( $customer, $address_customer ): array {
 		return array(
 			'profile'  => $this->profile_payload( $customer ),
-			'billing'  => $this->address_payload( $customer, 'billing' ),
-			'shipping' => $this->address_payload( $customer, 'shipping' ),
+			'billing'  => $this->address_payload( $address_customer, 'billing' ),
+			'shipping' => $this->address_payload( $address_customer, 'shipping' ),
 			'support'  => $this->support_payload(),
 		);
 	}

@@ -87,10 +87,19 @@ final class MobiShop_Customer_Orders_Endpoint {
 			);
 	}
 
+	/** Historical owner orders and new shopping orders share one authenticated view. */
+	private function owned_customer_ids( int $customer_id ): array {
+		if ( $customer_id <= 0 ) return array();
+		$owner = class_exists( 'MobiShop_Storefront_Admin' )
+			? MobiShop_Storefront_Admin::data_owner_id( $customer_id ) : $customer_id;
+		return $owner > 0 ? array_values( array_unique( array( $customer_id, $owner ) ) ) : array();
+	}
+
 	/** Return only orders owned by the authenticated WooCommerce customer. */
 	public function get_orders( WP_REST_Request $request ) {
 		$customer_id = get_current_user_id();
-		if ( $customer_id <= 0 ) {
+		$owner_ids = $this->owned_customer_ids( $customer_id );
+		if ( ! $owner_ids ) {
 			return $this->unauthorized_error();
 		}
 		if ( ! function_exists( 'wc_get_orders' ) || ! function_exists( 'wc_price' ) ) {
@@ -109,7 +118,7 @@ final class MobiShop_Customer_Orders_Endpoint {
 		$result = wc_get_orders(
 			array(
 				// Match the same customer query used by WooCommerce My Account.
-				'customer'    => $customer_id,
+				'customer'    => count( $owner_ids ) === 1 ? $customer_id : $owner_ids,
 				'limit'       => $per_page,
 				'page'        => $page,
 				'paginate'    => true,
@@ -131,7 +140,7 @@ final class MobiShop_Customer_Orders_Endpoint {
 			if ( ! is_object( $order ) || ! is_callable( array( $order, 'get_customer_id' ) ) ) {
 				continue;
 			}
-			if ( (int) $order->get_customer_id() !== $customer_id ) {
+			if ( ! in_array( (int) $order->get_customer_id(), $owner_ids, true ) ) {
 				continue;
 			}
 			$orders[] = $this->order_payload( $order );
@@ -157,14 +166,15 @@ final class MobiShop_Customer_Orders_Endpoint {
 	/** Refresh one existing order after a browser payment; never create or pay it. */
 	public function get_order( WP_REST_Request $request ) {
 		$customer_id = get_current_user_id();
-		if ( $customer_id <= 0 ) {
+		$owner_ids = $this->owned_customer_ids( $customer_id );
+		if ( ! $owner_ids ) {
 			return $this->unauthorized_error();
 		}
 		if ( ! function_exists( 'wc_get_order' ) ) {
 			return new WP_Error( 'mobishop_orders_woocommerce_unavailable', 'Order history is unavailable.', array( 'status' => 503 ) );
 		}
 		$order = wc_get_order( absint( $request->get_param( 'id' ) ) );
-		if ( ! is_object( $order ) || ! is_callable( array( $order, 'get_customer_id' ) ) || (int) $order->get_customer_id() !== $customer_id ) {
+		if ( ! is_object( $order ) || ! is_callable( array( $order, 'get_customer_id' ) ) || ! in_array( (int) $order->get_customer_id(), $owner_ids, true ) ) {
 			return new WP_Error( 'mobishop_order_not_found', 'The requested order was not found.', array( 'status' => 404 ) );
 		}
 		$response = new WP_REST_Response( array( 'order' => $this->order_payload( $order ) ), 200 );
@@ -176,7 +186,8 @@ final class MobiShop_Customer_Orders_Endpoint {
 	/** Cancel an owned order or submit the store's registered cancellation request. */
 	public function cancel_order( WP_REST_Request $request ) {
 		$customer_id = get_current_user_id();
-		if ( $customer_id <= 0 ) {
+		$owner_ids = $this->owned_customer_ids( $customer_id );
+		if ( ! $owner_ids ) {
 			return $this->unauthorized_error();
 		}
 		if ( ! function_exists( 'wc_get_order' ) ) {
@@ -190,7 +201,7 @@ final class MobiShop_Customer_Orders_Endpoint {
 		$order = wc_get_order( absint( $request->get_param( 'id' ) ) );
 		if ( ! is_object( $order ) ||
 			! is_callable( array( $order, 'get_customer_id' ) ) ||
-			(int) $order->get_customer_id() !== $customer_id ) {
+			! in_array( (int) $order->get_customer_id(), $owner_ids, true ) ) {
 			return new WP_Error(
 				'mobishop_order_not_found',
 				__( 'The requested order was not found.', 'mobi2app-connector' ),
