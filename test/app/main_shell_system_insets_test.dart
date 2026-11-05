@@ -71,12 +71,13 @@ void main() {
         );
         await tester.pumpAndSettle();
         final footer = find.byKey(const Key('cms-bottom-navigation-size'));
-        expect(tester.getRect(footer).bottom, 844 - bottom);
+        final expectedBottom = 844 - (bottom > 0 ? bottom : 6);
+        expect(tester.getRect(footer).bottom, expectedBottom);
         final account = find.byKey(const Key('cms-bottom-nav-account'));
         await tester.tap(account);
         await tester.pumpAndSettle();
         expect(router.routeInformationProvider.value.uri.path, '/account');
-        expect(tester.getRect(footer).bottom, 844 - bottom);
+        expect(tester.getRect(footer).bottom, expectedBottom);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox.shrink());
       },
