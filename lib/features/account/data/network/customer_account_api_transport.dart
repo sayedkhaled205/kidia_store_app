@@ -95,6 +95,19 @@ class DioCustomerAccountApiTransport
   final CustomerAccountAuthTokenReader authTokenReader;
   final Dio _dio;
 
+  Future<Map<String, dynamic>> fetchWishlist() =>
+      _request('customer/wishlist', method: 'GET', authenticated: true);
+
+  Future<Map<String, dynamic>> mutateWishlist(
+    List<int> add,
+    List<int> remove,
+  ) => _request(
+    'customer/wishlist',
+    method: 'POST',
+    authenticated: true,
+    body: {'add': add, 'remove': remove},
+  );
+
   @override
   Future<Map<String, dynamic>> deletionAvailability() =>
       _request('customer/account/deletion', method: 'GET', authenticated: true);
@@ -159,7 +172,7 @@ class DioCustomerAccountApiTransport
     String endpoint, {
     required String method,
     required bool authenticated,
-    Map<String, String>? body,
+    Map<String, dynamic>? body,
     String? expectedSession,
   }) async {
     final String token = authenticated ? authTokenReader()?.trim() ?? '' : '';

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/shared/widgets/product/shared_product_card_provider.dart';
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -138,14 +139,25 @@ class WishlistScreen extends StatefulWidget {
   State<WishlistScreen> createState() => _WishlistScreenState();
 }
 
-class _WishlistScreenState extends State<WishlistScreen> {
+class _WishlistScreenState extends State<WishlistScreen>
+    with WidgetsBindingObserver {
   late WishlistController _controller;
   Timer? _snackBarTimer;
+  int _deviceItemCount = 0;
+  bool _importingDeviceItems = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _createController();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_controller.load(background: true));
+    }
   }
 
   @override
@@ -160,11 +172,53 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 
   void _createController() {
+    _deviceItemCount = 0;
     _controller = WishlistController(
       repository: widget.repository,
       catalogRepository: widget.catalogRepository,
     )..addListener(_onControllerChanged);
     _controller.load();
+    final repository = widget.repository;
+    if (repository is GuestWishlistImporter) {
+      unawaited(_readDeviceItems(repository as GuestWishlistImporter));
+    }
+  }
+
+  Future<void> _readDeviceItems(GuestWishlistImporter importer) async {
+    try {
+      final count = await importer.pendingDeviceItemCount();
+      if (mounted && identical(importer, widget.repository)) {
+        setState(() => _deviceItemCount = count);
+      }
+    } catch (_) {
+      /* A failed account load remains retryable in the main list. */
+    }
+  }
+
+  Future<void> _importDeviceItems() async {
+    final repository = widget.repository;
+    if (repository is! GuestWishlistImporter || _importingDeviceItems) return;
+    setState(() => _importingDeviceItems = true);
+    try {
+      await (repository as GuestWishlistImporter).importDeviceItems();
+      if (!mounted || !identical(repository, widget.repository)) return;
+      setState(() => _deviceItemCount = 0);
+      await _controller.refresh();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _WishlistCopy.of(context).arabic
+                  ? 'تعذّر ضم المحفوظات. حاول تاني.'
+                  : 'Unable to import saved items. Please retry.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _importingDeviceItems = false);
+    }
   }
 
   void _onControllerChanged() {
@@ -175,6 +229,7 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _snackBarTimer?.cancel();
     _controller.removeListener(_onControllerChanged);
     _controller.dispose();
@@ -204,6 +259,25 @@ class _WishlistScreenState extends State<WishlistScreen> {
           ],
           body: Column(
             children: <Widget>[
+              if (_deviceItemCount > 0 && widget.signedIn)
+                ListTile(
+                  title: Text(
+                    copy.arabic
+                        ? 'محفوظات قديمة على الجهاز ($_deviceItemCount)'
+                        : 'Saved on this device ($_deviceItemCount)',
+                  ),
+                  subtitle: Text(
+                    copy.arabic
+                        ? 'ضمّها لو تخص الحساب ده عشان تظهر على أجهزتك.'
+                        : 'Import them if they belong to this account to sync across your devices.',
+                  ),
+                  trailing: TextButton(
+                    onPressed: _importingDeviceItems
+                        ? null
+                        : _importDeviceItems,
+                    child: Text(copy.arabic ? 'ضم للحساب' : 'Import'),
+                  ),
+                ),
               if (_controller.status == WishlistStatus.ready &&
                   layout.header.boolean('show_count', false) &&
                   (previewState == 'products' ||

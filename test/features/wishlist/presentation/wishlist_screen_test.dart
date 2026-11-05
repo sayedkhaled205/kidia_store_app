@@ -11,8 +11,33 @@ import 'package:mobishop_store_app/features/wishlist/presentation/wishlist_scree
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 
 import '../support/wishlist_test_data.dart';
+import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
+
+class ImportableWishlist extends FakeWishlistRepository implements GuestWishlistImporter {
+  bool imported = false;
+  @override
+  Future<int> pendingDeviceItemCount() async => 2;
+  @override
+  Future<void> importDeviceItems() async { imported = true; }
+}
 
 void main() {
+  testWidgets('device favorites are imported only after the account owner taps Import', (tester) async {
+    final repository = ImportableWishlist();
+    await tester.pumpWidget(_testApp(WishlistScreen(
+      repository: repository,
+      catalogRepository: FakeWishlistCatalogRepository(),
+      signedIn: true,
+    )));
+    await tester.pumpAndSettle();
+    expect(repository.imported, isFalse);
+    expect(find.text('Import'), findsOneWidget);
+    await tester.tap(find.text('Import'));
+    await tester.pumpAndSettle();
+    expect(repository.imported, isTrue);
+    expect(find.text('Import'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
   viewportRotationTests('Wishlist', (tester,size) => tester.pumpWidget(_testApp(WishlistScreen(repository:FakeWishlistRepository(),catalogRepository:FakeWishlistCatalogRepository()))));
   test('recommendations preserve every supported disabled quick-add value', () {
     final base = CmsPageLayout.fallback('wishlist');

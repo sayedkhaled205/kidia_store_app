@@ -612,6 +612,12 @@ final class MobiShop_Customer_Auth_Endpoint {
 			: $this->unauthorized_error();
 	}
 
+	/** Resolve the verified token owner without trusting a WordPress cookie. */
+	public function customer_id_from_request( WP_REST_Request $request ): int {
+		$user = $this->user_from_request( $request );
+		return $user instanceof WP_User ? (int) $user->ID : 0;
+	}
+
 	/**
 	 * Authenticate mobile tokens only for customer-facing REST namespaces.
 	 *
