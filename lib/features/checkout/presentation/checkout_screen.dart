@@ -945,6 +945,8 @@ class _DynamicCheckoutField extends StatelessWidget {
       final String? selected = field.options.containsKey(value) ? value : null;
       return DropdownButtonFormField<String>(
         key: Key('checkout-dynamic-${field.key}'),
+        menuMaxHeight: 280,
+        borderRadius: BorderRadius.circular(12),
         initialValue: selected,
         isExpanded: true,
         decoration: InputDecoration(
@@ -1158,6 +1160,8 @@ class _AddressFields extends StatelessWidget {
       );
     }
     return DropdownButtonFormField<String>(
+      menuMaxHeight: 280,
+      borderRadius: BorderRadius.circular(12),
       key: Key('checkout-$keyPrefix-$name'),
       initialValue: states.containsKey(value) ? value : null,
       isExpanded: true,

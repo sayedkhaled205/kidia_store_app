@@ -442,12 +442,15 @@ class _AddressField extends StatelessWidget {
           : null;
       return DropdownButtonFormField<String>(
         key: Key('customer-address-${field.key}'),
+        menuMaxHeight: 280,
+        borderRadius: BorderRadius.circular(12),
+        isExpanded: true,
         initialValue: value,
         items: field.options.entries
             .map(
               (MapEntry<String, String> entry) => DropdownMenuItem<String>(
                 value: entry.key,
-                child: Text(entry.value),
+                child: Text(entry.value, maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
             )
             .toList(growable: false),

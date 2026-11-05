@@ -258,6 +258,13 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('المحافظة *'), findsOneWidget);
+      final governorates = tester.widget<DropdownButton<String>>(
+        find.descendant(
+          of: find.byKey(const Key('checkout-dynamic-billing_state')),
+          matching: find.byType(DropdownButton<String>),
+        ),
+      );
+      expect(governorates.menuMaxHeight, 280);
 
       await tester.tap(find.byKey(const Key('checkout-dynamic-billing_state')));
       await tester.pumpAndSettle();
