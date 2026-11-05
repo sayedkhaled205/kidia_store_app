@@ -1045,7 +1045,29 @@ workflows:
       flutter: 3.47.8
       xcode: latest
       cocoapods: default
+      vars:
+        STORE_URL: "https://kidiastore.com"
+        STORE_PLATFORM: "woocommerce"
+        STORE_NAME: "\u0643\u064a\u062f\u064a\u0627 \u0633\u062a\u0648\u0631"
+        STORE_LOCALE: "ar"
+        STORE_COUNTRY_CODE: "EG"
+        IOS_BUNDLE_ID: "app.mobishop.d983d98ad8afd98ad8a7d8b3d8aad988d8b1"
+        APPLE_SIGN_IN_REQUIRED: "true"
+        APP_DESIGN_UPDATE_URL: "https://api.woomobile.app/v1/app-design/6990b322-e396-46bb-a188-a1e472b6bf64"
     scripts:
+      - name: Verify release320 source and public design snapshot
+        script: |
+          set -euo pipefail
+          git diff --exit-code 8059bae18579baefdf3da38ea4fc2925cc63fc53 -- lib android ios test integration_test test_driver assets packages pubspec.yaml pubspec.lock tool ':(exclude)integration_test/qa320_*'
+          python3 - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          data=Path('.qa/release320-public-design.b64').read_bytes()
+          assert hashlib.sha256(data).hexdigest() == '388b2243f1bf64ff0961fad7d6c3938ec7579c4bca27c7faa0f141b5b23c2b9e'
+          with open(os.environ['CM_ENV'], 'a', encoding='utf-8') as target:
+              target.write('APP_DESIGN_BUNDLE='+data.decode('ascii')+'\n')
+          print('Release320 application source and embedded public design verified.')
+          PY
       - name: Freeze public iOS sign-in configuration
         script: |
           set -euo pipefail
@@ -1091,7 +1113,7 @@ workflows:
       - name: Compile iOS simulator application
         script: |
           set -euo pipefail
-          flutter build ios --simulator --debug \
+          flutter build ios --simulator --debug --build-name=1.0.0 --build-number=320 \
             --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
             --dart-define="STORE_URL=$STORE_URL" \
             --dart-define="STORE_NAME=$STORE_NAME" \
@@ -1112,6 +1134,23 @@ workflows:
             echo 'Startup inspection failed; retain diagnostics and run the independent UI fixtures before the final gate.'
           fi
           printf 'IOS_TEST_DEVICE=%s\n' "$SIMULATOR_ID" >> "$CM_ENV"
+      - name: Exercise live public storefront without account or commerce mutations
+        script: |
+          set -uo pipefail
+          flutter test integration_test/qa320_live_public_test.dart \
+            -d "${IOS_TEST_DEVICE:?}" --reporter expanded \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=$STORE_NAME" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-ar}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}" \
+            2>&1 | tee build/ios/simulator-artifacts/live-public-tests.log
+          RESULT=${PIPESTATUS[0]}
+          echo "$RESULT" > build/ios/simulator-artifacts/live-public-exit-code.txt
+          CONTAINER=$(xcrun simctl get_app_container "$IOS_TEST_DEVICE" "$IOS_BUNDLE_ID" data)
+          find "$CONTAINER/tmp" -name 'ios320-live-*.png' -exec cp {} build/ios/simulator-artifacts/ \;
+          xcrun simctl io "$IOS_TEST_DEVICE" screenshot build/ios/simulator-artifacts/live-public-final.png
+          exit 0
       - name: Exercise customer flows on the iOS engine
         script: |
           set -euo pipefail
@@ -1121,6 +1160,7 @@ workflows:
       - name: Validate simulator results
         script: |
           set -euo pipefail
+          test "$(cat build/ios/simulator-artifacts/live-public-exit-code.txt)" = "0"
           python3 -c 'import json; r=json.load(open("build/ios/simulator-artifacts/launch-check.json")); assert r["status"] == "startup_no_detected_fatal_errors", r.get("reason", "Startup failed")'
     artifacts:
       - build/ios/simulator-artifacts/Runner-simulator.zip
@@ -1134,3 +1174,5 @@ workflows:
       - build/ios/simulator-artifacts/customer-flow-tests.log
       - build/ios/simulator-artifacts/native-startup.log
       - build/ios/simulator-artifacts/native-stack.log
+      - build/ios/simulator-artifacts/live-public*
+      - build/ios/simulator-artifacts/ios320-live-*.png
