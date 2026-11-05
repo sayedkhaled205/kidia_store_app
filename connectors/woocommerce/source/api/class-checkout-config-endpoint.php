@@ -116,7 +116,11 @@ final class MobiShop_Checkout_Config_Endpoint {
 	private function saved_addresses(): array {
 		$id = get_current_user_id();
 		if ( $id <= 0 ) return array();
-		$customer = new WC_Customer( $id );
+		// The isolated owner shopper has no historical Woo address of its own.
+		// Resolve only the verified site-bound owner; never select by email/input.
+		$data_id = class_exists( 'MobiShop_Storefront_Admin' ) ? MobiShop_Storefront_Admin::data_owner_id( $id ) : $id;
+		if ( $data_id <= 0 ) return array();
+		$customer = new WC_Customer( $data_id );
 		$rows = array();
 		foreach ( array( 'billing', 'shipping' ) as $group ) {
 			$values = $customer->{ 'get_' . $group }();

@@ -1,3 +1,4 @@
+import 'package:mobishop_store_app/features/cart/data/models/cart_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/checkout/application/checkout_controller.dart';
 import 'package:mobishop_store_app/features/checkout/domain/entities/checkout_state.dart';
@@ -160,4 +161,50 @@ void main() {
       expect(controller.selectedSavedAddressId, isNull);
     },
   );
+  test('empty owner shopper cart prefills saved address without submitting', () async {
+    final json = checkoutCartJson();
+    json['billing_address'] = {'country': 'US', 'email': 'owner@example.test'};
+    json['shipping_address'] = {'country': 'US'};
+    final repository = FakeCheckoutRepository(state: CheckoutState(
+      cart: CartModel.fromJson(json).toEntity(),
+      savedAddresses: const [SavedCheckoutAddress92(id: 'billing', label: 'Saved', values: {...values, 'email': ''})],
+    ));
+    final controller = CheckoutController(repository: repository);
+    addTearDown(controller.dispose);
+    await controller.load();
+    expect(controller.billingAddress.address1, 'Test street');
+    expect(controller.billingAddress.email, 'owner@example.test');
+    expect(controller.selectedSavedAddressId, 'billing');
+    expect(controller.showBillingEditor, false);
+    expect(repository.submitCalls, 0);
+    expect(repository.updateCustomerCalls, 0);
+  });
+  test('saved defaults never overwrite an existing cart location draft', () async {
+    for (final draft in [{'city': 'Typed city'}, {'address_1': 'Current street'}]) {
+      final json = checkoutCartJson();
+      json['billing_address'] = {...draft, 'country': 'US'};
+      json['shipping_address'] = {'country': 'US'};
+      final controller = CheckoutController(repository: FakeCheckoutRepository(state: CheckoutState(
+        cart: CartModel.fromJson(json).toEntity(),
+        savedAddresses: const [SavedCheckoutAddress92(id: 'billing', label: 'Saved', values: values)],
+      )));
+      await controller.load();
+      expect(controller.billingAddress.address1, draft['address_1'] ?? '');
+      expect(controller.billingAddress.city, draft['city'] ?? '');
+      expect(controller.selectedSavedAddressId, isNull);
+      controller.dispose();
+    }
+  });
+  test('no saved address leaves another customer empty and validation active', () async {
+    final json = checkoutCartJson();
+    json['billing_address'] = {'country': 'US'};
+    json['shipping_address'] = {'country': 'US'};
+    final controller = CheckoutController(repository: FakeCheckoutRepository(state: CheckoutState(cart: CartModel.fromJson(json).toEntity())));
+    addTearDown(controller.dispose);
+    await controller.load();
+    expect(controller.billingAddress.address1, isEmpty);
+    expect(controller.showBillingEditor, true);
+    expect(controller.validate(), false);
+  });
+
 }

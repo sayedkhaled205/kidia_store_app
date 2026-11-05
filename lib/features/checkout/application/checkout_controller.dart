@@ -133,19 +133,7 @@ class CheckoutController extends ChangeNotifier {
     setShipToDifferentAddress(false);
     // Replace the address as a whole. Missing optional fields belong to the
     // selected address too; retaining them would mix two customers' locations.
-    updateBillingAddress(CheckoutAddress(
-      firstName: values['first_name'] ?? '',
-      lastName: values['last_name'] ?? '',
-      company: values['company'] ?? '',
-      address1: values['address_1'] ?? '',
-      address2: values['address_2'] ?? '',
-      city: values['city'] ?? '',
-      state: values['state'] ?? '',
-      postcode: values['postcode'] ?? '',
-      country: values['country'] ?? _billingAddress.country,
-      email: values['email'] ?? _billingAddress.email,
-      phone: values['phone'] ?? _billingAddress.phone,
-    ));
+    updateBillingAddress(_savedAddress(values, _billingAddress));
     for (final field in _checkout?.fieldDefinitions ?? <CheckoutFieldDefinition>[]) {
       if (field.group == CheckoutFieldGroup.billing && !const {'billing_first_name', 'billing_last_name', 'billing_company', 'billing_address_1', 'billing_address_2', 'billing_city', 'billing_state', 'billing_postcode', 'billing_country', 'billing_email', 'billing_phone'}.contains(field.key)) {
         final key = field.key.replaceFirst(RegExp(r'^billing_'), '');
@@ -179,7 +167,10 @@ class CheckoutController extends ChangeNotifier {
       'address_2', 'city', 'state', 'postcode', 'country'};
     for (final key in {...coreKeys, ...values.keys}) {
       // A missing contact uses the signed-in customer's existing contact.
-      if ((key == 'email' || key == 'phone') && !values.containsKey(key)) continue;
+      if ((key == 'email' || key == 'phone') &&
+          (values[key]?.trim().isEmpty ?? true)) {
+        continue;
+      }
       final fieldKey = (_checkout?.fieldDefinitions.any((field) => field.key == key &&
           field.group == CheckoutFieldGroup.billing) ?? false) ? key : 'billing_$key';
       if (_valueForKey(fieldKey).trim() != (values[key] ?? '').trim()) return false;
@@ -289,6 +280,7 @@ class CheckoutController extends ChangeNotifier {
       _shippingAddress = CheckoutAddress.fromCartAddress(
         loaded.cart.shippingAddress,
       );
+      final initialSavedAddress = _applySavedAddressDefaults(loaded.savedAddresses);
       _applyDefaultAddresses(loaded.fieldDefinitions);
       _applyDefaultCountries(loaded.fieldDefinitions);
       _shipToDifferentAddress =
@@ -310,6 +302,17 @@ class CheckoutController extends ChangeNotifier {
           if (!_isCoreCheckoutField(field.key) && field.defaultValue.isNotEmpty)
             field.key: field.defaultValue,
       };
+      if (initialSavedAddress != null) {
+        for (final field in loaded.fieldDefinitions) {
+          if (field.group != CheckoutFieldGroup.billing ||
+              _isCoreCheckoutField(field.key)) {
+            continue;
+          }
+          final key = field.key.replaceFirst(RegExp(r'^billing_'), '');
+          final value = initialSavedAddress.values[key];
+          if (value != null) _customFieldValues[field.key] = value;
+        }
+      }
       _savedAddressContactDefaults = {'email': _billingAddress.email, 'phone': _billingAddress.phone};
       _selectedSavedAddressId = savedAddresses
           .where((row) => matchesSavedAddress(row.values)).firstOrNull?.id;
@@ -1075,6 +1078,46 @@ class CheckoutController extends ChangeNotifier {
               : billingCountry);
     _billingAddress = _billingAddress.copyWith(country: billingCountry);
     _shippingAddress = _shippingAddress.copyWith(country: shippingCountry);
+  }
+
+  CheckoutAddress _savedAddress(
+    Map<String, String> values, CheckoutAddress contact,
+  ) => CheckoutAddress(
+    firstName: values['first_name'] ?? '',
+    lastName: values['last_name'] ?? '',
+    company: values['company'] ?? '',
+    address1: values['address_1'] ?? '',
+    address2: values['address_2'] ?? '',
+    city: values['city'] ?? '',
+    state: values['state'] ?? '',
+    postcode: values['postcode'] ?? '',
+    country: values['country'] ?? contact.country,
+    email: values['email']?.trim().isNotEmpty == true
+        ? values['email']! : contact.email,
+    phone: values['phone']?.trim().isNotEmpty == true
+        ? values['phone']! : contact.phone,
+  );
+
+  SavedCheckoutAddress92? _applySavedAddressDefaults(
+    List<SavedCheckoutAddress92> rows,
+  ) {
+    // A country/contact alone is not a delivery draft. Any existing location
+    // wins as a whole; never combine a typed/cart location with a saved one.
+    bool hasLocation(CheckoutAddress address) => [
+      address.company, address.address1, address.address2, address.city,
+      address.state, address.postcode,
+    ].any((value) => value.trim().isNotEmpty);
+    if (rows.isEmpty || hasLocation(_billingAddress) ||
+        hasLocation(_shippingAddress)) {
+      return null;
+    }
+    final billing = rows.where((row) => row.id == 'billing').firstOrNull ?? rows.first;
+    _billingAddress = _savedAddress(billing.values, _billingAddress);
+    final shipping = rows.where((row) => row.id == 'shipping').firstOrNull;
+    if (shipping != null) {
+      _shippingAddress = _savedAddress(shipping.values, _shippingAddress);
+    }
+    return billing;
   }
 
   void _applyDefaultAddresses(List<CheckoutFieldDefinition> fields) {
