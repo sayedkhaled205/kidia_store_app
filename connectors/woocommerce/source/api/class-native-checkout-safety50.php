@@ -550,7 +550,20 @@ final class MobiShop_Native_Checkout_Safety50 {
 				return $this->error( 'unavailable' === $claim['result'] ? 'storage_unavailable' : 'attempt_conflict', 'unavailable' === $claim['result'] ? 503 : 409 );
 			}
 			$this->active = array( 'buyer' => $buyer, 'attempt' => $attempt, 'cart' => $cart, 'cart_user' => $cart_user, 'customer' => $customer, 'request' => $request, 'confirmed' => $confirmed, 'order_id' => 0, 'conflict' => false, 'passed' => false, 'safe_rejection' => false, 'after_stock' => false, 'purchased_cart' => null );
+			$wc = WC();
+			$countries = $wc->countries ?? null;
+			$native_countries = null;
 			try {
+				if ( $countries instanceof WC_Countries ) {
+					// Store API validates country locale, not the legacy checkout fields.
+					// Match Native's hidden EG postcode without changing web or other countries.
+					// WC caches locale on this public object: clone and restore to isolate it.
+					$native_countries = clone $countries;
+					$locale = $native_countries->get_country_locale();
+					$locale['EG']['postcode'] = array_replace( $locale['EG']['postcode'] ?? array(), array( 'required' => false, 'hidden' => true ) );
+					$native_countries->locale = $locale;
+					$wc->countries = $native_countries;
+				}
 				$response = call_user_func( $handler['callback'], $request );
 				if ( ! $this->store->finished( $buyer, $attempt ) ) {
 					return $this->error( 'outcome_unknown', 503 );
@@ -566,6 +579,7 @@ final class MobiShop_Native_Checkout_Safety50 {
 				}
 				return $this->error( 'outcome_unknown', 503 );
 			} finally {
+				if ( null !== $native_countries ) $wc->countries = $countries;
 				$this->restore_payment_hook();
 				$this->active = null;
 			}
