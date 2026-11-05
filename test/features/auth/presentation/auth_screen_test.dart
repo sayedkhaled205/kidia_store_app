@@ -76,7 +76,7 @@ void main() {
         const Size.square(52));
     final google = tester.getRect(find.byKey(const Key('auth-google')));
     final facebook = tester.getRect(find.byKey(const Key('auth-facebook')));
-    expect(facebook.left - google.right, closeTo(36, 0.1));
+    expect(facebook.left - google.right, closeTo(32, 0.1));
     expect(facebook.center.dy, google.center.dy);
     final mark = tester.getRect(find.byKey(const Key('auth-google-brand')));
     expect(mark.size, const Size.square(28));

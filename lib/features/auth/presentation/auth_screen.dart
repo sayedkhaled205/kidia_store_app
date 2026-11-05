@@ -417,7 +417,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                     ),
                                   ),
                                   if (showGoogle || showFacebook)
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 4),
                                 ],
                                 if (showGoogle)
                                   _loginOption(
@@ -1105,7 +1105,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     required bool last,
     required AuthCopy copy,
   }) => SizedBox(
-    width: 84,
+    width: 80,
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
