@@ -64,8 +64,8 @@ final class MobiShop_Discount_Rules_Summary {
 
 		$where_sql = implode( ' AND ', $where );
 
-		$count_sql = "SELECT COUNT(*) FROM {$table} WHERE {$where_sql}";
-		$total_raw = empty( $args ) ? $wpdb->get_var( $count_sql ) : $wpdb->get_var( $wpdb->prepare( $count_sql, $args ) );
+		// Only fixed predicates from above form $where_sql. All filter values and the table identifier are bound separately.
+		$total_raw = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE {$where_sql}", array_merge( array( $table ), $args ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- $where_sql contains only literal SQL and placeholders.
 		if ( false === $total_raw || null === $total_raw ) {
 			$empty['error'] = true;
 			return $empty;
@@ -80,10 +80,8 @@ final class MobiShop_Discount_Rules_Summary {
 		if ( $total > 0 ) {
 			// Merchant-only raw rows stay server-side; the browser receives the
 			// summary and a revision hash, never customer targeting conditions.
-			$columns = '*';
-			$sql     = "SELECT {$columns} FROM {$table} WHERE {$where_sql} ORDER BY priority ASC, id ASC LIMIT %d OFFSET %d";
-			$query_args = array_merge( $args, array( self::PER_PAGE, $offset ) );
-			$results = $wpdb->get_results( $wpdb->prepare( $sql, $query_args ), ARRAY_A );
+			$query_args = array_merge( array( $table ), $args, array( self::PER_PAGE, $offset ) );
+			$results = $wpdb->get_results( $wpdb->prepare( "SELECT * FROM %i WHERE {$where_sql} ORDER BY priority ASC, id ASC LIMIT %d OFFSET %d", $query_args ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared,PluginCheck.Security.DirectDB.UnescapedDBParameter -- The same fixed predicates and bound filter values as the count query.
 
 			if ( ! is_array( $results ) || ! empty( $wpdb->last_error ) ) {
 				$empty['error'] = true;
@@ -120,7 +118,10 @@ final class MobiShop_Discount_Rules_Summary {
 		$result = self::query( $filters );
 
 		echo '<section class="mobishop-discount-rules-summary">';
-		echo '<style>.mobishop-discount-rules-summary .mobishop-rule-dates{min-width:155px}.mobishop-rule-dates span{display:block;white-space:nowrap;direction:ltr;unicode-bidi:isolate}.mobishop-discount-rules-summary td{vertical-align:middle}.mobishop-discount-rules-summary td:first-child{min-width:160px}</style>';
+		// The authorized central builder receives an HTML fragment, without a
+		// WordPress page header. Print only this fragment's registered stylesheet.
+		wp_enqueue_style( 'mobishop-discount-rules-summary', MOBISHOP_URL . 'public/css/mobishop-discount-rules-summary.css', array(), MOBISHOP_VERSION );
+		wp_print_styles( array( 'mobishop-discount-rules-summary' ) );
 		echo '<h3>' . esc_html__( 'Discount Rules', 'mobi2app-connector' ) . '</h3>';
 
 		if ( $result['error'] ) {
@@ -152,8 +153,7 @@ final class MobiShop_Discount_Rules_Summary {
 		echo '<input type="search" name="coupon_search" value="' . esc_attr( $search ) . '" placeholder="' . esc_attr__( 'Search rule name', 'mobi2app-connector' ) . '">';
 		echo '<select name="coupon_type"><option value="all">' . esc_html__( 'All discount types', 'mobi2app-connector' ) . '</option>';
 		foreach ( self::type_labels() as $type_key => $type_label ) {
-			$selected = $type === $type_key ? ' selected' : '';
-			echo '<option value="' . esc_attr( $type_key ) . '"' . $selected . '>' . esc_html( $type_label ) . '</option>';
+			echo '<option value="' . esc_attr( $type_key ) . '"' . ( $type === $type_key ? ' selected' : '' ) . '>' . esc_html( $type_label ) . '</option>';
 		}
 		echo '</select>';
 		echo '<select name="coupon_status" aria-label="' . esc_attr__( 'Rule status', 'mobi2app-connector' ) . '"><option value="all">' . esc_html__( 'All statuses', 'mobi2app-connector' ) . '</option>';
@@ -212,6 +212,7 @@ final class MobiShop_Discount_Rules_Summary {
 	private static function pagination( array $result ): void {
 		$from = $result['total'] ? ( $result['page'] - 1 ) * self::PER_PAGE + 1 : 0;
 		$to = min( $result['total'], $result['page'] * self::PER_PAGE );
+		/* translators: 1: first offer, 2: last offer, 3: total offers, 4: current page, 5: page count. */
 		echo '<div class="mobishop-rules-pagination"><p>' . esc_html( sprintf( __( 'Showing %1$d–%2$d of %3$d offers · Page %4$d of %5$d', 'mobi2app-connector' ), $from, $to, $result['total'], $result['page'], $result['pages'] ) ) . '</p>';
 
 		if ( $result['pages'] > 1 && function_exists( 'paginate_links' ) && function_exists( 'add_query_arg' ) && function_exists( 'wp_kses_post' ) ) {
@@ -334,13 +335,18 @@ final class MobiShop_Discount_Rules_Summary {
 			$number = $value['value'] ?? null;
 			if ( ! is_numeric( $number ) || ! is_finite( (float) $number ) || (float) $number < 0 ) { return ''; }
 			$kind = $value['type'] ?? '';
+			/* translators: %s: percentage discount. */
 			if ( 'percentage' === $kind ) { return sprintf( __( '%s%% off', 'mobi2app-connector' ), (string) $number ); }
 			if ( in_array( $kind, array( 'flat', 'flat_in_subtotal', 'fixed_price', 'fixed_set_price' ), true ) ) {
 				$money = (string) $number . ' ' . get_woocommerce_currency();
 				$labels = array(
+					/* translators: %s: discount amount with currency. */
 					'flat' => __( '%s off per item', 'mobi2app-connector' ),
+					/* translators: %s: discount amount with currency. */
 					'flat_in_subtotal' => __( '%s off subtotal', 'mobi2app-connector' ),
+					/* translators: %s: item price with currency. */
 					'fixed_price' => __( 'Final price: %s', 'mobi2app-connector' ),
+					/* translators: %s: set price with currency. */
 					'fixed_set_price' => __( 'Set price: %s', 'mobi2app-connector' ),
 				);
 				return sprintf( $labels[ $kind ], $money );
@@ -356,6 +362,7 @@ final class MobiShop_Discount_Rules_Summary {
 			if ( isset( $range['free_qty'] ) && is_numeric( $range['free_qty'] ) ) {
 				$benefit = 'free_product' === ( $range['free_type'] ?? '' ) ? __( 'free', 'mobi2app-connector' ) : __( 'discounted', 'mobi2app-connector' );
 				// The qualifying quantity can include the gift in cheapest-item modes.
+				/* translators: 1: minimum number of items, 2: gift quantity, 3: free or discounted. */
 				$parts[] = sprintf( __( 'From %1$s items: %2$s %3$s', 'mobi2app-connector' ), $from, $range['free_qty'], $benefit );
 			} elseif ( $amount( $range ) ) { $parts[] = $from . $to . ': ' . $amount( $range ); }
 		}

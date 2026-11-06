@@ -94,7 +94,7 @@ final class MobiShop_Push_Analytics {
 				$values[] = '(%s,%s,%s,%s,%s)';
 				array_push( $params, $id, 'target', hash( 'sha256', $client ), substr( (string) ( $device['platform'] ?? '' ), 0, 10 ), gmdate( 'Y-m-d H:i:s' ) );
 			}
-			if ( $values ) $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$table} (campaign,event,client_hash,platform,occurred_at) VALUES " . implode( ',', $values ), ...$params ) );
+			if ( $values ) $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$table} (campaign,event,client_hash,platform,occurred_at) VALUES " . implode( ',', $values ), ...$params ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Each group is a fixed five-placeholder tuple; every device value is bound via prepare().
 		}
 	}
 

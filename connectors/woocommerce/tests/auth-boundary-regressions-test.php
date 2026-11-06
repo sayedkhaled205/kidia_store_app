@@ -15,7 +15,7 @@ foreach (array('/mobishop/v1/auth/me','/wc/store/v1/cart') as $route) {
     mobishop_auth_assert($endpoint->determine_current_user(0) === 7, 'Canonical mobile and Store API routes still accept a session.');
 }
 unset($GLOBALS['wp']->query_vars['rest_route']);
-foreach (array('/wp-json/wp/v2/users/me?decoy=/wp-json/mobishop/v1/auth/me','/other/wp-json/mobishop/v1/auth/me') as $uri) {
+foreach (array('/wp-json/wp/v2/users/me?decoy=/wp-json/mobishop/v1/auth/me','/other/wp-json/mobishop/v1/auth/me', '//foreign.example/wp-json/mobishop/v1/auth/me', 'https://foreign.example/wp-json/mobishop/v1/auth/me', "/wp-json/mobishop/v1/auth/me\n", array('/wp-json/mobishop/v1/auth/me')) as $uri) {
     $_SERVER['REQUEST_URI'] = $uri;
     mobishop_auth_assert($endpoint->determine_current_user(0) === 0, 'Fallback must use the actual REST path prefix only.');
 }
@@ -62,4 +62,4 @@ mobishop_auth_assert($nested instanceof WP_REST_Response, 'First redemption crea
 mobishop_auth_assert(is_wp_error($outer) && $outer->get_error_data()['status'] === 401, 'Overlapping stale redemption loses.');
 mobishop_auth_assert($endpoint->authenticate_route(new WP_REST_Request(array(),array('X-MobiShop-Session'=>$nested->data['token']))) === true, 'Winning social session remains valid.');
 mobishop_auth_assert(is_wp_error($endpoint->social_exchange($request)), 'Sequential replay remains rejected.');
-echo "Auth route scope and handoff concurrency: 19 checks passed.\n";
+echo "Auth route scope and handoff concurrency: 23 checks passed.\n";

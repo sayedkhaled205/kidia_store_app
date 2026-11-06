@@ -10,6 +10,10 @@ error_reporting( E_ALL & ~E_DEPRECATED );
 define( 'ABSPATH', __DIR__ . '/' );
 define( 'ARRAY_A', 'ARRAY_A' );
 define( 'OBJECT', 'OBJECT' );
+define( 'MOBISHOP_URL', 'https://shop.example.com/wp-content/plugins/mobi2app-connector/' );
+define( 'MOBISHOP_VERSION', 'test' );
+function wp_enqueue_style($handle,$url,...$args) { $GLOBALS['summary_styles'][$handle]=$url; }
+function wp_print_styles($handles) { foreach($handles as $handle) echo '<link rel="stylesheet" href="'.htmlspecialchars($GLOBALS['summary_styles'][$handle],ENT_QUOTES).'">'; }
 
 // ---- WordPress function stubs -------------------------------------------------
 
@@ -112,10 +116,11 @@ class Test_Stub_WPDB {
 		}
 		$i = 0;
 		return preg_replace_callback(
-			'/%[sd]/',
+			'/%[isd]/',
 			static function ( $matches ) use ( &$i, $args ) {
 				$value = $args[ $i ] ?? '';
 				++$i;
+				if ( '%i' === $matches[0] ) return '`' . str_replace( '`', '``', $value ) . '`';
 				if ( '%d' === $matches[0] ) {
 					return (string) intval( $value );
 				}

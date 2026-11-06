@@ -1116,9 +1116,10 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 
 	private function guard( string $action, int $limit ) {
 		if ( ! wp_is_using_https() ) return $this->error( 'https_required', 403 );
+		$ip = filter_var( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ), FILTER_VALIDATE_IP );
 		// Both endpoint and shared IP budgets prevent switching identities to evade the limit.
 		foreach ( array( $action => $limit, 'all' => 100 ) as $scope => $maximum ) {
-			$key = 'mobishop_native_rate_' . $this->hash( $scope . ':' . (string) ( $_SERVER['REMOTE_ADDR'] ?? 'unknown' ) );
+			$key = 'mobishop_native_rate_' . $this->hash( $scope . ':' . ( $ip !== false ? $ip : 'unknown' ) );
 			$count = (int) get_transient( $key );
 			if ( $count >= $maximum ) return $this->error( 'rate_limited', 429 );
 			set_transient( $key, $count + 1, 600 );

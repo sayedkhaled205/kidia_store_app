@@ -2691,7 +2691,8 @@ final class MobiShop_Analytics {
 			return $client_id;
 		}
 
-		$client_id = $this->identifier( $_COOKIE['mobishop_website_client'] ?? '' );
+		$value = filter_var( wp_unslash( $_COOKIE['mobishop_website_client'] ?? '' ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/\A[A-Za-z0-9._-]{8,64}\z/' ) ) );
+		$client_id = $value !== false ? $value : '';
 		if ( '' !== $client_id ) {
 			return $client_id;
 		}

@@ -32,7 +32,7 @@ def verify_features(files: dict[str, bytes], manifest: dict) -> None:
     for name, data in files.items():
         path = relative_path(name)
         if (set(path.parts) & {'.git', '.github', 'tests', 'node_modules', '__pycache__'}
-                or path.name.startswith('.env')
+                or path.name.startswith('.env') or path.name in {'.gitattributes', '.gitignore'}
                 or path.suffix.lower() in {'.pem', '.key', '.p8', '.p12', '.mobileprovision', '.keystore', '.jks', '.zip', '.log', '.sqlite'}):
             raise ValueError(f'Private, development or nested archive file cannot ship: {name}')
         if private_material.search(data):
@@ -42,7 +42,10 @@ def verify_features(files: dict[str, bytes], manifest: dict) -> None:
         'includes/central/class-discount-rules-admin.php': ['manage_options', 'manage_woocommerce', 'FOR UPDATE', 'request_id', 'revision', 'lock_rule'],
         'api/class-discount-rules-prices.php': ['advanced_woo_discount_rules_get_product_discount_price', 'no-store, private', 'isFreeProduct'],
         'includes/central/class-discount-rules-summary.php': ['current_user_authorized', 'manage_options', 'manage_woocommerce', 'offer_summary'],
-        'includes/class-mobishop-order-source98.php': ['_mobishop_order_source', 'hpos_query', 'legacy_query', 'filter-by-created-via'],
+        'includes/class-mobishop-order-source98.php': ['_mobishop_order_source', 'hpos_query', 'legacy_query', 'wp_enqueue_script'],
+        'public/js/mobishop-order-source98.js': ['filter-by-created-via', 'mobishop-mobile', 'source.remove()'],
+        'public/js/mobishop-checkout88.js': ['ajaxError', 'update_order_review', 'mobishop-checkout88-expired'],
+        'public/css/mobishop-website-auth-confirmation.css': ['main{', 'button{'],
         'api/class-embedded-checkout88.php': ['/customer/checkout/session', 'session_context_from_request', 'validate_cart_token', 'hash_equals', 'DELETE FROM', 'httponly', 'no-store', 'customer_capabilities'],
         'mobi2app-connector.php': [f'Version:           {version}', "'MOBISHOP_VERSION'", f"'{version}'"],
         'readme.txt': [f'Stable tag: {version}'],

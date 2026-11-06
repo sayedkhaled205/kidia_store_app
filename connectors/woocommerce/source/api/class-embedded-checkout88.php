@@ -21,7 +21,7 @@ final class MobiShop_Embedded_Checkout88 {
         add_action( 'init', array( $this, 'redeem' ), -20 );
         add_action( 'woocommerce_init', array( $this, 'restore_cart' ), 5 );
         add_action( 'template_redirect', array( $this, 'redirect' ), -100 );
-        add_action( 'wp_head', array( $this, 'document_style' ), 99 );
+        add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
         add_action( 'mobishop_checkout88_expire', static function ( $key ) {
             if ( is_string( $key ) && str_starts_with( $key, self::PREFIX ) ) delete_option( $key );
         } );
@@ -204,37 +204,14 @@ final class MobiShop_Embedded_Checkout88 {
         }
     }
 
-    public function document_style(): void {
+    public function enqueue_assets(): void {
         if ( null === $this->scope || ! is_checkout() ) return;
         // Only surrounding site chrome is removed. Merchant checkout markup/JS stays intact.
-        echo '<style id="mobishop-checkout88-chrome">.site-header,#masthead,header#header,.site-footer,#colophon,footer#footer,.woocommerce-breadcrumb{display:none!important}body{min-width:0!important}</style>';
+        wp_enqueue_style( 'mobishop-checkout88-chrome', MOBISHOP_URL . 'public/css/mobishop-checkout88.css', array(), MOBISHOP_VERSION );
         // Woo leaves its blocking overlay in place when an expired checkout
         // nonce returns 403. Explain recovery without renewing authentication
         // or touching payment fields, amounts, or merchant submission logic.
-        echo <<<'HTML'
-<script id="mobishop-checkout88-expiry">
-document.addEventListener('DOMContentLoaded', function () {
-  if (!window.jQuery) return;
-  var $ = window.jQuery;
-  $(document).ajaxError(function (_event, xhr, settings) {
-    if (xhr.status !== 403 || !/[?&]wc-ajax=update_order_review(?:&|$)/.test(settings.url || '')) return;
-    $('.woocommerce-checkout-payment,.woocommerce-checkout-review-order-table,form.checkout').unblock();
-    if (document.getElementById('mobishop-checkout88-expired')) return;
-    var notice = document.createElement('div');
-    notice.id = 'mobishop-checkout88-expired';
-    notice.className = 'woocommerce-error';
-    notice.setAttribute('role', 'alert');
-    notice.textContent = document.documentElement.lang.indexOf('ar') === 0
-      ? 'انتهت جلسة الدفع. ارجع للسلة وافتح إتمام الطلب مرة تانية.'
-      : 'Your checkout session expired. Return to the cart and open checkout again.';
-    var form = document.querySelector('form.checkout');
-    if (form) form.prepend(notice);
-    $('#place_order').prop('disabled', true);
-    notice.scrollIntoView({block:'center'});
-  });
-});
-</script>
-HTML;
+        wp_enqueue_script( 'mobishop-checkout88-expiry', MOBISHOP_URL . 'public/js/mobishop-checkout88.js', array( 'jquery' ), MOBISHOP_VERSION, true );
     }
 
     private function deny(): void {

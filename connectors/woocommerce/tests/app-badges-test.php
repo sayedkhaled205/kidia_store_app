@@ -9,6 +9,7 @@ function wp_unslash($v){return stripslashes($v);}
 function check($ok,$label){if(!$ok)throw new RuntimeException($label); echo "PASS $label\n";}
 function determine_locale(){return $GLOBALS['locale']??'ar';}
 function esc_attr($v){return htmlspecialchars((string)$v,ENT_QUOTES,'UTF-8');}
+function wp_kses_post($v){return strip_tags($v,'<span>');}
 function esc_html($v){return esc_attr($v);}
 function is_admin(){return $GLOBALS['admin']??true;}
 function wp_doing_ajax(){return $GLOBALS['ajax']??false;}

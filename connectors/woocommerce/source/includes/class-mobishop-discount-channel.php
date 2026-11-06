@@ -24,7 +24,7 @@ final class MobiShop_Discount_Channel {
     public static function verified_embedded_checkout(): void { self::$embedded_checkout = true; }
 
     public static function api_route( string $uri, string $rest_route = '' ): bool {
-        $path = (string) parse_url( $uri, PHP_URL_PATH );
+        $path = (string) wp_parse_url( $uri, PHP_URL_PATH );
         return $rest_route !== ''
             ? (bool) preg_match( '~^/(?:wc/store/v[0-9]+|mobishop/v1)(?:/|$)~D', $rest_route )
             : (bool) preg_match( '~/wp-json/(?:wc/store/v[0-9]+|mobishop/v1)(?:/|$)~D', $path );

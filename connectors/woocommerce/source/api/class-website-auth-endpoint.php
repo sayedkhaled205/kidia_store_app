@@ -17,10 +17,15 @@ final class MobiShop_Website_Auth_Endpoint {
 
 	public function register(): void {
 		add_action( 'rest_api_init', array( $this, 'routes' ) );
+		add_action( 'init', array( $this, 'register_assets' ) );
 		add_action( 'template_redirect', array( $this, 'browser' ), -100 );
 		add_action( 'wp_login', function ( $login, $user ) { $this->verified( $user ); }, 99, 2 );
 		add_action( 'nsl_login', function ( $id ) { $this->verified( get_user_by( 'id', $id ) ); }, 99 );
 		add_action( 'mobishop_web_login_cleanup', function ( $id ) { delete_option( self::PREFIX . $id ); } );
+	}
+
+	public function register_assets(): void {
+		wp_register_style( 'mobishop-website-auth-confirmation', MOBISHOP_URL . 'public/css/mobishop-website-auth-confirmation.css', array(), MOBISHOP_VERSION );
 	}
 
 	public function routes(): void {
@@ -92,8 +97,9 @@ final class MobiShop_Website_Auth_Endpoint {
 		$state = (string) $request->get_param( 'state' );
 		$challenge = (string) $request->get_param( 'challenge' );
 		if ( ! $this->login_url() ) return $this->error( 'unavailable', 404 );
-		if ( ! preg_match( '/^[a-f0-9]{64}$/', $state ) || ! preg_match( '/^[a-f0-9]{64}$/', $challenge ) ) return $this->error( 'invalid', 400 );
-		$rate = 'mobishop_web_rate_' . hash_hmac( 'sha256', (string) ( $_SERVER['REMOTE_ADDR'] ?? '' ), wp_salt() );
+		if ( ! preg_match( '/^[a-f0-9]{64}\z/', $state ) || ! preg_match( '/^[a-f0-9]{64}\z/', $challenge ) ) return $this->error( 'invalid', 400 );
+		$ip = filter_var( wp_unslash( $_SERVER['REMOTE_ADDR'] ?? '' ), FILTER_VALIDATE_IP );
+		$rate = 'mobishop_web_rate_' . hash_hmac( 'sha256', $ip !== false ? $ip : '', wp_salt() );
 		$count = (int) get_transient( $rate );
 		if ( $count >= 30 ) return $this->error( 'rate_limited', 429 );
 		set_transient( $rate, $count + 1, self::TTL );
@@ -105,7 +111,7 @@ final class MobiShop_Website_Auth_Endpoint {
 	}
 
 	private function read( string $id ): ?array {
-		if ( ! preg_match( '/^[a-f0-9]{64}$/', $id ) ) return null;
+		if ( ! preg_match( '/^[a-f0-9]{64}\z/', $id ) ) return null;
 		$row = get_option( self::PREFIX . $id );
 		return is_array( $row ) && (int) $row['expires'] > time() ? $row : null;
 	}
@@ -114,18 +120,17 @@ final class MobiShop_Website_Auth_Endpoint {
 	private function change( string $id, array $old, ?array $next ): bool {
 		global $wpdb;
 		if ( $next === null ) {
-			$sql = $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name=%s AND option_value=%s", self::PREFIX . $id, maybe_serialize( $old ) );
+			$changed = 1 === $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name=%s AND option_value=%s", self::PREFIX . $id, maybe_serialize( $old ) ) );
 		} else {
-			$sql = $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value=%s WHERE option_name=%s AND option_value=%s", maybe_serialize( $next ), self::PREFIX . $id, maybe_serialize( $old ) );
+			$changed = 1 === $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value=%s WHERE option_name=%s AND option_value=%s", maybe_serialize( $next ), self::PREFIX . $id, maybe_serialize( $old ) ) );
 		}
-		$changed = $wpdb->query( $sql ) === 1;
 		wp_cache_delete( self::PREFIX . $id, 'options' );
 		return $changed;
 	}
 
 	private function bound(): ?array {
-		$cookie = (string) ( $_COOKIE[ self::COOKIE ] ?? '' );
-		if ( ! preg_match( '/^([a-f0-9]{64})\.([a-f0-9]{64})$/', $cookie, $match ) ) return null;
+		$cookie = filter_var( wp_unslash( $_COOKIE[ self::COOKIE ] ?? '' ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/\A[a-f0-9]{64}\.[a-f0-9]{64}\z/' ) ) );
+		if ( $cookie === false || ! preg_match( '/\A([a-f0-9]{64})\.([a-f0-9]{64})\z/', $cookie, $match ) ) return null;
 		$row = $this->read( $match[1] );
 		return $row && hash_equals( (string) $row['binding'], hash( 'sha256', $match[2] ) ) ? array( $match[1], $row ) : null;
 	}
@@ -151,7 +156,8 @@ final class MobiShop_Website_Auth_Endpoint {
 
 	public function browser(): void {
 		if ( isset( $_GET['mobishop_login'] ) ) {
-			$id = sanitize_text_field( wp_unslash( $_GET['mobishop_login'] ) );
+			$id = filter_var( wp_unslash( $_GET['mobishop_login'] ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/\A[a-f0-9]{64}\z/' ) ) );
+			if ( $id === false ) wp_die( 'Invalid sign-in request.', '', array( 'response' => 400 ) );
 			$row = $this->read( $id );
 			if ( ! $row || $row['binding'] !== '' || ! $this->login_url() ) wp_die( 'انتهت محاولة الدخول. ارجع للتطبيق وحاول مرة أخرى.', '', array( 'response' => 400 ) );
 			$secret = bin2hex( random_bytes( 32 ) );
@@ -174,8 +180,8 @@ final class MobiShop_Website_Auth_Endpoint {
 			if ( $this->handle_switch( $id ) ) {
 				wp_safe_redirect( $this->destination( $row ) ); exit;
 			}
-			if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) === 'POST'
-				&& (string) ( $_POST['choice'] ?? '' ) === 'switch' ) {
+			if ( $this->request_method() === 'POST'
+				&& $this->request_choice() === 'switch' ) {
 				wp_die( 'ارجع للتطبيق وابدأ محاولة دخول جديدة.' );
 			}
 			$this->confirmation( $id, $user, true ); exit;
@@ -188,13 +194,13 @@ final class MobiShop_Website_Auth_Endpoint {
 			if ( $this->handle_switch( $id ) ) {
 				wp_safe_redirect( $this->destination( $row ) ); exit;
 			}
-			if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) === 'POST'
-				&& (string) ( $_POST['choice'] ?? '' ) === 'switch' ) {
+			if ( $this->request_method() === 'POST'
+				&& $this->request_choice() === 'switch' ) {
 				wp_die( 'ارجع للتطبيق وابدأ محاولة دخول جديدة.' );
 			}
-			if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) === 'POST'
-				&& (string) ( $_POST['choice'] ?? '' ) === 'continue'
-				&& wp_verify_nonce( (string) ( $_POST['_wpnonce'] ?? '' ), 'mobishop_continue_' . $id ) ) {
+			if ( $this->request_method() === 'POST'
+				&& $this->request_choice() === 'continue'
+				&& wp_verify_nonce( $this->request_nonce(), 'mobishop_continue_' . $id ) ) {
 				$this->verified( $user );
 				$row = $this->read( $id );
 			} else {
@@ -215,11 +221,26 @@ final class MobiShop_Website_Auth_Endpoint {
 		exit;
 	}
 
+	private function request_method(): string {
+		$method = filter_var( wp_unslash( $_SERVER['REQUEST_METHOD'] ?? 'GET' ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/\A(?:GET|POST)\z/' ) ) );
+		return $method !== false ? $method : '';
+	}
+
+	private function request_choice(): string {
+		$choice = filter_var( wp_unslash( $_POST['choice'] ?? '' ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/\A(?:continue|switch)\z/' ) ) );
+		return $choice !== false ? $choice : '';
+	}
+
+	private function request_nonce(): string {
+		$nonce = filter_var( wp_unslash( $_POST['_wpnonce'] ?? '' ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/\A[A-Za-z0-9_-]{1,128}\z/' ) ) );
+		return $nonce !== false ? $nonce : '';
+	}
+
 	/** State-bound, nonce-validated request to drop the current browser identity and retry with another account. */
 	private function handle_switch( string $id ): bool {
-		if ( ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) !== 'POST' ) return false;
-		if ( (string) ( $_POST['choice'] ?? '' ) !== 'switch' ) return false;
-		if ( ! wp_verify_nonce( (string) ( $_POST['_wpnonce'] ?? '' ), 'mobishop_continue_' . $id ) ) return false;
+		if ( $this->request_method() !== 'POST' ) return false;
+		if ( $this->request_choice() !== 'switch' ) return false;
+		if ( ! wp_verify_nonce( $this->request_nonce(), 'mobishop_continue_' . $id ) ) return false;
 		$bound = $this->bound();
 		if ( ! $bound || $bound[0] !== $id ) return false;
 		$row = $bound[1];
@@ -243,23 +264,29 @@ final class MobiShop_Website_Auth_Endpoint {
 
 	private function confirmation( string $id, WP_User $user, bool $privileged ): void {
 		header( 'Content-Type: text/html; charset=utf-8' );
-		echo '<!doctype html><html lang="ar" dir="rtl"><meta name="viewport" content="width=device-width,initial-scale=1"><title>متابعة الدخول</title><style>body{font-family:system-ui;background:#f3f8f6;color:#244f47;margin:0;padding:24px}main{max-width:420px;margin:10vh auto;padding:28px;background:white;border:1px solid #d6e7e1;border-radius:24px;text-align:center}p.note{font-size:13px;color:#5a776f}button{display:block;width:100%;border:0;border-radius:28px;padding:15px;margin:16px 0;font:inherit;background:#50aa9b;color:white}button+button{background:#edf6f3;color:#244f47}</style><main><h2>متابعة الدخول إلى التطبيق</h2><p>' . esc_html( $user->display_name ) . '</p>';
+		echo '<!doctype html><html lang="ar" dir="rtl"><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>متابعة الدخول</title>';
+		// This is a standalone security document, not a normal template. Print only
+		// our own registered handle; wp_head() would also execute arbitrary
+		// theme/plugin scripts and styles into this auth-sensitive page.
+		wp_enqueue_style( 'mobishop-website-auth-confirmation' );
+		wp_print_styles( array( 'mobishop-website-auth-confirmation' ) );
+		echo '</head><body><main><h2>متابعة الدخول إلى التطبيق</h2><p>' . esc_html( $user->display_name ) . '</p>';
 		if ( $privileged ) {
 			echo '<p class="note">هذا حساب إدارة المتجر ولا يمكن استخدامه في التطبيق. اضغط لاستخدام حساب عميل آخر، وسيتم تسجيل خروجك من المتجر في هذا المتصفح فقط.</p><form method="post">';
 			wp_nonce_field( 'mobishop_continue_' . $id );
-			echo '<button name="choice" value="switch">استخدام حساب آخر</button></form></main></html>';
+			echo '<button name="choice" value="switch">استخدام حساب آخر</button></form></main></body></html>';
 			return;
 		}
 		echo '<p class="note">اختيار "استخدام حساب آخر" سيسجل خروجك من المتجر في هذا المتصفح فقط.</p><form method="post">';
 		wp_nonce_field( 'mobishop_continue_' . $id );
-		echo '<button name="choice" value="continue">متابعة بهذا الحساب</button><button name="choice" value="switch">استخدام حساب آخر</button></form></main></html>';
+		echo '<button name="choice" value="continue">متابعة بهذا الحساب</button><button name="choice" value="switch">استخدام حساب آخر</button></form></main></body></html>';
 	}
 
 	public function exchange( WP_REST_Request $request ) {
 		$code = (string) $request->get_param( 'code' );
 		$state = (string) $request->get_param( 'state' );
 		$verifier = (string) $request->get_param( 'verifier' );
-		if ( ! preg_match( '/^([a-f0-9]{64})\.[a-f0-9]{64}$/', $code, $match ) || ! preg_match( '/^[a-f0-9]{64}$/', $verifier ) ) return $this->error( 'invalid', 400 );
+		if ( ! preg_match( '/^([a-f0-9]{64})\.[a-f0-9]{64}\z/', $code, $match ) || ! preg_match( '/^[a-f0-9]{64}\z/', $verifier ) ) return $this->error( 'invalid', 400 );
 		$row = $this->read( $match[1] );
 		if ( ! $row || ! hash_equals( $row['code'], hash( 'sha256', $code ) ) || ! hash_equals( $row['state'], $state ) || ! hash_equals( $row['challenge'], hash( 'sha256', $verifier ) ) ) return $this->error( 'expired', 401 );
 		$user = get_user_by( 'id', (int) $row['user'] );

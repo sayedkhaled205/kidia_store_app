@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.137
+Stable tag: 1.46.138
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -19,17 +19,55 @@ This is a connector, not a local application builder. It does not add a WordPres
 
 The connector provides REST interfaces for store catalog, layouts, customer accounts, orders and checkout, and retains existing store configuration identifiers for compatibility. WooCommerce must be active.
 
-= External service =
+= External services =
 
-This plugin connects to the WooMobile service at `https://api.woomobile.app` when an administrator connects a website, activates or verifies a license, requests an app build, or configures managed push notifications.
+The following services are used only for the corresponding configured features. Ordinary store checkout continues to use the merchant's installed WooCommerce payment and authentication providers, which may have their own services and privacy terms.
 
-For license activation, the plugin sends the license key, website URL, plugin version, a random installation identifier, and a one-time nonce. Hourly license verification sends the installation-bound activation token, plugin version, and a one-time nonce. App-build and managed-push requests send the settings selected by the administrator and the installation-bound authorization token. The plugin does not send customer passwords or raw payment-card data to WooMobile.
+= WooMobile connection and notifications =
 
-The service is provided by WooMobile and is required for subscription validation, managed builds, and managed push notifications:
+WooMobile (`https://api.woomobile.app`) provides the connected dashboard and managed notification delivery. When an administrator activates a connection, the plugin sends the license key, website URL, plugin version, random installation identifier and a one-time nonce. Scheduled license verification sends the installation-bound activation token, plugin version and nonce. Managed application builds run in the external dashboard, not in WordPress.
+
+On an authorized dashboard request, the connector returns the requested store information: catalog, categories, prices, discounts, saved layouts, and, where authorized, customer names and email addresses, orders, totals, statuses and store analytics. These responses support the merchant's store management; the plugin does not automatically export all customers on activation.
+
+When managed push delivery is enabled and a notification is sent, the plugin sends the installation authorization, recipient device push tokens, title, message, optional image URL and action/delivery data to WooMobile. WooMobile delivers these notifications through Google Firebase Cloud Messaging. Customer passwords and raw payment-card data are not sent to WooMobile.
 
 * Service: https://woomobile.app/
 * Terms: https://woomobile.app/terms/
 * Privacy policy: https://woomobile.app/privacy/
+
+= Google and Firebase authentication =
+
+When the merchant configures native Google or Firebase sign-in and a customer submits a sign-in proof, the connector fetches public signing certificates from `https://www.googleapis.com/oauth2/v1/certs` or `https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com` as needed when the cached certificates expire or signing keys change. These certificate requests contain no customer token, email or phone number. The connector validates the customer's signed token locally against the configured application and uses its verified identity claims to authenticate that customer. Firebase-backed Apple sign-in uses the same Firebase verification path.
+
+The mobile application's configured Google/Firebase SDKs separately communicate with Google when the customer chooses authentication, phone verification or push registration. Firebase handles the corresponding authentication data (such as the selected account or phone number) and device push registration. The connector does not proxy the customer's Google password.
+
+* Service: https://firebase.google.com/ and https://developers.google.com/identity/
+* Terms: https://firebase.google.com/terms and https://policies.google.com/terms
+* Privacy: https://firebase.google.com/support/privacy and https://policies.google.com/privacy
+
+= Meta / Facebook sign-in =
+
+When Facebook sign-in is configured and the customer chooses it, the connector verifies the supplied access token with `https://graph.facebook.com/debug_token` using the merchant's Facebook app authorization, then requests the account ID and, if granted, email from `https://graph.facebook.com/me`. These requests send the Facebook access token and application authentication proof; they do not send a Facebook password. For supported Limited Login tokens, it instead fetches public keys from `https://www.facebook.com/.well-known/oauth/openid/jwks/` on a cache miss and validates the signed token locally. That public-key request contains no customer token or personal data. Website login can also reuse the merchant's configured Nextend Social Login authorization flow.
+
+* Service: https://developers.facebook.com/docs/facebook-login/
+* Terms: https://www.facebook.com/legal/terms/
+* Privacy policy: https://www.facebook.com/privacy/policy/
+
+= Kashier payments =
+
+If the merchant has enabled the supported Kashier gateway and a customer chooses it for native checkout, the connector creates a payment session using `https://api.kashier.io` (live) or `https://test-api.kashier.io` (test). The request uses the merchant's API authorization and sends the merchant ID, order/customer reference, amount, currency, session options/expiry, and callback/webhook URLs. Payment-status checks and verified webhook handling query the same service using the order reference. Card details are collected by Kashier's payment interface; this connector does not store raw card data.
+
+* Service: https://www.kashier.io/
+* Merchant terms: https://www.kashier.io/legal/terms-of-services
+* Privacy policy: https://www.kashier.io/legal/privacy-policy
+
+= Merchant media and WordPress avatars =
+
+Catalog images and merchant-selected artwork retain their configured store/media URLs, which the dashboard or app loads when showing the content. Where WordPress avatars are enabled, WordPress's avatar function may cause the viewer's browser to request a Gravatar image using an email-derived hash. This follows the site's WordPress avatar settings.
+
+* Gravatar service: https://gravatar.com/
+* Terms: https://wordpress.com/tos/
+* Privacy policy: https://automattic.com/privacy/
 
 = Source code and third-party licenses =
 
@@ -61,6 +99,12 @@ No. Store checkout is handled by the payment methods configured in WooCommerce, 
 Yes. Application language, direction, typography, and other visual settings can be configured from the builder.
 
 == Changelog ==
+
+= 1.46.138 =
+
+* Load checkout, sign-in confirmation and order-source assets through WordPress asset APIs.
+* Reject malformed authentication proofs, route targets and analytics identifiers.
+* Document configured authentication, payment and notification services and their privacy terms.
 
 = 1.46.137 =
 

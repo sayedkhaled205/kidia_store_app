@@ -10,14 +10,13 @@ final class MobiShop_Order_Source98 {
 		add_action( 'restrict_manage_posts', array( $this, 'control' ), 40, 2 );
 		add_filter( 'woocommerce_order_list_table_prepare_items_query_args', array( $this, 'hpos_query' ), 50 );
 		add_action( 'pre_get_posts', array( $this, 'legacy_query' ), 50 );
-		add_action( 'admin_footer', array( $this, 'merge_channel_control' ) );
 		add_filter( 'manage_woocommerce_page_wc-orders_columns', array( $this, 'order_columns' ) );
 		add_filter( 'manage_edit-shop_order_columns', array( $this, 'order_columns' ) );
 		add_action( 'manage_woocommerce_page_wc-orders_custom_column', array( $this, 'order_cell' ), 10, 2 );
 		add_action( 'manage_shop_order_posts_custom_column', array( $this, 'order_cell' ), 10, 2 );
 		add_action( 'woocommerce_admin_order_data_after_billing_address', array( $this, 'order_detail' ) );
 		add_filter( 'woocommerce_email_order_meta_fields', array( $this, 'email_source' ), 10, 3 );
-		add_action( 'admin_head', array( $this, 'badge_style' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 	}
 
 	private function label( string $arabic, string $english ): string {
@@ -45,11 +44,13 @@ final class MobiShop_Order_Source98 {
 	public function order_cell( $column, $order ): void {
 		if ( 'mobishop_app_source' !== $column ) return;
 		if ( ! $order instanceof WC_Order ) $order = wc_get_order( $order );
-		echo $this->mobile_order( $order ) ? $this->badge( $this->label( 'الطلب تم من التطبيق', 'Order placed in the app' ) ) : '&mdash;';
+		if ( $this->mobile_order( $order ) ) {
+			echo wp_kses_post( $this->badge( $this->label( 'الطلب تم من التطبيق', 'Order placed in the app' ) ) );
+		} else { echo '&mdash;'; }
 	}
 
 	public function order_detail( $order ): void {
-		if ( $this->mobile_order( $order ) ) echo '<p><strong>' . esc_html( $this->label( 'مصدر الطلب: ', 'Order source: ' ) ) . '</strong>' . $this->badge( $this->label( 'الطلب تم من التطبيق', 'Order placed in the app' ) ) . '</p>';
+		if ( $this->mobile_order( $order ) ) echo '<p><strong>' . esc_html( $this->label( 'مصدر الطلب: ', 'Order source: ' ) ) . '</strong>' . wp_kses_post( $this->badge( $this->label( 'الطلب تم من التطبيق', 'Order placed in the app' ) ) ) . '</p>';
 	}
 
 	public function email_source( array $fields, $sent_to_admin, $order ): array {
@@ -59,10 +60,15 @@ final class MobiShop_Order_Source98 {
 		return $fields;
 	}
 
-	public function badge_style(): void {
+	public function enqueue_assets(): void {
 		$screen = get_current_screen();
-		if ( ! $screen || ! in_array( $screen->id, array( 'woocommerce_page_wc-orders', 'edit-shop_order', 'shop_order', 'users', 'user-edit', 'profile' ), true ) ) return;
-		echo '<style>.column-mobishop_app_source{width:100px}.mobishop-app-badge98{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;padding:3px 9px;border:1px solid #a8daca;border-radius:14px;background:#e8f6f0;color:#17664c;font-size:12px;font-weight:600;line-height:20px}.mobishop-app-badge98 .dashicons{font-size:16px;width:16px;height:16px}</style>';
+		if ( ! $screen ) return;
+		if ( in_array( $screen->id, array( 'woocommerce_page_wc-orders', 'edit-shop_order', 'shop_order', 'users', 'user-edit', 'profile' ), true ) ) {
+			wp_enqueue_style( 'mobishop-order-source98', MOBISHOP_URL . 'public/css/mobishop-order-source98.css', array(), MOBISHOP_VERSION );
+		}
+		if ( 'woocommerce_page_wc-orders' === $screen->id ) {
+			wp_enqueue_script( 'mobishop-order-source98', MOBISHOP_URL . 'public/js/mobishop-order-source98.js', array(), MOBISHOP_VERSION, true );
+		}
 	}
 
 	private function selected(): bool {
@@ -96,23 +102,4 @@ final class MobiShop_Order_Source98 {
 		$query->set( 'meta_query', $this->with_source( (array) $query->get( 'meta_query' ) ) );
 	}
 
-	public function merge_channel_control(): void {
-		$screen = get_current_screen();
-		if ( ! $screen || 'woocommerce_page_wc-orders' !== $screen->id ) return;
-		?>
-		<script>
-		(function () {
-			var source = document.getElementById('mobishop-order-source98');
-			var channels = document.getElementById('filter-by-created-via');
-			if (!source || !channels) return;
-			var option = document.createElement('option');
-			option.value = 'mobishop-mobile';
-			option.textContent = source.options[1].textContent;
-			channels.appendChild(option);
-			if (source.value === 'mobile') channels.value = option.value;
-			source.remove();
-		}());
-		</script>
-		<?php
-	}
 }

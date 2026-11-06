@@ -204,7 +204,7 @@ final class MobiShop_Attribute_Stock_Filter {
 			static $request_matches = array();
 			$key = md5( $wpdb->posts . '.' . $predicate );
 			if ( ! array_key_exists( $key, $request_matches ) ) {
-				$ids = $wpdb->get_col( "SELECT {$wpdb->posts}.ID FROM {$wpdb->posts} WHERE {$wpdb->posts}.post_type='product' AND {$predicate} LIMIT 10001" );
+				$ids = $wpdb->get_col( "SELECT {$wpdb->posts}.ID FROM {$wpdb->posts} WHERE {$wpdb->posts}.post_type='product' AND {$predicate} LIMIT 10001" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Predicates come from fixed fragments above, with integer term IDs and individually prepared keys, slugs and prices.
 				$request_matches[$key] = false;
 				if ( ! $wpdb->last_error && is_array( $ids ) && count( $ids ) <= 10000 ) {
 					$request_matches[$key] = $ids ? "{$wpdb->posts}.ID IN (" . implode( ',', array_map( 'absint', $ids ) ) . ')' : '1=0';

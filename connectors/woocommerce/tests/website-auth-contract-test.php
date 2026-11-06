@@ -18,6 +18,11 @@ function wp_verify_nonce($nonce, $action) { return $nonce === 'valid-'.$action; 
 function wp_logout() { $GLOBALS['web_logged_in']=false; $GLOBALS['web_logouts']=($GLOBALS['web_logouts']??0)+1; }
 function wp_nonce_field($action) { echo '<input type="hidden" name="_wpnonce" value="valid-'.$action.'">'; }
 function esc_html($value) { return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8'); }
+define('MOBISHOP_URL', 'https://shop.example.com/wp-content/plugins/mobi2app-connector/');
+define('MOBISHOP_VERSION', 'test');
+function wp_register_style($handle,$url,...$args) { $GLOBALS['web_styles'][$handle]=$url; }
+function wp_enqueue_style($handle) { $GLOBALS['web_style_queue'][]=$handle; }
+function wp_print_styles($handles) { foreach($handles as $handle) echo '<link rel="stylesheet" href="'.esc_html($GLOBALS['web_styles'][$handle]).'">'; }
 
 // Simulate compare-and-swap against a persistent option store, including races.
 $wpdb = new class {
@@ -59,6 +64,7 @@ $bridge = new MobiShop_Website_Auth_Endpoint(
     fn($user) => $user->ID === 7
 );
 $web_checks = 0;
+$bridge->register_assets();
 function web_assert($condition, $label) { global $web_checks; if (!$condition) throw new RuntimeException($label); $web_checks++; }
 function start_web($bridge) {
     $state = bin2hex(random_bytes(32)); $verifier = bin2hex(random_bytes(32));
@@ -95,6 +101,12 @@ web_assert(is_wp_error($bridge->start(new WP_REST_Request(['state'=>'bad','chall
 $key='_mobishop_web_login_'.$id;
 $secret=bin2hex(random_bytes(32));
 $options[$key]['binding']=hash('sha256',$secret);
+$_COOKIE['__Host-mobishop_login']=$id.'.'.$secret;
+foreach ([$id.'.'.$secret."\n", [$id.'.'.$secret], '<b>'.$id.'.'.$secret.'</b>'] as $malformed) {
+    $_COOKIE['__Host-mobishop_login']=$malformed;
+    $bridge->verified(get_user_by('id',7));
+    web_assert($options[$key]['user']===0, 'Malformed browser binding cannot authenticate');
+}
 $_COOKIE['__Host-mobishop_login']=$id.'.'.$secret;
 $bridge->verified(get_user_by('id',8));
 web_assert($options[$key]['user']===0, 'Privileged account blocked');
@@ -202,6 +214,7 @@ $confirm = new ReflectionMethod($bridge, 'confirmation');
 $admin = get_user_by('id',8);
 $admin->display_name = '<Admin fixture>';
 ob_start(); $confirm->invoke($bridge, $id, $admin, true); $html=ob_get_clean();
+web_assert(str_contains($html, 'public/css/mobishop-website-auth-confirmation.css') && !str_contains($html, '<style'), 'Standalone confirmation loads only its registered stylesheet');
 web_assert(str_contains($html, 'value="switch"') && !str_contains($html, 'value="continue"'), 'Admin gets switch only, never customer continuation');
 web_assert(str_contains($html, '&lt;Admin fixture&gt;') && !str_contains($html, '<Admin fixture>'), 'Confirmation escapes the displayed account');
 ob_start(); $confirm->invoke($bridge, $id, get_user_by('id',7), false); $html=ob_get_clean();
@@ -217,6 +230,11 @@ $_SERVER['REQUEST_METHOD']='GET';
 web_assert(!$switch->invoke($bridge,$id), 'GET cannot log a browser out');
 $_SERVER['REQUEST_METHOD']='POST'; $_POST['_wpnonce']='invalid';
 web_assert(!$switch->invoke($bridge,$id), 'Invalid CSRF proof cannot switch');
+$_POST['_wpnonce']='valid-mobishop_continue_'.$id;
+foreach (['valid-mobishop_continue_'.$id."\n", ['valid-mobishop_continue_'.$id], '<b>valid-mobishop_continue_'.$id.'</b>'] as $bad_nonce) {
+    $_POST['_wpnonce']=$bad_nonce;
+    web_assert(!$switch->invoke($bridge,$id), 'Malformed nonce does not change identity');
+}
 $_POST['_wpnonce']='valid-mobishop_continue_'.$id;
 $_COOKIE['__Host-mobishop_login']=$id.'.'.str_repeat('f',64);
 web_assert(!$switch->invoke($bridge,$id), 'Different browser cannot switch attempt');

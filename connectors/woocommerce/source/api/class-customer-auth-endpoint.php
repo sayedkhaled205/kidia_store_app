@@ -955,14 +955,14 @@ final class MobiShop_Customer_Auth_Endpoint {
 
 	/** Extract the same header before the REST request object is constructed. */
 	private function token_from_server(): string {
-		$token = isset( $_SERVER['HTTP_X_MOBISHOP_SESSION'] )
-			? wp_unslash( $_SERVER['HTTP_X_MOBISHOP_SESSION'] )
-			: '';
+		$token = filter_var( wp_unslash( $_SERVER['HTTP_X_MOBISHOP_SESSION'] ?? '' ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/\A[\x20-\x7E]{0,512}\z/' ) ) );
+		if ( false === $token ) return '';
 		if ( '' !== trim( (string) $token ) ) {
 			return $this->normalize_token( (string) $token );
 		}
-		$authorization = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
-		$authorization = wp_unslash( (string) $authorization );
+		$authorization = isset( $_SERVER['HTTP_AUTHORIZATION'] )
+			? filter_var( wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/\A[\x20-\x7E]{1,512}\z/' ) ) )
+			: filter_var( wp_unslash( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '' ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '/\A[\x20-\x7E]{1,512}\z/' ) ) );
 		return preg_match( '/^Bearer\s+(.+)$/i', trim( $authorization ), $matches )
 			? $this->normalize_token( $matches[1] )
 			: '';
@@ -991,9 +991,9 @@ final class MobiShop_Customer_Auth_Endpoint {
 		if ( $route !== '' ) {
 			return str_starts_with( $route, '/wc/store/' ) || str_starts_with( $route, '/mobishop/v1/' );
 		}
-		$uri = isset( $_SERVER['REQUEST_URI'] )
-			? (string) wp_unslash( $_SERVER['REQUEST_URI'] )
-			: '';
+		// Accept an origin-form request target only; never an absolute or network URL.
+		$uri = filter_var( wp_unslash( $_SERVER['REQUEST_URI'] ?? '' ), FILTER_VALIDATE_REGEXP, array( 'options' => array( 'regexp' => '~\A/(?!/)[^\x00-\x20\x7F\x5C]*\z~' ) ) );
+		if ( $uri === false ) return false;
 		$path = (string) wp_parse_url( $uri, PHP_URL_PATH );
 		$rest_url = rest_url();
 		$rest_path = rtrim( (string) wp_parse_url( $rest_url, PHP_URL_PATH ), '/' );

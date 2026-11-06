@@ -1,4 +1,5 @@
 <?php
+function wp_parse_url( $url, $component = -1 ) { return parse_url( $url, $component ); }
 define( 'ABSPATH', __DIR__ );
 $hooks = array(); $checks = 0;
 function add_filter( $name, $callback, $priority, $args ) { $GLOBALS['hooks'][$name] = $callback; }
