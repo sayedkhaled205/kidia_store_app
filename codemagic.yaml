@@ -1134,3 +1134,44 @@ workflows:
       - build/ios/simulator-artifacts/customer-flow-tests.log
       - build/ios/simulator-artifacts/native-startup.log
       - build/ios/simulator-artifacts/native-stack.log
+
+  kidia-ipad-store-screenshots:
+    name: Kidia real iPad Store screenshots
+    instance_type: mac_mini_m2
+    max_build_duration: 40
+    environment:
+      flutter: 3.47.8
+      xcode: 26.5
+      cocoapods: default
+    scripts:
+      - name: Prepare actual store configuration
+        script: |
+          set -euo pipefail
+          python3 tool/prepare_native_auth_build.py --output "$CM_BUILD_DIR/.mobishop-native-auth.json" --env-file "$CM_ENV"
+          python3 tool/configure_ios_store.py --simulator
+          python3 tool/native_build_defines81.py --output "$CM_BUILD_DIR/.mobishop-native-defines.json"
+          flutter pub get
+          python3 -m venv "$CM_BUILD_DIR/.icon-tools"
+          "$CM_BUILD_DIR/.icon-tools/bin/pip" install -r tool/requirements-build.txt
+          "$CM_BUILD_DIR/.icon-tools/bin/python" tool/build_app_icons.py
+      - name: Check capture code and real design
+        script: |
+          set -euo pipefail
+          flutter analyze integration_test/ipad_store_screenshots_test.dart test_driver/ipad_store_screenshots_driver.dart
+          flutter test test/core/app_design/compiled_design_preflight297_test.dart --dart-define=REQUIRE_SAVED_DESIGN=true --dart-define-from-file="$CM_BUILD_DIR/.mobishop-native-defines.json" --dart-define="STORE_URL=$STORE_URL" --dart-define="STORE_NAME=$STORE_NAME" --dart-define="STORE_LOCALE=$STORE_LOCALE"
+      - name: Boot a real 13-inch iPad simulator
+        script: |
+          set -euo pipefail
+          mkdir -p build/ipad-store-screenshots
+          xcrun simctl list devices available -j > "$CM_BUILD_DIR/.ipad-devices.json"
+          IOS_TEST_DEVICE=$(python3 tool/ipad_capture_artifacts.py select "$CM_BUILD_DIR/.ipad-devices.json")
+          xcrun simctl boot "$IOS_TEST_DEVICE" || true
+          xcrun simctl bootstatus "$IOS_TEST_DEVICE" -b
+          printf 'IOS_TEST_DEVICE=%s\n' "$IOS_TEST_DEVICE" >> "$CM_ENV"
+      - name: Capture the live application on iPad
+        script: |
+          set -euo pipefail
+          flutter drive --driver=test_driver/ipad_store_screenshots_driver.dart --target=integration_test/ipad_store_screenshots_test.dart -d "$IOS_TEST_DEVICE" --dart-define-from-file="$CM_BUILD_DIR/.mobishop-native-defines.json" --dart-define="STORE_URL=$STORE_URL" --dart-define="STORE_NAME=$STORE_NAME" --dart-define="STORE_LOCALE=$STORE_LOCALE" --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
+          python3 tool/ipad_capture_artifacts.py verify build/ipad-store-screenshots
+    artifacts:
+      - build/ipad-store-screenshots/**
