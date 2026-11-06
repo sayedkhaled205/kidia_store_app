@@ -14,6 +14,88 @@ import 'package:mobishop_store_app/features/catalog/presentation/controllers/cat
 
 void main() {
   group('CatalogProductListController', () {
+    test('side panel asks only for displayed metadata', () async {
+      final source = _FilterOptionsRepository();
+      final controller = CatalogProductListController(
+        source,
+        request: const CatalogProductListRequest(),
+      );
+      addTearDown(controller.dispose);
+      await controller.loadFilterOptions();
+      expect(source.includeAttributes, false);
+      expect(source.productQueries, isEmpty);
+    });
+    test('late old search cannot restore stale choices', () async {
+      final pending = Completer<CatalogPage<CatalogProduct>>();
+      final repository = _FakeCatalogRepository(
+        products: (q) => q.search == 'old'
+            ? pending.future
+            : Future.value(_page(q, items: [_product(2)])),
+      );
+      final controller = CatalogProductListController(
+        repository,
+        request: const CatalogProductListRequest(searchOnly: true),
+      );
+      addTearDown(controller.dispose);
+      final old = controller.submitSearch('old');
+      await controller.submitSearch('new');
+      pending.complete(
+        _page(
+          repository.productQueries.first,
+          items: [_product(1, withSizes: true)],
+        ),
+      );
+      await old;
+      expect(controller.state.items.single.id, 2);
+      expect(controller.state.availableSizes, isEmpty);
+      expect(controller.state.availableColors, isEmpty);
+    });
+    test('new search drops old choices and empty search stays idle', () async {
+      final repository = _FakeCatalogRepository(
+        products: (q) async =>
+            _page(q, items: [_product(1, withSizes: q.search == 'old')]),
+      );
+      final controller = CatalogProductListController(
+        repository,
+        request: const CatalogProductListRequest(searchOnly: true),
+      );
+      addTearDown(controller.dispose);
+      await controller.submitSearch('old');
+      expect(controller.state.availableSizes, isNotEmpty);
+      expect(controller.state.availableColors, isNotEmpty);
+      await controller.submitSearch('new');
+      expect(controller.state.availableSizes, isEmpty);
+      expect(controller.state.availableColors, isEmpty);
+      await controller.submitSearch('old');
+      final calls = repository.productQueries.length;
+      await controller.submitSearch('');
+      expect(controller.state.availableSizes, isEmpty);
+      expect(controller.state.availableColors, isEmpty);
+      expect(repository.productQueries.length, calls);
+    });
+    test(
+      'general filters clear choices while size and sort preserve them',
+      () async {
+        final repository = _FakeCatalogRepository(
+          products: (q) async =>
+              _page(q, items: [_product(1, withSizes: q.brandIds.isEmpty)]),
+        );
+        final controller = CatalogProductListController(
+          repository,
+          request: const CatalogProductListRequest(),
+        );
+        addTearDown(controller.dispose);
+        await controller.loadInitial();
+        final sizes = controller.state.availableSizes;
+        await controller.applySize(sizes.first);
+        expect(controller.state.availableSizes, sizes);
+        await controller.changeSort(CatalogSort.priceLowToHigh);
+        expect(controller.state.availableSizes, sizes);
+        await controller.applyFilters(const CatalogProductFilters(brandId: 7));
+        expect(controller.state.availableSizes, isEmpty);
+        expect(controller.state.availableColors, isEmpty);
+      },
+    );
     test(
       'products appear before slow filters and filters survive paging',
       () async {
@@ -583,5 +665,17 @@ class _FakeCatalogRepository implements CatalogRepository {
   @override
   Future<List<CatalogVariation>> getVariations(int productId) async {
     return const <CatalogVariation>[];
+  }
+}
+
+class _FilterOptionsRepository extends _FakeCatalogRepository
+    implements CatalogFilterOptionsSource {
+  bool? includeAttributes;
+  @override
+  Future<CatalogFilterOptions> getFilterOptions({
+    bool includeAttributes = true,
+  }) async {
+    this.includeAttributes = includeAttributes;
+    return const CatalogFilterOptions();
   }
 }

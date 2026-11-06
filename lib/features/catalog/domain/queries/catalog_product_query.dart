@@ -115,7 +115,11 @@ class CatalogProductQuery {
 
     for (int index = 0; index < attributes.length; index++) {
       final CatalogAttributeFilter filter = attributes[index];
-      query['attributes[$index][attribute]'] = filter.taxonomy;
+      // Store API displays decoded names; WordPress filters require slug bytes.
+      query['attributes[$index][attribute]'] = filter.taxonomy.replaceAllMapped(
+        RegExp(r'[^\x00-\x7f]+'),
+        (match) => Uri.encodeComponent(match[0]!).toLowerCase(),
+      );
       query['attributes[$index][slug]'] = filter.terms.join(',');
       query['attributes[$index][operator]'] =
           filter.operator == CatalogAttributeOperator.all ? 'and' : 'in';

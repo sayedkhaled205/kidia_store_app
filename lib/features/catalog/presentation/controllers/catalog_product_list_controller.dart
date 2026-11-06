@@ -464,7 +464,9 @@ class CatalogProductListController extends ChangeNotifier {
   Future<CatalogFilterOptions> loadFilterOptions() {
     final source = _repository;
     return source is CatalogFilterOptionsSource
-        ? (source as CatalogFilterOptionsSource).getFilterOptions()
+        ? (source as CatalogFilterOptionsSource).getFilterOptions(
+            includeAttributes: false,
+          )
         : Future.value(const CatalogFilterOptions());
   }
 
@@ -574,6 +576,8 @@ class CatalogProductListController extends ChangeNotifier {
           error: null,
           loadMoreError: null,
           filterData: null,
+          availableSizes: const [],
+          availableColors: const [],
         ),
       );
       return;
@@ -768,7 +772,21 @@ class CatalogProductListController extends ChangeNotifier {
       return;
     }
     _operation++;
-    _replace(_state.copyWith(filters: filters));
+    final previous = _state.filters;
+    final scopeChanged =
+        previous.onSaleOnly != filters.onSaleOnly ||
+        previous.minimumPriceMinor != filters.minimumPriceMinor ||
+        previous.maximumPriceMinor != filters.maximumPriceMinor ||
+        previous.brandId != filters.brandId ||
+        !listEquals(previous.tags, filters.tags);
+    _replace(
+      _state.copyWith(
+        filters: filters,
+        availableSizes: scopeChanged ? const [] : null,
+        availableColors: scopeChanged ? const [] : null,
+        filterData: scopeChanged ? null : _state.filterData,
+      ),
+    );
     await loadInitial();
   }
 
@@ -789,6 +807,9 @@ class CatalogProductListController extends ChangeNotifier {
     _replace(
       _state.copyWith(
         search: search,
+        availableSizes: search != _state.search ? const [] : null,
+        availableColors: search != _state.search ? const [] : null,
+        filterData: search != _state.search ? null : _state.filterData,
         items: search.isEmpty && request.searchOnly
             ? const <CatalogProduct>[]
             : _state.items,
