@@ -11,7 +11,8 @@ Future<void> main() async {
     writeResponseOnFailure: true,
     onScreenshot:
         (String name, List<int> bytes, [Map<String, Object?>? args]) async {
-          if (!RegExp(r'^0[1-5]-[a-z-]+$').hasMatch(name)) {
+          if (name != 'diagnostic-timeout' &&
+              !RegExp(r'^0[1-5]-[a-z-]+$').hasMatch(name)) {
             throw StateError('Invalid capture name');
           }
           final result = await Process.run('xcrun', [
