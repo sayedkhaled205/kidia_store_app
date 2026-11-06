@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import struct
 
@@ -50,7 +51,11 @@ def main():
     report = json.loads((args.path / 'capture-report.json').read_text())
     assert report.get('data') == 'live public endpoints', 'Not a live capture run'
     assert report.get('orders') == report.get('payments') == 0
+    design_hash = hashlib.sha256(os.environ['APP_DESIGN_BUNDLE'].encode()).hexdigest()
+    assert design_hash == os.environ['QA_DESIGN_SHA256'], 'Design input changed'
     result = dict(source='c24d4eed1dc4148d5590c1572c1bc778f21e2476',
+                  published_design_revision=int(os.environ['QA_DESIGN_REVISION']),
+                  published_design_sha256=design_hash,
                   method='xcrun simctl io screenshot; original PNGs, no resizing',
                   device=json.loads((args.path / 'device.json').read_text()), files=rows)
     (args.path / 'manifest.json').write_text(json.dumps(result, indent=2))
