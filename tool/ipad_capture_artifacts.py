@@ -48,6 +48,7 @@ def main():
         width, height = png_size(content)
         rows.append(dict(file=file.name, width=width, height=height,
                          sha256=hashlib.sha256(content).hexdigest()))
+    assert len({row['sha256'] for row in rows}) == len(CAPTURES), 'Repeated screens are not deliverable'
     report = json.loads((args.path / 'capture-report.json').read_text())
     assert report.get('data') == 'live public endpoints', 'Not a live capture run'
     assert report.get('orders') == report.get('payments') == 0
@@ -56,7 +57,7 @@ def main():
     result = dict(source='c24d4eed1dc4148d5590c1572c1bc778f21e2476',
                   published_design_revision=int(os.environ['QA_DESIGN_REVISION']),
                   published_design_sha256=design_hash,
-                  method='xcrun simctl io screenshot; original PNGs, no resizing',
+                  method='Flutter integration_test iOS native UIWindow capture at each route; original PNG bytes, no resizing',
                   device=json.loads((args.path / 'device.json').read_text()), files=rows)
     (args.path / 'manifest.json').write_text(json.dumps(result, indent=2))
     print('Five original iPad screenshots validated')

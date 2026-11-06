@@ -15,16 +15,9 @@ Future<void> main() async {
               !RegExp(r'^0[1-5]-[a-z-]+$').hasMatch(name)) {
             throw StateError('Invalid capture name');
           }
-          final result = await Process.run('xcrun', [
-            'simctl',
-            'io',
-            device,
-            'screenshot',
-            '${output.path}/$name.png',
-          ]);
-          if (result.exitCode != 0) {
-            throw StateError('iPad screen capture failed');
-          }
+          // iOS captures these original PNG bytes at takeScreenshot time.
+          // Native onScreenshot callbacks run after the test has finished.
+          await File('${output.path}/$name.png').writeAsBytes(bytes, flush: true);
           return true;
         },
     responseDataCallback: (data) async {
