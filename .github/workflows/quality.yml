@@ -105,6 +105,11 @@ jobs:
           php connectors/woocommerce/tests/native-auth-completion-race-test.php
           php integrations/woocommerce/kidia-auth/website-auth-logic-regression-test.php
           node integrations/woocommerce/kidia-auth/website-auth-recovery-test.cjs
+      - name: Check staged identity erasure boundaries without live accounts
+        run: |
+          php tools/customer_identity/tests/firebase-erasure-test.php
+          php tools/customer_identity/tests/store-identity-adapter-test.php
+          php tools/customer_identity/tests/identity-controller-test.php
 
   flutter:
     name: Flutter app
