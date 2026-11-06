@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
+import 'package:mobishop_store_app/core/app_design/app_ui_controls.dart';
 import 'package:mobishop_store_app/features/auth/application/auth_controller.dart';
 import 'package:mobishop_store_app/features/auth/data/cms_preview_auth_actions.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
@@ -24,6 +25,43 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets(
+    'published Google size updates and rolls back without losing input',
+    (tester) async {
+      final controls = ValueNotifier<Map<String, dynamic>>({});
+      addTearDown(controls.dispose);
+      final actions = _Actions()..configuration = const NativeAuthConfig(
+        methods: {'email_password': true, 'google': true, 'facebook': true, 'apple': true},
+      );
+      await _Fixture(actions: actions).pump(tester, controls: controls);
+      await tester.enterText(
+        find.byKey(const Key('auth-email')),
+        'buyer@example.invalid',
+      );
+      for (final height in [44.0, 64.0, 52.0]) {
+        controls.value = height == 52
+            ? {}
+            : {'auth_google_button_height': height};
+        await tester.pumpAndSettle();
+        expect(
+          tester.getSize(find.byKey(const Key('auth-google'))),
+          Size.square(height),
+        );
+        expect(
+          tester.getSize(find.byKey(const Key('auth-facebook'))),
+          const Size.square(52),
+        );
+        expect(tester.getSize(find.byKey(const Key('auth-apple'))), const Size.square(52));
+        expect(
+          tester.getSize(find.byKey(const Key('auth-google-brand'))),
+          const Size.square(28),
+        );
+        expect(find.text('buyer@example.invalid'), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
   testWidgets(
     'Apple shown on iOS only and name-only registration has no password step',
     (tester) async {
@@ -72,8 +110,10 @@ void main() {
       tester.getSize(find.byKey(const Key('auth-google'))),
       tester.getSize(find.byKey(const Key('auth-facebook'))),
     );
-    expect(tester.getSize(find.byKey(const Key('auth-facebook-brand'))),
-        const Size.square(52));
+    expect(
+      tester.getSize(find.byKey(const Key('auth-facebook-brand'))),
+      const Size.square(52),
+    );
     final google = tester.getRect(find.byKey(const Key('auth-google')));
     final facebook = tester.getRect(find.byKey(const Key('auth-facebook')));
     expect(facebook.left - google.right, closeTo(32, 0.1));
@@ -1281,6 +1321,7 @@ class _Fixture {
     NativeAuthActions? previewActions,
     Size size = const Size(390, 844),
     FakeViewPadding? viewPadding,
+    ValueNotifier<Map<String, dynamic>>? controls,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -1339,6 +1380,15 @@ class _Fixture {
           ),
         ],
         child: MaterialApp.router(
+          builder: (_, child) => controls == null
+              ? child!
+              : ValueListenableBuilder<Map<String, dynamic>>(
+                  valueListenable: controls,
+                  builder: (_, values, _) => AppUiControlsScope(
+                    controls: AppUiControls.fromJson(values),
+                    child: child!,
+                  ),
+                ),
           routerConfig: router,
           locale: const Locale('ar'),
           supportedLocales: const [Locale('ar')],

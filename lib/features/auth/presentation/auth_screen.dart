@@ -479,8 +479,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                           visualDensity: VisualDensity.standard,
                                           tapTargetSize:
                                               MaterialTapTargetSize.shrinkWrap,
-                                          fixedSize: const Size.square(52),
-                                          minimumSize: const Size.square(52),
+                                          fixedSize: Size.square(
+                                            _ui.numberOr('auth_google_button_height', 52),
+                                          ),
+                                          minimumSize: Size.square(
+                                            _ui.numberOr('auth_google_button_height', 52),
+                                          ),
                                           padding: EdgeInsets.zero,
                                           backgroundColor: Colors.white,
                                           side: const BorderSide(
