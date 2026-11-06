@@ -14,7 +14,6 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/auth_pro
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_footer_label.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
-import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'app_language_tile.dart';
 import 'store_privacy_link.dart';
@@ -53,9 +52,6 @@ class AccountScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ui = AppUiControlsScope.of(context);
-    final previewIdentity = ref.watch(applicationIdentity58Provider);
-    final storeName =
-        previewIdentity?['app_name'] as String? ?? AppConfig.storeName;
     final bool isArabic =
         Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
     final AsyncValue<AuthSession?> authState = ref.watch(
@@ -101,7 +97,6 @@ class AccountScreen extends ConsumerWidget {
               CmsElementFrame(
                 component: summarySettings,
                 child: _AccountHeader(
-                  storeName: storeName,
                   session: session,
                   loading: authState.isLoading,
                   isArabic: isArabic,
@@ -309,7 +304,6 @@ class AccountScreen extends ConsumerWidget {
 
 class _AccountHeader extends StatelessWidget {
   const _AccountHeader({
-    required this.storeName,
     required this.session,
     required this.loading,
     required this.isArabic,
@@ -321,7 +315,6 @@ class _AccountHeader extends StatelessWidget {
   });
 
   final AuthSession? session;
-  final String storeName;
   final bool loading;
   final bool isArabic;
   final VoidCallback onSignIn;
@@ -397,8 +390,8 @@ class _AccountHeader extends StatelessWidget {
                                   const SizedBox(height: 3),
                                   Text(
                                     isArabic
-                                        ? 'تابع طلباتك وبياناتك على $storeName'
-                                        : 'Manage your $storeName orders and details',
+                                        ? 'تابع طلباتك وبياناتك'
+                                        : 'Manage your orders and details',
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: MobiShopColors.textSecondary,

@@ -84,6 +84,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _active(int flow) => mounted && !_closing && flow == _flow;
 
   @override
+  void initState() {
+    super.initState();
+    // A failed background prefetch must not strand a newly opened sign-in page.
+    if (ref.read(nativeAuthConfigProvider).hasError) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.invalidate(nativeAuthConfigProvider);
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _flow++;
     _otpEpoch++;

@@ -1,4 +1,10 @@
 import 'dart:async';
+import 'package:go_router/go_router.dart';
+import 'package:mobishop_store_app/features/wishlist/application/wishlist_access_provider.dart';
+import 'package:mobishop_store_app/features/wishlist/application/wishlist_repository_provider.dart';
+import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_button.dart';
+import 'package:mobishop_store_app/shared/widgets/product/product_wishlist_appearance.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,6 +49,119 @@ ProviderContainer fixture(ConfigActions actions) {
 }
 
 void main() {
+  testWidgets('product heart retries a failed prefetch when opening sign-in', (
+    tester,
+  ) async {
+    final actions = ConfigActions()
+      ..load = () async => throw StateError('offline');
+    final repository = _UntouchedWishlist();
+    final container = ProviderContainer(
+      overrides: [
+        nativeAuthActionsProvider.overrideWithValue(actions),
+        authControllerProvider.overrideWith(_GuestAuthController.new),
+        applicationIdentity58Provider.overrideWithValue({
+          'app_name': 'Test store',
+        }),
+        cmsPageLayoutProvider(
+          'account',
+        ).overrideWith((_) async => CmsPageLayout.fallback('account')),
+        wishlistAccessProvider.overrideWithValue(
+          const WishlistAccess(requiresSignIn: true),
+        ),
+        wishlistRepositoryProvider.overrideWithValue(repository),
+      ],
+    );
+    // A public policy subscriber can retain the failed startup prefetch.
+    final retained = container.listen(nativeAuthConfigProvider, (_, _) {});
+    await tester.pump();
+    expect(container.read(nativeAuthConfigProvider).hasError, isTrue);
+    expect(actions.calls, 1);
+    actions.load = () async => available;
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(
+            body: ProductWishlistButton(
+              productId: 1,
+              appearance: ProductWishlistAppearance(enabled: true),
+            ),
+          ),
+        ),
+        GoRoute(path: '/auth', builder: (_, _) => const AuthScreen()),
+      ],
+    );
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('product-card-wishlist-1')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('auth-email')), findsOneWidget);
+    expect(find.byKey(const Key('auth-google')), findsOneWidget);
+    expect(find.byKey(const Key('auth-config-retry')), findsNothing);
+    expect(actions.calls, 2);
+    expect(repository.writes, 0);
+    router.pop();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('product-card-wishlist-1')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('auth-email')), findsOneWidget);
+    expect(
+      actions.calls,
+      2,
+      reason: 'Successful public capabilities stay cached',
+    );
+    expect(repository.writes, 0);
+    await tester.pumpWidget(const SizedBox.shrink());
+    retained.close();
+    router.dispose();
+    container.dispose();
+  });
+  testWidgets('failed entry retries only once during a persistent outage', (
+    tester,
+  ) async {
+    final actions = ConfigActions()
+      ..load = () async => throw StateError('offline');
+    final container = ProviderContainer(
+      overrides: [
+        nativeAuthActionsProvider.overrideWithValue(actions),
+        authControllerProvider.overrideWith(_GuestAuthController.new),
+        applicationIdentity58Provider.overrideWithValue({
+          'app_name': 'Test store',
+        }),
+        cmsPageLayoutProvider(
+          'account',
+        ).overrideWith((_) async => CmsPageLayout.fallback('account')),
+      ],
+    );
+    final retained = container.listen(nativeAuthConfigProvider, (_, _) {});
+    await tester.pump();
+    expect(actions.calls, 1);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: AuthScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(actions.calls, 2);
+    expect(find.byKey(const Key('auth-config-retry')), findsOneWidget);
+    await tester.pump(const Duration(seconds: 30));
+    expect(
+      actions.calls,
+      2,
+      reason: 'No automatic retry loop or invented login methods',
+    );
+    expect(find.byKey(const Key('auth-email')), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    retained.close();
+    container.dispose();
+  });
+
   testWidgets(
     'preview reuses public flags briefly then reads changed methods',
     (tester) async {
@@ -214,4 +333,14 @@ void main() {
 class _GuestAuthController extends AuthController {
   @override
   Future<AuthSession?> build() async => null;
+}
+
+class _UntouchedWishlist implements WishlistRepository {
+  int writes = 0;
+  @override
+  Future<List<int>> loadProductIds() async => [];
+  @override
+  Future<void> saveProductIds(List<int> values) async {
+    writes++;
+  }
 }

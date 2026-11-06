@@ -272,7 +272,7 @@ void main() {
     });
   }
 
-  testWidgets('preview account uses the selected application name', (
+  testWidgets('preview guest account subtitle omits the selected application name', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -292,7 +292,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('تابع طلباتك وبياناتك على كيديا ستور'), findsOneWidget);
+    expect(find.text('تابع طلباتك وبياناتك'), findsOneWidget);
   }, skip: !AppConfig.isCmsPreview);
 
   testWidgets(
