@@ -311,7 +311,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			|| ( $claims['firebase']['sign_in_provider'] ?? null ) !== 'phone' || strlen( $claims['sub'] ) > 128 ) return $this->error( 'invalid_proof', 401 );
 		$users = $this->phone_users( $phone );
 		if ( is_wp_error( $users ) ) return $users;
-		$proof = array( 'kind' => 'phone', 'phone' => $phone );
+		$identity = array( 'project' => $project, 'uid' => $claims['sub'] );
+		$proof = array( 'kind' => 'phone', 'phone' => $phone, 'phone_firebase_identity' => $identity );
 		$prior = (string) $request->get_param( 'ticket' );
 		if ( $prior !== '' ) {
 			$row = $this->read_ticket( $prior, $request );
@@ -319,6 +320,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			$proof = $row['proof'];
 			unset( $proof['unverified_phone'], $proof['attempted_phone'] );
 			$proof['phone'] = $phone;
+			$proof['phone_firebase_identity'] = $identity;
 			// Existing account completion cannot silently merge another account's phone.
 			$users = $this->phone_users( $phone );
 			if ( is_wp_error( $users ) ) return $users;
@@ -709,6 +711,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			$proof['user_id'] = (int) $user->ID;
 			return $this->registration_ticket( $proof, $request );
 		}
+		// Only the selected, fully authenticated account receives this verified OTP identity.
+		if ( ! $this->persist_phone_identity( $user->ID, $proof ) ) return $this->error( 'identity_link_failed', 503 );
 		$result = call_user_func( $this->issue, $user );
 		if ( $result instanceof WP_REST_Response ) {
 			if ( $result->get_status() < 300 && $request->get_param( 'client_channel' ) !== 'website' ) {
@@ -721,6 +725,19 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return $result;
 	}
 
+	/** Append-only per identity: concurrent different UIDs never replace each other or Apple metadata. */
+	private function persist_phone_identity( int $user_id, array $proof ): bool {
+		if ( ! isset( $proof['phone_firebase_identity'] ) ) return true;
+		$identity = $proof['phone_firebase_identity'];
+		if ( ! is_array( $identity ) || ! is_string( $identity['project'] ?? null ) || $identity['project'] === ''
+			|| ! is_string( $identity['uid'] ?? null ) || $identity['uid'] === '' || strlen( $identity['uid'] ) > 128 ) return false;
+		$key = '_mobishop_phone_firebase_identity_' . hash( 'sha256', $identity['project'] . '|' . $identity['uid'] );
+		$value = array( 'project' => $identity['project'], 'uid' => $identity['uid'] );
+		// WordPress returns false for an unchanged value too; read back the stored value.
+		update_user_meta( $user_id, $key, $value );
+		wp_cache_delete( $user_id, 'user_meta' );
+		return get_user_meta( $user_id, $key, true ) === $value;
+	}
 	private function ready( WP_User $user ): bool {
 		$ready = apply_filters( 'mobishop_auth_customer_ready', ! get_user_meta( $user->ID, 'kidia_phone_setup_required', true ), $user );
 		return (bool) apply_filters( 'mobishop_native_auth_customer_ready', $ready, $user );
