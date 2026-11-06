@@ -24,9 +24,10 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/native_a
 import '../../auth/support/idle_native_auth_actions.dart';
 
 void main() {
-  testWidgets('iPhone account menu and sign out stay reachable above navigation', (tester) async {
+  for (final screenSize in [const Size(375, 812), const Size(390, 844)]) {
+  testWidgets('iPhone $screenSize account menu fits above navigation', (tester) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = screenSize;
     tester.view.padding = const FakeViewPadding(top: 44, bottom: 34);
     tester.view.viewPadding = const FakeViewPadding(top: 44, bottom: 34);
     addTearDown(tester.view.reset);
@@ -52,8 +53,10 @@ void main() {
     for (final key in ['account-action-orders', 'account-action-addresses', 'account-action-profile', 'account-action-support', 'account-language', 'account-delete', 'account-sign-out']) {
       expect(find.byKey(Key(key)).hitTestable(), findsOneWidget, reason: key);
     }
+    expect(tester.state<ScrollableState>(find.byType(Scrollable).first).position.maxScrollExtent, 0);
     expect(tester.takeException(), isNull);
   });
+  }
 
   viewportRotationTests(
     'Account',

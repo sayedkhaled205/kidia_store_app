@@ -143,7 +143,7 @@ class _CategoryLayoutView extends StatefulWidget {
 class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
   double _contentTopInset(double value) =>
       Theme.of(context).platform == TargetPlatform.iOS
-          ? (value - 4).clamp(0, double.infinity).toDouble()
+          ? (value - 8).clamp(0, double.infinity).toDouble()
           : value;
 
   final List<int> _categoryPath = <int>[];
@@ -406,7 +406,11 @@ class _CategoryLayoutViewState extends State<_CategoryLayoutView> {
                 gap: _settings.cardGap,
               ),
             ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: Theme.of(context).platform == TargetPlatform.iOS ? 16 : 24,
+            ),
+          ),
         ],
       ),
     );

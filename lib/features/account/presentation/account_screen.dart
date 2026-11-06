@@ -88,9 +88,9 @@ class AccountScreen extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsetsDirectional.fromSTEB(
             cmsContentHorizontalPadding(pageLayout),
-            compactIos ? 8 : MobiShopSpacing.md,
+            compactIos ? 4 : MobiShopSpacing.md,
             cmsContentHorizontalPadding(pageLayout),
-            compactIos ? 16 : MobiShopSpacing.xl,
+            compactIos ? 4 : MobiShopSpacing.xl,
           ),
           children: <Widget>[
             if (summarySettings.enabled)
@@ -126,7 +126,7 @@ class AccountScreen extends ConsumerWidget {
               ),
             ],
             if (menuSettings.enabled)
-              SizedBox(height: compactIos ? 8 : MobiShopSpacing.lg),
+              SizedBox(height: compactIos ? 4 : MobiShopSpacing.lg),
             if (menuSettings.enabled)
               CmsElementFrame(
                 component: menuSettings,
@@ -204,7 +204,7 @@ class AccountScreen extends ConsumerWidget {
               ),
             if (session != null &&
                 pageLayout.element('logout_button').enabled) ...<Widget>[
-              SizedBox(height: compactIos ? 4 : MobiShopSpacing.lg),
+              SizedBox(height: compactIos ? 0 : MobiShopSpacing.lg),
               CmsElementFrame(
                 component: pageLayout.element('logout_button'),
                 child: Center(
@@ -340,7 +340,7 @@ class _AccountHeader extends StatelessWidget {
         padding: EdgeInsets.symmetric(
           horizontal: MobiShopSpacing.md,
           vertical: Theme.of(context).platform == TargetPlatform.iOS
-              ? 8
+              ? 4
               : MobiShopSpacing.md,
         ),
         child: Row(
@@ -465,7 +465,7 @@ class _AccountActionTile extends StatelessWidget {
         vertical: MobiShopSpacing.xs,
       ),
       minTileHeight: flat
-          ? (Theme.of(context).platform == TargetPlatform.iOS ? 52 : 64)
+          ? (Theme.of(context).platform == TargetPlatform.iOS ? 48 : 64)
           : null,
       leading: flat
           ? Icon(action.icon, size: 24, color: MobiShopColors.textPrimary)
