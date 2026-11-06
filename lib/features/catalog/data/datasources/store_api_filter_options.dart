@@ -11,15 +11,23 @@ class StoreApiFilterOptions implements CatalogFilterOptionsSource {
   final Duration budget;
 
   @override
-  Future<CatalogFilterOptions> getFilterOptions() async {
+  Future<CatalogFilterOptions> getFilterOptions({
+    bool includeAttributes = true,
+  }) async {
     final clock = Stopwatch()..start();
+    final tagsFuture = _terms('/wp-json/wc/store/v1/products/tags', clock);
+    if (!includeAttributes) {
+      final tags = await tagsFuture;
+      return CatalogFilterOptions(tags: _tagOptions(tags));
+    }
     final values = await Future.wait([
-      _terms('/wp-json/wc/store/v1/products/tags', clock),
+      tagsFuture,
       _terms('/wp-json/wc/store/v1/products/attributes', clock),
     ]);
+    final attributes = values[1];
     final sizes = <CatalogSizeOption>[];
     final colors = <CatalogSizeOption>[];
-    for (final attribute in values[1]) {
+    for (final attribute in attributes) {
       final id = int.tryParse('${attribute['id']}') ?? 0;
       final taxonomy = '${attribute['taxonomy'] ?? ''}';
       final name = '$taxonomy ${attribute['name']}'.toLowerCase();
@@ -44,19 +52,21 @@ class StoreApiFilterOptions implements CatalogFilterOptionsSource {
       }
     }
     return CatalogFilterOptions(
-      tags: [
-        for (final tag in values[0])
-          if ((int.tryParse('${tag['id']}') ?? 0) > 0 &&
-              catalogFilterLabel(tag['name']).isNotEmpty)
-            CatalogTagOption(
-              id: int.parse('${tag['id']}'),
-              label: catalogFilterLabel(tag['name']),
-            ),
-      ],
+      tags: _tagOptions(values[0]),
       sizes: sizes,
       colors: colors,
     );
   }
+
+  List<CatalogTagOption> _tagOptions(List<Map<String, dynamic>> tags) => [
+    for (final tag in tags)
+      if ((int.tryParse('${tag['id']}') ?? 0) > 0 &&
+          catalogFilterLabel(tag['name']).isNotEmpty)
+        CatalogTagOption(
+          id: int.parse('${tag['id']}'),
+          label: catalogFilterLabel(tag['name']),
+        ),
+  ];
 
   Future<List<Map<String, dynamic>>> _terms(
     String path,

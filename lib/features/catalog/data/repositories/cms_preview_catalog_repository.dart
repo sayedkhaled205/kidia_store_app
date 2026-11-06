@@ -61,9 +61,14 @@ class CmsPreviewCatalogRepository
 
   bool get _usesLiveCatalog => _live ?? CmsPreviewLayoutBridge.useLiveCatalog;
   @override
-  Future<CatalogFilterOptions> getFilterOptions() async {
+  Future<CatalogFilterOptions> getFilterOptions({
+    bool includeAttributes = true,
+  }) async {
     if (!_usesLiveCatalog) return const CatalogFilterOptions();
-    return CatalogFilterOptions.fromJson(await _filterOptions());
+    final options = CatalogFilterOptions.fromJson(await _filterOptions());
+    return includeAttributes
+        ? options
+        : CatalogFilterOptions(tags: options.tags, brands: options.brands);
   }
 
   Future<List<StoreBrand>> getFilterBrands() async =>
