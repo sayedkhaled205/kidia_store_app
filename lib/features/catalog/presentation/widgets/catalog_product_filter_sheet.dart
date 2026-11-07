@@ -611,7 +611,9 @@ class _FilterChoiceSectionState<T> extends State<_FilterChoiceSection<T>> {
                     fontSize: ui.optionalNumber('filters_option_size'),
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(
+                      ui.numberOr('filters_chip_radius', 6),
+                    ),
                   ),
                   side: BorderSide(color: colors.primary.withValues(alpha: .3)),
                   onSelected: (selected) => widget.onChange(

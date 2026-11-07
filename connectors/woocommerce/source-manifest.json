@@ -2418,8 +2418,8 @@
     "api/class-customer-account-deletion.php": {
       "source": "connectors/woocommerce/source/api/class-customer-account-deletion.php",
       "newline": "lf",
-      "source_sha256": "4a75f0be29bc209de13e3b6dd3057296cf2cf604e05a243a3c8bb82277293ebb",
-      "sha256": "4a75f0be29bc209de13e3b6dd3057296cf2cf604e05a243a3c8bb82277293ebb"
+      "source_sha256": "a1a28350a521855e51f06bb16f5a845ef09b5d021f2d7e078e811ac2cfbe5eaf",
+      "sha256": "a1a28350a521855e51f06bb16f5a845ef09b5d021f2d7e078e811ac2cfbe5eaf"
     },
     "api/class-customer-account-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-account-endpoint.php",
@@ -2430,8 +2430,32 @@
     "api/class-customer-auth-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-auth-endpoint.php",
       "newline": "lf",
-      "source_sha256": "121daed4beebd6dd17d14ad342ce08a5b40c05d60df06f66efc3cc265ebc5522",
-      "sha256": "121daed4beebd6dd17d14ad342ce08a5b40c05d60df06f66efc3cc265ebc5522"
+      "source_sha256": "d1d94fdb885601cc0de29b4dbd602ddabfa0931c68bd3afef6a57aefcad389db",
+      "sha256": "d1d94fdb885601cc0de29b4dbd602ddabfa0931c68bd3afef6a57aefcad389db"
+    },
+    "api/class-customer-identity-client.php": {
+      "source": "connectors/woocommerce/source/api/class-customer-identity-client.php",
+      "newline": "lf",
+      "source_sha256": "e9c320e489d7e461745ebcacb0c6f5da2bbc8685af179d01db0bbeba07e965ac",
+      "sha256": "e9c320e489d7e461745ebcacb0c6f5da2bbc8685af179d01db0bbeba07e965ac"
+    },
+    "api/class-customer-identity-erasure-stage.php": {
+      "source": "connectors/woocommerce/source/api/class-customer-identity-erasure-stage.php",
+      "newline": "lf",
+      "source_sha256": "0c3d2f5011c197a6ab3ffbb55582dcf9d2bc850edbab6ded42ba9e360edab4bf",
+      "sha256": "0c3d2f5011c197a6ab3ffbb55582dcf9d2bc850edbab6ded42ba9e360edab4bf"
+    },
+    "api/class-customer-identity-guard.php": {
+      "source": "connectors/woocommerce/source/api/class-customer-identity-guard.php",
+      "newline": "lf",
+      "source_sha256": "73eb84941b5ea541d4c4de0e150a3fe6bd9a5cb52f0a0a384c9865d3b46ab2e7",
+      "sha256": "73eb84941b5ea541d4c4de0e150a3fe6bd9a5cb52f0a0a384c9865d3b46ab2e7"
+    },
+    "api/class-customer-identity-links.php": {
+      "source": "connectors/woocommerce/source/api/class-customer-identity-links.php",
+      "newline": "lf",
+      "source_sha256": "4727b953901f9da7e96749698c32491f46b8fb097be3debf967e35449586ef8f",
+      "sha256": "4727b953901f9da7e96749698c32491f46b8fb097be3debf967e35449586ef8f"
     },
     "api/class-customer-orders-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-orders-endpoint.php",
@@ -2472,8 +2496,8 @@
     "api/class-native-customer-auth-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-native-customer-auth-endpoint.php",
       "newline": "lf",
-      "source_sha256": "17423182b9fe2f8c184fc1d7aa2f107faffc3de48ee72f5cb261d9075a7c057b",
-      "sha256": "17423182b9fe2f8c184fc1d7aa2f107faffc3de48ee72f5cb261d9075a7c057b"
+      "source_sha256": "5b118277a0776cb875ea029de52d1968baa028d7e1dffb8ebfbfcbe808d7fbfe",
+      "sha256": "5b118277a0776cb875ea029de52d1968baa028d7e1dffb8ebfbfcbe808d7fbfe"
     },
     "api/class-native-payment92.php": {
       "source": "connectors/woocommerce/source/api/class-native-payment92.php",
@@ -2880,8 +2904,8 @@
     "includes/class-mobishop.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop.php",
       "newline": "crlf",
-      "source_sha256": "2bf22010285fb28fa8d9034ea2dd79c89cff7bb9ab69fd302cac729bfee182a2",
-      "sha256": "dc3937dbff4b92f2eb94da4da60c27f7b34e436ba2a0a7eb7b2843f38ceedf67"
+      "source_sha256": "84d0167dbb6948ed4023b98cce6a4c02df59f7238b6e8a41b8af6015e51de207",
+      "sha256": "1d32100a21b952f208b44ed70ae2100a29735a9b0ee7d99374d84b85f2b071d0"
     },
     "includes/class-native-checkout-bootstrap50.php": {
       "source": "connectors/woocommerce/source/includes/class-native-checkout-bootstrap50.php",

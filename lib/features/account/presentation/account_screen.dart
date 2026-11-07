@@ -14,7 +14,6 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/auth_pro
 import 'package:mobishop_store_app/features/page_builder/domain/cms_page_layout.dart';
 import 'package:mobishop_store_app/features/page_builder/domain/cms_footer_label.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_page_layout_providers.dart';
-import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'app_language_tile.dart';
 import 'store_privacy_link.dart';
@@ -53,9 +52,6 @@ class AccountScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ui = AppUiControlsScope.of(context);
-    final previewIdentity = ref.watch(applicationIdentity58Provider);
-    final storeName =
-        previewIdentity?['app_name'] as String? ?? AppConfig.storeName;
     final bool isArabic =
         Localizations.localeOf(context).languageCode.toLowerCase() == 'ar';
     final AsyncValue<AuthSession?> authState = ref.watch(
@@ -92,16 +88,15 @@ class AccountScreen extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsetsDirectional.fromSTEB(
             cmsContentHorizontalPadding(pageLayout),
-            compactIos ? 8 : MobiShopSpacing.md,
+            compactIos ? 4 : MobiShopSpacing.md,
             cmsContentHorizontalPadding(pageLayout),
-            compactIos ? 16 : MobiShopSpacing.xl,
+            compactIos ? 4 : MobiShopSpacing.xl,
           ),
           children: <Widget>[
             if (summarySettings.enabled)
               CmsElementFrame(
                 component: summarySettings,
                 child: _AccountHeader(
-                  storeName: storeName,
                   session: session,
                   loading: authState.isLoading,
                   isArabic: isArabic,
@@ -131,7 +126,7 @@ class AccountScreen extends ConsumerWidget {
               ),
             ],
             if (menuSettings.enabled)
-              SizedBox(height: compactIos ? 8 : MobiShopSpacing.lg),
+              SizedBox(height: compactIos ? 4 : MobiShopSpacing.lg),
             if (menuSettings.enabled)
               CmsElementFrame(
                 component: menuSettings,
@@ -160,9 +155,10 @@ class AccountScreen extends ConsumerWidget {
                           ),
                         ),
                         if (!flat && index < visibleActions.length - 1)
-                          const Divider(),
+                          Divider(height: compactIos ? 8 : null),
                       ],
-                      if (!flat && visibleActions.isNotEmpty) const Divider(),
+                      if (!flat && visibleActions.isNotEmpty)
+                        Divider(height: compactIos ? 8 : null),
                       if (compactIos)
                         Theme(
                           data: Theme.of(context).copyWith(
@@ -176,40 +172,34 @@ class AccountScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-            const StorePrivacyLink(),
-            if (!AppConfig.isCmsPreview &&
-                AppConfig.commercePlatform == CommercePlatform.wooCommerce &&
-                ref.watch(accountDeletionReceiptProvider).value != null)
-              TextButton.icon(
-                key: const Key('account-deletion-status'),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AccountDeletionScreen(),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Expanded(child: StorePrivacyLink()),
+                if (session != null &&
+                    !AppConfig.isCmsPreview &&
+                    AppConfig.commercePlatform ==
+                        CommercePlatform.wooCommerce &&
+                    ref.watch(accountDeletionAvailabilityProvider).value ==
+                        true)
+                  Expanded(
+                    child: TextButton.icon(
+                      key: const Key('account-delete'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              AccountDeletionScreen(userId: session.user.id),
+                        ),
+                      ),
+                      icon: const Icon(Icons.person_remove_outlined),
+                      label: Text(isArabic ? 'حذف الحساب' : 'Delete account'),
+                    ),
                   ),
-                ),
-                icon: const Icon(Icons.pending_actions),
-                label: Text(
-                  isArabic ? 'حالة طلب حذف الحساب' : 'Account deletion status',
-                ),
-              ),
-            if (session != null &&
-                !AppConfig.isCmsPreview &&
-                AppConfig.commercePlatform == CommercePlatform.wooCommerce &&
-                ref.watch(accountDeletionAvailabilityProvider).value == true)
-              TextButton.icon(
-                key: const Key('account-delete'),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        AccountDeletionScreen(userId: session.user.id),
-                  ),
-                ),
-                icon: const Icon(Icons.person_remove_outlined),
-                label: Text(isArabic ? 'حذف الحساب' : 'Delete account'),
-              ),
+              ],
+            ),
             if (session != null &&
                 pageLayout.element('logout_button').enabled) ...<Widget>[
-              SizedBox(height: compactIos ? 4 : MobiShopSpacing.lg),
+              SizedBox(height: compactIos ? 0 : MobiShopSpacing.lg),
               CmsElementFrame(
                 component: pageLayout.element('logout_button'),
                 child: Center(
@@ -309,7 +299,6 @@ class AccountScreen extends ConsumerWidget {
 
 class _AccountHeader extends StatelessWidget {
   const _AccountHeader({
-    required this.storeName,
     required this.session,
     required this.loading,
     required this.isArabic,
@@ -321,7 +310,6 @@ class _AccountHeader extends StatelessWidget {
   });
 
   final AuthSession? session;
-  final String storeName;
   final bool loading;
   final bool isArabic;
   final VoidCallback onSignIn;
@@ -347,7 +335,7 @@ class _AccountHeader extends StatelessWidget {
         padding: EdgeInsets.symmetric(
           horizontal: MobiShopSpacing.md,
           vertical: Theme.of(context).platform == TargetPlatform.iOS
-              ? 8
+              ? 4
               : MobiShopSpacing.md,
         ),
         child: Row(
@@ -397,8 +385,8 @@ class _AccountHeader extends StatelessWidget {
                                   const SizedBox(height: 3),
                                   Text(
                                     isArabic
-                                        ? 'تابع طلباتك وبياناتك على $storeName'
-                                        : 'Manage your $storeName orders and details',
+                                        ? 'تابع طلباتك وبياناتك'
+                                        : 'Manage your orders and details',
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
                                           color: MobiShopColors.textSecondary,
@@ -465,14 +453,21 @@ class _AccountActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compactCards = !flat &&
+        Theme.of(context).platform == TargetPlatform.iOS;
     return ListTile(
       key: Key('account-action-${action.id}'),
-      contentPadding: const EdgeInsets.symmetric(
+      visualDensity: compactCards
+          ? const VisualDensity(vertical: -1)
+          : null,
+      contentPadding: EdgeInsets.symmetric(
         horizontal: MobiShopSpacing.md,
-        vertical: MobiShopSpacing.xs,
+        vertical: compactCards
+            ? 0
+            : MobiShopSpacing.xs,
       ),
       minTileHeight: flat
-          ? (Theme.of(context).platform == TargetPlatform.iOS ? 52 : 64)
+          ? (Theme.of(context).platform == TargetPlatform.iOS ? 48 : 64)
           : null,
       leading: flat
           ? Icon(action.icon, size: 24, color: MobiShopColors.textPrimary)

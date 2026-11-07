@@ -431,7 +431,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 		if ( ! delete_transient( $code_key ) ) {
 			return new WP_Error(
 				'mobishop_auth_social_invalid_handoff',
-				__( 'The social sign-in request is invalid or expired.', 'mobi2app-connector' ),
+				__( 'The social sign-in request is invalid or expired.', 'mobishop' ),
 				array( 'status' => 401 )
 			);
 		}

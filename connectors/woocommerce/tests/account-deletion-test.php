@@ -1,5 +1,6 @@
 <?php
 /** Deterministic deletion/lifecycle tests; never calls a real store. */
+define('MOBISHOP_ACCOUNT_DELETION_LEGACY_TEST_ONLY',true);
 require __DIR__ . '/auth-endpoint-contract-test.php';
 
 $GLOBALS['delete_options'] = array();
@@ -80,6 +81,7 @@ class DeletionDb extends Mobishop_WPDB_Stub {
 	function esc_like($v){return addcslashes($v,'_%');}
 	function get_var(string $q) {
 		$this->last_error=''; [$sql,$a]=$this->prepared[$q]??array($q,array());
+		if(str_starts_with($sql,'SELECT GET_LOCK')&&isset($GLOBALS['delete_intent_lock_race'])){$race=$GLOBALS['delete_intent_lock_race'];unset($GLOBALS['delete_intent_lock_race']);$race();}
 		if(str_starts_with($sql,'SELECT option_value')) {
 			if(isset($GLOBALS['delete_before_option_read'])) { $f=$GLOBALS['delete_before_option_read'];$f($a[0]); }
 			if(!empty($GLOBALS['delete_flags']['receipt-read-once'])&&str_starts_with($a[0],'mobishop_deletion_receipt_v1_')) {unset($GLOBALS['delete_flags']['receipt-read-once']);$this->last_error='Synthetic one-time receipt read failure';return null;}
@@ -98,7 +100,7 @@ class DeletionDb extends Mobishop_WPDB_Stub {
 		$this->last_error=''; [$sql,$a]=$this->prepared[$q]??array($q,array());
 		if(str_starts_with($sql,'SELECT option_name, option_value')) {
 			$rows=array();$options=$GLOBALS['delete_options'];ksort($options);
-			foreach($options as $key=>$value) if(str_starts_with($key,'mobishop_deletion_receipt_v1_')&&$key>$a[1]) $rows[]=array('option_name'=>$key,'option_value'=>$value);
+			foreach($options as $key=>$value) if(str_starts_with($key,rtrim(stripslashes($a[0]),'%'))&&$key>$a[1]) $rows[]=array('option_name'=>$key,'option_value'=>$value);
 			return array_slice($rows,0,20);
 		}
 		if(str_starts_with($sql,'SELECT id, coupon_id')) {
@@ -117,6 +119,7 @@ class DeletionDb extends Mobishop_WPDB_Stub {
 			$GLOBALS['delete_options'][$a[1]]=$a[0]; return 1;
 		}
 		if(str_starts_with($sql,'DELETE FROM wp_options')) {
+			if(!empty($GLOBALS['delete_flags']['intent-cleanup-failure'])&&str_starts_with($a[0],'mobishop_deletion_intent_v1_'))return false;
 			if(($GLOBALS['delete_options'][$a[0]]??null)!==$a[1]) return 0;
 			unset($GLOBALS['delete_options'][$a[0]]);return 1;
 		}

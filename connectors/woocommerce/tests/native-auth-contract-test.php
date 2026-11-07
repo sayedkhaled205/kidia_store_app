@@ -140,8 +140,8 @@ function delete_transient( $key ) { unset( $GLOBALS['native_transients'][$key] )
 function maybe_serialize( $value ) { return is_array( $value ) || is_object( $value ) ? serialize( $value ) : $value; }
 function wp_cache_delete( $key, $group = '' ) {}
 function wp_schedule_single_event( $timestamp, $hook, $args = array() ) { return true; }
-function get_user_meta( $id, $key = '', $single = false ) { $value = $GLOBALS['native_meta'][(int) $id][$key] ?? null; return $value === null ? ( $single ? '' : array() ) : $value; }
-function update_user_meta( $id, $key, $value ) { if (($GLOBALS['native_fail_meta'] ?? '') === $key) return false; $GLOBALS['native_meta'][(int) $id][$key] = $value; return true; }
+function get_user_meta( $id, $key = '', $single = false ) { $value = $GLOBALS['native_meta'][(int) $id][$key] ?? null; if ( ! empty( $GLOBALS['native_meta_rows_format'] ) ) return $single ? ( $value[0] ?? '' ) : ( $value ?? array() ); return $value === null ? ( $single ? '' : array() ) : ( $single ? $value : array( $value ) ); }
+function update_user_meta( $id, $key, $value ) { if (str_starts_with((string) $key, '_mobishop_phone_firebase_identity_') && ($GLOBALS['native_meta'][(int) $id][$key] ?? null) === $value) return false; if (($GLOBALS['native_fail_meta'] ?? '') === $key) return false; $GLOBALS['native_meta'][(int) $id][$key] = $value; return true; }
 function wp_delete_user( $id, $reassign = 0 ) { unset($GLOBALS['native_users'][(int)$id], $GLOBALS['native_meta'][(int)$id]); return true; }
 function delete_user_meta( $id, $key, $value = '' ) { unset( $GLOBALS['native_meta'][(int) $id][$key] ); return true; }
 function get_current_user_id() { return $GLOBALS['website_user'] ?? 0; }
@@ -993,6 +993,39 @@ native_assert( $web_proof['status'] === 'registration_required', 'Trusted websit
 native_rejected( native_phone( $endpoint, $verifier, '+201077777772', array('client_channel'=>'website') ), 'Request channel cannot opt the public native endpoint into a different trusted project' );
 $GLOBALS['native_options']['mobishop_native_auth_settings'] = $saved_native_settings;
 
+// Verified OTP linkage belongs only to the successfully selected account.
+native_clear_rate();
+foreach (array(3001,3002) as $id) {
+    $GLOBALS['native_users'][$id] = array('login'=>'link-'.$id,'email'=>'link-'.$id.'@example.test','password'=>'fixture-password','name'=>'Link Fixture','roles'=>array('customer'));
+    $GLOBALS['native_meta'][$id] = array('kidia_login_phone'=>'+201077777773','_mobishop_firebase_uid'=>'existing-apple-uid');
+}
+$key = '_mobishop_phone_firebase_identity_'.hash('sha256','test-project|fixture-firebase-user');
+$before_meta = $GLOBALS['native_meta'];
+$picker = native_data(native_phone($endpoint,$verifier,'+201077777773'),'Linkage account picker');
+native_assert($GLOBALS['native_meta'] === $before_meta, 'Account picker writes no linkage before selection');
+native_data(native_select($endpoint,$picker['ticket'],$verifier,3001),'Linkage selected account');
+native_assert(get_user_meta(3001,$key,true) === array('project'=>'test-project','uid'=>'fixture-firebase-user'), 'Verified project and UID persist for the selected account');
+native_assert(get_user_meta(3002,$key,true) === '' && get_user_meta(3001,'_mobishop_firebase_uid',true) === 'existing-apple-uid', 'Unselected shared-phone account and Apple metadata remain unchanged');
+$repeat = native_data(native_phone($endpoint,$verifier,'+201077777773'),'Repeat identity picker');
+native_data(native_select($endpoint,$repeat['ticket'],$verifier,3001),'Unchanged identity linkage remains idempotent');
+$before_meta = $GLOBALS['native_meta'];
+native_rejected(native_phone($endpoint,$verifier,'+201077777773',array('id_token'=>native_jwt(array_merge(native_phone_claims('+201077777773'),array('aud'=>'wrong-project'))))),'Invalid proof cannot link');
+native_assert($GLOBALS['native_meta'] === $before_meta, 'Invalid signed claims cause no metadata writes');
+$second_claims = native_phone_claims('+201077777773'); $second_claims['sub']='second-verified-uid';
+$picker = native_data(native_phone($endpoint,$verifier,'+201077777773',array('id_token'=>native_jwt($second_claims))),'Second UID picker');
+native_data(native_select($endpoint,$picker['ticket'],$verifier,3001),'Second UID selected');
+$second_key='_mobishop_phone_firebase_identity_'.hash('sha256','test-project|second-verified-uid');
+native_assert(get_user_meta(3001,$key,true) !== '' && get_user_meta(3001,$second_key,true) === array('project'=>'test-project','uid'=>'second-verified-uid'), 'Multiple verified UIDs coexist without replacing earlier linkage');
+$picker = native_data(native_phone($endpoint,$verifier,'+201077777773'),'Shared UID second account picker');
+native_data(native_select($endpoint,$picker['ticket'],$verifier,3002),'Shared UID second account selection');
+native_assert(get_user_meta(3002,$key,true) === get_user_meta(3001,$key,true), 'One verified phone UID may link to independently selected shared-phone accounts');
+$third_claims=$second_claims; $third_claims['sub']='write-fails-uid';
+$picker=native_data(native_phone($endpoint,$verifier,'+201077777773',array('id_token'=>native_jwt($third_claims))),'Failed persistence picker');
+$GLOBALS['native_fail_meta']='_mobishop_phone_firebase_identity_'.hash('sha256','test-project|write-fails-uid');
+$before_issued=count($GLOBALS['native_issued']);
+native_rejected(native_select($endpoint,$picker['ticket'],$verifier,3001),'Linkage persistence failure is closed');
+native_assert(count($GLOBALS['native_issued']) === $before_issued && get_user_meta(3001,$GLOBALS['native_fail_meta'],true) === '', 'Failed linkage persistence issues no session');
+unset($GLOBALS['native_fail_meta']);
 echo 'Native customer auth: '
 
  . $GLOBALS['native_checks'] . ' contract/security checks passed.' . PHP_EOL;

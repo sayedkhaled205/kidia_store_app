@@ -546,7 +546,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 	 *                                any session is revoked.
 	 * @return array|WP_Error array( 'user_id' => int ) on success.
 	 */
-	public function begin_self_deletion( WP_REST_Request $request, int $max_age_seconds, callable $mark_pending ) {
+	public function begin_self_deletion( WP_REST_Request $request, int $max_age_seconds, callable $mark_pending, bool $revoke = true ) {
 		$secure = $this->require_https();
 		if ( is_wp_error( $secure ) ) {
 			return $secure;
@@ -561,7 +561,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 		$outcome = 'not_found';
 		$result  = $this->mutate_sessions(
 			$user_id,
-			function ( array $current ) use ( $target, $max_age_seconds, $user_id, $mark_pending, &$outcome ): array {
+			function ( array $current ) use ( $target, $max_age_seconds, $user_id, $mark_pending, $revoke, &$outcome ): array {
 				$now = time();
 				$fresh_user = get_user_by( 'id', $user_id );
 				if ( ! $fresh_user instanceof WP_User || ! $this->is_allowed_customer( $fresh_user ) || ! $this->is_customer_ready( $fresh_user ) ) {
@@ -581,7 +581,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 						return $current;
 					}
 					$outcome = 'success';
-					return array();
+					return $revoke ? array() : $current;
 				}
 				return $current;
 			}

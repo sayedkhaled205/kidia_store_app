@@ -11,6 +11,9 @@ import 'package:mobishop_store_app/features/auth/data/storage/auth_session_store
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/providers/native_auth_providers.dart';
+import 'package:mobishop_store_app/features/auth/presentation/auth_screen.dart';
+import '../../auth/support/idle_native_auth_actions.dart';
 
 AuthSession session(String token, {int id = 7}) => AuthSession(
   token: token,
@@ -188,27 +191,142 @@ void main() {
     );
   }
 
-  test(
-    'receipts persist, are store scoped and cannot be replaced by another account',
-    () async {
-      final a = AccountDeletionReceiptStore('https://a.example.invalid');
-      final same = AccountDeletionReceiptStore('https://A.example.invalid/');
-      final b = AccountDeletionReceiptStore('https://b.example.invalid');
-      final receipts = await Future.wait([
-        a.prepare(7, 'token'),
-        same.prepare(7, 'token'),
-      ]);
-      expect(receipts[0].receipt, matches(RegExp(r'^[a-f0-9]{64}$')));
-      expect(receipts[0].receipt, receipts[1].receipt);
-      expect((await same.read())?.matchesSession('token'), true);
-      expect((await b.read()), null);
-      await expectLater(a.prepare(8, 'another-account'), throwsStateError);
-      await a.clear('wrong-capability');
-      expect(await a.read(), isNotNull);
-      await a.clear(receipts[0].receipt);
-      expect(await a.read(), null);
-    },
-  );
+  for (final outcome in ['cancelled', 'unchanged', 'fresh', 'other-account']) {
+    testWidgets('deletion reauthentication: $outcome', (tester) async {
+      final auth = _Auth(session('original'));
+      final api = _Deletion('stale');
+      final receipts = AccountDeletionReceiptStore(
+        'https://reauth.example.invalid',
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authControllerProvider.overrideWith(() => auth),
+            accountDeletionTransportProvider.overrideWithValue(api),
+            accountDeletionReceiptStoreProvider.overrideWithValue(receipts),
+            nativeAuthActionsProvider.overrideWithValue(
+              IdleNativeAuthActions(),
+            ),
+          ],
+          child: const MaterialApp(home: AccountDeletionScreen(userId: 7)),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm-account-deletion')));
+      await tester.pump();
+      await tester.ensureVisible(
+        find.byKey(const Key('request-account-deletion')),
+      );
+      await tester.tap(find.byKey(const Key('request-account-deletion')));
+      await tester.pumpAndSettle();
+      final receipt = (await receipts.read())!.receipt;
+      await tester.ensureVisible(find.text('Sign in to confirm'));
+      await tester.tap(find.text('Sign in to confirm'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AuthScreen), findsOneWidget);
+      if (outcome == 'fresh') auth.replace(session('fresh'));
+      if (outcome == 'other-account') auth.replace(session('fresh', id: 8));
+      Navigator.of(
+        tester.element(find.byType(AuthScreen)),
+      ).pop(outcome != 'cancelled');
+      await tester.pumpAndSettle();
+      expect(
+        api.calls,
+        1,
+        reason: 'Signing in never submits deletion automatically',
+      );
+      expect((await receipts.read())!.receipt, receipt);
+      if (outcome == 'fresh') {
+        final delete = find.byKey(const Key('request-account-deletion'));
+        expect(tester.widget<FilledButton>(delete).onPressed, isNull);
+        await tester.ensureVisible(
+          find.byKey(const Key('confirm-account-deletion')),
+        );
+        await tester.tap(find.byKey(const Key('confirm-account-deletion')));
+        await tester.pump();
+        await tester.ensureVisible(delete);
+        await tester.tap(delete);
+        await tester.pumpAndSettle();
+        expect(api.calls, 2);
+        expect(find.text('Account deletion requested'), findsOneWidget);
+        expect((await receipts.read())!.receipt, receipt);
+      } else if (outcome == 'other-account') {
+        expect(find.byKey(const Key('request-account-deletion')), findsNothing);
+        expect(find.textContaining('Your account changed'), findsOneWidget);
+      } else {
+        expect(find.text('Sign in to confirm'), findsOneWidget);
+        expect(find.byKey(const Key('request-account-deletion')), findsNothing);
+      }
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets('completed receipt is recovered only for the screen owner', (
+    tester,
+  ) async {
+    final receipts = AccountDeletionReceiptStore(
+      'https://owners.example.invalid',
+    );
+    final first = await receipts.prepare(7, 'first');
+    await receipts.saveAppleCheckpoint(
+      AppleDeletionCheckpoint(
+        receipt: first.receipt,
+        userId: 7,
+        sessionHash: first.sessionHash,
+        intentId: 'b' * 64,
+      ),
+    );
+    final second = await receipts.prepare(8, 'second');
+    final sessions = MemoryAuthSessionStore()..value = session('second', id: 8);
+    final api = _Deletion('pending')..status = 'completed';
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authSessionStoreProvider.overrideWithValue(sessions),
+          authControllerProvider.overrideWith(() => _Auth(sessions.value!)),
+          accountDeletionReceiptStoreProvider.overrideWithValue(receipts),
+          accountDeletionTransportProvider.overrideWithValue(api),
+        ],
+        child: const MaterialApp(home: AccountDeletionScreen(userId: 8)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(api.checkedReceipts, [second.receipt]);
+    expect(find.text('Account deleted'), findsOneWidget);
+    expect(find.byKey(const Key('check-deletion-status')), findsNothing);
+    expect(sessions.value, isNull);
+    await tester.tap(find.text('Done'));
+    await tester.pumpAndSettle();
+    expect(await receipts.read(userId: 8), isNull);
+    expect((await receipts.read(userId: 7))?.receipt, first.receipt);
+    expect(
+      (await receipts.read(userId: 7))?.appleCheckpoint?.intentId,
+      'b' * 64,
+    );
+    expect(api.calls, 0);
+  });
+
+  test('receipts persist separately for every account and merchant', () async {
+    final a = AccountDeletionReceiptStore('https://a.example.invalid');
+    final same = AccountDeletionReceiptStore('https://A.example.invalid/');
+    final b = AccountDeletionReceiptStore('https://b.example.invalid');
+    final receipts = await Future.wait([
+      a.prepare(7, 'token'),
+      same.prepare(7, 'token'),
+    ]);
+    expect(receipts[0].receipt, matches(RegExp(r'^[a-f0-9]{64}$')));
+    expect(receipts[0].receipt, receipts[1].receipt);
+    expect((await same.read())?.matchesSession('token'), true);
+    expect((await b.read()), null);
+    final other = await a.prepare(8, 'another-account');
+    expect(other.receipt, isNot(receipts[0].receipt));
+    expect((await a.read(userId: 7))?.receipt, receipts[0].receipt);
+    await a.clear('wrong-capability');
+    expect(await a.read(), isNotNull);
+    await a.clear(receipts[0].receipt);
+    expect(await a.read(userId: 7), null);
+    expect((await a.read(userId: 8))?.receipt, other.receipt);
+  });
 }
 
 class _Auth extends AuthController {
@@ -229,15 +347,21 @@ class _DelayedReceiptStore extends AccountDeletionReceiptStore {
   }
 }
 
-class _Deletion implements CustomerAccountDeletionTransport {
+class _Deletion
+    implements
+        CustomerAccountDeletionTransport,
+        CustomerAccountIdentityDeletionTransport {
   _Deletion(this.result);
   final String result;
   int calls = 0;
+  final checkedReceipts = <String>[];
   String status = 'unknown';
   @override
-  Future<Map<String, dynamic>> deletionStatus(String receipt) async => {
-    'status': status,
-  };
+  Future<Map<String, dynamic>> deletionStatus(String receipt) async {
+    checkedReceipts.add(receipt);
+    return {'status': status};
+  }
+
   @override
   Future<Map<String, dynamic>> deletionAvailability() async => {
     'available': true,
@@ -246,7 +370,30 @@ class _Deletion implements CustomerAccountDeletionTransport {
   Future<Map<String, dynamic>> requestDeletion({
     required String receipt,
     required String expectedSession,
+  }) async => throw StateError('Legacy deletion must not be called');
+  @override
+  Future<Map<String, dynamic>> prepareIdentityDeletion({
+    required String receipt,
+    required String expectedSession,
+  }) async => {
+    'status': 'prepared',
+    'user_id': 7,
+    'apple_revocation_required': false,
+    'intent_id': 'b' * 64,
+  };
+  @override
+  Future<Map<String, dynamic>> validateAppleDeletion({
+    required String receipt,
+    required String expectedSession,
+    required String idToken,
+  }) async => throw StateError('Non-Apple fixture must not require Apple');
+  @override
+  Future<Map<String, dynamic>> finalizeIdentityDeletion({
+    required String receipt,
+    required String expectedSession,
+    required bool appleRevoked,
   }) async {
+    expect(appleRevoked, false);
     calls++;
     expect(receipt, matches(RegExp(r'^[a-f0-9]{64}$')));
     if (result == 'lost-response') {
@@ -256,7 +403,7 @@ class _Deletion implements CustomerAccountDeletionTransport {
         message: 'Synthetic lost response after acceptance',
       );
     }
-    if (result == 'stale') {
+    if (result == 'stale' && expectedSession != 'fresh') {
       throw const CustomerAccountTransportException(
         kind: CustomerAccountTransportFailureKind.unauthorized,
         message: 'Synthetic reauthentication requirement',

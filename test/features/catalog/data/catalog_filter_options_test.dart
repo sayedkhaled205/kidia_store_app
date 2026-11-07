@@ -27,6 +27,30 @@ StoreApiResponse response(List data, {int? pages}) => StoreApiResponse(
 
 void main() {
   test(
+    'side filters fetch all tag pages without waiting for hidden attributes',
+    () async {
+      final client = _Client((path, query) async {
+        if (!path.endsWith('/tags')) {
+          return Completer<StoreApiResponse>().future;
+        }
+        final page = query['page'] as int;
+        return response([
+          {'id': page, 'name': 'Tag $page'},
+        ], pages: 2);
+      });
+      final options = await StoreApiFilterOptions(
+        client,
+      ).getFilterOptions(includeAttributes: false);
+      expect(options.tags.map((tag) => tag.id), [1, 2]);
+      expect(options.sizes, isEmpty);
+      expect(options.colors, isEmpty);
+      expect(
+        client.calls,
+        List.filled(2, '/wp-json/wc/store/v1/products/tags'),
+      );
+    },
+  );
+  test(
     'malformed imported markup is omitted and readable labels stay intact',
     () {
       expect(catalogFilterLabel('i/>'), '');

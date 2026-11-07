@@ -19,12 +19,16 @@ void main() {
       );
       final brands = repository.getFilterBrands();
       final facets = repository.getFilterOptions();
+      final tagsOnly = repository.getFilterOptions(includeAttributes: false);
       expect(calls, 1);
       pending.complete({
         'filter_options': {
           'brands': [
             {'id': 5, 'name': 'Kids', 'slug': 'kids', 'count': 3},
             {'id': 0},
+          ],
+          'sizes': [
+            {'taxonomy': 'pa_size', 'term': 's', 'label': 'Small'},
           ],
           'tags': [
             {'id': 7, 'label': 'Trousers'},
@@ -33,6 +37,10 @@ void main() {
       });
       expect((await brands).single.id, 5);
       expect((await facets).tags.single.id, 7);
+      expect((await facets).sizes, isNotEmpty);
+      expect((await tagsOnly).tags.single.id, 7);
+      expect((await tagsOnly).brands.single.id, 5);
+      expect((await tagsOnly).sizes, isEmpty);
       await repository.getFilterBrands();
       expect(calls, 1);
       revision++;

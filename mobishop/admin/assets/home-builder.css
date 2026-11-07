@@ -943,6 +943,10 @@
 .mobishop-slider-editor-item > .mobishop-repeatable-field--button-label { grid-row: 3; }
 .mobishop-slider-editor-item > .mobishop-repeatable-field--button-link,
 .mobishop-slider-editor-item > .mobishop-repeatable-field--button-position { grid-row: 4; }
+/* In-app actions use two fields; keep them clear of slide text and position. */
+.mobishop-slider-editor-item > .mobishop-repeatable-field--action-value,
+.mobishop-slider-editor-item > .mobishop-repeatable-field--action-type { grid-row: 4; }
+.mobishop-slider-editor-item:has(> .mobishop-repeatable-field--action-type) > .mobishop-repeatable-field--button-position { grid-row: 5; }
 .mobishop-slider-editor-item.mobishop-hero-block-item > .mobishop-repeatable-field--media {
 	grid-row: 2 / 5;
 	align-self: stretch;

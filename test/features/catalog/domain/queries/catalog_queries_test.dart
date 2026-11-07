@@ -4,6 +4,22 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 
 void main() {
   group('CatalogProductQuery', () {
+    test('Arabic display taxonomy returns to its canonical WordPress slug', () {
+      const canonical = 'pa_%d8%a7%d9%84%d9%85%d9%82%d8%a7%d8%b3';
+      for (final taxonomy in ['pa_المقاس', canonical]) {
+        final query = CatalogProductQuery(
+          search: 'بيزك',
+          attributes: [
+            CatalogAttributeFilter(taxonomy: taxonomy, terms: ['6y', '8y']),
+            CatalogAttributeFilter(taxonomy: 'pa_color', terms: ['red']),
+          ],
+        ).toStoreApiQuery();
+        expect(query['attributes[0][attribute]'], canonical);
+        expect(query['attributes[0][slug]'], '6y,8y');
+        expect(query['attributes[1][attribute]'], 'pa_color');
+        expect(query['attribute_relation'], 'and');
+      }
+    });
     test('normalizes pagination and serializes Store API filters', () {
       final CatalogProductQuery query = CatalogProductQuery(
         page: 0,
@@ -47,10 +63,12 @@ void main() {
     });
 
     test('combined size and color require both attributes', () {
-      final serialized = CatalogProductQuery(attributes: [
-        CatalogAttributeFilter(taxonomy: 'pa_size', terms: ['s']),
-        CatalogAttributeFilter(taxonomy: 'pa_color', terms: ['blue']),
-      ]).toStoreApiQuery();
+      final serialized = CatalogProductQuery(
+        attributes: [
+          CatalogAttributeFilter(taxonomy: 'pa_size', terms: ['s']),
+          CatalogAttributeFilter(taxonomy: 'pa_color', terms: ['blue']),
+        ],
+      ).toStoreApiQuery();
       expect(serialized['attribute_relation'], 'and');
       expect(serialized['attributes[0][slug]'], 's');
       expect(serialized['attributes[1][slug]'], 'blue');

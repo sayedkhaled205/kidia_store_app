@@ -84,6 +84,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _active(int flow) => mounted && !_closing && flow == _flow;
 
   @override
+  void initState() {
+    super.initState();
+    // A failed background prefetch must not strand a newly opened sign-in page.
+    if (ref.read(nativeAuthConfigProvider).hasError) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.invalidate(nativeAuthConfigProvider);
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _flow++;
     _otpEpoch++;
@@ -468,8 +479,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                           visualDensity: VisualDensity.standard,
                                           tapTargetSize:
                                               MaterialTapTargetSize.shrinkWrap,
-                                          fixedSize: const Size.square(52),
-                                          minimumSize: const Size.square(52),
+                                          fixedSize: Size.square(
+                                            _ui.numberOr('auth_google_button_height', 52),
+                                          ),
+                                          minimumSize: Size.square(
+                                            _ui.numberOr('auth_google_button_height', 52),
+                                          ),
                                           padding: EdgeInsets.zero,
                                           backgroundColor: Colors.white,
                                           side: const BorderSide(

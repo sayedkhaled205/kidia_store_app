@@ -32,28 +32,35 @@ class CatalogRepositoryImpl
   final Stream<int>? _changes;
   StreamSubscription<int>? _changeSubscription;
   int _revision = 0;
-  Future<CatalogFilterOptions>? _filterOptions;
-  DateTime? _filterOptionsExpire;
+  final _filterOptions = <bool, Future<CatalogFilterOptions>>{};
+  final _filterOptionsExpire = <bool, DateTime>{};
   @override
-  Future<CatalogFilterOptions> getFilterOptions() async {
+  Future<CatalogFilterOptions> getFilterOptions({
+    bool includeAttributes = true,
+  }) async {
     final source = _remoteDataSource;
     if (source is! CatalogFilterOptionsSource) {
       return const CatalogFilterOptions();
     }
-    if (_filterOptions != null &&
-        _filterOptionsExpire != null &&
-        _now().isBefore(_filterOptionsExpire!)) {
-      return _filterOptions!;
+    final cached = _filterOptions[includeAttributes];
+    final expiry = _filterOptionsExpire[includeAttributes];
+    if (cached != null && expiry != null && _now().isBefore(expiry)) {
+      return cached;
     }
     final request = (source as CatalogFilterOptionsSource)
-        .getFilterOptions()
+        .getFilterOptions(includeAttributes: includeAttributes)
         .timeout(const Duration(seconds: 15));
-    _filterOptions = request;
-    _filterOptionsExpire = _now().add(const Duration(minutes: 5));
+    _filterOptions[includeAttributes] = request;
+    _filterOptionsExpire[includeAttributes] = _now().add(
+      const Duration(minutes: 5),
+    );
     try {
       return await request;
     } catch (_) {
-      if (identical(_filterOptions, request)) _filterOptions = null;
+      if (identical(_filterOptions[includeAttributes], request)) {
+        _filterOptions.remove(includeAttributes);
+        _filterOptionsExpire.remove(includeAttributes);
+      }
       rethrow;
     }
   }
@@ -70,8 +77,8 @@ class CatalogRepositoryImpl
 
   void _clearProductReads() {
     _revision++;
-    _filterOptions = null;
-    _filterOptionsExpire = null;
+    _filterOptions.clear();
+    _filterOptionsExpire.clear();
     _products.clear();
     _variations.clear();
     _productRequests.clear();

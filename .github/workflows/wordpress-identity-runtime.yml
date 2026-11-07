@@ -1,0 +1,78 @@
+name: WordPress identity lifecycle
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/wordpress-identity-runtime.yml'
+      - 'tools/customer_identity/**'
+      - 'connectors/woocommerce/source/api/class-customer-auth-endpoint.php'
+      - 'connectors/woocommerce/source/api/class-customer-account-deletion.php'
+      - 'connectors/woocommerce/source/api/class-storefront-admin.php'
+
+permissions:
+  contents: read
+
+jobs:
+  wordpress-mysql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: kidia-ci-only
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: kidia_identity_ci
+        ports:
+          - '127.0.0.1:3306:3306'
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mysqli, mbstring, curl, openssl, zip
+          coverage: none
+          ini-values: memory_limit=512M
+      - name: Set disposable runtime paths
+        shell: bash
+        run: |
+          printf 'WP_PATH=%s/kidia-wordpress\nWP_CLI=%s/wp-cli.phar\n' "$RUNNER_TEMP" "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Lint integration test
+        run: php -l tools/customer_identity/tests/wordpress-runtime-test.php
+      - name: Install official WordPress and WooCommerce in disposable database
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar -o "$WP_CLI"
+          php "$WP_CLI" --info
+          mkdir -p "$WP_PATH"
+          php "$WP_CLI" core download --path="$WP_PATH" --version=latest --quiet
+          php "$WP_CLI" config create --path="$WP_PATH" --dbname=kidia_identity_ci \
+            --dbuser=root --dbpass=kidia-ci-only --dbhost=127.0.0.1:3306 --skip-check --quiet
+          php "$WP_CLI" config set WP_ENVIRONMENT_TYPE local --path="$WP_PATH" --quiet
+          php "$WP_CLI" config set DISABLE_WP_CRON true --raw --path="$WP_PATH" --quiet
+          php "$WP_CLI" core install --path="$WP_PATH" --url=https://kidia-identity.test \
+            --title='Disposable identity CI' --admin_user=ci-admin \
+            --admin_password=ci-admin-fixture-only --admin_email=ci-admin@example.invalid --skip-email --quiet
+          php "$WP_CLI" plugin deactivate --all --path="$WP_PATH" --quiet
+          php "$WP_CLI" plugin install woocommerce --version=10.9.4 --activate --path="$WP_PATH" --quiet
+          php "$WP_CLI" eval 'WC_Install::install();' --path="$WP_PATH" --quiet
+          mkdir -p "$WP_PATH/wp-content/mu-plugins"
+          cat > "$WP_PATH/wp-content/mu-plugins/kidia-ci-network.php" <<'PHP'
+          <?php
+          if (getenv('KIDIA_IDENTITY_RUNTIME_TEST') === '1') {
+              add_filter('pre_http_request', static fn() => new WP_Error('ci_network_disabled', 'No outbound HTTP in runtime fixture.'), PHP_INT_MAX);
+              add_filter('pre_wp_mail', static fn() => true, PHP_INT_MAX);
+          }
+          PHP
+      - name: Exercise real WordPress MySQL lifecycle with external provider stub only
+        env:
+          KIDIA_IDENTITY_RUNTIME_TEST: '1'
+        run: php "$WP_CLI" eval-file "$GITHUB_WORKSPACE/tools/customer_identity/tests/wordpress-runtime-test.php" --path="$WP_PATH"

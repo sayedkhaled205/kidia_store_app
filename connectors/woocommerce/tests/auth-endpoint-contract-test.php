@@ -121,12 +121,14 @@ class WP_Error {
 class WP_User {
 	public int $ID;
 	public string $user_email;
+	public string $user_login;
 	public string $display_name;
 	public array $roles;
 	public array $allcaps;
 
 	public function __construct( int $id, array $record ) {
 		$this->ID           = $id;
+		$this->user_login = (string)($record['login'] ?? 'customer-'.$id);
 		$this->user_email   = (string) $record['email'];
 		$this->display_name = (string) $record['display_name'];
 		$this->roles        = (array) $record['roles'];
