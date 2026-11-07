@@ -1,7 +1,8 @@
 # Customer identity erasure — staged, not deployed
 
-These services prepare the external-identity stage of customer account deletion.
-They are not connected to the live WordPress deletion worker or enabled on the server.
+The local connector now integrates the external-identity worker stage with durable
+prepare/proof/finalize intents, per-owner and per-UID reservations, and recovery.
+These changes are not deployed or enabled on the live server.
 The checked-in configuration defaults to disabled with no store/project mappings.
 
 The Auth project must be explicitly mapped by authorized store ID. It is independent
@@ -16,9 +17,13 @@ creation generation, deletes, and confirms absence with another lookup. Google
 does not offer an atomic generation-conditional deletion. No account email, phone,
 provider body, credential or upstream exception is returned or logged.
 
-Before enabling any route, finish and verify: durable ownership linkage (including
-shared UIDs), deletion intent/receipt ownership, server worker retry and recovery,
-Apple authorization revocation, and the external account-deletion page. Never
+Before enabling any route, verify the deployed integration and real database
+concurrency, exclusive Auth-project ownership, Apple authorization revocation in
+a disposable test workflow, and the external account-deletion page. Approved
+reservations cannot expire by time: a previously approved device can resume its
+SDK operation later. Provisional orphan reservations need explicit reconciliation.
+The client records known SDK success before finalization; a crash before that
+checkpoint remains ambiguous and must not be inferred from Firebase absence. Never
 activate these endpoints with a notification-only token without explicitly approving
 its expanded deletion capability. Do not report account deletion complete based on
 these clients alone. Do not test deletion against real customer accounts.
