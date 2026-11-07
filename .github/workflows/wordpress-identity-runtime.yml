@@ -31,9 +31,6 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=12
-    env:
-      WP_PATH: ${{ runner.temp }}/kidia-wordpress
-      WP_CLI: ${{ runner.temp }}/wp-cli.phar
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -42,6 +39,10 @@ jobs:
           extensions: mysqli, mbstring, curl, openssl, zip
           coverage: none
           ini-values: memory_limit=512M
+      - name: Set disposable runtime paths
+        shell: bash
+        run: |
+          printf 'WP_PATH=%s/kidia-wordpress\nWP_CLI=%s/wp-cli.phar\n' "$RUNNER_TEMP" "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - name: Lint integration test
         run: php -l tools/customer_identity/tests/wordpress-runtime-test.php
       - name: Install official WordPress and WooCommerce in disposable database
