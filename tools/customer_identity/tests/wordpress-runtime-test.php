@@ -108,7 +108,12 @@ for($turn=0;$turn<40&&MobiShop_Customer_Account_Deletion::is_pending($target);$t
 }
 runtime_check(!MobiShop_Customer_Account_Deletion::is_pending($target)&&get_user_by('id',$target)===false,'Actual worker finishes and removes disposable WordPress account');
 runtime_check((int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->usermeta} WHERE user_id=%d",$target))===0,'Owned profile, wishlist and session metadata are erased from MySQL');
-runtime_check(get_comment($review)===null&&(int)wc_get_order($order->get_id())->get_customer_id()===0,'Own review is erased and retained order is detached');
+runtime_check((int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->comments} WHERE comment_ID=%d",$review))===0,'Own review is erased from real MySQL');
+// The factory can return an object cached earlier in this same long-lived CLI request.
+// A new order reads persisted storage, as a subsequent customer/admin request would.
+$detachedOrder=new WC_Order($order->get_id());
+echo 'Persisted retained order detached: '.((int)$detachedOrder->get_customer_id()===0?'yes':'no').PHP_EOL;
+runtime_check($detachedOrder->get_id()===$order->get_id()&&(int)$detachedOrder->get_customer_id()===0,'Retained order persists with account association detached');
 runtime_check(get_user_by('id',$other) instanceof WP_User&&get_user_meta($other,'_mobishop_wishlist_product_ids',true)===array(789)
     &&get_user_meta($other,'billing_address_1',true)==='Unrelated synthetic address'&&get_comment($otherReview)!==null
     &&(int)wc_get_order($otherOrder->get_id())->get_customer_id()===$other,'Unrelated customer, profile, wishlist, review and order remain unchanged');
