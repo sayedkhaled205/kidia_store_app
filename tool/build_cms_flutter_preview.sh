@@ -33,7 +33,8 @@ node "$ROOT/tool/normalize_cms_preview_artifacts.mjs" "$OUTPUT"
 # omit debug symbols plus WASM renderers that this build cannot select.
 rm -f \
   "$OUTPUT/canvaskit/canvaskit.js.symbols" \
-  "$OUTPUT/canvaskit/chromium/canvaskit.js.symbols"
+  "$OUTPUT/canvaskit/chromium/canvaskit.js.symbols" \
+  "$OUTPUT/canvaskit/webparagraph/canvaskit.js.symbols"
 rm -rf \
   "$OUTPUT/canvaskit/experimental_webparagraph" \
   "$OUTPUT/canvaskit/skwasm.js" \
