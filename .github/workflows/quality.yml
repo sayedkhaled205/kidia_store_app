@@ -101,6 +101,7 @@ jobs:
         run: |
           php connectors/woocommerce/tests/account-deletion-test.php
           php connectors/woocommerce/tests/native-apple-auth-test.php
+          php connectors/woocommerce/tests/native-apple-deletion-proof-test.php
           php connectors/woocommerce/tests/auth-boundary-regressions-test.php
           php connectors/woocommerce/tests/native-auth-completion-race-test.php
           php integrations/woocommerce/kidia-auth/website-auth-logic-regression-test.php

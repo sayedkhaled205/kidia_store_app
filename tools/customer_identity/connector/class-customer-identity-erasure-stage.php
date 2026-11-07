@@ -26,7 +26,8 @@ final class MobiShop_Customer_Identity_Erasure_Stage {
     /** One bounded provider step. Persist returned state before advancing the merchant worker. */
     public static function advance(int $id, array $state): array {
         if (($state['version'] ?? null) !== 1 || ($state['user_id'] ?? null) !== $id
-            || !is_array($state['entries'] ?? null) || !array_is_list($state['entries'])
+            || !is_array($state['entries'] ?? null)
+            || ($state['entries'] !== [] && array_keys($state['entries']) !== range(0, count($state['entries']) - 1))
             || !is_int($state['cursor'] ?? null) || $state['cursor'] < 0 || $state['cursor'] > count($state['entries'])) {
             throw new RuntimeException('Invalid identity deletion state.');
         }
