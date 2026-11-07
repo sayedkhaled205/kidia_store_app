@@ -29,6 +29,24 @@ abstract interface class CustomerAccountDeletionTransport {
   Future<Map<String, dynamic>> deletionStatus(String receipt);
 }
 
+/// A separate capability so older transports cannot silently bypass identity erasure.
+abstract interface class CustomerAccountIdentityDeletionTransport {
+  Future<Map<String, dynamic>> prepareIdentityDeletion({
+    required String receipt,
+    required String expectedSession,
+  });
+  Future<Map<String, dynamic>> validateAppleDeletion({
+    required String receipt,
+    required String expectedSession,
+    required String idToken,
+  });
+  Future<Map<String, dynamic>> finalizeIdentityDeletion({
+    required String receipt,
+    required String expectedSession,
+    required bool appleRevoked,
+  });
+}
+
 enum CustomerAccountTransportFailureKind {
   configuration,
   invalidInput,
@@ -62,7 +80,10 @@ class CustomerAccountTransportException implements Exception {
 }
 
 class DioCustomerAccountApiTransport
-    implements CustomerAccountApiTransport, CustomerAccountDeletionTransport {
+    implements
+        CustomerAccountApiTransport,
+        CustomerAccountDeletionTransport,
+        CustomerAccountIdentityDeletionTransport {
   DioCustomerAccountApiTransport({
     required Uri storeUri,
     required this.authTokenReader,
@@ -111,6 +132,48 @@ class DioCustomerAccountApiTransport
   @override
   Future<Map<String, dynamic>> deletionAvailability() =>
       _request('customer/account/deletion', method: 'GET', authenticated: true);
+
+  @override
+  Future<Map<String, dynamic>> prepareIdentityDeletion({
+    required String receipt,
+    required String expectedSession,
+  }) => _request(
+    'customer/account/deletion/prepare',
+    method: 'POST',
+    authenticated: true,
+    expectedSession: expectedSession,
+    body: {'receipt': receipt},
+  );
+
+  @override
+  Future<Map<String, dynamic>> validateAppleDeletion({
+    required String receipt,
+    required String expectedSession,
+    required String idToken,
+  }) => _request(
+    'customer/account/deletion/apple-proof',
+    method: 'POST',
+    authenticated: true,
+    expectedSession: expectedSession,
+    body: {'receipt': receipt, 'id_token': idToken, 'platform': 'ios'},
+  );
+
+  @override
+  Future<Map<String, dynamic>> finalizeIdentityDeletion({
+    required String receipt,
+    required String expectedSession,
+    required bool appleRevoked,
+  }) => _request(
+    'customer/account/deletion/finalize',
+    method: 'POST',
+    authenticated: true,
+    expectedSession: expectedSession,
+    body: {
+      'confirmation': 'delete-my-account',
+      'receipt': receipt,
+      'apple_revoked': appleRevoked,
+    },
+  );
 
   @override
   Future<Map<String, dynamic>> requestDeletion({

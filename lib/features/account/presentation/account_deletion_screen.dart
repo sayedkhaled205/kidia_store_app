@@ -1,11 +1,23 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import '../../auth/presentation/auth_screen.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../auth/presentation/providers/native_auth_providers.dart';
+import '../../auth/data/native_auth_sdk.dart';
+import '../application/account_identity_deletion.dart';
 import '../data/network/customer_account_api_transport.dart';
 import '../data/storage/account_deletion_receipt_store.dart';
 import 'providers/customer_account_providers.dart';
+
+final accountDeletionAppleSdkProvider =
+    Provider.autoDispose<NativeAppleDeletionSdk>((ref) {
+      final sdk = FirebaseNativeAuthSdk();
+      ref.onDispose(() => unawaited(sdk.cancel()));
+      return sdk;
+    });
 
 final accountDeletionTransportProvider =
     Provider<CustomerAccountDeletionTransport>((ref) {
@@ -52,22 +64,27 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
   bool _restoring = true;
   bool _reauth = false;
   bool _unconfirmedReceipt = false;
+  bool _preparedReceipt = false;
+  late final String _storeScope;
   String? _error;
   String? _deletedToken;
   AccountDeletionReceipt? _receipt;
+  int? get _targetUserId => widget.userId ?? _receipt?.userId;
+  bool get _sameMerchant => AppConfig.apiBaseUrl == _storeScope;
   bool get _ar => Localizations.localeOf(context).languageCode == 'ar';
   String _text(String ar, String en) => _ar ? ar : en;
 
   @override
   void initState() {
     super.initState();
+    _storeScope = AppConfig.apiBaseUrl;
     Future.microtask(_restoreReceipt);
   }
 
   Future<void> _restoreReceipt() async {
     try {
       final saved = await ref.read(accountDeletionReceiptStoreProvider).read();
-      if (!mounted) return;
+      if (!mounted || !_sameMerchant) return;
       if (saved != null &&
           (widget.userId == null || saved.userId == widget.userId)) {
         _receipt = saved;
@@ -89,20 +106,26 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
 
   Future<bool> _recoverAccepted() async {
     final receipt = _receipt;
-    if (receipt == null) return false;
+    if (receipt == null || !_sameMerchant) return false;
     final response = await ref
         .read(accountDeletionTransportProvider)
         .deletionStatus(receipt.receipt);
     final status = response['status'];
-    if (status == 'unknown' && mounted) {
-      setState(() => _unconfirmedReceipt = true);
+    if (mounted &&
+        _sameMerchant &&
+        (status == 'unknown' || status == 'prepared')) {
+      setState(() {
+        _unconfirmedReceipt = status == 'unknown';
+        _preparedReceipt = status == 'prepared';
+      });
     }
     if (status != 'pending' && status != 'completed') return false;
-    if (!mounted) return true;
+    if (!mounted || !_sameMerchant) return true;
     setState(() {
       _pending = true;
       _completed = status == 'completed';
       _unconfirmedReceipt = false;
+      _preparedReceipt = false;
       _error = null;
     });
     final current = ref.read(authControllerProvider).value;
@@ -125,7 +148,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       _error = null;
     });
     try {
-      if (!await _recoverAccepted() && mounted) {
+      if (!await _recoverAccepted() && mounted && !_preparedReceipt) {
         setState(
           () => _error = _text(
             'لم يتم تأكيد طلب الحذف. لو انتهت الجلسة، سجّل الدخول مرة أخرى ثم أعد الطلب.',
@@ -152,12 +175,21 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
     if (_busy ||
         _restoring ||
         !_confirmed ||
+        !_sameMerchant ||
         session == null ||
         session.isExpired ||
-        session.user.id != widget.userId) {
+        session.user.id != _targetUserId) {
       return;
     }
     final token = session.token;
+    bool isCurrentAccount() {
+      if (!mounted || !_sameMerchant) return false;
+      final current = ref.read(authControllerProvider).value;
+      return current?.user.id == session.user.id &&
+          current?.token == token &&
+          current?.isExpired == false;
+    }
+
     setState(() {
       _busy = true;
       _error = null;
@@ -165,26 +197,55 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
     try {
       _receipt = await ref
           .read(accountDeletionReceiptStoreProvider)
-          .prepare(widget.userId!, token);
+          .prepare(session.user.id, token);
       ref.invalidate(accountDeletionReceiptProvider);
-      final current = ref.read(authControllerProvider).value;
-      if (!mounted ||
-          current?.user.id != session.user.id ||
-          current?.token != token ||
-          current?.isExpired == true) {
+      if (!isCurrentAccount()) {
         throw StateError('The account changed before confirmation');
       }
-      final result = await ref
-          .read(accountDeletionTransportProvider)
-          .requestDeletion(receipt: _receipt!.receipt, expectedSession: token);
-      if (result['status'] != 'pending' || result['user_id'] != widget.userId) {
-        throw const FormatException('Invalid deletion response');
+      final transport = ref.read(accountDeletionTransportProvider);
+      if (transport is! CustomerAccountIdentityDeletionTransport) {
+        throw StateError('Identity deletion is unavailable');
       }
+      await requestAccountIdentityDeletion(
+        transport: transport as CustomerAccountIdentityDeletionTransport,
+        receipt: _receipt!.receipt,
+        expectedSession: token,
+        userId: session.user.id,
+        appleSdk: ref.read(accountDeletionAppleSdkProvider),
+        loadAppleConfig: () async {
+          if (ref.read(nativeAuthConfigProvider).hasError) {
+            ref.invalidate(nativeAuthConfigProvider);
+          }
+          final config = await ref.read(nativeAuthConfigProvider.future);
+          if (!config.allows('apple')) {
+            throw StateError('Apple sign-in is unavailable');
+          }
+          return {'firebase': config.firebase};
+        },
+        isApplePlatform: !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
+        isCurrentAccount: isCurrentAccount,
+      );
       _deletedToken = token;
-      if (mounted) setState(() => _pending = true);
+      if (mounted) {
+        setState(() {
+          _pending = true;
+          _preparedReceipt = false;
+          _unconfirmedReceipt = false;
+        });
+      }
       await ref
           .read(authControllerProvider.notifier)
           .completeAccountDeletion(token);
+    } on AppleDeletionRequiresIos {
+      if (mounted) {
+        setState(() {
+          _preparedReceipt = true;
+          _error = _text(
+            'الحساب مرتبط بأبل. أكمل حذف الحساب من تطبيق الآيفون، أو تواصل مع خدمة العملاء للمساعدة.',
+            'This account is linked to Apple. Complete deletion in the iPhone app, or contact customer service for help.',
+          );
+        });
+      }
     } on CustomerAccountTransportException catch (error) {
       try {
         if (await _recoverAccepted()) return;
@@ -206,11 +267,16 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
         });
       }
     } catch (_) {
+      try {
+        if (await _recoverAccepted()) return;
+      } catch (_) {
+        /* Keep the receipt. A provider error cannot establish completion. */
+      }
       if (mounted) {
         setState(
           () => _error = _text(
-            'تعذر إكمال الخطوة الآن. حاول مرة أخرى.',
-            'Could not complete this step. Please retry.',
+            'لم يتم تأكيد اكتمال الحذف. حدّث حالة الطلب قبل المحاولة مرة أخرى.',
+            'Deletion completion is not confirmed. Check the request status before retrying.',
           ),
         );
       }
@@ -291,11 +357,14 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Keep this screen's SDK alive across the confirmation awaits; disposal cancels it.
+    ref.watch(accountDeletionAppleSdkProvider);
     final session = ref.watch(authControllerProvider).value;
     final sameAccount =
+        _sameMerchant &&
         session != null &&
         !session.isExpired &&
-        session.user.id == widget.userId;
+        session.user.id == _targetUserId;
     final availability = !_pending && sameAccount
         ? ref.watch(accountDeletionAvailabilityProvider)
         : null;
@@ -346,6 +415,15 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
                     ),
             ),
             const SizedBox(height: 24),
+            if (_preparedReceipt && !_pending) ...[
+              Text(
+                _text(
+                  'الطلب محفوظ، لكن الحذف لم يبدأ بعد. أكّد الحذف لاستكماله، أو تواصل مع خدمة العملاء إذا تعذر التأكيد.',
+                  'Your request is saved, but deletion has not started. Confirm deletion to continue, or contact customer service if confirmation fails.',
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             if (_unconfirmedReceipt && !_pending) ...[
               Text(
                 _text(
@@ -447,6 +525,14 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
                 onPressed: _busy ? null : () => Navigator.of(context).pop(),
                 child: Text(_text('إلغاء', 'Cancel')),
               ),
+              if (_receipt != null)
+                TextButton(
+                  key: const Key('check-deletion-status'),
+                  onPressed: _busy ? null : _checkStatus,
+                  child: Text(
+                    _text('تحديث حالة الحذف', 'Check deletion status'),
+                  ),
+                ),
             ],
             if (_error != null)
               Padding(
