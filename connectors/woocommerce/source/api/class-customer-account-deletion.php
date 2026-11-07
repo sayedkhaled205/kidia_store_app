@@ -567,7 +567,7 @@ final class MobiShop_Customer_Account_Deletion {
 			// wp_delete_user does not erase comments or product reviews. Ownership
 			// is the authenticated user ID, never a matching editable email.
 			$wpdb->last_error = '';
-			$comments = get_comments( array( 'user_id' => $id, 'number' => self::LIMIT, 'status' => 'all', 'orderby' => 'comment_ID', 'order' => 'ASC' ) );
+			$comments = get_comments( array( 'user_id' => $id, 'number' => self::LIMIT, 'status' => 'all', 'type' => 'all', 'orderby' => 'comment_ID', 'order' => 'ASC' ) );
 			if ( ! is_array( $comments ) || $wpdb->last_error ) throw new RuntimeException( 'Comment lookup unavailable' );
 			foreach ( $comments as $comment ) {
 				if ( (int) $comment->user_id !== $id || ! wp_delete_comment( (int) $comment->comment_ID, true ) || get_comment( (int) $comment->comment_ID ) ) throw new RuntimeException( 'Comment deletion unavailable' );
