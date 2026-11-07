@@ -33,6 +33,7 @@ require $repo.'/tools/customer_identity/connector/class-customer-identity-guard.
 require $repo.'/tools/customer_identity/connector/class-customer-identity-erasure-stage.php';
 require $repo.'/connectors/woocommerce/source/api/class-customer-auth-endpoint.php';
 require $repo.'/connectors/woocommerce/source/api/class-customer-account-deletion.php';
+global $wpdb, $checks; // wp eval-file executes this script in method scope.
 $checks=0;
 function runtime_check(bool $ok,string $label): void {
     global $checks;
