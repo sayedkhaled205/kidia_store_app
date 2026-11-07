@@ -70,6 +70,36 @@ abstract interface class NativeAppleAuthSdk {
   Future<NativeAppleProof> apple(Map<String, dynamic> config);
 }
 
+abstract interface class NativeAppleDeletionSdk {
+  /// The caller must capture the merchant/account/session before confirmation.
+  /// Only a server-verified match to that account may approve [validateIdentity].
+  Future<void> deleteAppleIdentity(
+    Map<String, dynamic> config, {
+    required Future<bool> Function(String firebaseIdToken) validateIdentity,
+    required bool Function() isCurrentAccount,
+  });
+}
+
+abstract interface class NativeAppleDeletionBackend {
+  /// Holds the merchant Firebase lock and always signs out before returning.
+  Future<void> withDeletionSession(
+    Future<void> Function(NativeAppleDeletionSession session) action, {
+    required void Function() checkCurrent,
+  });
+}
+
+class NativeAppleDeletionSession {
+  const NativeAppleDeletionSession({
+    required this.idToken,
+    required this.revokeAuthorization,
+    required this.deleteIdentity,
+  });
+
+  final String idToken;
+  final Future<void> Function() revokeAuthorization;
+  final Future<void> Function() deleteIdentity;
+}
+
 class NativeAppleProof {
   const NativeAppleProof(this.idToken, {this.name = ''});
   final String idToken;
@@ -108,7 +138,11 @@ typedef NativePhoneBackendFactory =
     Future<NativePhoneBackend> Function(Map<String, dynamic> firebase);
 
 final class FirebaseNativeAuthSdk
-    implements NativeAuthSdk, NativeAppleAuthSdk, NativeFacebookAuthSdk {
+    implements
+        NativeAuthSdk,
+        NativeAppleAuthSdk,
+        NativeAppleDeletionSdk,
+        NativeFacebookAuthSdk {
   FirebaseNativeAuthSdk({
     NativePhoneBackendFactory? phoneBackendFactory,
     NativeGoogleBackend? googleBackend,
@@ -135,6 +169,7 @@ final class FirebaseNativeAuthSdk
   final bool _isWeb;
   int _generation = 0;
   _PhoneAttempt? _phone;
+  bool _appleDeletionInProgress = false;
 
   void _checkPlatform() {
     if (_isWeb ||
@@ -433,6 +468,71 @@ final class FirebaseNativeAuthSdk
     }
   }
 
+  @override
+  Future<void> deleteAppleIdentity(
+    Map<String, dynamic> config, {
+    required Future<bool> Function(String firebaseIdToken) validateIdentity,
+    required bool Function() isCurrentAccount,
+  }) async {
+    _checkPlatform();
+    if (_platform != TargetPlatform.iOS) {
+      throw const NativeAuthSdkException('native-platform-required');
+    }
+    final options = _firebaseOptions(config);
+    if (_appleDeletionInProgress) {
+      throw const NativeAuthSdkException('operation-in-progress');
+    }
+    _appleDeletionInProgress = true;
+    final generation = ++_generation;
+    _phone?.cancel();
+    void checkCurrent() {
+      _checkCurrent(generation);
+      if (!isCurrentAccount()) {
+        throw const NativeAuthSdkException('account-changed');
+      }
+    }
+
+    try {
+      checkCurrent();
+      final backend = await _appleBackendFactory(
+        options,
+      ).timeout(const Duration(seconds: 10));
+      checkCurrent();
+      if (backend is! NativeAppleDeletionBackend) {
+        throw const NativeAuthSdkException('apple-deletion-unavailable');
+      }
+      await (backend as NativeAppleDeletionBackend).withDeletionSession((
+        session,
+      ) async {
+        checkCurrent();
+        if (session.idToken.isEmpty) {
+          throw const NativeAuthSdkException('missing-id-token');
+        }
+        if (!await validateIdentity(session.idToken)) {
+          throw const NativeAuthSdkException('identity-mismatch');
+        }
+        checkCurrent();
+        await session.revokeAuthorization();
+        checkCurrent();
+        await session.deleteIdentity();
+        checkCurrent();
+      }, checkCurrent: checkCurrent);
+      checkCurrent();
+    } catch (error) {
+      if (error is FirebaseAuthException &&
+          [
+            'web-context-cancelled',
+            'canceled',
+            'cancelled',
+          ].contains(error.code)) {
+        throw const NativeAuthSdkException('cancelled');
+      }
+      throw _safeError(error);
+    } finally {
+      _appleDeletionInProgress = false;
+    }
+  }
+
   static Object _safeError(Object error) {
     if (error is NativeAuthSdkException) return error;
     if (error is FirebaseAuthException) {
@@ -611,7 +711,8 @@ final class _FirebasePhoneBackend implements NativePhoneBackend {
   Future<void> signOut() => _exclusive(auth.signOut);
 }
 
-final class _FirebaseAppleBackend implements NativeAppleBackend {
+final class _FirebaseAppleBackend
+    implements NativeAppleBackend, NativeAppleDeletionBackend {
   _FirebaseAppleBackend(this.backend);
   final _FirebasePhoneBackend backend;
 
@@ -636,6 +737,55 @@ final class _FirebaseAppleBackend implements NativeAppleBackend {
     } finally {
       // The merchant session is committed separately. Never retain a provider
       // session after success, failure or a late/cancelled result.
+      await backend.auth.signOut();
+    }
+  });
+
+  @override
+  Future<void> withDeletionSession(
+    Future<void> Function(NativeAppleDeletionSession session) action, {
+    required void Function() checkCurrent,
+  }) => backend._exclusive(() async {
+    // A cancelled request may have waited behind another merchant auth read.
+    checkCurrent();
+    try {
+      final credential = await backend.auth.signInWithProvider(
+        AppleAuthProvider(),
+      );
+      final user = credential.user;
+      final token = await user?.getIdToken(true);
+      final authorizationCode =
+          credential.additionalUserInfo?.authorizationCode;
+      if (user == null || token == null || token.isEmpty) {
+        throw const NativeAuthSdkException('missing-id-token');
+      }
+      if (authorizationCode == null || authorizationCode.isEmpty) {
+        throw const NativeAuthSdkException('missing-apple-authorization-code');
+      }
+      void checkProviderUser() {
+        if (backend.auth.currentUser?.uid != user.uid) {
+          throw const NativeAuthSdkException('identity-changed');
+        }
+      }
+
+      // The authorization code stays inside this operation's memory, including
+      // retries. It never enters the merchant proof or persistent session store.
+      await action(
+        NativeAppleDeletionSession(
+          idToken: token,
+          revokeAuthorization: () async {
+            checkProviderUser();
+            await backend.auth.revokeTokenWithAuthorizationCode(
+              authorizationCode,
+            );
+          },
+          deleteIdentity: () async {
+            checkProviderUser();
+            await user.delete();
+          },
+        ),
+      );
+    } finally {
       await backend.auth.signOut();
     }
   });
