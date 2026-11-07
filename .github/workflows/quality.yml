@@ -101,6 +101,7 @@ jobs:
         run: |
           php connectors/woocommerce/tests/account-deletion-test.php
           php connectors/woocommerce/tests/account-deletion-intent-test.php
+          php connectors/woocommerce/tests/protected-owner-deletion-test.php
           php connectors/woocommerce/tests/native-identity-guard-test.php
           php connectors/woocommerce/tests/native-apple-auth-test.php
           php connectors/woocommerce/tests/native-apple-deletion-proof-test.php

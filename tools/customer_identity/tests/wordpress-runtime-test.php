@@ -17,9 +17,9 @@ define('MOBISHOP_ACCOUNT_DELETION_ENABLED',true);
 
 /** The sole stub is the external identity service. No WordPress, database, lock or session stubs. */
 final class MobiShop_Customer_Identity_Client {
-    public static $failure=false, $attempts=0, $erased=array();
-    public static function capabilities(): array {return array('available'=>true,'project_id'=>'synthetic-project');}
-    public static function lookup(string $project,string $uid): array {return array('status'=>'present','created_at'=>'12345');}
+    public static $failure=false, $attempts=0, $erased=array(), $snapshot_calls=0;
+    public static function capabilities(): array {self::$snapshot_calls++;return array('available'=>true,'project_id'=>'synthetic-project');}
+    public static function lookup(string $project,string $uid): array {self::$snapshot_calls++;return array('status'=>'present','created_at'=>'12345');}
     public static function erase(string $project,string $uid,string $created): array {
         self::$attempts++;
         if(self::$failure)throw new RuntimeException('Synthetic provider outage.');
@@ -122,4 +122,45 @@ $remaining=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->opti
 runtime_check($remaining===0&&get_option('mobishop_deletion_intent_v1_'.$hash,false)===false,'Real owner/UID reservations and identity intent are cleaned after completion');
 $status=runtime_rest('customer/account/deletion/status',array('receipt'=>$receipt));
 runtime_check(($status->get_data()['status']??'')==='completed','Receipt recovers durable completion without authentication');
+
+// Privileged owner's customer-only shopping alias is not an independently erasable account.
+$admin=wp_insert_user(array('user_login'=>'ci-protected-owner','user_email'=>'identity-owner@example.invalid','user_pass'=>'ci-owner-password-only','role'=>'administrator'));
+runtime_check(!is_wp_error($admin),'Create synthetic protected administrator');$admin=(int)$admin;
+update_user_meta($admin,'billing_address_1','Synthetic protected canonical address');
+update_user_meta($admin,'shipping_address_1','Synthetic protected shipping address');
+$canonicalOrder=wc_create_order(array('customer_id'=>$admin,'status'=>'completed'));
+$alias=MobiShop_Storefront_Admin::resolve(get_user_by('id',$admin));
+runtime_check($alias instanceof WP_User&&MobiShop_Storefront_Admin::data_owner_id($alias->ID)===$admin,'Actual owner bridge resolves administrator shopping alias');
+$ownerLogin=runtime_rest('auth/login',array('email'=>'identity-owner@example.invalid','password'=>'ci-owner-password-only'));
+$ownerToken=$ownerLogin->get_data()['token']??'';
+runtime_check($ownerLogin->get_status()===200&&($ownerLogin->get_data()['user']['id']??0)===$alias->ID,'Owner login keeps existing isolated customer-only session behavior');
+$adminCookie=WP_Session_Tokens::get_instance($admin)->create(time()+3600);
+$aliasCookie=WP_Session_Tokens::get_instance($alias->ID)->create(time()+3600);
+$protectedRequest=new WP_REST_Request('GET','/mobishop/v1/customer/account/deletion');$protectedRequest->set_header('X-MobiShop-Session',$ownerToken);
+$availability=rest_do_request($protectedRequest);
+runtime_check($availability->get_status()===200&&($availability->get_data()['available']??null)===false,'Protected owner alias does not advertise account erasure');
+$protectedReceipt=bin2hex(random_bytes(32));$protectedBody=array('receipt'=>$protectedReceipt,'confirmation'=>'delete-my-account','platform'=>'ios','id_token'=>'must-not-reach-identity-provider');
+$providerBefore=MobiShop_Customer_Identity_Client::$attempts+MobiShop_Customer_Identity_Client::$snapshot_calls;
+foreach(array('prepare','apple-proof','finalize','')as $suffix){
+ $response=runtime_rest('customer/account/deletion'.($suffix!==''?'/'.$suffix:''),$protectedBody,$ownerToken);
+ runtime_check($response->get_status()>=400,'Protected owner alias rejects '.($suffix!==''?$suffix:'legacy acceptance').' before identity or revocation');
+}
+$protectedHash=hash_hmac('sha256',home_url('/').'|'.$wpdb->options.'|'.$protectedReceipt,wp_salt('auth'));
+runtime_check(get_option('mobishop_deletion_intent_v1_'.$protectedHash,false)===false&&get_option('mobishop_account_deletion_v1_'.$alias->ID,false)===false,'Protected attempts create no deletion intent or pending job');
+// A stale/externally seeded accepted job must also stop at the same protected boundary.
+MobiShop_Customer_Identity_Guard::reserve($alias->ID,$protectedHash,array(),time()+600);
+$protectedJob=array('userId'=>$alias->ID,'phase'=>0,'cursor'=>0,'receiptHash'=>$protectedHash,'identityStage'=>array('version'=>1,'user_id'=>$alias->ID,'entries'=>array(),'cursor'=>0),'identityLinks'=>array());
+add_option('mobishop_account_deletion_v1_'.$alias->ID,$protectedJob,'',false);
+MobiShop_Customer_Account_Deletion::run_worker($alias->ID);
+runtime_check(get_option('mobishop_account_deletion_v1_'.$alias->ID)===$protectedJob,'Worker does not advance a protected alias deletion job');
+MobiShop_Customer_Identity_Guard::release($alias->ID,$protectedHash,array());
+delete_option('mobishop_account_deletion_v1_'.$alias->ID);wp_clear_scheduled_hook('mobishop_delete_customer_batch',array($alias->ID));
+$aliasSession=new WP_REST_Request();$aliasSession->set_header('X-MobiShop-Session',$ownerToken);
+runtime_check(!is_wp_error($auth->authenticate_route($aliasSession))&&WP_Session_Tokens::get_instance($admin)->verify($adminCookie)&&WP_Session_Tokens::get_instance($alias->ID)->verify($aliasCookie),'Protected administrator, alias and merchant sessions remain valid');
+$canonicalReload=new WC_Order($canonicalOrder->get_id());
+runtime_check(get_user_by('id',$admin) instanceof WP_User&&get_user_by('id',$alias->ID) instanceof WP_User
+ &&get_user_meta($admin,'billing_address_1',true)==='Synthetic protected canonical address'&&get_user_meta($admin,'shipping_address_1',true)==='Synthetic protected shipping address'
+ &&(int)$canonicalReload->get_customer_id()===$admin,'Protected administrator, alias, canonical addresses and order remain intact');
+runtime_check(MobiShop_Customer_Identity_Client::$attempts+MobiShop_Customer_Identity_Client::$snapshot_calls===$providerBefore,'Protected owner never reaches identity provider prepare, lookup or erase');
+
 echo 'WordPress/MySQL identity lifecycle: '.$checks.' checks passed; external identity provider only is stubbed.'.PHP_EOL;

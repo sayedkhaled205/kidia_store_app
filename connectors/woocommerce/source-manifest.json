@@ -2418,8 +2418,8 @@
     "api/class-customer-account-deletion.php": {
       "source": "connectors/woocommerce/source/api/class-customer-account-deletion.php",
       "newline": "lf",
-      "source_sha256": "d97d429427101667f0cdd99c047f088dda75ba7313c27f3fecf872797112d824",
-      "sha256": "d97d429427101667f0cdd99c047f088dda75ba7313c27f3fecf872797112d824"
+      "source_sha256": "a1a28350a521855e51f06bb16f5a845ef09b5d021f2d7e078e811ac2cfbe5eaf",
+      "sha256": "a1a28350a521855e51f06bb16f5a845ef09b5d021f2d7e078e811ac2cfbe5eaf"
     },
     "api/class-customer-account-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-account-endpoint.php",

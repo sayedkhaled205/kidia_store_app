@@ -61,7 +61,8 @@ final class MobiShop_Customer_Account_Deletion {
 	public function availability( WP_REST_Request $request ) {
 		$auth = $this->auth->authenticate_route( $request );
 		if ( is_wp_error( $auth ) ) return $auth;
-		return self::response( array( 'available' => self::enabled() && ! is_multisite() ) );
+		$user = get_user_by( 'id', $this->auth->customer_id_from_request( $request ) );
+		return self::response( array( 'available' => self::enabled() && ! is_multisite() && $user instanceof WP_User && self::ordinary_customer( $user ) ) );
 	}
 	/** Keep rollout closed until external identity erasure and completion receipts are integrated. */
 	private static function enabled(): bool {
@@ -80,6 +81,8 @@ final class MobiShop_Customer_Account_Deletion {
 		$prepared = 0;
 		try {
 			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( &$prepared, $hash, $request, $body ): bool {
+				$user = get_user_by( 'id', $id );
+				if ( ! $user instanceof WP_User || ! self::ordinary_customer( $user ) ) return false;
 				return self::guarded( $id, $hash, static function () use ( $id, &$prepared, $hash, $request, $body ): bool {
 				// Fail before revocation: the customer must retain access to resolve
 				// an in-flight checkout, including when its ledger cannot be read.
@@ -199,6 +202,8 @@ final class MobiShop_Customer_Account_Deletion {
 			$hash = self::receipt_hash( $body['receipt'] );
 			$response = null;
 			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( $request, $body, $hash, $action, &$response ): bool {
+				$user = get_user_by( 'id', $id );
+				if ( ! $user instanceof WP_User || ! self::ordinary_customer( $user ) ) return false;
 				if ( self::has_pending_payment( $id ) || self::job( $id ) ) return false;
 				$response = self::guarded( $id, $hash, static fn() => $action( $id, $hash, self::binding( $request ), $body ) );
 				return $response instanceof WP_REST_Response;
@@ -498,6 +503,8 @@ final class MobiShop_Customer_Account_Deletion {
 		}
 	}
 	private static function ordinary_customer( WP_User $user ): bool {
+		// A customer-only shopping alias must never imply erasure of its privileged canonical owner.
+		if ( ! class_exists( 'MobiShop_Storefront_Admin' ) || MobiShop_Storefront_Admin::data_owner_id( $user->ID ) !== $user->ID ) return false;
 		$roles = (array) $user->roles;
 		$caps = (array) $user->allcaps;
 		return ! array_intersect( array( 'administrator', 'shop_manager' ), $roles ) &&
