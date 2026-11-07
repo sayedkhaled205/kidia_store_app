@@ -309,7 +309,15 @@ void main() {
             },
             isCurrentAccount: () => true,
           ),
-          throwsA(sdkError('identity-provider-unavailable')),
+          throwsA(
+            isA<NativeAppleDeletionException>()
+                .having(
+                  (e) => e.code,
+                  'sanitized code',
+                  'identity-provider-unavailable',
+                )
+                .having((e) => e.stage.name, 'failed stage', stage),
+          ),
         );
         expect(backend.calls.last, 'signOut');
         if (stage != 'delete') expect(backend.calls, isNot(contains('delete')));

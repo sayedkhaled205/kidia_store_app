@@ -151,6 +151,88 @@ void main() {
     },
   );
   deletionWidgetTest(
+    'real Apple SDK preserves merchant reauthentication without deleting or signing out',
+    (tester) async {
+      transport.proofError = const CustomerAccountTransportException(
+        kind: CustomerAccountTransportFailureKind.unauthorized,
+        message: 'Private upstream details must not be displayed',
+        code: 'mobishop_account_deletion_reauth',
+        statusCode: 401,
+      );
+      final backend = DeletionBackend()..token = 'fresh-fixture-proof';
+      final realSdk = FirebaseNativeAuthSdk(
+        platform: TargetPlatform.iOS,
+        isWeb: false,
+        appleBackendFactory: (_) async => backend,
+      );
+      await open(tester, appleClient: realSdk);
+      await confirm(tester);
+      expect(calls, ['prepare', 'config', 'proof']);
+      expect(backend.calls, ['authenticate', 'signOut']);
+      expect(find.text('Sign in to confirm'), findsOneWidget);
+      expect(find.textContaining('Private upstream'), findsNothing);
+      expect(sessions.value?.token, 'original');
+      expect(await receipts.read(), isNotNull);
+      expect(find.text('Account deletion requested'), findsNothing);
+    },
+  );
+  deletionWidgetTest(
+    'Apple revocation failure is visible above actions on a small iPhone',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(375, 700);
+      addTearDown(tester.view.reset);
+      final backend = DeletionBackend()..token = 'fresh-fixture-proof';
+      backend.onRevoke = () async =>
+          throw StateError('private provider details');
+      final realSdk = FirebaseNativeAuthSdk(
+        platform: TargetPlatform.iOS,
+        isWeb: false,
+        appleBackendFactory: (_) async => backend,
+      );
+      await open(tester, appleClient: realSdk);
+      await confirm(tester);
+      expect(backend.calls, ['authenticate', 'revoke', 'signOut']);
+      expect(calls, ['prepare', 'config', 'proof']);
+      expect(
+        find.textContaining('We could not confirm disconnecting Apple'),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('account-deletion-error')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(find.textContaining('private provider'), findsNothing);
+      expect(find.textContaining('Your request is saved'), findsNothing);
+      expect(sessions.value?.token, 'original');
+      expect(await receipts.read(), isNotNull);
+    },
+  );
+  deletionWidgetTest(
+    'late Apple cancellation never claims identity removal did not occur',
+    (tester) async {
+      final backend = DeletionBackend()..token = 'fresh-fixture-proof';
+      final realSdk = FirebaseNativeAuthSdk(
+        platform: TargetPlatform.iOS,
+        isWeb: false,
+        appleBackendFactory: (_) async => backend,
+      );
+      backend.onSignOut = realSdk.cancel;
+      await open(tester, appleClient: realSdk);
+      await confirm(tester);
+      expect(backend.calls, ['authenticate', 'revoke', 'delete', 'signOut']);
+      expect(calls, ['prepare', 'config', 'proof']);
+      expect(
+        find.textContaining('Deletion completion is not confirmed'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('was not deleted'), findsNothing);
+      expect(find.text('Account deletion requested'), findsNothing);
+      expect(sessions.value?.token, 'original');
+      expect(await receipts.read(), isNotNull);
+    },
+  );
+  deletionWidgetTest(
     'prepared receipt restores without SDK, cleanup or automatic retry',
     (tester) async {
       transport.requiresApple = false;
@@ -375,6 +457,7 @@ class _Transport extends _Legacy
   final AccountDeletionReceiptStore receipts;
   bool requiresApple = true;
   bool failFinalize = false;
+  CustomerAccountTransportException? proofError;
   String status = 'unknown';
   @override
   Future<Map<String, dynamic>> deletionStatus(String receipt) async => {
@@ -405,6 +488,7 @@ class _Transport extends _Legacy
   }) async {
     steps.add('proof');
     expect(idToken, 'fresh-fixture-proof');
+    if (proofError != null) throw proofError!;
     return {'approved': true};
   }
 

@@ -70,10 +70,59 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
   String? _deletedToken;
   AccountDeletionReceipt? _receipt;
   AppleDeletionCheckpoint? _appleCheckpoint;
+  final _errorKey = GlobalKey();
   int? get _targetUserId => widget.userId ?? _receipt?.userId;
   bool get _sameMerchant => AppConfig.apiBaseUrl == _storeScope;
   bool get _ar => Localizations.localeOf(context).languageCode == 'ar';
   String _text(String ar, String en) => _ar ? ar : en;
+
+  void _revealError() {
+    if (_error == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final errorContext = _errorKey.currentContext;
+      if (!mounted || errorContext == null) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          errorContext,
+          alignment: 0.3,
+          duration: const Duration(milliseconds: 200),
+        ),
+      );
+    });
+  }
+
+  String _appleErrorText(NativeAuthSdkException error) {
+    if (error.code == 'cancelled') {
+      return _text(
+        'تم إلغاء تأكيد أبل. لم يتأكد اكتمال الحذف؛ راجع حالة الطلب قبل المحاولة مرة أخرى.',
+        'Apple confirmation was cancelled. Deletion completion is not confirmed; check the request status before retrying.',
+      );
+    }
+    if (error.code == 'identity-mismatch' || error.code == 'identity-changed') {
+      return _text(
+        'اختر حساب أبل المرتبط بنفس الحساب المطلوب حذفه.',
+        'Choose the Apple account linked to the account you want to delete.',
+      );
+    }
+    if (error is NativeAppleDeletionException &&
+        error.stage == NativeAppleDeletionStage.revoke) {
+      return _text(
+        'تعذر تأكيد إلغاء ربط أبل. لم يتأكد اكتمال حذف الحساب. راجع حالة الطلب أو تواصل مع خدمة العملاء.',
+        'We could not confirm disconnecting Apple. Deletion completion is not confirmed. Check the request status or contact customer service.',
+      );
+    }
+    if (error is NativeAppleDeletionException &&
+        error.stage == NativeAppleDeletionStage.delete) {
+      return _text(
+        'تعذر تأكيد حذف بيانات تسجيل الدخول. لم يتأكد اكتمال حذف الحساب. راجع حالة الطلب أو تواصل مع خدمة العملاء.',
+        'We could not confirm removing the sign-in identity. Deletion completion is not confirmed. Check the request status or contact customer service.',
+      );
+    }
+    return _text(
+      'تعذر إكمال تأكيد أبل. لم يتأكد اكتمال الحذف. حدّث حالة الطلب قبل المحاولة مرة أخرى.',
+      'We could not finish Apple confirmation. Deletion completion is not confirmed. Check the request status before retrying.',
+    );
+  }
 
   @override
   void initState() {
@@ -171,6 +220,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       }
     } finally {
       if (mounted) setState(() => _busy = false);
+      _revealError();
     }
   }
 
@@ -282,6 +332,13 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
                 );
         });
       }
+    } on NativeAuthSdkException catch (error) {
+      try {
+        if (await _recoverAccepted()) return;
+      } catch (_) {
+        /* Keep the receipt. SDK errors do not establish the merchant outcome. */
+      }
+      if (mounted) setState(() => _error = _appleErrorText(error));
     } catch (_) {
       try {
         if (await _recoverAccepted()) return;
@@ -298,6 +355,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       }
     } finally {
       if (mounted) setState(() => _busy = false);
+      _revealError();
     }
   }
 
@@ -431,7 +489,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
                     ),
             ),
             const SizedBox(height: 24),
-            if (_preparedReceipt && !_pending) ...[
+            if (_preparedReceipt && !_pending && _error == null) ...[
               Text(
                 _text(
                   'طلبك محفوظ، لكن تنفيذ الحذف لم يتأكد بعد. أكّد الحذف لاستكماله، أو تواصل مع خدمة العملاء إذا تعذر التأكيد.',
@@ -440,6 +498,21 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
               ),
               const SizedBox(height: 16),
             ],
+            if (_error != null)
+              Semantics(
+                liveRegion: true,
+                child: Padding(
+                  key: _errorKey,
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    _error!,
+                    key: const Key('account-deletion-error'),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              ),
             if (_unconfirmedReceipt && !_pending) ...[
               Text(
                 _text(
@@ -550,14 +623,6 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
                   ),
                 ),
             ],
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Text(
-                  _error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
           ],
         ),
       ),

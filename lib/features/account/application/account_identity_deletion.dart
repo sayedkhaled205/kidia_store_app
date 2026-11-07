@@ -56,21 +56,38 @@ Future<Map<String, dynamic>> requestAccountIdentityDeletion({
       final config = await loadAppleConfig();
       checkCurrent();
       var proofApproved = false;
-      await appleSdk.deleteAppleIdentity(
-        config,
-        isCurrentAccount: isCurrentAccount,
-        validateIdentity: (idToken) async {
-          checkCurrent();
-          final response = await transport.validateAppleDeletion(
-            receipt: receipt,
-            expectedSession: expectedSession,
-            idToken: idToken,
-          );
-          checkCurrent();
-          proofApproved = response['approved'] == true;
-          return proofApproved;
-        },
-      );
+      CustomerAccountTransportException? proofError;
+      StackTrace? proofStack;
+      try {
+        await appleSdk.deleteAppleIdentity(
+          config,
+          isCurrentAccount: isCurrentAccount,
+          validateIdentity: (idToken) async {
+            checkCurrent();
+            try {
+              final response = await transport.validateAppleDeletion(
+                receipt: receipt,
+                expectedSession: expectedSession,
+                idToken: idToken,
+              );
+              checkCurrent();
+              proofApproved = response['approved'] == true;
+              return proofApproved;
+            } on CustomerAccountTransportException catch (error, stack) {
+              proofError = error;
+              proofStack = stack;
+              rethrow;
+            }
+          },
+        );
+      } catch (_) {
+        checkCurrent();
+        // Provider sanitization must not hide the merchant's reauth/rejection.
+        if (proofError != null) {
+          Error.throwWithStackTrace(proofError!, proofStack!);
+        }
+        rethrow;
+      }
       if (!proofApproved) {
         throw StateError('Apple deletion proof was not approved');
       }

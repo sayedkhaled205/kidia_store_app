@@ -50,6 +50,11 @@ void main() {
         home: const Scaffold(body: AccountScreen(), bottomNavigationBar: SafeArea(child: SizedBox(height: 64)))),
     ));
     await tester.pumpAndSettle();
+    final privacy = tester.getRect(find.byKey(const Key('store-privacy-policy')));
+    final deletion = tester.getRect(find.byKey(const Key('account-delete')));
+    final language = tester.getRect(find.byKey(const Key('account-language')));
+    expect(privacy.center.dy, closeTo(deletion.center.dy, 1));
+    expect(privacy.top - language.bottom, greaterThanOrEqualTo(8));
     for (final key in ['account-action-orders', 'account-action-addresses', 'account-action-profile', 'account-action-support', 'account-language', 'account-delete', 'account-sign-out']) {
       expect(find.byKey(Key(key)).hitTestable(), findsOneWidget, reason: key);
     }

@@ -45,6 +45,20 @@ class NativeAuthSdkException implements Exception {
   String toString() => 'NativeAuthSdkException($code)';
 }
 
+enum NativeAppleDeletionStage {
+  authenticate,
+  validate,
+  revoke,
+  delete,
+  cleanup,
+}
+
+/// Fixed operation names and sanitized codes only; never provider messages.
+class NativeAppleDeletionException extends NativeAuthSdkException {
+  const NativeAppleDeletionException(super.code, this.stage);
+  final NativeAppleDeletionStage stage;
+}
+
 /// Small boundaries keep race/cancellation tests independent of platform SDKs.
 abstract interface class NativePhoneBackend {
   Future<void> verify({
@@ -483,6 +497,7 @@ final class FirebaseNativeAuthSdk
       throw const NativeAuthSdkException('operation-in-progress');
     }
     _appleDeletionInProgress = true;
+    var stage = NativeAppleDeletionStage.authenticate;
     final generation = ++_generation;
     _phone?.cancel();
     void checkCurrent() {
@@ -508,14 +523,18 @@ final class FirebaseNativeAuthSdk
         if (session.idToken.isEmpty) {
           throw const NativeAuthSdkException('missing-id-token');
         }
+        stage = NativeAppleDeletionStage.validate;
         if (!await validateIdentity(session.idToken)) {
           throw const NativeAuthSdkException('identity-mismatch');
         }
         checkCurrent();
+        stage = NativeAppleDeletionStage.revoke;
         await session.revokeAuthorization();
         checkCurrent();
+        stage = NativeAppleDeletionStage.delete;
         await session.deleteIdentity();
         checkCurrent();
+        stage = NativeAppleDeletionStage.cleanup;
       }, checkCurrent: checkCurrent);
       checkCurrent();
     } catch (error) {
@@ -525,9 +544,10 @@ final class FirebaseNativeAuthSdk
             'canceled',
             'cancelled',
           ].contains(error.code)) {
-        throw const NativeAuthSdkException('cancelled');
+        throw NativeAppleDeletionException('cancelled', stage);
       }
-      throw _safeError(error);
+      final safe = _safeError(error) as NativeAuthSdkException;
+      throw NativeAppleDeletionException(safe.code, stage);
     } finally {
       _appleDeletionInProgress = false;
     }

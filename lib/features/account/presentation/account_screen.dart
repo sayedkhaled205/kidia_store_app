@@ -171,7 +171,31 @@ class AccountScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-            const StorePrivacyLink(),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Expanded(child: StorePrivacyLink()),
+                if (session != null &&
+                    !AppConfig.isCmsPreview &&
+                    AppConfig.commercePlatform ==
+                        CommercePlatform.wooCommerce &&
+                    ref.watch(accountDeletionAvailabilityProvider).value ==
+                        true)
+                  Expanded(
+                    child: TextButton.icon(
+                      key: const Key('account-delete'),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              AccountDeletionScreen(userId: session.user.id),
+                        ),
+                      ),
+                      icon: const Icon(Icons.person_remove_outlined),
+                      label: Text(isArabic ? 'حذف الحساب' : 'Delete account'),
+                    ),
+                  ),
+              ],
+            ),
             if (!AppConfig.isCmsPreview &&
                 AppConfig.commercePlatform == CommercePlatform.wooCommerce &&
                 ref.watch(accountDeletionReceiptProvider).value != null)
@@ -186,21 +210,6 @@ class AccountScreen extends ConsumerWidget {
                 label: Text(
                   isArabic ? 'حالة طلب حذف الحساب' : 'Account deletion status',
                 ),
-              ),
-            if (session != null &&
-                !AppConfig.isCmsPreview &&
-                AppConfig.commercePlatform == CommercePlatform.wooCommerce &&
-                ref.watch(accountDeletionAvailabilityProvider).value == true)
-              TextButton.icon(
-                key: const Key('account-delete'),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        AccountDeletionScreen(userId: session.user.id),
-                  ),
-                ),
-                icon: const Icon(Icons.person_remove_outlined),
-                label: Text(isArabic ? 'حذف الحساب' : 'Delete account'),
               ),
             if (session != null &&
                 pageLayout.element('logout_button').enabled) ...<Widget>[
