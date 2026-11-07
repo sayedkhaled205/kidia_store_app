@@ -155,9 +155,10 @@ class AccountScreen extends ConsumerWidget {
                           ),
                         ),
                         if (!flat && index < visibleActions.length - 1)
-                          const Divider(),
+                          Divider(height: compactIos ? 8 : null),
                       ],
-                      if (!flat && visibleActions.isNotEmpty) const Divider(),
+                      if (!flat && visibleActions.isNotEmpty)
+                        Divider(height: compactIos ? 8 : null),
                       if (compactIos)
                         Theme(
                           data: Theme.of(context).copyWith(
@@ -467,11 +468,18 @@ class _AccountActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compactCards = !flat &&
+        Theme.of(context).platform == TargetPlatform.iOS;
     return ListTile(
       key: Key('account-action-${action.id}'),
-      contentPadding: const EdgeInsets.symmetric(
+      visualDensity: compactCards
+          ? const VisualDensity(vertical: -1)
+          : null,
+      contentPadding: EdgeInsets.symmetric(
         horizontal: MobiShopSpacing.md,
-        vertical: MobiShopSpacing.xs,
+        vertical: compactCards
+            ? 0
+            : MobiShopSpacing.xs,
       ),
       minTileHeight: flat
           ? (Theme.of(context).platform == TargetPlatform.iOS ? 48 : 64)
