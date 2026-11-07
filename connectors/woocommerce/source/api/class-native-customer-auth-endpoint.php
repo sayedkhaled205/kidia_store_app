@@ -421,6 +421,41 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return $this->registration_ticket( $proof, $request );
 	}
 
+	/**
+	 * Read-only proof check for the authenticated deletion route, never a login route.
+	 * The caller supplies its authenticated customer ID (not a request-body ID) and
+	 * owns identity serialization. A true result does not confirm Apple revocation.
+	 */
+	public function validate_deletion_apple_proof( WP_REST_Request $request, int $captured_user_id ) {
+		if ( $captured_user_id <= 0 ) return $this->error( 'invalid_proof', 401 );
+		if ( ! class_exists( 'MobiShop_Customer_Identity_Links' ) ) return $this->error( 'unavailable', 503 );
+		try {
+			$c = $this->capabilities( $request );
+			if ( ! $c['methods']['apple'] ) return $this->error( 'unavailable', 503 );
+			$claims = $this->jwt( $request->get_param( 'id_token' ), self::FIREBASE_CERTS );
+			$project = $c['firebase']['projectId'];
+			$subjects = $claims['firebase']['identities']['apple.com'] ?? null;
+			if ( ! $claims || ! $this->fresh( $claims, true ) || strlen( $claims['sub'] ) > 128
+				|| ( $claims['aud'] ?? null ) !== $project || ( $claims['iss'] ?? null ) !== 'https://securetoken.google.com/' . $project
+				|| ( $claims['firebase']['sign_in_provider'] ?? null ) !== 'apple.com'
+				|| ! is_array( $subjects ) || array_keys( $subjects ) !== array( 0 )
+				|| ! is_string( $subjects[0] ) || ! preg_match( '/^[A-Za-z0-9._-]{1,255}$/D', $subjects[0] ) ) {
+				return $this->error( 'invalid_proof', 401 );
+			}
+			$user = get_user_by( 'id', $captured_user_id );
+			if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_proof', 401 );
+			// Reject partial or duplicate bindings instead of trusting the first row.
+			foreach ( array( '_mobishop_firebase_project' => $project, '_mobishop_firebase_uid' => $claims['sub'], '_mobishop_apple_subject' => $subjects[0] ) as $key => $expected ) {
+				if ( get_user_meta( $captured_user_id, $key, false ) !== array( $expected ) ) return $this->error( 'invalid_proof', 401 );
+			}
+			$link = array( 'project' => $project, 'uid' => $claims['sub'], 'provider' => 'apple' );
+			if ( MobiShop_Customer_Identity_Links::shared( $captured_user_id, $link ) !== false ) return $this->error( 'invalid_proof', 401 );
+			return true;
+		} catch ( Throwable $error ) {
+			return $this->error( 'invalid_proof', 401 );
+		}
+	}
+
 	private function apple_key( array $proof ): string {
 		return hash( 'sha256', $proof['firebase_project'] . '|' . $proof['apple_subject'] );
 	}
