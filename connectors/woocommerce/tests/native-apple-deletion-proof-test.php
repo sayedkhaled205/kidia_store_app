@@ -2,6 +2,8 @@
 /** Fresh signed Apple proof is authorization to continue, never proof of erasure. */
 require __DIR__ . '/native-auth-contract-test.php';
 $before = $GLOBALS['native_checks'];
+// This suite models raw metadata rows, including duplicate and malformed rows.
+$GLOBALS['native_meta_rows_format'] = true;
 $settings = $GLOBALS['native_options']['mobishop_native_auth_settings'];
 $settings['apple_enabled'] = true;
 $settings['ios_apple_native_ready'] = true;

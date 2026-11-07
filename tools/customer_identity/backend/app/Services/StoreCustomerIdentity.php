@@ -65,6 +65,10 @@ final class StoreCustomerIdentity
             || !is_string($project) || preg_match('/^[a-z][a-z0-9-]{4,28}[a-z0-9]$/D', $project) !== 1) {
             throw new \RuntimeException('Identity erasure is not configured for this store.');
         }
+        // Local WordPress ownership scans cannot protect another store sharing this Auth project.
+        if (count(array_keys($projects, $project, true)) !== 1) {
+            throw new \RuntimeException('Auth project must be exclusive to this store.');
+        }
         return $project;
     }
 

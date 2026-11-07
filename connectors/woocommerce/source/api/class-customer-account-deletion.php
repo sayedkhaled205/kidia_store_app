@@ -3,6 +3,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class MobiShop_Customer_Account_Deletion {
+	private const INTENT = 'mobishop_deletion_intent_v1_';
 	private const PREFIX = 'mobishop_account_deletion_v1_';
 	private const HOOK = 'mobishop_delete_customer_batch';
 	private const LIMIT = 50;
@@ -26,6 +27,7 @@ final class MobiShop_Customer_Account_Deletion {
 		add_filter( 'determine_current_user', array( self::class, 'deny_pending_cookie' ), 99 );
 	}
 	public function register_routes(): void {
+		foreach ( array( 'prepare' => 'prepare_deletion', 'apple-proof' => 'approve_apple', 'finalize' => 'finalize_deletion' ) as $path => $method ) register_rest_route( 'mobishop/v1', '/customer/account/deletion/' . $path, array( 'methods' => 'POST', 'callback' => array( $this, $method ), 'permission_callback' => array( $this->auth, 'authenticate_route' ) ) );
 		register_rest_route( 'mobishop/v1', '/customer/account/deletion', array(
 			array( 'methods' => 'GET', 'callback' => array( $this, 'availability' ), 'permission_callback' => array( $this->auth, 'authenticate_route' ) ),
 			array( 'methods' => 'POST', 'callback' => array( $this, 'request_deletion' ), 'permission_callback' => array( $this->auth, 'authenticate_route' ) ),
@@ -42,7 +44,8 @@ final class MobiShop_Customer_Account_Deletion {
 		try {
 			$hash = self::receipt_hash( $receipt );
 			$record = self::receipt_record( $hash );
-			$status = 'unknown';
+			$intent = self::intent( $hash );
+			$status = $intent && self::retain_intent( $intent ) ? 'prepared' : 'unknown';
 			if ( $record ) {
 				$job = self::job( (int) $record['userId'] );
 				if ( $job && ( $job['receiptHash'] ?? '' ) === $hash && (int) $job['phase'] >= 0 ) $status = 'pending';
@@ -62,7 +65,8 @@ final class MobiShop_Customer_Account_Deletion {
 	}
 	/** Keep rollout closed until external identity erasure and completion receipts are integrated. */
 	private static function enabled(): bool {
-		return defined( 'MOBISHOP_ACCOUNT_DELETION_ENABLED' ) && true === MOBISHOP_ACCOUNT_DELETION_ENABLED;
+		return defined( 'MOBISHOP_ACCOUNT_DELETION_ENABLED' ) && true === MOBISHOP_ACCOUNT_DELETION_ENABLED
+			&& ( ( class_exists( 'MobiShop_Customer_Identity_Erasure_Stage' ) && class_exists( 'MobiShop_Customer_Identity_Guard' ) ) || ( defined( 'MOBISHOP_ACCOUNT_DELETION_LEGACY_TEST_ONLY' ) && MOBISHOP_ACCOUNT_DELETION_LEGACY_TEST_ONLY === true ) );
 	}
 	public function request_deletion( WP_REST_Request $request ) {
 		if ( ! self::enabled() || is_multisite() ) return self::error( 'unavailable', 409 );
@@ -75,31 +79,193 @@ final class MobiShop_Customer_Account_Deletion {
 		// No caller-supplied user ID, email or WordPress admin cookie is a target.
 		$prepared = 0;
 		try {
-			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( &$prepared, $hash ): bool {
+			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( &$prepared, $hash, $request, $body ): bool {
+				return self::guarded( $id, $hash, static function () use ( $id, &$prepared, $hash, $request, $body ): bool {
 				// Fail before revocation: the customer must retain access to resolve
 				// an in-flight checkout, including when its ledger cannot be read.
 				if ( self::has_pending_payment( $id ) ) return false;
 				// Never reset an accepted job or overwrite another account's capability.
 				if ( self::job( $id ) ) return false;
+				$intent = self::intent( $hash );
+				$legacy = defined( 'MOBISHOP_ACCOUNT_DELETION_LEGACY_TEST_ONLY' ) && MOBISHOP_ACCOUNT_DELETION_LEGACY_TEST_ONLY === true;
+				if ( ! $intent && ! $legacy ) return false;
+				if ( $intent ) {
+					if ( $intent['userId'] !== $id || ! hash_equals( $intent['binding'], self::binding( $request ) ) || $intent['expires'] < time() ) return false;
+					if ( ! ( class_exists( 'MobiShop_Customer_Identity_Erasure_Stage' ) && class_exists( 'MobiShop_Customer_Identity_Guard' ) ) || MobiShop_Customer_Identity_Links::inventory( $id ) !== $intent['inventory'] ) return false;
+					if ( $intent['appleRequired'] ) {
+						if ( ! $intent['appleApproved'] || ( $body['apple_revoked'] ?? null ) !== true ) return false;
+						foreach ( $intent['inventory'] as $link ) if ( $link['provider'] === 'apple' && MobiShop_Customer_Identity_Links::shared( $id, $link ) !== false ) return false;
+						foreach ( $intent['identityStage']['entries'] as &$entry ) {
+							if ( $entry['provider'] !== 'apple' || $entry['action'] === 'retain_shared' ) continue;
+							if ( MobiShop_Customer_Identity_Client::lookup( $entry['project'], $entry['uid'] ) !== array( 'status' => 'absent' ) ) return false;
+							$entry['apple_revoked'] = true;
+						}
+						unset( $entry );
+					}
+				}
 				$record = array( 'userId' => $id, 'status' => 'prepared', 'expires' => time() + self::RECEIPT_TTL );
 				if ( ! add_option( self::RECEIPT_PREFIX . $hash, $record, '', false ) ) return false;
 				$prepared = $id;
 				if ( self::receipt_record( $hash ) !== $record ) throw new RuntimeException( 'Receipt persistence unavailable' );
-				self::save( array( 'userId' => $id, 'phase' => -1, 'cursor' => time(), 'receiptHash' => $hash ) );
+				self::save( array( 'userId' => $id, 'phase' => -1, 'cursor' => time(), 'receiptHash' => $hash ) + ( $intent ? array( 'identityStage' => $intent['identityStage'], 'identityLinks' => $intent['inventory'] ) : array() ) );
 				return self::schedule( $id );
+				} );
 			} );
 			if ( is_wp_error( $result ) ) {
 				self::cancel_prepared( $prepared, $hash );
 				return $result;
 			}
 			// Only a VERIFIED session revocation opens the worker's ready barrier.
-			self::save( array( 'userId' => $prepared, 'phase' => 0, 'cursor' => 0, 'receiptHash' => $hash ) );
+			$accepted = self::job( $prepared );
+			$accepted['phase'] = 0; $accepted['cursor'] = 0;
+			self::save( $accepted );
+			if ( isset( $accepted['identityLinks'] ) ) MobiShop_Customer_Identity_Guard::accept( $prepared, $hash, $accepted['identityLinks'] );
+			$intent = self::intent( $hash );
+			if ( $intent ) self::remove_intent( $hash, $intent );
 			if ( class_exists( 'WP_Session_Tokens' ) ) WP_Session_Tokens::get_instance( $prepared )->destroy_all();
 			return self::response( array( 'status' => 'pending', 'user_id' => $prepared ), 202 );
 		} catch ( Throwable $error ) {
 			self::cancel_prepared( $prepared, $hash );
 			return self::error( 'unavailable', 503 );
 		}
+	}
+	/** Caller holds the merchant session lock first; capture under owner then sorted UID locks. */
+	private static function guarded( int $id, string $hash, callable $action ) {
+		if ( ! class_exists( 'MobiShop_Customer_Identity_Guard' ) ) {
+			if ( defined( 'MOBISHOP_ACCOUNT_DELETION_LEGACY_TEST_ONLY' ) && MOBISHOP_ACCOUNT_DELETION_LEGACY_TEST_ONLY === true ) return $action();
+			throw new RuntimeException( 'Identity guard unavailable' );
+		}
+		return MobiShop_Customer_Identity_Guard::with_owner( $id, static function () use ( $id, $hash, $action ) {
+			$row = self::intent( $hash );
+			$current = MobiShop_Customer_Identity_Links::inventory( $id );
+			return MobiShop_Customer_Identity_Guard::with_links( array_merge( $current, $row['inventory'] ?? array() ), $action );
+		} );
+	}
+	private static function process_guarded( array &$job ): bool {
+		if ( ! isset( $job['identityLinks'] ) ) return self::process( $job ); // Legacy fixtures only; process denies production legacy jobs.
+		return MobiShop_Customer_Identity_Guard::with_owner( $job['userId'], static function () use ( &$job ): bool {
+			return MobiShop_Customer_Identity_Guard::with_links( $job['identityLinks'], static function () use ( &$job ): bool {
+				MobiShop_Customer_Identity_Guard::accept( $job['userId'], $job['receiptHash'], $job['identityLinks'] );
+				return self::process( $job );
+			} );
+		} );
+	}
+	private static function binding( WP_REST_Request $request ): string {
+		$token = trim( (string) $request->get_header( 'x-mobishop-session' ) );
+		if ( $token === '' && preg_match( '/^Bearer\s+(.+)$/i', trim( (string) $request->get_header( 'authorization' ) ), $matches ) ) $token = trim( $matches[1] );
+		if ( $token === '' ) throw new RuntimeException( 'Missing session binding' );
+		return hash_hmac( 'sha256', home_url( '/' ) . '|' . $token, wp_salt( 'auth' ) );
+	}
+	/** A finalized request may crash before removing its original approved intent. */
+	private static function remove_completed_intent( array $job ): void {
+		if ( ! isset( $job['identityLinks'] ) ) return;
+		$hash = $job['receiptHash'];
+		$record = self::intent( $hash );
+		if ( $record === null ) return;
+		if ( $record['userId'] !== $job['userId'] || $record['inventory'] !== $job['identityLinks'] ) throw new RuntimeException( 'Completed intent owner changed' );
+		self::remove_intent( $hash, $record );
+		if ( self::raw_option( self::INTENT . $hash ) !== null ) throw new RuntimeException( 'Completed intent cleanup unconfirmed' );
+	}
+	private static function remove_intent( string $hash, array $record ): void {
+		global $wpdb;
+		$key = self::INTENT . $hash;
+		$removed = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND BINARY option_value = BINARY %s", $key, maybe_serialize( $record ) ) );
+		self::clear_option_cache( $key );
+		if ( false === $removed ) throw new RuntimeException( 'Intent cleanup unavailable' );
+	}
+	private static function retain_intent( array $row ): bool {
+		// Approval grants a device SDK capability; wall-clock expiry cannot revoke it.
+		// Keep its reconciliation snapshot until durable acceptance or explicit reconciliation.
+		return $row['appleApproved'] || $row['expires'] >= time();
+	}
+	private static function intent( string $hash ): ?array {
+		$raw = self::raw_option( self::INTENT . $hash );
+		if ( $raw === null ) return null;
+		$row = maybe_unserialize( $raw );
+		if ( ! is_array( $row ) || ! isset( $row['userId'], $row['binding'], $row['expires'], $row['identityStage'], $row['appleRequired'], $row['appleApproved'] ) ) throw new RuntimeException( 'Invalid deletion intent' );
+		if ( ! is_string( $row['intentId'] ?? null ) || ! preg_match( '/^[a-f0-9]{64}$/D', $row['intentId'] ) || ! is_int( $row['userId'] ) || $row['userId'] < 1 || ! is_string( $row['binding'] ) || ! preg_match( '/^[a-f0-9]{64}$/D', $row['binding'] )
+			|| ! is_int( $row['expires'] ) || ! is_array( $row['identityStage'] ) || ! is_array( $row['inventory'] ?? null ) || ! is_bool( $row['appleRequired'] ) || ! is_bool( $row['appleApproved'] ) ) throw new RuntimeException( 'Invalid deletion intent values' );
+		$apple = false;
+		foreach ( ( $row['identityStage']['entries'] ?? array() ) as $link ) if ( ( $link['provider'] ?? '' ) === 'apple' && ( $link['action'] ?? '' ) !== 'retain_shared' ) $apple = true;
+		if ( $row['appleApproved'] && ( ! is_int( $row['approvedAt'] ?? null ) || $row['approvedAt'] <= 0 || $row['approvedAt'] > time() ) ) throw new RuntimeException( 'Invalid approved recovery window' );
+		if ( $apple !== $row['appleRequired'] ) throw new RuntimeException( 'Invalid Apple intent flag' );
+		return $row;
+	}
+	private function intent_operation( WP_REST_Request $request, callable $action ) {
+		if ( ! self::enabled() || is_multisite() || ! class_exists( 'MobiShop_Customer_Identity_Erasure_Stage' ) ) return self::error( 'unavailable', 409 );
+		$body = $request->get_json_params();
+		if ( ! is_array( $body ) || ! self::valid_receipt( $body['receipt'] ?? '' ) ) return self::error( 'receipt', 400 );
+		try {
+			$hash = self::receipt_hash( $body['receipt'] );
+			$response = null;
+			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( $request, $body, $hash, $action, &$response ): bool {
+				if ( self::has_pending_payment( $id ) || self::job( $id ) ) return false;
+				$response = self::guarded( $id, $hash, static fn() => $action( $id, $hash, self::binding( $request ), $body ) );
+				return $response instanceof WP_REST_Response;
+			}, false );
+			return is_wp_error( $result ) ? $result : $response;
+		} catch ( Throwable $error ) { return self::error( 'intent_unavailable', 503 ); }
+	}
+	public function prepare_deletion( WP_REST_Request $request ) {
+		return $this->intent_operation( $request, static function ( int $id, string $hash, string $binding ): WP_REST_Response {
+			$row = self::intent( $hash );
+			if ( $row === null ) {
+				if ( self::receipt_record( $hash ) ) throw new RuntimeException( 'Receipt already used' );
+				$inventory = MobiShop_Customer_Identity_Links::inventory( $id );
+				$stage = MobiShop_Customer_Identity_Erasure_Stage::prepare( $id );
+				if ( ! is_array( $stage ) ) throw new RuntimeException( 'Invalid identity snapshot' );
+				$apple = false;
+				foreach ( $stage['entries'] as $link ) if ( $link['provider'] === 'apple' && $link['action'] !== 'retain_shared' ) $apple = true;
+				$row = array( 'intentId' => bin2hex( random_bytes( 32 ) ), 'userId' => $id, 'binding' => $binding, 'expires' => time() + 600, 'identityStage' => $stage, 'inventory' => $inventory, 'appleRequired' => $apple, 'appleApproved' => false );
+				$inserted = false;
+				try {
+					MobiShop_Customer_Identity_Guard::reserve( $id, $hash, $inventory, $row['expires'] );
+					$inserted = add_option( self::INTENT . $hash, $row, '', false );
+					if ( ! $inserted || self::intent( $hash ) !== $row ) throw new RuntimeException( 'Intent save unavailable' );
+				} catch ( Throwable $error ) {
+					// A stored intent may need reconciliation; never free an uncertain durable claim.
+					if ( ! $inserted ) MobiShop_Customer_Identity_Guard::release( $id, $hash, $inventory );
+					throw $error;
+				}
+			}
+			if ( $row['userId'] !== $id ) throw new RuntimeException( 'Intent owner changed' );
+			if ( ! hash_equals( $row['binding'], $binding ) || $row['expires'] < time() ) {
+				// begin_self_deletion already verified this owner's fresh merchant session.
+				// Preserve approved evidence after SDK deletion: a replacement Firebase proof may be impossible.
+				if ( $row['appleApproved'] && ( MobiShop_Customer_Identity_Links::inventory( $id ) !== $row['inventory'] ) ) throw new RuntimeException( 'Approved recovery unavailable' );
+				$next = $row;
+				if ( ! $row['appleApproved'] ) {
+					$next['inventory'] = MobiShop_Customer_Identity_Links::inventory( $id );
+					$next['identityStage'] = MobiShop_Customer_Identity_Erasure_Stage::prepare( $id );
+					$next['appleRequired'] = false;
+					foreach ( $next['identityStage']['entries'] as $link ) if ( $link['provider'] === 'apple' && $link['action'] !== 'retain_shared' ) $next['appleRequired'] = true;
+				}
+				$next['binding'] = $binding;
+				$next['expires'] = time() + 600;
+				if ( ! self::cas( self::INTENT . $hash, maybe_serialize( $row ), maybe_serialize( $next ) ) ) throw new RuntimeException( 'Intent changed during recovery' );
+				$row = $next;
+			}
+			// Repair a cleanup crash after prepared reservations were released but before intent removal.
+			if ( ! $row['appleApproved'] ) MobiShop_Customer_Identity_Guard::reserve( $id, $hash, $row['inventory'], $row['expires'] );
+			return self::response( array( 'status' => 'prepared', 'intent_id' => $row['intentId'], 'user_id' => $id, 'apple_revocation_required' => $row['appleRequired'] ) );
+		} );
+	}
+	public function approve_apple( WP_REST_Request $request ) {
+		return $this->intent_operation( $request, static function ( int $id, string $hash, string $binding ) use ( $request ): WP_REST_Response {
+			$row = self::intent( $hash );
+			if ( ! $row || $row['userId'] !== $id || ! hash_equals( $row['binding'], $binding ) || $row['expires'] < time() || ! $row['appleRequired'] || $request->get_param( 'platform' ) !== 'ios' ) throw new RuntimeException( 'Invalid Apple intent' );
+			if ( MobiShop_Customer_Identity_Links::inventory( $id ) !== $row['inventory'] ) throw new RuntimeException( 'Identity snapshot changed' );
+			$auth = new MobiShop_Native_Customer_Auth_Endpoint( static fn() => null, static fn( $user ) => $user instanceof WP_User && self::ordinary_customer( $user ) );
+			if ( $auth->validate_deletion_apple_proof( $request, $id ) !== true ) throw new RuntimeException( 'Invalid Apple proof' );
+			$next = $row; $next['appleApproved'] = true;
+			if ( ! $row['appleApproved'] ) $next['approvedAt'] = time();
+			if ( $next !== $row && ! self::cas( self::INTENT . $hash, maybe_serialize( $row ), maybe_serialize( $next ) ) ) throw new RuntimeException( 'Intent changed' );
+			MobiShop_Customer_Identity_Guard::approve( $id, $hash, $row['inventory'] );
+			return self::response( array( 'approved' => true ) );
+		} );
+	}
+	public function finalize_deletion( WP_REST_Request $request ) {
+		return $this->request_deletion( $request );
 	}
 	private static function response( array $data, int $status = 200 ): WP_REST_Response {
 		$response = new WP_REST_Response( $data, $status );
@@ -191,6 +357,7 @@ final class MobiShop_Customer_Account_Deletion {
 	}
 	/** Keyset pagination prevents the first live receipts from starving older results. */
 	public static function cleanup_receipts(): void {
+		self::cleanup_intents();
 		global $wpdb;
 		try {
 			$cursor = self::raw_option( self::RECEIPT_CURSOR ) ?? '';
@@ -209,6 +376,35 @@ final class MobiShop_Customer_Account_Deletion {
 			$old = self::raw_option( self::RECEIPT_CURSOR );
 			if ( null === $old ) add_option( self::RECEIPT_CURSOR, $next, '', false );
 			else self::cas( self::RECEIPT_CURSOR, $old, $next );
+		} catch ( Throwable $error ) { /* Next scheduled batch retries safely. */ }
+	}
+
+	private static function cleanup_intents(): void {
+		global $wpdb;
+		try {
+			$cursor = self::raw_option( 'mobishop_deletion_intent_cursor_v1' ) ?? '';
+			$wpdb->last_error = '';
+			$rows = $wpdb->get_results( $wpdb->prepare( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name LIKE %s AND option_name > %s ORDER BY option_name ASC LIMIT 20", $wpdb->esc_like( self::INTENT ) . '%', $cursor ), ARRAY_A );
+			if ( ! is_array( $rows ) || $wpdb->last_error ) return;
+			foreach ( $rows as $row ) {
+				$hash = substr( $row['option_name'], strlen( self::INTENT ) );
+				$record = self::intent( $hash );
+				if ( ! $record || self::retain_intent( $record ) ) continue;
+				$job = self::job( (int) $record['userId'] );
+				if ( $job && ( $job['receiptHash'] ?? '' ) === $hash ) continue;
+				self::guarded( (int) $record['userId'], $hash, static function () use ( $hash ): void {
+					$fresh = self::intent( $hash );
+					if ( ! $fresh || self::retain_intent( $fresh ) ) return;
+					$job = self::job( $fresh['userId'] );
+					if ( $job && ( $job['receiptHash'] ?? '' ) === $hash ) return;
+					MobiShop_Customer_Identity_Guard::release( $fresh['userId'], $hash, $fresh['inventory'] );
+					self::remove_intent( $hash, $fresh );
+				} );
+			}
+			$next = count( $rows ) < 20 ? '' : end( $rows )['option_name'];
+			$old = self::raw_option( 'mobishop_deletion_intent_cursor_v1' );
+			if ( null === $old ) add_option( 'mobishop_deletion_intent_cursor_v1', $next, '', false );
+			else self::cas( 'mobishop_deletion_intent_cursor_v1', $old, $next );
 		} catch ( Throwable $error ) { /* Next scheduled batch retries safely. */ }
 	}
 
@@ -273,7 +469,15 @@ final class MobiShop_Customer_Account_Deletion {
 			$user = get_user_by( 'id', $id );
 			if ( $user && ! self::ordinary_customer( $user ) ) return;
 			if ( self::has_pending_payment( $id ) ) return;
-			if ( self::process( $job ) ) {
+			$finished = ! $user && isset( $job['identityLinks'] ) ? self::receipt_record( $job['receiptHash'] ) : null;
+			if ( $finished && $finished['status'] === 'completed' && (int) $finished['userId'] === $id ) {
+				// Recover a crash after completion/release; never replay provider erasure.
+				self::remove_completed_intent( $job );
+				MobiShop_Customer_Identity_Guard::release( $id, $job['receiptHash'], $job['identityLinks'], true );
+				self::remove_job( $job );
+				return;
+			}
+			if ( self::process_guarded( $job ) ) {
 				$hash = $job['receiptHash'] ?? '';
 				if ( $hash !== '' ) {
 					$record = self::receipt_record( $hash );
@@ -281,6 +485,8 @@ final class MobiShop_Customer_Account_Deletion {
 					$completed = array( 'userId' => $id, 'status' => 'completed', 'expires' => time() + self::RECEIPT_TTL );
 					if ( ! self::cas( self::RECEIPT_PREFIX . $hash, maybe_serialize( $record ), maybe_serialize( $completed ) ) ) throw new RuntimeException( 'Completion receipt unavailable' );
 				}
+				self::remove_completed_intent( $job );
+				if ( isset( $job['identityLinks'] ) ) MobiShop_Customer_Identity_Guard::release( $id, $hash, $job['identityLinks'], true );
 				self::remove_job( $job );
 			}
 			else self::save( $job );
@@ -321,6 +527,13 @@ final class MobiShop_Customer_Account_Deletion {
 		global $wpdb;
 		$id = (int) $job['userId'];
 		$phase = (int) $job['phase'];
+		if ( isset( $job['identityStage'] ) ) {
+			if ( ! class_exists( 'MobiShop_Customer_Identity_Erasure_Stage' ) ) throw new RuntimeException( 'Identity erasure unavailable' );
+			$job['identityStage'] = MobiShop_Customer_Identity_Erasure_Stage::advance( $id, $job['identityStage'] );
+			// Persist each bounded provider step before merchant data erasure begins.
+			self::save( $job );
+			if ( $job['identityStage']['cursor'] !== count( $job['identityStage']['entries'] ) ) return false;
+		} elseif ( ! ( defined( 'MOBISHOP_ACCOUNT_DELETION_LEGACY_TEST_ONLY' ) && MOBISHOP_ACCOUNT_DELETION_LEGACY_TEST_ONLY === true ) ) throw new RuntimeException( 'Missing identity erasure stage' );
 		if ( 0 === $phase ) {
 			if ( ! function_exists( 'wc_get_orders' ) ) throw new RuntimeException( 'WooCommerce unavailable' );
 			$orders = wc_get_orders( array( 'customer_id' => $id, 'limit' => self::LIMIT, 'orderby' => 'ID', 'order' => 'ASC', 'return' => 'objects' ) );

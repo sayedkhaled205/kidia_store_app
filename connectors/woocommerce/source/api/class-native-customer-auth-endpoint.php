@@ -474,24 +474,35 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		try {
 			if ( $this->apple_user( $p ) || email_exists( $p['email'] ) ) return $this->error( 'account_conflict', 409 );
 			if ( ! $this->consume( $ticket, $row ) ) return $this->error( 'invalid_ticket', 401 );
-			$id = wp_insert_user( array( 'user_login' => 'mobile_' . bin2hex( random_bytes( 12 ) ), 'user_email' => $p['email'],
-				'user_pass' => wp_generate_password( 64, true, true ), 'display_name' => $name, 'first_name' => $name, 'role' => 'customer' ) );
-			if ( is_wp_error( $id ) ) return $this->error( 'registration_failed', 409 );
-			update_user_meta( $id, '_mobishop_apple_identity', $this->apple_key( $p ) );
-			update_user_meta( $id, '_mobishop_apple_subject', $p['apple_subject'] );
-			update_user_meta( $id, '_mobishop_firebase_project', $p['firebase_project'] );
-			update_user_meta( $id, '_mobishop_firebase_uid', $p['firebase_uid'] );
-			update_user_meta( $id, '_mobishop_app_registered_at', gmdate( 'c' ) );
-			// Apple proves the account; shipping contact details belong at checkout.
-			delete_user_meta( $id, 'kidia_phone_setup_required' );
-			$user = get_user_by( 'id', (int) $id );
-			if ( ! $this->proof_allows( $user, $p ) || get_user_meta( $id, '_mobishop_apple_subject', true ) !== $p['apple_subject'] ) {
-				// Only roll back the customer created above, still under both locks.
-				// A partial identity write must not reserve this email forever.
-				if ( ! function_exists( 'wp_delete_user' ) ) require_once ABSPATH . 'wp-admin/includes/user.php';
-				wp_delete_user( (int) $id, 0 );
-				return $this->error( 'registration_failed', 503 );
-			}
+			$create = function () use ( $p, $name ) {
+				$id = wp_insert_user( array( 'user_login' => 'mobile_' . bin2hex( random_bytes( 12 ) ), 'user_email' => $p['email'],
+					'user_pass' => wp_generate_password( 64, true, true ), 'display_name' => $name, 'first_name' => $name, 'role' => 'customer' ) );
+				if ( is_wp_error( $id ) ) return $this->error( 'registration_failed', 409 );
+				update_user_meta( $id, '_mobishop_apple_identity', $this->apple_key( $p ) );
+				update_user_meta( $id, '_mobishop_apple_subject', $p['apple_subject'] );
+				update_user_meta( $id, '_mobishop_firebase_project', $p['firebase_project'] );
+				update_user_meta( $id, '_mobishop_firebase_uid', $p['firebase_uid'] );
+				update_user_meta( $id, '_mobishop_app_registered_at', gmdate( 'c' ) );
+				// Apple proves the account; shipping contact details belong at checkout.
+				delete_user_meta( $id, 'kidia_phone_setup_required' );
+				$user = get_user_by( 'id', (int) $id );
+				if ( ! $this->proof_allows( $user, $p ) || get_user_meta( $id, '_mobishop_apple_subject', true ) !== $p['apple_subject'] ) {
+					// Only roll back the customer created above, still under both locks.
+					// A partial identity write must not reserve this email forever.
+					if ( ! function_exists( 'wp_delete_user' ) ) require_once ABSPATH . 'wp-admin/includes/user.php';
+					wp_delete_user( (int) $id, 0 );
+					return $this->error( 'registration_failed', 503 );
+				}
+				return $user;
+			};
+			try {
+				if ( class_exists( 'MobiShop_Customer_Identity_Guard' ) ) {
+					$user = MobiShop_Customer_Identity_Guard::new_identity( array( 'project' => $p['firebase_project'], 'uid' => $p['firebase_uid'] ), $create );
+				} elseif ( defined( 'MOBISHOP_ACCOUNT_DELETION_ENABLED' ) && MOBISHOP_ACCOUNT_DELETION_ENABLED === true ) {
+					return $this->error( 'identity_link_failed', 503 );
+				} else { $user = $create(); }
+			} catch ( Throwable $error ) { return $this->error( 'identity_link_failed', 503 ); }
+			if ( is_wp_error( $user ) ) return $user;
 			return $this->finish( $user, $p, $request );
 		} finally { $this->unlock( $locks ); }
 	}
@@ -768,10 +779,20 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			|| ! is_string( $identity['uid'] ?? null ) || $identity['uid'] === '' || strlen( $identity['uid'] ) > 128 ) return false;
 		$key = '_mobishop_phone_firebase_identity_' . hash( 'sha256', $identity['project'] . '|' . $identity['uid'] );
 		$value = array( 'project' => $identity['project'], 'uid' => $identity['uid'] );
-		// WordPress returns false for an unchanged value too; read back the stored value.
-		update_user_meta( $user_id, $key, $value );
-		wp_cache_delete( $user_id, 'user_meta' );
-		return get_user_meta( $user_id, $key, true ) === $value;
+		$write = static function () use ( $user_id, $key, $value ): bool {
+			// WordPress returns false for an unchanged value too; read back the stored value.
+			update_user_meta( $user_id, $key, $value );
+			wp_cache_delete( $user_id, 'user_meta' );
+			return get_user_meta( $user_id, $key, true ) === $value;
+		};
+		try {
+			if ( class_exists( 'MobiShop_Customer_Identity_Guard' ) ) return MobiShop_Customer_Identity_Guard::writer( $user_id, $identity, $write, static function () use ( $user_id, $key, $value ): bool {
+				wp_cache_delete( $user_id, 'user_meta' );
+				return get_user_meta( $user_id, $key, false ) === array( $value );
+			} );
+			if ( defined( 'MOBISHOP_ACCOUNT_DELETION_ENABLED' ) && MOBISHOP_ACCOUNT_DELETION_ENABLED === true ) return false;
+			return $write();
+		} catch ( Throwable $error ) { return false; }
 	}
 	private function ready( WP_User $user ): bool {
 		$ready = apply_filters( 'mobishop_auth_customer_ready', ! get_user_meta( $user->ID, 'kidia_phone_setup_required', true ), $user );

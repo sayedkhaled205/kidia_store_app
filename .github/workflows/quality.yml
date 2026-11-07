@@ -100,6 +100,8 @@ jobs:
       - name: Check shared account boundaries and website recovery
         run: |
           php connectors/woocommerce/tests/account-deletion-test.php
+          php connectors/woocommerce/tests/account-deletion-intent-test.php
+          php connectors/woocommerce/tests/native-identity-guard-test.php
           php connectors/woocommerce/tests/native-apple-auth-test.php
           php connectors/woocommerce/tests/native-apple-deletion-proof-test.php
           php connectors/woocommerce/tests/auth-boundary-regressions-test.php
@@ -114,6 +116,7 @@ jobs:
           php tools/customer_identity/tests/connector-identity-client-test.php
           php tools/customer_identity/tests/customer-identity-links-test.php
           php tools/customer_identity/tests/identity-erasure-stage-test.php
+          php tools/customer_identity/tests/identity-guard-test.php
 
   flutter:
     name: Flutter app
