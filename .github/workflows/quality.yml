@@ -110,6 +110,9 @@ jobs:
           php tools/customer_identity/tests/firebase-erasure-test.php
           php tools/customer_identity/tests/store-identity-adapter-test.php
           php tools/customer_identity/tests/identity-controller-test.php
+          php tools/customer_identity/tests/connector-identity-client-test.php
+          php tools/customer_identity/tests/customer-identity-links-test.php
+          php tools/customer_identity/tests/identity-erasure-stage-test.php
 
   flutter:
     name: Flutter app
