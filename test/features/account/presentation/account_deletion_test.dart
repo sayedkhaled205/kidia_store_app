@@ -258,6 +258,7 @@ class _Deletion
     'status': 'prepared',
     'user_id': 7,
     'apple_revocation_required': false,
+    'intent_id': 'b' * 64,
   };
   @override
   Future<Map<String, dynamic>> validateAppleDeletion({

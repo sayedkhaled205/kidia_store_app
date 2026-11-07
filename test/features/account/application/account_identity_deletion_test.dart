@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/account/application/account_identity_deletion.dart';
 import 'package:mobishop_store_app/features/account/data/network/customer_account_api_transport.dart';
+import 'package:mobishop_store_app/features/account/data/storage/account_deletion_receipt_store.dart';
 import 'package:mobishop_store_app/features/auth/data/native_auth_sdk.dart';
 
 void main() {
@@ -10,10 +11,13 @@ void main() {
   late List<String> calls;
   var current = true;
   var applePlatform = true;
+  AppleDeletionCheckpoint? checkpoint;
+  var failSave = false;
+  var session = 'captured-session';
   Future<Map<String, dynamic>> run() => requestAccountIdentityDeletion(
     transport: transport,
-    receipt: 'persisted-receipt',
-    expectedSession: 'captured-session',
+    receipt: 'a' * 64,
+    expectedSession: session,
     userId: 7,
     appleSdk: sdk,
     loadAppleConfig: () async {
@@ -22,6 +26,12 @@ void main() {
     },
     isApplePlatform: applePlatform,
     isCurrentAccount: () => current,
+    appleCheckpoint: checkpoint,
+    persistAppleCheckpoint: (value) async {
+      checkpoint = value;
+      calls.add('checkpoint');
+      if (failSave) throw StateError('Synthetic secure storage failure');
+    },
   );
   setUp(() {
     calls = [];
@@ -29,6 +39,9 @@ void main() {
     sdk = _Apple(calls);
     current = true;
     applePlatform = true;
+    checkpoint = null;
+    failSave = false;
+    session = 'captured-session';
   });
   test(
     'non-Apple account finalizes without native configuration or SDK',
@@ -50,6 +63,7 @@ void main() {
         'proof',
         'revoke',
         'delete-identity',
+        'checkpoint',
         'finalize:true',
       ]);
     },
@@ -59,6 +73,83 @@ void main() {
     await expectLater(run(), throwsA(isA<AppleDeletionRequiresIos>()));
     expect(calls, ['prepare']);
   });
+  for (final id in [null, '', 'invalid', 123, 'F' * 64]) {
+    test('invalid immutable intent cannot start the SDK: $id', () async {
+      transport.prepared['intent_id'] = id;
+      await expectLater(run(), throwsFormatException);
+      expect(calls, ['prepare']);
+    });
+  }
+  test('lost finalize response retries from saved Apple completion', () async {
+    transport.failure = 'finalize';
+    await expectLater(run(), throwsA(isA<CustomerAccountTransportException>()));
+    expect(
+      checkpoint?.sessionHash,
+      AccountDeletionReceipt.hashSession(session),
+    );
+    transport.failure = null;
+    calls.clear();
+    await run();
+    expect(calls, ['prepare', 'checkpoint', 'finalize:true']);
+  });
+  test(
+    'same-owner reauthentication rebinds only after matching intent',
+    () async {
+      transport.failure = 'finalize';
+      await expectLater(
+        run(),
+        throwsA(isA<CustomerAccountTransportException>()),
+      );
+      transport.failure = null;
+      session = transport.expectedToken = 'fresh-session';
+      calls.clear();
+      await run();
+      expect(calls, ['prepare', 'checkpoint', 'finalize:true']);
+      expect(
+        checkpoint?.sessionHash,
+        AccountDeletionReceipt.hashSession(session),
+      );
+    },
+  );
+  test(
+    'saving SDK success must finish before finalize and retry skips SDK',
+    () async {
+      failSave = true;
+      await expectLater(run(), throwsStateError);
+      expect(calls.last, 'checkpoint');
+      expect(calls.where((s) => s.startsWith('finalize')), isEmpty);
+      failSave = false;
+      calls.clear();
+      await run();
+      expect(calls, ['prepare', 'checkpoint', 'finalize:true']);
+    },
+  );
+  for (final mismatch in [
+    'receipt',
+    'user',
+    'intent',
+    'session-format',
+    'non-apple',
+  ]) {
+    test(
+      'checkpoint mismatch fails closed without rerunning SDK: $mismatch',
+      () async {
+        checkpoint = AppleDeletionCheckpoint(
+          receipt: (mismatch == 'receipt' ? 'b' : 'a') * 64,
+          userId: mismatch == 'user' ? 8 : 7,
+          intentId: (mismatch == 'intent' ? 'c' : 'b') * 64,
+          sessionHash: mismatch == 'session-format'
+              ? 'invalid'
+              : AccountDeletionReceipt.hashSession(session),
+        );
+        if (mismatch == 'non-apple') {
+          transport.prepared['apple_revocation_required'] = false;
+        }
+        await expectLater(run(), throwsStateError);
+        expect(calls, ['prepare']);
+      },
+    );
+  }
   for (final bad in [
     {'status': 'pending', 'user_id': 7, 'apple_revocation_required': true},
     {'status': 'prepared', 'user_id': 8, 'apple_revocation_required': true},
@@ -115,6 +206,23 @@ void main() {
     await expectLater(run(), throwsStateError);
     expect(calls, isEmpty);
   });
+  test(
+    'SDK success is recorded before handling a late session change',
+    () async {
+      sdk.afterStep = (s) {
+        if (s == 'delete-identity') current = false;
+      };
+      await expectLater(run(), throwsStateError);
+      expect(checkpoint?.intentId, 'b' * 64);
+      expect(calls.last, 'checkpoint');
+      expect(calls.where((s) => s.startsWith('finalize')), isEmpty);
+      current = true;
+      session = transport.expectedToken = 'fresh-session';
+      calls.clear();
+      await run();
+      expect(calls, ['prepare', 'checkpoint', 'finalize:true']);
+    },
+  );
   for (final step in ['prepare', 'proof', 'delete-identity']) {
     test('account/store/session change after $step cannot finalize', () async {
       transport.afterStep = (s) {
@@ -172,14 +280,16 @@ class _Transport implements CustomerAccountIdentityDeletionTransport {
     'status': 'prepared',
     'user_id': 7,
     'apple_revocation_required': true,
+    'intent_id': 'b' * 64,
   };
   Map<String, dynamic> result = {'status': 'pending', 'user_id': 7};
   Object? approval = true;
   String? failure;
+  String expectedToken = 'captured-session';
   void Function(String)? afterStep;
   void step(String value, String receipt, String session) {
-    expect(receipt, 'persisted-receipt');
-    expect(session, 'captured-session');
+    expect(receipt, 'a' * 64);
+    expect(session, expectedToken);
     calls.add(value);
     if (failure == value.split(':').first) {
       throw const CustomerAccountTransportException(

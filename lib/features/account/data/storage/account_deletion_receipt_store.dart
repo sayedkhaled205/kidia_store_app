@@ -4,16 +4,66 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class AccountDeletionReceipt {
-  const AccountDeletionReceipt({
+/// Device-local evidence of a completed SDK operation, never an Apple token.
+class AppleDeletionCheckpoint {
+  const AppleDeletionCheckpoint({
     required this.receipt,
     required this.userId,
     required this.sessionHash,
+    required this.intentId,
   });
 
   final String receipt;
   final int userId;
   final String sessionHash;
+  final String intentId;
+
+  static bool isDigest(Object? value) =>
+      value is String && RegExp(r'^[a-f0-9]{64}$').hasMatch(value);
+
+  bool get isValid =>
+      isDigest(receipt) &&
+      userId > 0 &&
+      isDigest(sessionHash) &&
+      isDigest(intentId);
+
+  Map<String, dynamic> toJson() => {
+    'receipt': receipt,
+    'userId': userId,
+    'sessionHash': sessionHash,
+    'intentId': intentId,
+  };
+
+  static AppleDeletionCheckpoint fromJson(Object? value) {
+    if (value is! Map ||
+        !isDigest(value['receipt']) ||
+        value['userId'] is! int ||
+        (value['userId'] as int) < 1 ||
+        !isDigest(value['sessionHash']) ||
+        !isDigest(value['intentId'])) {
+      throw const FormatException('Invalid stored Apple deletion checkpoint');
+    }
+    return AppleDeletionCheckpoint(
+      receipt: value['receipt'] as String,
+      userId: value['userId'] as int,
+      sessionHash: value['sessionHash'] as String,
+      intentId: value['intentId'] as String,
+    );
+  }
+}
+
+class AccountDeletionReceipt {
+  const AccountDeletionReceipt({
+    required this.receipt,
+    required this.userId,
+    required this.sessionHash,
+    this.appleCheckpoint,
+  });
+
+  final String receipt;
+  final int userId;
+  final String sessionHash;
+  final AppleDeletionCheckpoint? appleCheckpoint;
 
   bool matchesSession(String token) => sessionHash == hashSession(token);
   static String hashSession(String token) =>
@@ -69,10 +119,21 @@ class AccountDeletionReceiptStore {
         !RegExp(r'^[a-f0-9]{64}$').hasMatch(value['sessionHash'] as String)) {
       throw const FormatException('Invalid stored deletion receipt');
     }
+    final checkpoint = value.containsKey('appleCheckpoint')
+        ? AppleDeletionCheckpoint.fromJson(value['appleCheckpoint'])
+        : null;
+    if (checkpoint != null &&
+        (checkpoint.receipt != value['receipt'] ||
+            checkpoint.userId != value['userId'])) {
+      throw const FormatException(
+        'Apple checkpoint belongs to another receipt',
+      );
+    }
     return AccountDeletionReceipt(
       receipt: value['receipt'] as String,
       userId: value['userId'] as int,
       sessionHash: value['sessionHash'] as String,
+      appleCheckpoint: checkpoint,
     );
   }
 
@@ -98,17 +159,47 @@ class AccountDeletionReceiptStore {
           receipt: receipt,
           userId: userId,
           sessionHash: AccountDeletionReceipt.hashSession(sessionToken),
+          // Reauthentication alone must not rebind the completed operation.
+          // The server must first confirm the same owner and frozen intent.
+          appleCheckpoint: existing?.appleCheckpoint,
         );
-        await _storage.write(
-          key: _key,
-          value: jsonEncode({
-            'receipt': record.receipt,
-            'userId': record.userId,
-            'sessionHash': record.sessionHash,
-          }),
-        );
+        await _write(record);
         return record;
       });
+
+  Future<AccountDeletionReceipt> saveAppleCheckpoint(
+    AppleDeletionCheckpoint checkpoint,
+  ) => _exclusive(() async {
+    final current = await _read();
+    if (!checkpoint.isValid ||
+        current == null ||
+        current.receipt != checkpoint.receipt ||
+        current.userId != checkpoint.userId ||
+        current.sessionHash != checkpoint.sessionHash ||
+        (current.appleCheckpoint != null &&
+            current.appleCheckpoint!.intentId != checkpoint.intentId)) {
+      throw StateError('The deletion receipt changed before saving completion');
+    }
+    final record = AccountDeletionReceipt(
+      receipt: current.receipt,
+      userId: current.userId,
+      sessionHash: current.sessionHash,
+      appleCheckpoint: checkpoint,
+    );
+    await _write(record);
+    return record;
+  });
+
+  Future<void> _write(AccountDeletionReceipt record) => _storage.write(
+    key: _key,
+    value: jsonEncode({
+      'receipt': record.receipt,
+      'userId': record.userId,
+      'sessionHash': record.sessionHash,
+      if (record.appleCheckpoint != null)
+        'appleCheckpoint': record.appleCheckpoint!.toJson(),
+    }),
+  );
 
   Future<void> clear(String receipt) => _exclusive(() async {
     if ((await _read())?.receipt == receipt) await _storage.delete(key: _key);

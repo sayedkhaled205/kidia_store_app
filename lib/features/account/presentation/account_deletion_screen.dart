@@ -69,6 +69,7 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
   String? _error;
   String? _deletedToken;
   AccountDeletionReceipt? _receipt;
+  AppleDeletionCheckpoint? _appleCheckpoint;
   int? get _targetUserId => widget.userId ?? _receipt?.userId;
   bool get _sameMerchant => AppConfig.apiBaseUrl == _storeScope;
   bool get _ar => Localizations.localeOf(context).languageCode == 'ar';
@@ -115,7 +116,10 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
         _sameMerchant &&
         (status == 'unknown' || status == 'prepared')) {
       setState(() {
-        _unconfirmedReceipt = status == 'unknown';
+        _unconfirmedReceipt =
+            status == 'unknown' &&
+            _appleCheckpoint == null &&
+            receipt.appleCheckpoint == null;
         _preparedReceipt = status == 'prepared';
       });
     }
@@ -195,13 +199,12 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       _error = null;
     });
     try {
-      _receipt = await ref
-          .read(accountDeletionReceiptStoreProvider)
-          .prepare(session.user.id, token);
-      ref.invalidate(accountDeletionReceiptProvider);
+      final receiptStore = ref.read(accountDeletionReceiptStoreProvider);
+      _receipt = await receiptStore.prepare(session.user.id, token);
       if (!isCurrentAccount()) {
         throw StateError('The account changed before confirmation');
       }
+      ref.invalidate(accountDeletionReceiptProvider);
       final transport = ref.read(accountDeletionTransportProvider);
       if (transport is! CustomerAccountIdentityDeletionTransport) {
         throw StateError('Identity deletion is unavailable');
@@ -224,6 +227,19 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
         },
         isApplePlatform: !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
         isCurrentAccount: isCurrentAccount,
+        appleCheckpoint: _appleCheckpoint ?? _receipt!.appleCheckpoint,
+        persistAppleCheckpoint: (checkpoint) async {
+          // Keep successful SDK evidence in memory if secure storage fails so
+          // a same-screen retry first retries persistence, never Apple sign-in.
+          _appleCheckpoint = checkpoint;
+          // This only records success for the captured receipt. The store
+          // rejects replacement receipts/sessions; the flow checks the current
+          // account again before finalization or local sign-out.
+          _receipt = await receiptStore.saveAppleCheckpoint(checkpoint);
+          if (isCurrentAccount()) {
+            ref.invalidate(accountDeletionReceiptProvider);
+          }
+        },
       );
       _deletedToken = token;
       if (mounted) {
@@ -418,8 +434,8 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
             if (_preparedReceipt && !_pending) ...[
               Text(
                 _text(
-                  'الطلب محفوظ، لكن الحذف لم يبدأ بعد. أكّد الحذف لاستكماله، أو تواصل مع خدمة العملاء إذا تعذر التأكيد.',
-                  'Your request is saved, but deletion has not started. Confirm deletion to continue, or contact customer service if confirmation fails.',
+                  'طلبك محفوظ، لكن تنفيذ الحذف لم يتأكد بعد. أكّد الحذف لاستكماله، أو تواصل مع خدمة العملاء إذا تعذر التأكيد.',
+                  'Your request is saved, but deletion is not confirmed. Confirm deletion to continue, or contact customer service if confirmation fails.',
                 ),
               ),
               const SizedBox(height: 16),
