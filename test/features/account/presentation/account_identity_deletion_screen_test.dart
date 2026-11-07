@@ -217,6 +217,99 @@ void main() {
     },
   );
   deletionWidgetTest(
+    'SDK success survives lost finalize response and restart without another Apple prompt',
+    (tester) async {
+      transport.failFinalize = true;
+      await open(tester);
+      await confirm(tester);
+      final saved = await receipts.read();
+      expect(saved?.appleCheckpoint?.intentId, 'b' * 64);
+      expect(find.text('Account deletion requested'), findsNothing);
+      expect(sessions.value?.token, 'original');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpAndSettle();
+      auth = _Auth(sessions.value!);
+      receipts = AccountDeletionReceiptStore(
+        'https://synthetic.example.invalid',
+      );
+      transport = _Transport(calls, receipts)..status = 'prepared';
+      calls.clear();
+      await open(tester, statusOnly: true);
+      expect(calls, isEmpty);
+      expect(find.textContaining('deletion is not confirmed'), findsOneWidget);
+      await confirm(tester);
+      expect(calls, ['prepare', 'finalize:true']);
+      expect(find.text('Account deletion requested'), findsOneWidget);
+      expect(sessions.value, null);
+    },
+  );
+  deletionWidgetTest(
+    'saved Apple completion survives fresh same-owner login and a temporary unknown status',
+    (tester) async {
+      final original = await receipts.prepare(7, 'old');
+      await receipts.saveAppleCheckpoint(
+        AppleDeletionCheckpoint(
+          receipt: original.receipt,
+          userId: 7,
+          sessionHash: original.sessionHash,
+          intentId: 'b' * 64,
+        ),
+      );
+      await open(tester, statusOnly: true);
+      expect(find.byKey(const Key('dismiss-deletion-status')), findsNothing);
+      expect(sessions.value?.token, 'original');
+      await confirm(tester);
+      expect(calls, ['prepare', 'finalize:true']);
+      expect(
+        (await receipts.read())?.appleCheckpoint?.sessionHash,
+        AccountDeletionReceipt.hashSession('original'),
+      );
+      expect(find.text('Account deletion requested'), findsOneWidget);
+    },
+  );
+  deletionWidgetTest(
+    'account change during checkpoint persistence blocks finalize and preserves replacement',
+    (tester) async {
+      final gate = Completer<void>();
+      receipts = _DelayedCheckpointStore(gate.future);
+      transport = _Transport(calls, receipts);
+      await open(tester);
+      await confirm(tester, settle: false);
+      await tester.pump();
+      expect(calls, ['prepare', 'config', 'apple', 'proof', 'revoked']);
+      final replacement = _session('replacement', id: 8);
+      auth.replace(replacement);
+      sessions.value = replacement;
+      gate.complete();
+      await tester.pumpAndSettle();
+      expect(calls.where((s) => s.startsWith('finalize')), isEmpty);
+      expect(sessions.value?.token, 'replacement');
+      expect((await receipts.read())?.appleCheckpoint?.userId, 7);
+      expect(find.text('Account deletion requested'), findsNothing);
+      expect(tester.takeException(), null);
+    },
+  );
+  deletionWidgetTest(
+    'checkpoint storage failure preserves in-memory SDK completion for explicit retry',
+    (tester) async {
+      receipts = _FailingCheckpointStore();
+      transport = _Transport(calls, receipts);
+      await open(tester);
+      await confirm(tester);
+      expect((await receipts.read())?.appleCheckpoint, null);
+      expect(calls.where((s) => s.startsWith('finalize')), isEmpty);
+      (receipts as _FailingCheckpointStore).fail = false;
+      calls.clear();
+      final button = find.byKey(const Key('request-account-deletion'));
+      await tester.ensureVisible(button);
+      await tester.tap(button);
+      await tester.pumpAndSettle();
+      expect(calls, ['prepare', 'finalize:true']);
+      expect((await receipts.read())?.appleCheckpoint, isNotNull);
+      expect(find.text('Account deletion requested'), findsOneWidget);
+    },
+  );
+  deletionWidgetTest(
     'account switch while Apple is open cannot finalize or clear replacement',
     (tester) async {
       final gate = Completer<void>();
@@ -281,6 +374,7 @@ class _Transport extends _Legacy
   final List<String> steps;
   final AccountDeletionReceiptStore receipts;
   bool requiresApple = true;
+  bool failFinalize = false;
   String status = 'unknown';
   @override
   Future<Map<String, dynamic>> deletionStatus(String receipt) async => {
@@ -299,6 +393,7 @@ class _Transport extends _Legacy
       'status': 'prepared',
       'user_id': 7,
       'apple_revocation_required': requiresApple,
+      'intent_id': 'b' * 64,
     };
   }
 
@@ -320,8 +415,42 @@ class _Transport extends _Legacy
     required bool appleRevoked,
   }) async {
     steps.add('finalize:$appleRevoked');
+    if (appleRevoked) {
+      final record = await receipts.read();
+      expect(record?.appleCheckpoint?.intentId, 'b' * 64);
+      expect(
+        record?.appleCheckpoint?.sessionHash,
+        AccountDeletionReceipt.hashSession(expectedSession),
+      );
+    }
+    if (failFinalize) throw StateError('Synthetic lost connection');
     status = 'pending';
     return {'status': 'pending', 'user_id': 7};
+  }
+}
+
+class _FailingCheckpointStore extends AccountDeletionReceiptStore {
+  _FailingCheckpointStore() : super('https://synthetic.example.invalid');
+  bool fail = true;
+  @override
+  Future<AccountDeletionReceipt> saveAppleCheckpoint(
+    AppleDeletionCheckpoint checkpoint,
+  ) {
+    if (fail) throw StateError('Synthetic storage failure');
+    return super.saveAppleCheckpoint(checkpoint);
+  }
+}
+
+class _DelayedCheckpointStore extends AccountDeletionReceiptStore {
+  _DelayedCheckpointStore(this.gate)
+    : super('https://synthetic.example.invalid');
+  final Future<void> gate;
+  @override
+  Future<AccountDeletionReceipt> saveAppleCheckpoint(
+    AppleDeletionCheckpoint checkpoint,
+  ) async {
+    await gate;
+    return super.saveAppleCheckpoint(checkpoint);
   }
 }
 
