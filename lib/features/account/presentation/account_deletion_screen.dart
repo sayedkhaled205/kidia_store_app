@@ -63,7 +63,6 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
   bool _completed = false;
   bool _restoring = true;
   bool _reauth = false;
-  bool _unconfirmedReceipt = false;
   bool _preparedReceipt = false;
   late final String _storeScope;
   String? _error;
@@ -94,8 +93,8 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
   String _appleErrorText(NativeAuthSdkException error) {
     if (error.code == 'cancelled') {
       return _text(
-        'تم إلغاء تأكيد أبل. لم يتأكد اكتمال الحذف؛ راجع حالة الطلب قبل المحاولة مرة أخرى.',
-        'Apple confirmation was cancelled. Deletion completion is not confirmed; check the request status before retrying.',
+        'لم يكتمل تأكيد أبل. لم يتأكد اكتمال الحذف. حاول مرة أخرى.',
+        'Apple confirmation did not finish. Deletion completion is not confirmed. Please retry.',
       );
     }
     if (error.code == 'identity-mismatch' || error.code == 'identity-changed') {
@@ -107,20 +106,20 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
     if (error is NativeAppleDeletionException &&
         error.stage == NativeAppleDeletionStage.revoke) {
       return _text(
-        'تعذر تأكيد إلغاء ربط أبل. لم يتأكد اكتمال حذف الحساب. راجع حالة الطلب أو تواصل مع خدمة العملاء.',
-        'We could not confirm disconnecting Apple. Deletion completion is not confirmed. Check the request status or contact customer service.',
+        'تعذر تأكيد إلغاء ربط أبل. لم يتأكد اكتمال حذف الحساب. حاول مرة أخرى أو تواصل مع خدمة العملاء.',
+        'We could not confirm disconnecting Apple. Deletion completion is not confirmed. Please retry or contact customer service.',
       );
     }
     if (error is NativeAppleDeletionException &&
         error.stage == NativeAppleDeletionStage.delete) {
       return _text(
-        'تعذر تأكيد حذف بيانات تسجيل الدخول. لم يتأكد اكتمال حذف الحساب. راجع حالة الطلب أو تواصل مع خدمة العملاء.',
-        'We could not confirm removing the sign-in identity. Deletion completion is not confirmed. Check the request status or contact customer service.',
+        'تعذر تأكيد حذف بيانات تسجيل الدخول. لم يتأكد اكتمال حذف الحساب. حاول مرة أخرى أو تواصل مع خدمة العملاء.',
+        'We could not confirm removing the sign-in identity. Deletion completion is not confirmed. Please retry or contact customer service.',
       );
     }
     return _text(
-      'تعذر إكمال تأكيد أبل. لم يتأكد اكتمال الحذف. حدّث حالة الطلب قبل المحاولة مرة أخرى.',
-      'We could not finish Apple confirmation. Deletion completion is not confirmed. Check the request status before retrying.',
+      'تعذر إكمال تأكيد أبل. لم يتأكد اكتمال الحذف. حاول مرة أخرى.',
+      'We could not finish Apple confirmation. Deletion completion is not confirmed. Please retry.',
     );
   }
 
@@ -133,7 +132,9 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
 
   Future<void> _restoreReceipt() async {
     try {
-      final saved = await ref.read(accountDeletionReceiptStoreProvider).read();
+      final saved = await ref
+          .read(accountDeletionReceiptStoreProvider)
+          .read(userId: widget.userId);
       if (!mounted || !_sameMerchant) return;
       if (saved != null &&
           (widget.userId == null || saved.userId == widget.userId)) {
@@ -144,8 +145,8 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       if (mounted) {
         setState(
           () => _error = _text(
-            'تعذر قراءة حالة الحذف. حاول مرة أخرى.',
-            'Could not read the deletion status. Please retry.',
+            'تعذر استعادة طلب الحذف. حاول مرة أخرى.',
+            'Could not restore the deletion request. Please retry.',
           ),
         );
       }
@@ -161,14 +162,18 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
         .read(accountDeletionTransportProvider)
         .deletionStatus(receipt.receipt);
     final status = response['status'];
+    if (!const [
+      'unknown',
+      'prepared',
+      'pending',
+      'completed',
+    ].contains(status)) {
+      throw const FormatException('Invalid deletion status response');
+    }
     if (mounted &&
         _sameMerchant &&
         (status == 'unknown' || status == 'prepared')) {
       setState(() {
-        _unconfirmedReceipt =
-            status == 'unknown' &&
-            _appleCheckpoint == null &&
-            receipt.appleCheckpoint == null;
         _preparedReceipt = status == 'prepared';
       });
     }
@@ -177,7 +182,6 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
     setState(() {
       _pending = true;
       _completed = status == 'completed';
-      _unconfirmedReceipt = false;
       _preparedReceipt = false;
       _error = null;
     });
@@ -192,36 +196,6 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
           .completeAccountDeletion(current.token);
     }
     return true;
-  }
-
-  Future<void> _checkStatus() async {
-    if (_busy) return;
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    try {
-      if (!await _recoverAccepted() && mounted && !_preparedReceipt) {
-        setState(
-          () => _error = _text(
-            'لم يتم تأكيد طلب الحذف. لو انتهت الجلسة، سجّل الدخول مرة أخرى ثم أعد الطلب.',
-            'Deletion is not confirmed. If your session expired, sign in again and retry the request.',
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(
-          () => _error = _text(
-            'تعذر تحديث الحالة. حاول مرة أخرى.',
-            'Could not refresh status. Please retry.',
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
-      _revealError();
-    }
   }
 
   Future<void> _delete() async {
@@ -249,6 +223,9 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       _error = null;
     });
     try {
+      // Recover an accepted request before retrying any provider operation.
+      if (_receipt != null && await _recoverAccepted()) return;
+      if (!isCurrentAccount()) return;
       final receiptStore = ref.read(accountDeletionReceiptStoreProvider);
       _receipt = await receiptStore.prepare(session.user.id, token);
       if (!isCurrentAccount()) {
@@ -296,7 +273,6 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
         setState(() {
           _pending = true;
           _preparedReceipt = false;
-          _unconfirmedReceipt = false;
         });
       }
       await ref
@@ -348,8 +324,8 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
       if (mounted) {
         setState(
           () => _error = _text(
-            'لم يتم تأكيد اكتمال الحذف. حدّث حالة الطلب قبل المحاولة مرة أخرى.',
-            'Deletion completion is not confirmed. Check the request status before retrying.',
+            'لم يتم تأكيد اكتمال الحذف. حاول مرة أخرى؛ لن يتكرر طلب مقبول.',
+            'Deletion completion is not confirmed. Please retry; an accepted request will not be duplicated.',
           ),
         );
       }
@@ -360,10 +336,20 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
   }
 
   Future<void> _signInAgain() async {
-    await Navigator.of(
+    if (_busy || !_sameMerchant) return;
+    final previous = ref.read(authControllerProvider).value;
+    final signedIn = await Navigator.of(
       context,
     ).push<bool>(MaterialPageRoute(builder: (_) => const AuthScreen()));
-    if (!mounted) return;
+    if (!mounted || !_sameMerchant) return;
+    final current = ref.read(authControllerProvider).value;
+    if (signedIn != true ||
+        current == null ||
+        current.isExpired ||
+        current.user.id != _targetUserId ||
+        current.token == previous?.token) {
+      return;
+    }
     ref.invalidate(accountDeletionAvailabilityProvider);
     setState(() {
       _reauth = false;
@@ -398,29 +384,6 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
           () => _error = _text(
             'طلب الحذف اتسجل. تعذر مسح جلسة الجهاز؛ حاول مرة أخرى.',
             'Deletion is requested. Local sign-out could not finish; please retry.',
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
-
-  Future<void> _dismissUnconfirmed() async {
-    if (_busy || !_unconfirmedReceipt || _receipt == null) return;
-    setState(() => _busy = true);
-    try {
-      await ref
-          .read(accountDeletionReceiptStoreProvider)
-          .clear(_receipt!.receipt);
-      ref.invalidate(accountDeletionReceiptProvider);
-      if (mounted) Navigator.of(context).pop();
-    } catch (_) {
-      if (mounted) {
-        setState(
-          () => _error = _text(
-            'تعذر إغلاق المتابعة. حاول مرة أخرى.',
-            'Could not dismiss status. Please retry.',
           ),
         );
       }
@@ -513,30 +476,9 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
                   ),
                 ),
               ),
-            if (_unconfirmedReceipt && !_pending) ...[
-              Text(
-                _text(
-                  'إخفاء المتابعة من الجهاز لا يلغي طلب حذف مقبول.',
-                  'Dismissing this status does not cancel an accepted deletion request.',
-                ),
-              ),
-              TextButton(
-                key: const Key('dismiss-deletion-status'),
-                onPressed: _busy ? null : _dismissUnconfirmed,
-                child: Text(_text('إغلاق المتابعة', 'Dismiss status')),
-              ),
-            ],
             if (_restoring)
               const Center(child: CircularProgressIndicator())
             else if (_pending) ...[
-              if (!_completed)
-                OutlinedButton(
-                  key: const Key('check-deletion-status'),
-                  onPressed: _busy ? null : _checkStatus,
-                  child: Text(
-                    _text('تحديث حالة الحذف', 'Check deletion status'),
-                  ),
-                ),
               FilledButton(
                 onPressed: _busy ? null : _closePending,
                 child: Text(_text('تم', 'Done')),
@@ -548,14 +490,6 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
                   'Your account changed or the session expired. Return to Account and open deletion for the intended account.',
                 ),
               ),
-              if (_receipt != null)
-                TextButton(
-                  key: const Key('check-deletion-status'),
-                  onPressed: _busy ? null : _checkStatus,
-                  child: Text(
-                    _text('تحديث حالة الحذف', 'Check deletion status'),
-                  ),
-                ),
             ] else if (availability?.isLoading == true)
               const Center(child: CircularProgressIndicator())
             else if (availability?.value != true) ...[
@@ -614,14 +548,6 @@ class _AccountDeletionScreenState extends ConsumerState<AccountDeletionScreen> {
                 onPressed: _busy ? null : () => Navigator.of(context).pop(),
                 child: Text(_text('إلغاء', 'Cancel')),
               ),
-              if (_receipt != null)
-                TextButton(
-                  key: const Key('check-deletion-status'),
-                  onPressed: _busy ? null : _checkStatus,
-                  child: Text(
-                    _text('تحديث حالة الحذف', 'Check deletion status'),
-                  ),
-                ),
             ],
           ],
         ),

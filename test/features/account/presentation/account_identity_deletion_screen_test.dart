@@ -274,7 +274,7 @@ void main() {
     platform: TargetPlatform.android,
   );
   deletionWidgetTest(
-    'ambiguous SDK error preserves receipt and permits status-only recovery',
+    'retry recovers accepted deletion without another Apple operation or status button',
     (tester) async {
       sdk.failAfterProof = true;
       await open(tester);
@@ -289,13 +289,33 @@ void main() {
       final saved = await receipts.read();
       expect(saved, isNotNull);
       transport.status = 'completed';
-      final status = find.byKey(const Key('check-deletion-status'));
-      await tester.ensureVisible(status);
-      await tester.tap(status);
+      expect(find.byKey(const Key('check-deletion-status')), findsNothing);
+      expect(find.byKey(const Key('dismiss-deletion-status')), findsNothing);
+      final retry = find.byKey(const Key('request-account-deletion'));
+      await tester.ensureVisible(retry);
+      await tester.tap(retry);
       await tester.pumpAndSettle();
       expect(calls, ['prepare', 'config', 'apple', 'proof']);
       expect(find.text('Account deleted'), findsOneWidget);
       expect(sessions.value, null);
+    },
+  );
+  deletionWidgetTest(
+    'retry fails closed if the saved request cannot be reconciled',
+    (tester) async {
+      sdk.failAfterProof = true;
+      await open(tester);
+      await confirm(tester);
+      final saved = await receipts.read();
+      transport.status = 'invalid';
+      final retry = find.byKey(const Key('request-account-deletion'));
+      await tester.ensureVisible(retry);
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(calls, ['prepare', 'config', 'apple', 'proof']);
+      expect((await receipts.read())?.receipt, saved?.receipt);
+      expect(sessions.value?.token, 'original');
+      expect(find.text('Account deletion requested'), findsNothing);
     },
   );
   deletionWidgetTest(

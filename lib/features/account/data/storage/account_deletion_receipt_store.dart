@@ -104,19 +104,68 @@ class AccountDeletionReceiptStore {
     return result;
   }
 
-  Future<AccountDeletionReceipt?> read() => _exclusive(_read);
+  /// Version 1 was an implicit, unversioned single-record shape. Version 2
+  /// stores a `records` list keyed by owner so unrelated owners never
+  /// contend for the same durable capability.
+  static const _collectionVersion = 2;
 
-  Future<AccountDeletionReceipt?> _read() async {
+  /// Reads the receipt for [userId], or the first stored receipt when
+  /// [userId] is omitted. Kept for legacy/single-record call sites; callers
+  /// that know the acting user should always pass it explicitly.
+  Future<AccountDeletionReceipt?> read({int? userId}) =>
+      _exclusive(() => _readOne(userId));
+
+  Future<AccountDeletionReceipt?> _readOne(int? userId) async {
+    final all = await _readAll();
+    if (all.isEmpty) return null;
+    if (userId == null) return all.first;
+    for (final record in all) {
+      if (record.userId == userId) return record;
+    }
+    return null;
+  }
+
+  Future<List<AccountDeletionReceipt>> _readAll() async {
     final raw = await _storage.read(key: _key);
-    if (raw == null) return null;
+    if (raw == null) return const [];
     final value = jsonDecode(raw);
+    if (value is Map && value.containsKey('version')) {
+      if (value['version'] is! int || value['version'] != _collectionVersion) {
+        throw const FormatException(
+          'Unsupported stored deletion receipt version',
+        );
+      }
+      final records = value['records'];
+      if (records is! List) {
+        throw const FormatException(
+          'Invalid stored deletion receipt collection',
+        );
+      }
+      final parsed = <AccountDeletionReceipt>[];
+      final seenUsers = <int>{};
+      final seenReceipts = <String>{};
+      for (final entry in records) {
+        final record = _parseRecord(entry);
+        if (!seenUsers.add(record.userId) ||
+            !seenReceipts.add(record.receipt)) {
+          throw const FormatException(
+            'Duplicate stored deletion receipt entry',
+          );
+        }
+        parsed.add(record);
+      }
+      return parsed;
+    }
+    // Legacy, unversioned singleton shape: a lone record at the top level.
+    return [_parseRecord(value)];
+  }
+
+  AccountDeletionReceipt _parseRecord(Object? value) {
     if (value is! Map ||
-        value['receipt'] is! String ||
-        !RegExp(r'^[a-f0-9]{64}$').hasMatch(value['receipt'] as String) ||
+        !AppleDeletionCheckpoint.isDigest(value['receipt']) ||
         value['userId'] is! int ||
         (value['userId'] as int) < 1 ||
-        value['sessionHash'] is! String ||
-        !RegExp(r'^[a-f0-9]{64}$').hasMatch(value['sessionHash'] as String)) {
+        !AppleDeletionCheckpoint.isDigest(value['sessionHash'])) {
       throw const FormatException('Invalid stored deletion receipt');
     }
     final checkpoint = value.containsKey('appleCheckpoint')
@@ -142,12 +191,9 @@ class AccountDeletionReceiptStore {
         if (userId < 1 || sessionToken.isEmpty) {
           throw ArgumentError('A current account is required');
         }
-        final existing = await _read();
-        if (existing != null && existing.userId != userId) {
-          throw StateError(
-            'Another deletion receipt is still pending on this device',
-          );
-        }
+        final all = await _readAll();
+        final existingIndex = all.indexWhere((r) => r.userId == userId);
+        final existing = existingIndex == -1 ? null : all[existingIndex];
         final random = Random.secure();
         final receipt =
             existing?.receipt ??
@@ -163,18 +209,25 @@ class AccountDeletionReceiptStore {
           // The server must first confirm the same owner and frozen intent.
           appleCheckpoint: existing?.appleCheckpoint,
         );
-        await _write(record);
+        final updated = [...all];
+        if (existingIndex == -1) {
+          updated.add(record);
+        } else {
+          updated[existingIndex] = record;
+        }
+        await _writeAll(updated);
         return record;
       });
 
   Future<AccountDeletionReceipt> saveAppleCheckpoint(
     AppleDeletionCheckpoint checkpoint,
   ) => _exclusive(() async {
-    final current = await _read();
+    final all = await _readAll();
+    final index = all.indexWhere((r) => r.userId == checkpoint.userId);
+    final current = index == -1 ? null : all[index];
     if (!checkpoint.isValid ||
         current == null ||
         current.receipt != checkpoint.receipt ||
-        current.userId != checkpoint.userId ||
         current.sessionHash != checkpoint.sessionHash ||
         (current.appleCheckpoint != null &&
             current.appleCheckpoint!.intentId != checkpoint.intentId)) {
@@ -186,22 +239,39 @@ class AccountDeletionReceiptStore {
       sessionHash: current.sessionHash,
       appleCheckpoint: checkpoint,
     );
-    await _write(record);
+    final updated = [...all];
+    updated[index] = record;
+    await _writeAll(updated);
     return record;
   });
 
-  Future<void> _write(AccountDeletionReceipt record) => _storage.write(
-    key: _key,
-    value: jsonEncode({
-      'receipt': record.receipt,
-      'userId': record.userId,
-      'sessionHash': record.sessionHash,
-      if (record.appleCheckpoint != null)
-        'appleCheckpoint': record.appleCheckpoint!.toJson(),
-    }),
-  );
+  Future<void> _writeAll(List<AccountDeletionReceipt> records) =>
+      _storage.write(
+        key: _key,
+        value: jsonEncode({
+          'version': _collectionVersion,
+          'records': records
+              .map(
+                (record) => {
+                  'receipt': record.receipt,
+                  'userId': record.userId,
+                  'sessionHash': record.sessionHash,
+                  if (record.appleCheckpoint != null)
+                    'appleCheckpoint': record.appleCheckpoint!.toJson(),
+                },
+              )
+              .toList(),
+        }),
+      );
 
   Future<void> clear(String receipt) => _exclusive(() async {
-    if ((await _read())?.receipt == receipt) await _storage.delete(key: _key);
+    final all = await _readAll();
+    final updated = all.where((r) => r.receipt != receipt).toList();
+    if (updated.length == all.length) return;
+    if (updated.isEmpty) {
+      await _storage.delete(key: _key);
+    } else {
+      await _writeAll(updated);
+    }
   });
 }

@@ -58,6 +58,7 @@ void main() {
         home: const Scaffold(body: AccountScreen(), bottomNavigationBar: SafeArea(child: SizedBox(height: 64)))),
     ));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('account-deletion-status')), findsNothing);
     final privacy = tester.getRect(find.byKey(const Key('store-privacy-policy')));
     final deletion = tester.getRect(find.byKey(const Key('account-delete')));
     final languageTile = tester.getRect(find.byKey(const Key('account-language')));

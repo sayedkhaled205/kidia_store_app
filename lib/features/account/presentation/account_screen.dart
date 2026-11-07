@@ -197,21 +197,6 @@ class AccountScreen extends ConsumerWidget {
                   ),
               ],
             ),
-            if (!AppConfig.isCmsPreview &&
-                AppConfig.commercePlatform == CommercePlatform.wooCommerce &&
-                ref.watch(accountDeletionReceiptProvider).value != null)
-              TextButton.icon(
-                key: const Key('account-deletion-status'),
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const AccountDeletionScreen(),
-                  ),
-                ),
-                icon: const Icon(Icons.pending_actions),
-                label: Text(
-                  isArabic ? 'حالة طلب حذف الحساب' : 'Account deletion status',
-                ),
-              ),
             if (session != null &&
                 pageLayout.element('logout_button').enabled) ...<Widget>[
               SizedBox(height: compactIos ? 0 : MobiShopSpacing.lg),
