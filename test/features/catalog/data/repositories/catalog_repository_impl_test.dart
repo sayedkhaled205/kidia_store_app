@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_options.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'package:mobishop_store_app/features/catalog/data/datasources/catalog_remote_data_source.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_category_model.dart';
@@ -15,6 +16,53 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 
 void main() {
+  test(
+    'filter metadata caches coalesce per mode, expire and evict errors',
+    () async {
+      var now = DateTime(2026, 11, 6);
+      final source = _FacetSource();
+      final pending = Completer<CatalogFilterOptions>();
+      source.handler = (_) => pending.future;
+      final repository = CatalogRepositoryImpl(source, now: () => now);
+      addTearDown(repository.dispose);
+      final tags = repository.getFilterOptions(includeAttributes: false);
+      final sameTags = repository.getFilterOptions(includeAttributes: false);
+      final full = repository.getFilterOptions();
+      expect(source.calls, [false, true]);
+      pending.complete(const CatalogFilterOptions());
+      await Future.wait([tags, sameTags, full]);
+      await repository.getFilterOptions(includeAttributes: false);
+      await repository.getFilterOptions();
+      expect(source.calls.length, 2);
+      now = now.add(const Duration(minutes: 6));
+      source.handler = (_) async => throw StateError('offline');
+      await expectLater(
+        repository.getFilterOptions(includeAttributes: false),
+        throwsStateError,
+      );
+      source.handler = (_) async => const CatalogFilterOptions();
+      await repository.getFilterOptions(includeAttributes: false);
+      expect(source.calls, [false, true, false, false]);
+    },
+  );
+  test(
+    'catalog invalidation discards even a late filter metadata response',
+    () async {
+      final changes = StreamController<int>.broadcast(sync: true);
+      final pending = Completer<CatalogFilterOptions>();
+      final source = _FacetSource()..handler = (_) => pending.future;
+      final repository = CatalogRepositoryImpl(source, changes: changes.stream);
+      addTearDown(changes.close);
+      addTearDown(repository.dispose);
+      final old = repository.getFilterOptions(includeAttributes: false);
+      changes.add(1);
+      pending.complete(const CatalogFilterOptions());
+      await old;
+      source.handler = (_) async => const CatalogFilterOptions();
+      await repository.getFilterOptions(includeAttributes: false);
+      expect(source.calls, [false, false]);
+    },
+  );
   test(
     'opening a recently listed product skips a duplicate read and expires after 20 seconds',
     () async {
@@ -190,5 +238,19 @@ class _FailingCatalogRemoteDataSource extends _FakeCatalogRemoteDataSource {
       kind: StoreApiFailureKind.timeout,
       message: 'timed out',
     );
+  }
+}
+
+class _FacetSource extends _FakeCatalogRemoteDataSource
+    implements CatalogFilterOptionsSource {
+  final calls = <bool>[];
+  Future<CatalogFilterOptions> Function(bool) handler = (_) async =>
+      const CatalogFilterOptions();
+  @override
+  Future<CatalogFilterOptions> getFilterOptions({
+    bool includeAttributes = true,
+  }) {
+    calls.add(includeAttributes);
+    return handler(includeAttributes);
   }
 }

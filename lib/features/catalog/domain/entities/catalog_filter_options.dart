@@ -93,5 +93,10 @@ class CatalogFilterOptions {
 
 /// Optional capability: unsupported platforms never receive WooCommerce tags.
 abstract interface class CatalogFilterOptionsSource {
-  Future<CatalogFilterOptions> getFilterOptions();
+  /// [includeAttributes] controls whether pa_size/pa_color terms are fetched.
+  /// Callers that only render tags/brands (e.g. the side filter sheet) can
+  /// pass false to skip the hidden attribute/terms requests entirely.
+  Future<CatalogFilterOptions> getFilterOptions({
+    bool includeAttributes = true,
+  });
 }

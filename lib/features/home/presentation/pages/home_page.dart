@@ -83,6 +83,18 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(homeScrollToTopProvider, (_, _) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || !_scrollController.hasClients) return;
+        unawaited(
+          _scrollController.animateTo(
+            _scrollController.position.minScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          ),
+        );
+      });
+    });
     final String locale = Localizations.localeOf(context).toLanguageTag();
     final bool arabic = Localizations.localeOf(context).languageCode == 'ar';
     final identity = ref.watch(applicationIdentity58Provider);

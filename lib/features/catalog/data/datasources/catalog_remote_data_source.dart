@@ -44,8 +44,11 @@ class StoreApiCatalogRemoteDataSource
   final StoreApiClient _client;
 
   @override
-  Future<CatalogFilterOptions> getFilterOptions() =>
-      StoreApiFilterOptions(_client).getFilterOptions();
+  Future<CatalogFilterOptions> getFilterOptions({
+    bool includeAttributes = true,
+  }) => StoreApiFilterOptions(
+    _client,
+  ).getFilterOptions(includeAttributes: includeAttributes);
 
   @override
   Future<CatalogPage<CatalogProductModel>> fetchProducts(

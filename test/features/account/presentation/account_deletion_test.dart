@@ -229,7 +229,10 @@ class _DelayedReceiptStore extends AccountDeletionReceiptStore {
   }
 }
 
-class _Deletion implements CustomerAccountDeletionTransport {
+class _Deletion
+    implements
+        CustomerAccountDeletionTransport,
+        CustomerAccountIdentityDeletionTransport {
   _Deletion(this.result);
   final String result;
   int calls = 0;
@@ -246,7 +249,30 @@ class _Deletion implements CustomerAccountDeletionTransport {
   Future<Map<String, dynamic>> requestDeletion({
     required String receipt,
     required String expectedSession,
+  }) async => throw StateError('Legacy deletion must not be called');
+  @override
+  Future<Map<String, dynamic>> prepareIdentityDeletion({
+    required String receipt,
+    required String expectedSession,
+  }) async => {
+    'status': 'prepared',
+    'user_id': 7,
+    'apple_revocation_required': false,
+    'intent_id': 'b' * 64,
+  };
+  @override
+  Future<Map<String, dynamic>> validateAppleDeletion({
+    required String receipt,
+    required String expectedSession,
+    required String idToken,
+  }) async => throw StateError('Non-Apple fixture must not require Apple');
+  @override
+  Future<Map<String, dynamic>> finalizeIdentityDeletion({
+    required String receipt,
+    required String expectedSession,
+    required bool appleRevoked,
   }) async {
+    expect(appleRevoked, false);
     calls++;
     expect(receipt, matches(RegExp(r'^[a-f0-9]{64}$')));
     if (result == 'lost-response') {

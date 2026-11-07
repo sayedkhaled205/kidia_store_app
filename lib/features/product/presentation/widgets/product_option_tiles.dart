@@ -153,6 +153,7 @@ class ProductOptionTiles extends StatelessWidget {
                                             child: Padding(
                                               padding: const EdgeInsets.all(3),
                                               child: AppNetworkImage(
+                                                decodeAtDisplaySize: true,
                                                 imageUrl:
                                                     (image.thumbnail ??
                                                             image.source)

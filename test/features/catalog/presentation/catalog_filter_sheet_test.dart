@@ -132,6 +132,13 @@ void main() {
         'filters_button_height': 60,
       };
       await tester.pumpAndSettle();
+      BorderRadiusGeometry chipRadius() =>
+          (tester
+                      .widget<FilterChip>(find.widgetWithText(FilterChip, '4Y'))
+                      .shape
+                  as RoundedRectangleBorder)
+              .borderRadius;
+      expect(chipRadius(), BorderRadius.zero);
       expect(
         tester.getSize(find.byType(CatalogProductFilterSheet)).width,
         closeTo(272, .1),
@@ -151,8 +158,12 @@ void main() {
             .selected,
         true,
       );
+      controls.value = {'filters_chip_radius': 24};
+      await tester.pumpAndSettle();
+      expect(chipRadius(), BorderRadius.circular(24));
       controls.value = {};
       await tester.pumpAndSettle();
+      expect(chipRadius(), BorderRadius.circular(6));
       expect(
         tester.getSize(find.byType(CatalogProductFilterSheet)).width,
         closeTo(240, .1),

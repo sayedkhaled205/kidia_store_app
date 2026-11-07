@@ -616,6 +616,9 @@ class _MainShellState extends ConsumerState<MainShell>
   }
 
   void _openBranch(WidgetRef ref, int index) {
+    if (index == 0 && widget.navigationShell.currentIndex == 0) {
+      ref.read(homeScrollToTopProvider.notifier).request();
+    }
     if (index >= 4) {
       final route = switch (_items[index].id) {
         'search' => '/search',

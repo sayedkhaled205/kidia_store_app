@@ -24,9 +24,10 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/native_a
 import '../../auth/support/idle_native_auth_actions.dart';
 
 void main() {
-  testWidgets('iPhone account menu and sign out stay reachable above navigation', (tester) async {
+  for (final screenSize in [const Size(375, 812), const Size(390, 844)]) {
+  testWidgets('iPhone $screenSize account menu fits above navigation', (tester) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = screenSize;
     tester.view.padding = const FakeViewPadding(top: 44, bottom: 34);
     tester.view.viewPadding = const FakeViewPadding(top: 44, bottom: 34);
     addTearDown(tester.view.reset);
@@ -49,11 +50,18 @@ void main() {
         home: const Scaffold(body: AccountScreen(), bottomNavigationBar: SafeArea(child: SizedBox(height: 64)))),
     ));
     await tester.pumpAndSettle();
+    final privacy = tester.getRect(find.byKey(const Key('store-privacy-policy')));
+    final deletion = tester.getRect(find.byKey(const Key('account-delete')));
+    final language = tester.getRect(find.byKey(const Key('account-language')));
+    expect(privacy.center.dy, closeTo(deletion.center.dy, 1));
+    expect(privacy.top - language.bottom, greaterThanOrEqualTo(8));
     for (final key in ['account-action-orders', 'account-action-addresses', 'account-action-profile', 'account-action-support', 'account-language', 'account-delete', 'account-sign-out']) {
       expect(find.byKey(Key(key)).hitTestable(), findsOneWidget, reason: key);
     }
+    expect(tester.state<ScrollableState>(find.byType(Scrollable).first).position.maxScrollExtent, 0);
     expect(tester.takeException(), isNull);
   });
+  }
 
   viewportRotationTests(
     'Account',
@@ -272,7 +280,7 @@ void main() {
     });
   }
 
-  testWidgets('preview account uses the selected application name', (
+  testWidgets('preview guest account subtitle omits the selected application name', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -292,7 +300,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('تابع طلباتك وبياناتك على كيديا ستور'), findsOneWidget);
+    expect(find.text('تابع طلباتك وبياناتك'), findsOneWidget);
   }, skip: !AppConfig.isCmsPreview);
 
   testWidgets(

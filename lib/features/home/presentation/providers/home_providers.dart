@@ -17,6 +17,17 @@ import 'package:mobishop_store_app/features/home/domain/repositories/home_reposi
 import 'package:mobishop_store_app/features/home/data/models/home_layout_model.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/providers/cms_preview_layout_bridge.dart';
 
+final homeScrollToTopProvider = NotifierProvider<HomeScrollToTop, int>(
+  HomeScrollToTop.new,
+);
+
+class HomeScrollToTop extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void request() => state++;
+}
+
 final cmsPreviewHomeLayoutJsonProvider = StreamProvider<Map<String, dynamic>?>(
   (Ref ref) =>
       CmsPreviewLayoutBridge.homeLayouts.where((layout) => layout != null),

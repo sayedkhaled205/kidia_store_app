@@ -100,11 +100,25 @@ jobs:
       - name: Check shared account boundaries and website recovery
         run: |
           php connectors/woocommerce/tests/account-deletion-test.php
+          php connectors/woocommerce/tests/account-deletion-intent-test.php
+          php connectors/woocommerce/tests/protected-owner-deletion-test.php
+          php connectors/woocommerce/tests/native-identity-guard-test.php
           php connectors/woocommerce/tests/native-apple-auth-test.php
+          php connectors/woocommerce/tests/native-apple-deletion-proof-test.php
           php connectors/woocommerce/tests/auth-boundary-regressions-test.php
           php connectors/woocommerce/tests/native-auth-completion-race-test.php
           php integrations/woocommerce/kidia-auth/website-auth-logic-regression-test.php
           node integrations/woocommerce/kidia-auth/website-auth-recovery-test.cjs
+      - name: Check staged identity erasure boundaries without live accounts
+        run: |
+          php tools/customer_identity/tests/firebase-erasure-test.php
+          php tools/customer_identity/tests/store-identity-adapter-test.php
+          php tools/customer_identity/tests/identity-controller-test.php
+          php tools/customer_identity/tests/connector-identity-client-test.php
+          php tools/customer_identity/tests/customer-identity-links-test.php
+          php tools/customer_identity/tests/fresh-inventory-stage-test.php
+          php tools/customer_identity/tests/identity-erasure-stage-test.php
+          php tools/customer_identity/tests/identity-guard-test.php
 
   flutter:
     name: Flutter app
