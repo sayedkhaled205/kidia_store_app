@@ -1245,7 +1245,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       await _perform((flow) => _acceptResult(result, flow));
       return;
     }
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      setState(() => _error = null);
+      return;
+    }
     await _perform((flow) async {
       switch (_step) {
         case _AuthStep.identifier:

@@ -41,7 +41,7 @@ mobishop_auth_assert($restart->finalize_deletion($request)->status===202,'Non-Ap
 mobishop_auth_assert(!isset($GLOBALS['delete_options'][$intentKey]),'Accepted intent snapshot removed after durable job capture');
 $job=maybe_unserialize($GLOBALS['delete_options']['mobishop_account_deletion_v1_7']);
 mobishop_auth_assert(isset($job['identityStage'])&&$job['identityStage']['user_id']===7,'Accepted job durably contains captured identity stage');
-deletion_tick();mobishop_auth_assert(phase()===1,'Actual identity stage completes before merchant phase advances');
+deletion_tick();mobishop_auth_assert(!isset($GLOBALS['mobishop_users'][7])&&!MobiShop_Customer_Account_Deletion::is_pending(7),'Identity stage completes and the empty account finishes deletion in one bounded callback');
 intent_reset();$login=deletion_login();$GLOBALS['intent_outage']=true;
 mobishop_auth_assert(is_wp_error($deletion->prepare_deletion(intent_request($login)))&&!MobiShop_Customer_Account_Deletion::is_pending(7),'Identity snapshot outage retains account and session');
 unset($GLOBALS['intent_outage']);
@@ -71,7 +71,7 @@ mobishop_auth_assert(phase()===0&&isset($GLOBALS['mobishop_users'][7]),'Provider
 unset($GLOBALS['intent_outage']);deletion_tick();
 $partial=maybe_unserialize($GLOBALS['delete_options']['mobishop_account_deletion_v1_7']);
 mobishop_auth_assert($partial['identityStage']['cursor']===1&&phase()===0,'One identity step persisted without advancing merchant phase');
-deletion_tick();mobishop_auth_assert(phase()===1,'Merchant phase opens after all identity steps persist');
+deletion_tick();mobishop_auth_assert(!isset($GLOBALS['mobishop_users'][7])&&!MobiShop_Customer_Account_Deletion::is_pending(7),'Merchant phase opens and the empty account completes in the same bounded callback once identity steps persist');
 intent_reset();$login=deletion_login();$request=intent_request($login);$deletion->prepare_deletion($request);
 foreach(array_keys($GLOBALS['delete_options'])as $key)if(str_starts_with($key,'mobishop_deletion_intent_v1_')){$expiredIntentKey=$key;$expiredIntent=unserialize($GLOBALS['delete_options'][$key]);$expiredIntent['expires']=time()-1;$GLOBALS['delete_options'][$key]=serialize($expiredIntent);}
 MobiShop_Customer_Account_Deletion::cleanup_receipts();

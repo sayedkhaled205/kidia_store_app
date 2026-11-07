@@ -80,6 +80,46 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
+  for (final entry in {
+    'mobishop_native_phone_account_conflict': 'الرقم ده مرتبط بحساب',
+    'mobishop_native_account_deletion_pending': 'حذف الحساب لسه بيتم',
+    'mobishop_auth_account_deletion_pending': 'حذف الحساب لسه بيتم',
+  }.entries) {
+    test(
+      '${entry.key} gives an actionable safe message without a session',
+      () async {
+        final h = _Harness();
+        h.handler = (request) async => h.response(request, {
+          'code': entry.key,
+          'message': 'unsafe provider details',
+        }, status: 409);
+        await expectLater(
+          h.service.password('customer@example.com', 'fixture-password'),
+          throwsA(
+            isA<AuthRepositoryException>()
+                .having((e) => e.code, 'code', entry.key)
+                .having(
+                  (e) => e.message,
+                  'specific reason',
+                  contains(entry.value),
+                )
+                .having(
+                  (e) => e.message,
+                  'no misleading Google error',
+                  isNot(contains('جوجل')),
+                )
+                .having(
+                  (e) => e.message,
+                  'safe copy',
+                  isNot(contains('unsafe')),
+                ),
+          ),
+        );
+        expect(h.store.writes, 0);
+        expect(h.legacy.signIns, 0);
+      },
+    );
+  }
   test(
     'Apple commits once and remembers only the accepted merchant session',
     () async {

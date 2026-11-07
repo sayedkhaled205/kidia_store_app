@@ -412,6 +412,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$id = $this->apple_user( $proof );
 		if ( $id ) {
 			$user = get_user_by( 'id', $id );
+			// Apple may recreate its Firebase UID before merchant erasure finishes.
+			if ( $id > 0 && class_exists( 'MobiShop_Customer_Account_Deletion' ) && MobiShop_Customer_Account_Deletion::is_pending( $id ) ) return $this->error( 'account_deletion_pending', 409 );
 			return $this->proof_allows( $user, $proof ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
 		}
 		if ( ( $claims['email_verified'] ?? null ) !== true || ! is_string( $claims['email'] ?? null ) || ! is_email( $claims['email'] ) ) return $this->error( 'invalid_proof', 401 );
@@ -742,6 +744,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 
 	private function finish( WP_User $user, array $proof, WP_REST_Request $request ) {
 		if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401 );
+		if ( class_exists( 'MobiShop_Customer_Account_Deletion' ) && MobiShop_Customer_Account_Deletion::is_pending( $user->ID ) ) return $this->error( 'account_deletion_pending', 409 );
 		if ( in_array( $proof['kind'], array( 'facebook', 'facebook_phone' ), true )
 			&& ( ! $this->capabilities( $request )['methods']['facebook_native'] || ! $this->proof_allows( $user, $proof ) ) ) return $this->error( 'invalid_proof', 401 );
 		if ( ! empty( $proof['expected_phone'] ) && ! $this->google_matches_phone( $user, $proof['expected_phone'] ) ) return $this->error( 'google_phone_mismatch', 403 );
@@ -1009,10 +1012,10 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$pattern = $this->phone_lookup_pattern( $values );
 		$keys = array_merge( $this->phone_keys(), $include_unverified ? array( 'kidia_unverified_phone' ) : array() );
 		$users = $this->phone_candidates( $keys, $pattern );
-		if ( count( $users ) > 50 ) return $this->error( 'account_conflict', 409 );
+		if ( count( $users ) > 50 ) return $this->error( 'phone_account_conflict', 409 );
 		if ( ! $include_unverified ) $users = array_values( array_filter( $users, fn( $user ) => ! get_user_meta( $user->ID, 'kidia_unverified_phone', true ) || $this->user_phone( $user, $phone ) !== '' ) );
 		$eligible = array_values( array_filter( $users, fn( $user ) => $this->eligible( $user ) && $this->user_phone( $user, $phone, $include_unverified ) === $phone ) );
-		return $users && ! $eligible ? $this->error( 'account_conflict', 409 ) : $eligible;
+		return $users && ! $eligible ? $this->error( 'phone_account_conflict', 409 ) : $eligible;
 	}
 
 	/** Keep the 51-user limit and WordPress filters, without multiplying metadata joins. */

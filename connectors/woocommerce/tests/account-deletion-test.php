@@ -230,6 +230,7 @@ wp_schedule_single_event(time()+100,'mobishop_dispatch_automation_push',array(ar
 wp_schedule_single_event(time()+100,'mobishop_dispatch_automation_push',array(array('target_user_id'=>8),'x:user:8'));
 deletion_tick();
 mobishop_auth_assert(count(array_filter($GLOBALS['delete_orders'],fn($o)=>$o->owner===7))===1,'At most 50 orders per batch.');
+mobishop_auth_assert(phase()===0,'Order batch limit yields the same phase for the next callback instead of exhausting the worker loop.');
 for($i=0;$i<40&&MobiShop_Customer_Account_Deletion::is_pending(7);$i++)deletion_tick();
 mobishop_auth_assert(!isset($GLOBALS['mobishop_users'][7])&&$GLOBALS['delete_count']===1,'Account fully deleted once.');
 mobishop_auth_assert($other->owner===8&&$guest->owner===0&&isset($other->meta['_mobishop_push_campaign']),'Other customer and guest orders untouched.');
@@ -331,4 +332,18 @@ MobiShop_Customer_Account_Deletion::cleanup_receipts();
 mobishop_auth_assert(isset($GLOBALS['delete_options'][$expired]),'Cleanup first batch is bounded.');
 MobiShop_Customer_Account_Deletion::cleanup_receipts();
 mobishop_auth_assert(!isset($GLOBALS['delete_options'][$expired]),'Keyset cursor reaches expiry past first 20 live receipts.');
+deletion_reset();$deletion->request_deletion(deletion_request(deletion_login()));
+deletion_tick();
+mobishop_auth_assert(!isset($GLOBALS['mobishop_users'][7])&&deletion_status()->data['status']==='completed','An empty account finishes in one callback with a completed receipt.');
+
+deletion_reset();$deletion->request_deletion(deletion_request(deletion_login()));
+$phase8job=unserialize($GLOBALS['delete_options']['mobishop_account_deletion_v1_7']);$phase8job['phase']=8;$GLOBALS['delete_options']['mobishop_account_deletion_v1_7']=serialize($phase8job);
+for($i=0;$i<49;$i++)wp_schedule_single_event(time()+100,'mobishop_dispatch_automation_push',array(array('target_user_id'=>7),'fixture-'.$i));
+for($i=1;$i<=50;$i++)$GLOBALS['delete_comments'][$i]=(object)array('comment_ID'=>$i,'user_id'=>7);
+deletion_tick();
+mobishop_auth_assert(phase()===8&&count($GLOBALS['delete_comments'])===50,'Any event removal yields before a separate comment batch.');
+deletion_tick();
+mobishop_auth_assert(phase()===9&&!$GLOBALS['delete_comments']&&isset($GLOBALS['mobishop_users'][7]),'The next callback removes the bounded comment batch then yields.');
+deletion_tick();
+mobishop_auth_assert(!isset($GLOBALS['mobishop_users'][7]),'A following callback completes after the bounded data batches.');
 fwrite(STDOUT,"Self-deletion ownership, recovery receipts, race protection, completion failure, cleanup, revocation and rollout tests passed.\n");

@@ -11,6 +11,8 @@ final class MobiShop_Customer_Account_Deletion {
 	private const RECEIPT_CURSOR = 'mobishop_deletion_receipt_cursor_v1';
 	private const RECEIPT_TTL = 2592000;
 	private const RECEIPT_CLEANUP = 'mobishop_cleanup_deletion_receipts';
+	private const MAX_STEPS = 10;
+	private const STEP_BUDGET = 2;
 	private MobiShop_Customer_Auth_Endpoint $auth;
 
 	public function __construct() { $this->auth = new MobiShop_Customer_Auth_Endpoint(); }
@@ -126,6 +128,10 @@ final class MobiShop_Customer_Account_Deletion {
 			$intent = self::intent( $hash );
 			if ( $intent ) self::remove_intent( $hash, $intent );
 			if ( class_exists( 'WP_Session_Tokens' ) ) WP_Session_Tokens::get_instance( $prepared )->destroy_all();
+			// Start only after the response is flushed; the durable cron retry remains authoritative.
+			if ( function_exists( 'fastcgi_finish_request' ) ) add_action( 'shutdown', static function () use ( $prepared ): void {
+				if ( fastcgi_finish_request() ) self::run_worker( $prepared );
+			}, PHP_INT_MAX );
 			return self::response( array( 'status' => 'pending', 'user_id' => $prepared ), 202 );
 		} catch ( Throwable $error ) {
 			self::cancel_prepared( $prepared, $hash );
@@ -471,30 +477,38 @@ final class MobiShop_Customer_Account_Deletion {
 				return;
 			}
 			if ( ! self::schedule( $id ) || -1 === (int) $job['phase'] ) return;
-			$user = get_user_by( 'id', $id );
-			if ( $user && ! self::ordinary_customer( $user ) ) return;
-			if ( self::has_pending_payment( $id ) ) return;
-			$finished = ! $user && isset( $job['identityLinks'] ) ? self::receipt_record( $job['receiptHash'] ) : null;
-			if ( $finished && $finished['status'] === 'completed' && (int) $finished['userId'] === $id ) {
-				// Recover a crash after completion/release; never replay provider erasure.
-				self::remove_completed_intent( $job );
-				MobiShop_Customer_Identity_Guard::release( $id, $job['receiptHash'], $job['identityLinks'], true );
-				self::remove_job( $job );
-				return;
-			}
-			if ( self::process_guarded( $job ) ) {
-				$hash = $job['receiptHash'] ?? '';
-				if ( $hash !== '' ) {
-					$record = self::receipt_record( $hash );
-					if ( ! $record || (int) $record['userId'] !== $id ) throw new RuntimeException( 'Deletion receipt changed' );
-					$completed = array( 'userId' => $id, 'status' => 'completed', 'expires' => time() + self::RECEIPT_TTL );
-					if ( ! self::cas( self::RECEIPT_PREFIX . $hash, maybe_serialize( $record ), maybe_serialize( $completed ) ) ) throw new RuntimeException( 'Completion receipt unavailable' );
+			$started = microtime( true );
+			for ( $step = 0; $step < self::MAX_STEPS; $step++ ) {
+				$user = get_user_by( 'id', $id );
+				if ( $user && ! self::ordinary_customer( $user ) ) return;
+				if ( self::has_pending_payment( $id ) ) return;
+				$finished = ! $user && isset( $job['identityLinks'] ) ? self::receipt_record( $job['receiptHash'] ) : null;
+				if ( $finished && $finished['status'] === 'completed' && (int) $finished['userId'] === $id ) {
+					// Recover a crash after completion/release; never replay provider erasure.
+					self::remove_completed_intent( $job );
+					MobiShop_Customer_Identity_Guard::release( $id, $job['receiptHash'], $job['identityLinks'], true );
+					self::remove_job( $job );
+					return;
 				}
-				self::remove_completed_intent( $job );
-				if ( isset( $job['identityLinks'] ) ) MobiShop_Customer_Identity_Guard::release( $id, $hash, $job['identityLinks'], true );
-				self::remove_job( $job );
+				$phase_before = (int) $job['phase'];
+				if ( self::process_guarded( $job ) ) {
+					$hash = $job['receiptHash'] ?? '';
+					if ( $hash !== '' ) {
+						$record = self::receipt_record( $hash );
+						if ( ! $record || (int) $record['userId'] !== $id ) throw new RuntimeException( 'Deletion receipt changed' );
+						$completed = array( 'userId' => $id, 'status' => 'completed', 'expires' => time() + self::RECEIPT_TTL );
+						if ( ! self::cas( self::RECEIPT_PREFIX . $hash, maybe_serialize( $record ), maybe_serialize( $completed ) ) ) throw new RuntimeException( 'Completion receipt unavailable' );
+					}
+					self::remove_completed_intent( $job );
+					if ( isset( $job['identityLinks'] ) ) MobiShop_Customer_Identity_Guard::release( $id, $hash, $job['identityLinks'], true );
+					self::remove_job( $job );
+					return;
+				}
+				self::save( $job );
+				// An unchanged phase means a row/provider batch limit was hit; retry on the next callback.
+				if ( (int) $job['phase'] === $phase_before ) return;
+				if ( microtime( true ) - $started >= self::STEP_BUDGET ) return;
 			}
-			else self::save( $job );
 		} catch ( Throwable $error ) {
 			// The pre-scheduled retry handles transient failures and process crashes.
 			// Never log customer records, tokens, SQL values or provider exceptions.
@@ -628,6 +642,7 @@ final class MobiShop_Customer_Account_Deletion {
 				if ( ++$removed >= self::LIMIT ) return false;
 			}
 		}
-		return true;
+		// Yield after any removal so the following batch never runs in the same callback.
+		return 0 === $removed;
 	}
 }
