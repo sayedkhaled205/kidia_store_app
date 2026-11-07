@@ -7,7 +7,21 @@ final class MobiShop_Customer_Source {
         $arabic = array( 'Mobile app' => 'تطبيق الموبايل', 'App account' => 'حساب من التطبيق', 'App sign-in' => 'دخل من التطبيق', 'Mobile app customers' => 'عملاء التطبيق', 'All customer sources' => 'كل مصادر العملاء', 'Registered in app' => 'سجّل حسابه من التطبيق', 'Signed in through app' => 'سجّل الدخول من التطبيق', 'Filter' => 'تصفية', 'Contact phone' => 'رقم التواصل', 'Not verified by SMS' => 'لم يتم توثيقه بكود SMS' );
         $arabic['Has used the app'] = 'استخدم التطبيق';
         $arabic['All app users'] = 'كل مستخدمي التطبيق';
-        return str_starts_with( determine_locale(), 'ar' ) ? ( $arabic[$text] ?? $text ) : __( $text, 'mobi2app-connector' );
+        return str_starts_with( determine_locale(), 'ar' ) ? ( $arabic[$text] ?? $text ) : match ( $text ) {
+            'Mobile app' => __( 'Mobile app', 'mobishop' ),
+            'App account' => __( 'App account', 'mobishop' ),
+            'App sign-in' => __( 'App sign-in', 'mobishop' ),
+            'Mobile app customers' => __( 'Mobile app customers', 'mobishop' ),
+            'All customer sources' => __( 'All customer sources', 'mobishop' ),
+            'Registered in app' => __( 'Registered in app', 'mobishop' ),
+            'Signed in through app' => __( 'Signed in through app', 'mobishop' ),
+            'Filter' => __( 'Filter', 'mobishop' ),
+            'Contact phone' => __( 'Contact phone', 'mobishop' ),
+            'Not verified by SMS' => __( 'Not verified by SMS', 'mobishop' ),
+            'Has used the app' => __( 'Has used the app', 'mobishop' ),
+            'All app users' => __( 'All app users', 'mobishop' ),
+            default => $text,
+        };
     }
 
     public static function register(): void {
@@ -61,7 +75,7 @@ final class MobiShop_Customer_Source {
     public static function profile_source( $user ): void {
         if ( ! current_user_can( 'edit_user', $user->ID ) ) return;
         $badge = self::cell( '', 'mobishop_app_customer', (int) $user->ID );
-        if ( '—' !== $badge ) echo '<h2>' . esc_html( self::label( 'Mobile app' ) ) . '</h2><p>' . $badge . '</p>';
+        if ( '—' !== $badge ) echo '<h2>' . esc_html( self::label( 'Mobile app' ) ) . '</h2><p>' . wp_kses_post( $badge ) . '</p>';
     }
 
     private static function selected(): string {
