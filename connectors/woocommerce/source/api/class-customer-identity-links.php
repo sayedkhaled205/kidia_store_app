@@ -18,10 +18,30 @@ final class MobiShop_Customer_Identity_Links {
         return self::PHONE . hash( 'sha256', $project . '|' . $uid );
     }
 
+    /** Caller owns the owner/UID locks. Never consult WP's primed or late-filled metadata cache. */
+    private static function fresh_meta( int $id ): array {
+        global $wpdb;
+        $wpdb->last_error = '';
+        $sql = $wpdb->prepare(
+            "SELECT meta_key, meta_value FROM {$wpdb->usermeta} WHERE user_id = %d AND (BINARY meta_key LIKE %s OR BINARY meta_key IN (%s, %s, %s)) ORDER BY umeta_id ASC",
+            $id, $wpdb->esc_like( self::PHONE ) . '%', '_mobishop_firebase_project', '_mobishop_firebase_uid', '_mobishop_apple_subject'
+        );
+        if ( ! is_string( $sql ) || $sql === '' ) throw new RuntimeException( 'Identity inventory unavailable.' );
+        $rows = $wpdb->get_results( $sql, ARRAY_A );
+        if ( $wpdb->last_error !== '' || ! is_array( $rows ) ) throw new RuntimeException( 'Identity inventory unavailable.' );
+        $meta = array();
+        foreach ( $rows as $row ) {
+            if ( ! is_array( $row ) || ! is_string( $row['meta_key'] ?? null ) || ! is_string( $row['meta_value'] ?? null ) ) throw new RuntimeException( 'Invalid identity metadata row.' );
+            // Preserve every row: duplicate Apple bindings and malformed phone duplicates must fail validation.
+            $meta[ $row['meta_key'] ][] = $row['meta_value'];
+        }
+        return $meta;
+    }
+
     /** @throws RuntimeException A partial or malformed recorded identity must block deletion. */
     public static function inventory( int $id ): array {
         if ( $id <= 0 ) throw new RuntimeException( 'Invalid identity owner.' );
-        $meta = get_user_meta( $id );
+        $meta = self::fresh_meta( $id );
         if ( ! is_array( $meta ) ) throw new RuntimeException( 'Identity inventory unavailable.' );
         $out = array();
         foreach ( $meta as $key => $values ) {

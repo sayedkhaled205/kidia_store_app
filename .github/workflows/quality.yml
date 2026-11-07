@@ -115,6 +115,7 @@ jobs:
           php tools/customer_identity/tests/identity-controller-test.php
           php tools/customer_identity/tests/connector-identity-client-test.php
           php tools/customer_identity/tests/customer-identity-links-test.php
+          php tools/customer_identity/tests/fresh-inventory-stage-test.php
           php tools/customer_identity/tests/identity-erasure-stage-test.php
           php tools/customer_identity/tests/identity-guard-test.php
 

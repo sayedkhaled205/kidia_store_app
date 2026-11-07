@@ -1,8 +1,9 @@
 <?php
 /** Synthetic WP raw metadata/serialization fixtures; no WordPress or network. */
 define('ABSPATH',__DIR__);
+define('ARRAY_A','ARRAY_A');
 $GLOBALS['meta']=array(); $checks=0;
-function get_user_meta($id) { return $GLOBALS['meta'][$id] ?? array(); }
+function get_user_meta($id) { return $GLOBALS['stale_cache'][$id] ?? $GLOBALS['meta'][$id] ?? array(); }
 function maybe_unserialize($v) { if (!is_string($v)) return $v; $r=@unserialize($v,array('allowed_classes'=>false)); return $r === false && $v !== 'b:0;' ? $v : $r; }
 function maybe_serialize($v) { return is_array($v) || is_object($v) || (is_string($v) && ($v === 'a:0:{}' || $v === 'b:0;')) ? serialize($v) : $v; }
 function check($ok,$label) { global $checks; ++$checks; if(!$ok) throw new RuntimeException($label); }
@@ -10,6 +11,17 @@ function rejects($fn,$label) { try {$fn();} catch(RuntimeException $e) {check(tr
 class FakeWpdb {
  public $usermeta='wp_usermeta', $last_error='', $args=array(), $sql='';
  public function prepare($sql,...$args) {$this->sql=$sql;$this->args=$args;return $sql;}
+ public function esc_like($value) { return addcslashes($value,'_%\\'); }
+ public function get_results($sql,$format) {
+  if(!empty($GLOBALS['inventory_throw']))throw new RuntimeException('fixture inventory exception');
+  if(!empty($GLOBALS['inventory_error'])){$this->last_error='fixture inventory error';return null;}
+  if(isset($GLOBALS['inventory_rows']))return $GLOBALS['inventory_rows'];
+  [$id,$prefix,$projectKey,$uidKey,$subjectKey]=$this->args;
+  $rows=array();foreach($GLOBALS['meta'][$id]??array() as $key=>$values) {
+   if(!str_starts_with($key,'_mobishop_phone_firebase_identity_')&&!in_array($key,array($projectKey,$uidKey,$subjectKey),true))continue;
+   foreach($values as $value)$rows[]=array('meta_key'=>$key,'meta_value'=>$value);
+  }return $rows;
+ }
  public function get_col($sql) {
   if(!empty($GLOBALS['db_throw'])) throw new RuntimeException('fixture DB exception');
   if($this->last_error !== '') return null;
@@ -22,6 +34,7 @@ class FakeWpdb {
   } return $out;
  }
 }
+if(defined('MOBISHOP_IDENTITY_LINKS_FIXTURES_ONLY'))return;
 $wpdb=new FakeWpdb();
 require __DIR__.'/../connector/class-customer-identity-links.php';
 $class='MobiShop_Customer_Identity_Links';
@@ -63,4 +76,23 @@ check($serializedLink['uid']===$serializedUid && $class::shared(7,$serializedLin
 $GLOBALS['db_throw']=true; check($class::shared(7,$link),'DB exception fails closed'); unset($GLOBALS['db_throw']);
 $wpdb->last_error='fixture database failure'; check($class::shared(7,$link),'DB error fails closed');
 check($class::shared(7,array('project'=>'bad project','uid'=>'uid-one','provider'=>'phone')),'Invalid shared query input fails closed');
+
+// Request A primed metadata; request B committed another UID under the owner lock.
+$GLOBALS['meta'][7]=array($key=>array(serialize($identity)));
+$GLOBALS['stale_cache'][7]=$GLOBALS['meta'][7];
+$GLOBALS['meta'][7][$secondKey]=array(serialize($second));
+check(count(get_user_meta(7))===1,'Fixture preserves stale WordPress metadata cache');
+$fresh=$class::inventory(7);
+check(count($fresh)===2&&array_column($fresh,'uid')===array('uid-one','uid-two'),'Inventory reads newly committed UID despite stale primed WordPress cache');
+check($wpdb->args[0]===7&&str_contains($wpdb->sql,'user_id = %d')&&str_contains($wpdb->sql,'BINARY meta_key LIKE')&&str_contains($wpdb->sql,'BINARY meta_key IN')&&!str_contains($wpdb->sql,'LIMIT'),'Fresh query is exact owner and identity keys only, without duplicate truncation');
+$GLOBALS['meta'][7]['_mobishop_apple_subject']=array('subject','subject');
+$GLOBALS['meta'][7]['_mobishop_firebase_project']=array('test-project');$GLOBALS['meta'][7]['_mobishop_firebase_uid']=array('uid-one');
+rejects(fn()=>$class::inventory(7),'Fresh SQL preserves duplicate Apple rows and rejects ambiguous binding');
+$GLOBALS['inventory_rows']=array(array('meta_key'=>$key,'meta_value'=>serialize($identity)),array('meta_key'=>$key,'meta_value'=>'corrupt'));
+rejects(fn()=>$class::inventory(7),'Fresh SQL does not collapse malformed duplicate phone row');
+$GLOBALS['inventory_rows']=array(array('meta_key'=>$key,'meta_value'=>null));
+rejects(fn()=>$class::inventory(7),'Malformed SQL row fails closed');unset($GLOBALS['inventory_rows']);
+$GLOBALS['inventory_error']=true;rejects(fn()=>$class::inventory(7),'Inventory database error fails closed');unset($GLOBALS['inventory_error']);
+$GLOBALS['inventory_throw']=true;rejects(fn()=>$class::inventory(7),'Inventory database exception fails closed');unset($GLOBALS['inventory_throw']);
+
 echo "Identity links: $checks checks passed.\n";

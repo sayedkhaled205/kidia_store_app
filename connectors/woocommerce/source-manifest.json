@@ -2454,8 +2454,8 @@
     "api/class-customer-identity-links.php": {
       "source": "connectors/woocommerce/source/api/class-customer-identity-links.php",
       "newline": "lf",
-      "source_sha256": "15c4c0be95979e2c003f076aee1f7dca678a80716b32002cd92a61c93d52b6bf",
-      "sha256": "15c4c0be95979e2c003f076aee1f7dca678a80716b32002cd92a61c93d52b6bf"
+      "source_sha256": "4727b953901f9da7e96749698c32491f46b8fb097be3debf967e35449586ef8f",
+      "sha256": "4727b953901f9da7e96749698c32491f46b8fb097be3debf967e35449586ef8f"
     },
     "api/class-customer-orders-endpoint.php": {
       "source": "connectors/woocommerce/source/api/class-customer-orders-endpoint.php",
