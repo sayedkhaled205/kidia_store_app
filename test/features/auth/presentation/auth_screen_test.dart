@@ -25,6 +25,39 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets(
+    'deleted phone without SMS starts explicit new email registration',
+    (tester) async {
+      final actions = _Actions()
+        ..requiresEmailRegistration = true
+        ..identityMethods = ['email_password']
+        ..configuration = const NativeAuthConfig(
+          phoneCountryCode: '20',
+          passwordResetUrl: 'https://shop.example/login/?kidia_stage=forgot',
+          methods: {
+            'email_password': true,
+            'phone_password': true,
+            'phone_otp': false,
+          },
+        );
+      await _Fixture(actions: actions).pump(tester);
+      await _identify(tester, '01012345678');
+      expect(find.text('إنشاء حساب بالبريد الإلكتروني'), findsOneWidget);
+      expect(find.byKey(const Key('auth-use-password')), findsNothing);
+      expect(find.byKey(const Key('auth-use-otp')), findsNothing);
+      expect(find.byKey(const Key('auth-forgot-password')), findsNothing);
+      expect(find.byKey(const Key('auth-error')), findsNothing);
+      await _tap(tester, 'auth-use-email');
+      actions.requiresEmailRegistration = false;
+      actions.identityMethods = ['create_password'];
+      await _identify(tester, 'new-account@example.invalid');
+      expect(find.byKey(const Key('auth-create-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-confirm-password')), findsOneWidget);
+      expect(actions.passwordCalls, 0);
+      expect(actions.sentPhones, isEmpty);
+      expect(actions.commits, 0);
+    },
+  );
   testWidgets('direct protected phone sign-in offers email recovery', (
     tester,
   ) async {
@@ -1641,6 +1674,7 @@ class _Actions
     },
   );
   List<String>? identityMethods;
+  bool requiresEmailRegistration = false;
   Object? registrationError;
   NativeAuthResult? verifyResult;
   NativeAuthResult? passwordResult;
@@ -1685,6 +1719,7 @@ class _Actions
     return NativeAuthIdentity(
       identifier: identifier,
       kind: identifier.contains('@') ? 'email' : 'phone',
+      requiresEmailRegistration: requiresEmailRegistration,
       methods:
           identityMethods ??
           (identifier.contains('@') ? ['password'] : ['password', 'phone_otp']),

@@ -80,6 +80,30 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
+  test(
+    'identify opts into safe registration recovery without issuing proof',
+    () async {
+      final h = _Harness();
+      h.handler = (request) async => h.response(request, {
+        'identifier': '+201012345678',
+        'kind': 'phone',
+        'methods': ['email_password'],
+        'requires_email_registration': true,
+      });
+      final identity = await h.service.identify('01012345678');
+      expect(identity.requiresEmailRegistration, isTrue);
+      expect(identity.methods, ['email_password']);
+      expect(
+        h.posts('identify').single.data['supports_phone_registration_recovery'],
+        isTrue,
+      );
+      expect(
+        h.posts('identify').single.data['supports_email_password_recovery'],
+        isTrue,
+      );
+      expect(h.store.writes, 0);
+    },
+  );
   for (final url in [
     'https://shop.example/login/?kidia_stage=forgot',
     'https://outside.example/reset',

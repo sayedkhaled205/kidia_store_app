@@ -325,6 +325,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 _AuthStep.password,
                                 _AuthStep.recovery,
                               ].contains(_step) &&
+                              _identity?.requiresEmailRegistration != true &&
                               config.passwordResetUri != null)
                             TextButton(
                               key: const Key('auth-forgot-password'),
@@ -608,7 +609,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   String _title(AuthCopy copy) => switch (_step) {
     _AuthStep.identifier => copy.title,
-    _AuthStep.method => copy.chooseMethod,
+    _AuthStep.method =>
+      _identity?.requiresEmailRegistration == true
+          ? copy.createTitle
+          : copy.chooseMethod,
     _AuthStep.recovery => copy.chooseAnotherMethod,
     _AuthStep.password => copy.existingTitle,
     _AuthStep.createPassword => copy.createTitle,
@@ -682,11 +686,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ];
       case _AuthStep.method:
         return [
+          if (_identity!.requiresEmailRegistration) ...[
+            Text(
+              copy.newPhoneIntro,
+              textAlign: TextAlign.center,
+              style: _secondaryStyle,
+            ),
+            const SizedBox(height: 20),
+          ],
           if (_identity!.allows('email_password') &&
               config.allows('email_password'))
             _methodButton(
               key: const Key('auth-use-email'),
-              label: copy.useAccountEmail,
+              label: _identity!.requiresEmailRegistration
+                  ? copy.createWithEmail
+                  : copy.useAccountEmail,
               icon: Icons.email_outlined,
               onPressed: () {
                 _changeIdentifier();

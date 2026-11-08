@@ -107,10 +107,12 @@ class NativeAuthIdentity {
     required this.identifier,
     required this.kind,
     required this.methods,
+    this.requiresEmailRegistration = false,
   });
   final String identifier;
   final String kind;
   final List<String> methods;
+  final bool requiresEmailRegistration;
   bool allows(String method) => methods.contains(method);
   factory NativeAuthIdentity.fromJson(Map<String, dynamic> json) {
     final identifier = json['identifier']?.toString() ?? '';
@@ -124,6 +126,8 @@ class NativeAuthIdentity {
       identifier: identifier,
       kind: kind,
       methods: List<String>.from(json['methods'] as List),
+      requiresEmailRegistration:
+          kind == 'phone' && json['requires_email_registration'] == true,
     );
   }
 }

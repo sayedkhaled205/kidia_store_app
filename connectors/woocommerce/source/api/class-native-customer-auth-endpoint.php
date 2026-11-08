@@ -153,6 +153,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$identity = $this->identity( (string) $request->get_param( 'identifier' ) );
 		if ( ! $identity ) return $this->error( 'invalid_identifier', 400 );
 		$c = $this->capabilities( $request );
+		$requires_email_registration = false;
 		if ( $identity['kind'] === 'phone' ) {
 			$methods = array( 'password' );
 			$users = $this->phone_users( $identity['identifier'], true );
@@ -162,12 +163,16 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			} elseif ( $c['methods']['phone_otp'] ) {
 				// New customers have no password yet. Existing accounts retain password recovery if SMS fails.
 				$methods = $users === array() ? array( 'phone_otp' ) : array( 'password', 'phone_otp' );
+			} elseif ( $users === array() && $c['methods']['email_registration'] && $request->get_param( 'supports_phone_registration_recovery' ) === true ) {
+				// A deleted/new phone has no password. Use the existing email enrollment when SMS is unavailable.
+				$methods = array( 'email_password' );
+				$requires_email_registration = true;
 			}
 		} else {
 			// Unknown emails alone may be offered password creation; existing emails keep the login flow.
 			$methods = $c['methods']['email_registration'] && ! email_exists( $identity['identifier'] ) ? array( 'create_password' ) : array( 'password' );
 		}
-		return $this->response( $identity + array( 'methods' => $methods ) );
+		return $this->response( $identity + array( 'methods' => $methods, 'requires_email_registration' => $requires_email_registration ) );
 	}
 
 	public function password( WP_REST_Request $request ) {

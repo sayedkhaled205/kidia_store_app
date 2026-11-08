@@ -164,6 +164,7 @@ class NativeAuthService
       final json = await _post('identify', attempt, {
         'identifier': identifier.trim(),
         'supports_email_password_recovery': true,
+        'supports_phone_registration_recovery': true,
       });
       return NativeAuthIdentity.fromJson(json);
     });

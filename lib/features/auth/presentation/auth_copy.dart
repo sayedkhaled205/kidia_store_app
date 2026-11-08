@@ -43,6 +43,12 @@ class AuthCopy {
   String get useAccountEmail => isArabic
       ? 'الدخول ببريد الحساب وكلمة المرور'
       : 'Use the account email and password';
+  String get newPhoneIntro => isArabic
+      ? 'الرقم ده مش مرتبط بحساب حالي. أنشئ حساب بالبريد الإلكتروني أو استخدم طريقة تانية متاحة.'
+      : 'This number has no current account. Create an account with email or use another available method.';
+  String get createWithEmail => isArabic
+      ? 'إنشاء حساب بالبريد الإلكتروني'
+      : 'Create an account with email';
   String get otpSendFailed => isArabic
       ? 'تعذر إرسال رمز التحقق. اختار طريقة تانية للدخول.'
       : 'Unable to send the verification code. Choose another way to sign in.';
