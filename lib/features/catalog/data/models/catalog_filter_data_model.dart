@@ -1,5 +1,6 @@
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_json.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_options.dart';
 
 class CatalogFilterDataModel extends CatalogFilterData {
   const CatalogFilterDataModel({
@@ -8,6 +9,7 @@ class CatalogFilterDataModel extends CatalogFilterData {
     super.attributeCounts,
     super.ratingCounts,
     super.stockCounts,
+    super.availableSizes,
   });
 
   factory CatalogFilterDataModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,11 @@ class CatalogFilterDataModel extends CatalogFilterData {
       attributeCounts: _attributeCounts(json['attribute_counts']),
       ratingCounts: _ratingCounts(json['rating_counts']),
       stockCounts: _stockCounts(json['stock_status_counts']),
+      availableSizes: json['available_sizes'] is List
+          ? CatalogFilterOptions.fromJson({
+              'sizes': json['available_sizes'],
+            }).sizes
+          : null,
     );
   }
 
@@ -30,6 +37,7 @@ class CatalogFilterDataModel extends CatalogFilterData {
       attributeCounts: attributeCounts,
       ratingCounts: ratingCounts,
       stockCounts: stockCounts,
+      availableSizes: availableSizes,
     );
   }
 

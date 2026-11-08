@@ -228,7 +228,8 @@ final class MobiShop_Product_Variation_Endpoint {
 
 	/** Return the variation image in the same shape as Store API. */
 	private function get_image( WC_Product_Variation $variation ): ?array {
-		$image_id = $variation->get_image_id();
+		// View context inherits the parent photo, which may show another color.
+		$image_id = $variation->get_image_id( 'edit' );
 		if ( $image_id <= 0 ) {
 			return null;
 		}

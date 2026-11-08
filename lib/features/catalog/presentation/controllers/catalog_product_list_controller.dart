@@ -425,6 +425,8 @@ class CatalogProductListController extends ChangeNotifier {
   CatalogProductListState _state;
   int _operation = 0;
   int _filterOperation = 0;
+  bool _sizesPending = false;
+  bool _sizeMetadataFailed = false;
   bool _disposed = false;
   StreamSubscription<int>? _catalogSubscription;
 
@@ -479,6 +481,7 @@ class CatalogProductListController extends ChangeNotifier {
   Future<void> refreshSourceData() async {
     if (_disposed || isAwaitingSearch) return;
     ++_filterOperation;
+    _sizesPending = false;
     if (_state.items.isEmpty || _state.page < 1) {
       await loadInitial(refresh: true);
       return;
@@ -523,9 +526,10 @@ class CatalogProductListController extends ChangeNotifier {
       }
       if (latest == null || !_isCurrent(operation)) return;
       final CatalogFilterData? filterData = await _loadFilterData(
-        _query(page: 1, includeFilters: false),
+        _query(page: 1, includeFilters: true),
       );
       if (!_isCurrent(operation)) return;
+      _sizeMetadataFailed = filterData == null;
       final int? totalItems = latest.totalItems;
       final int? totalPages = totalItems == null
           ? null
@@ -547,7 +551,9 @@ class CatalogProductListController extends ChangeNotifier {
           isRefreshing: false,
           loadMoreError: null,
           filterData: filterData,
-          availableSizes: _discoverSizeOptions(updated),
+          availableSizes: filterData == null
+              ? const []
+              : filterData.availableSizes ?? _discoverSizeOptions(updated),
           availableColors: _discoverColorOptions(updated),
         ),
       );
@@ -561,6 +567,9 @@ class CatalogProductListController extends ChangeNotifier {
 
   Future<void> loadInitial({bool refresh = false}) async {
     final filterOperation = ++_filterOperation;
+    _sizesPending = !isAwaitingSearch;
+    _sizeMetadataFailed = false;
+    final fallbackSizes = _state.availableSizes;
     if (isAwaitingSearch) {
       _replace(
         _state.copyWith(
@@ -586,6 +595,8 @@ class CatalogProductListController extends ChangeNotifier {
     final int operation = ++_operation;
     _replace(
       _state.copyWith(
+        filterData: null,
+        availableSizes: const [],
         isInitialLoading: !refresh || _state.items.isEmpty,
         isRefreshing: refresh && _state.items.isNotEmpty,
         isLoadingMore: false,
@@ -597,7 +608,7 @@ class CatalogProductListController extends ChangeNotifier {
     final CatalogProductQuery query = _query(page: 1, includeFilters: true);
     final CatalogProductQuery filterQuery = _query(
       page: 1,
-      includeFilters: false,
+      includeFilters: true,
     );
 
     // Optional filter counts must not delay product rendering or image requests.
@@ -605,7 +616,22 @@ class CatalogProductListController extends ChangeNotifier {
     unawaited(
       _loadFilterData(filterQuery).then((data) {
         if (!_disposed && filterOperation == _filterOperation) {
-          _replace(_state.copyWith(filterData: data));
+          _sizesPending = false;
+          _sizeMetadataFailed = data == null;
+          _replace(
+            _state.copyWith(
+              filterData: data,
+              availableSizes: data == null
+                  ? const []
+                  : data.availableSizes ??
+                        _mergeSizeOptions(
+                          fallbackSizes,
+                          _state.isInitialLoading || _state.isRefreshing
+                              ? const []
+                              : _discoverSizeOptions(_state.items),
+                        ),
+            ),
+          );
         }
       }),
     );
@@ -630,10 +656,7 @@ class CatalogProductListController extends ChangeNotifier {
           isRefreshing: false,
           error: null,
           loadMoreError: null,
-          availableSizes: _mergeSizeOptions(
-            _state.availableSizes,
-            _discoverSizeOptions(page.items),
-          ),
+          availableSizes: _sizeOptionsFor(page.items),
           availableColors: _mergeSizeOptions(
             _state.availableColors,
             _discoverColorOptions(page.items),
@@ -689,10 +712,7 @@ class CatalogProductListController extends ChangeNotifier {
           cursorHasPreviousPage: page.cursorHasPreviousPage,
           isLoadingMore: false,
           loadMoreError: null,
-          availableSizes: _mergeSizeOptions(
-            _state.availableSizes,
-            _discoverSizeOptions(page.items),
-          ),
+          availableSizes: _sizeOptionsFor(page.items),
           availableColors: _mergeSizeOptions(
             _state.availableColors,
             _discoverColorOptions(page.items),
@@ -742,10 +762,7 @@ class CatalogProductListController extends ChangeNotifier {
           cursorHasPreviousPage: page.cursorHasPreviousPage,
           isInitialLoading: false,
           error: null,
-          availableSizes: _mergeSizeOptions(
-            _state.availableSizes,
-            _discoverSizeOptions(page.items),
-          ),
+          availableSizes: _sizeOptionsFor(page.items),
           availableColors: _mergeSizeOptions(
             _state.availableColors,
             _discoverColorOptions(page.items),
@@ -882,6 +899,15 @@ class CatalogProductListController extends ChangeNotifier {
       for (final group in groups.entries)
         CatalogAttributeFilter(taxonomy: group.key, terms: group.value),
     ];
+  }
+
+  List<CatalogSizeOption> _sizeOptionsFor(Iterable<CatalogProduct> products) {
+    if (_sizesPending || _sizeMetadataFailed) return const [];
+    return _state.filterData?.availableSizes ??
+        _mergeSizeOptions(
+          _state.availableSizes,
+          _discoverSizeOptions(products),
+        );
   }
 
   static List<CatalogSizeOption> _discoverSizeOptions(

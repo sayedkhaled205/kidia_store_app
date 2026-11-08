@@ -53,6 +53,21 @@ test('related products save outline controls through the normal form', () => {
   dom.window.close();
 });
 
+test('saved fractional outline widths remain valid while bounds are enforced', () => {
+  const {dom,root} = setup();
+  const width = root.querySelector('input[name$="[card_outline_width]"]');
+  // Include legacy fields that originally declared half-pixel steps.
+  width.step = '0.5'; width.value = '0.75';
+  assert.equal(width.checkValidity(), false);
+  dom.window.KidiaProductOutline.prepare(root, {primary_color:'#347A89'});
+  assert.equal(width.value, '0.75');
+  assert.equal(width.checkValidity(), true);
+  for (const invalid of ['-0.1','6.1']) {
+    width.value = invalid; assert.equal(width.checkValidity(), false);
+  }
+  dom.window.close();
+});
+
 test('visual position radios do not enter saved application fields', () => {
   const {dom} = setup('outlined', 'related_products');
   const entries = [
@@ -72,7 +87,7 @@ test('outline width is saved, preserved and only shown for outlined cards', () =
   const {dom,root,select} = setup();
   const width = root.querySelector('input[name$="[card_outline_width]"]');
   assert.equal(width.value, '1');
-  assert.equal(width.min, '0'); assert.equal(width.max, '6'); assert.equal(width.step, '0.5');
+  assert.equal(width.min, '0'); assert.equal(width.max, '6'); assert.equal(width.step, 'any');
   width.value = '2.5';
   for (const style of ['minimal','outlined','elevated','outlined']) {
     select.value = style; select.dispatchEvent(new dom.window.Event('change',{bubbles:true}));

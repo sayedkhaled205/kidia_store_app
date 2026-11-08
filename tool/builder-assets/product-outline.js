@@ -63,6 +63,8 @@
         width.setAttribute('aria-label', 'Outline width');
         widthWrapper.append(label, width);
       } else widthWrapper = width.closest('[data-product-outline-width],.mobishop-page-field,.mobishop-builder-field');
+      // The saved design accepts fractional widths, including the theme's 0.75.
+      width.step = 'any';
       if (!widthWrapper) return;
       widthWrapper.dataset.productOutlineWidth = '1';
       widthWrapper.hidden = hidden;

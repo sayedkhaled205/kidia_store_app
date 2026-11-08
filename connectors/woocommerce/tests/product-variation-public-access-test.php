@@ -37,8 +37,12 @@ class WC_Product_Variation {
 	public function get_price() { ++$this->reads; return '100'; }
 	public function get_regular_price() { return '100'; }
 	public function get_sale_price() { return ''; }
-	public function get_image_id() { return 0; }
+	public int $image = 0;
+	public function get_image_id( $context = 'view' ) { return $this->image ?: ( 'view' === $context ? 900 : 0 ); }
 }
+function wp_get_attachment_image_url( $id, $size ) { return 'https://example.com/' . $id . '-' . $size . '.jpg'; }
+function get_the_title( $id ) { return 'Photo ' . $id; }
+function get_post_meta( $id, $key, $single ) { return 'Photo'; }
 function register_rest_route( $namespace, $path, $route ) { $GLOBALS['route'] = $route; }
 function __( $text, $domain ) { return $text; }
 function absint( $value ) { return abs( (int) $value ); }
@@ -79,6 +83,10 @@ $GLOBALS['products'] = array( 58 => $parent, 5801 => $one, 5802 => $two );
 $GLOBALS['passwords'] = array();
 $GLOBALS['hide_stock'] = false;
 $GLOBALS['public_visibility'] = true;
+$one->image = 901;
+$image_rows = $endpoint->get_variations( $request );
+check( 'https://example.com/901-full.jpg' === $image_rows[0]['image']['src'], 'Preserve explicitly assigned variation image.' );
+check( null === $image_rows[1]['image'], 'Do not label an inherited parent image as this color image.' );
 $deny = static function ( $label ) use ( $endpoint, $permission, $request, $parent ) {
 	$before = $parent->reads;
 	foreach ( array( $permission( $request ), $endpoint->get_variations( $request ) ) as $response ) {

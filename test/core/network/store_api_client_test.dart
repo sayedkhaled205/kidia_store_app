@@ -2,9 +2,54 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/core/network/store_api_client.dart';
 import 'package:mobishop_store_app/core/network/store_api_exception.dart';
+import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_product_query.dart';
 
 void main() {
   group('DioStoreApiClient', () {
+    test('encodes Arabic catalog taxonomy exactly once on the wire', () async {
+      final requests = <RequestOptions>[];
+      final dio = Dio();
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            requests.add(options);
+            handler.resolve(
+              Response<dynamic>(
+                requestOptions: options,
+                data: <dynamic>[],
+                statusCode: 200,
+              ),
+            );
+          },
+        ),
+      );
+      final client = DioStoreApiClient(
+        storeUri: Uri.parse('https://shop.example.com'),
+        dio: dio,
+      );
+      for (final taxonomy in [
+        'pa_المقاس',
+        'pa_%d8%a7%d9%84%d9%85%d9%82%d8%a7%d8%b3',
+      ]) {
+        await client.get(
+          '/wp-json/wc/store/v1/products',
+          queryParameters: CatalogProductQuery(
+            search: 'Dino',
+            attributes: [
+              CatalogAttributeFilter(taxonomy: taxonomy, terms: ['24-25']),
+            ],
+          ).toStoreApiQuery(),
+        );
+      }
+      for (final request in requests) {
+        expect(
+          request.uri.queryParameters['attributes[0][attribute]'],
+          'pa_المقاس',
+        );
+        expect(request.uri.queryParameters['attributes[0][slug]'], '24-25');
+        expect(request.uri.toString().toLowerCase(), isNot(contains('%25d8')));
+      }
+    });
     test(
       'keeps requests on the configured store and WordPress subdirectory',
       () async {

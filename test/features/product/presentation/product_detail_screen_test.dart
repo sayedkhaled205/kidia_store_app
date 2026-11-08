@@ -2,6 +2,8 @@ import '../../../support/viewport_rotation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
 import 'package:mobishop_store_app/features/product/presentation/product_image_gallery.dart';
+import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/features/product/presentation/widgets/product_option_tiles.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -20,6 +22,87 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/product_test_data.dart';
 
 void main() {
+  testWidgets('gallery follows color before size without enabling purchase', (
+    tester,
+  ) async {
+    _useTallSurface(tester);
+    final red = CatalogImage(source: Uri.parse('https://example.com/red.jpg'));
+    final blue = CatalogImage(
+      source: Uri.parse('https://example.com/blue.jpg'),
+    );
+    final repository = ProductFakeCatalogRepository(
+      product: variableProduct,
+      variations: [
+        for (final variation in testVariations)
+          CatalogVariation(
+            id: variation.id,
+            attributes: variation.attributes,
+            isInStock: variation.isInStock,
+            image: variation.id == 103 ? blue : red,
+          ),
+      ],
+    );
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(
+          productId: variableProduct.id,
+          repository: repository,
+        ),
+        productLayout: CmsPageLayout(
+          page: 'product',
+          header: CmsPageLayout.fallback('product').header,
+          footer: CmsPageLayout.fallback('product').footer,
+          elements: [
+            for (final e in CmsPageLayout.fallback('product').elements)
+              CmsPageComponent(
+                id: e.id,
+                type: e.type,
+                enabled: e.enabled,
+                settings: {
+                  ...e.settings,
+                  if (e.type == 'variations') 'style': 'tiles',
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final controller = tester
+        .widget<ProductOptionTiles>(find.byType(ProductOptionTiles).first)
+        .controller;
+    await tester.tap(find.byKey(const Key('product-option-pa_color-red')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      tester
+          .widget<AppNetworkImage>(
+            find.byKey(const Key('product-image-0')).first,
+          )
+          .imageUrl,
+      red.source.toString(),
+    );
+    expect(controller.canAddToCart, isFalse);
+    controller.selectOption('pa_size', 's');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(controller.canAddToCart, isTrue);
+    await tester.tap(find.byKey(const Key('product-option-pa_color-blue')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      tester
+          .widget<AppNetworkImage>(
+            find.byKey(const Key('product-image-0')).first,
+          )
+          .imageUrl,
+      blue.source.toString(),
+    );
+    expect(controller.selectedAttributes.containsKey('pa_size'), isFalse);
+    expect(controller.canAddToCart, isFalse);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'tapping the actual product image opens zoom even with inline zoom off',
     (tester) async {

@@ -1,10 +1,34 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_filter_data_model.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_category_model.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_money_model.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_product_model.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
 
 void main() {
+  test(
+    'size facets distinguish legacy, authoritative empty and available terms',
+    () {
+      expect(
+        CatalogFilterDataModel.fromJson({}).toEntity().availableSizes,
+        isNull,
+      );
+      expect(
+        CatalogFilterDataModel.fromJson({
+          'available_sizes': [],
+        }).toEntity().availableSizes,
+        isEmpty,
+      );
+      final sizes = CatalogFilterDataModel.fromJson({
+        'available_sizes': [
+          {'taxonomy': 'pa_size', 'term': 's', 'label': 'Small'},
+          {'taxonomy': 'invalid', 'term': 'x'},
+        ],
+      }).toEntity().availableSizes!;
+      expect(sizes.single.term, 's');
+      expect(sizes.single.label, 'Small');
+    },
+  );
   test('category name highlight defaults off and survives saved presentation', () {
     final original = CatalogCategoryModel.fromJson({'id': 9, 'name': 'Child'});
     expect(original.nameHighlightEnabled, isFalse);

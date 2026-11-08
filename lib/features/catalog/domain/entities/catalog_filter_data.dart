@@ -1,3 +1,5 @@
+import 'catalog_filter_options.dart';
+
 class CatalogFilterData {
   const CatalogFilterData({
     this.minimumPriceMinor = '',
@@ -5,6 +7,7 @@ class CatalogFilterData {
     this.attributeCounts = const <CatalogAttributeCount>[],
     this.ratingCounts = const <CatalogRatingCount>[],
     this.stockCounts = const <CatalogStockCount>[],
+    this.availableSizes,
   });
 
   final String minimumPriceMinor;
@@ -12,6 +15,10 @@ class CatalogFilterData {
   final List<CatalogAttributeCount> attributeCounts;
   final List<CatalogRatingCount> ratingCounts;
   final List<CatalogStockCount> stockCounts;
+
+  /// Null means the store does not support stock-aware size facets.
+  /// An empty list is authoritative and must not be filled from parent terms.
+  final List<CatalogSizeOption>? availableSizes;
 }
 
 class CatalogAttributeCount {

@@ -228,6 +228,7 @@ class StoreApiCatalogRemoteDataSource
       ..remove('orderby')
       ..remove('order')
       ..addAll(const <String, dynamic>{
+        'mobishop_available_sizes': true,
         'calculate_price_range': true,
         'calculate_rating_counts': true,
         'calculate_stock_status_counts': true,

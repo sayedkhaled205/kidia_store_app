@@ -8,6 +8,74 @@ final class MobiShop_Attribute_Stock_Filter {
 		add_filter( 'woocommerce_store_api_product_query', array( $this, 'store_query' ), 30, 2 );
 		add_filter( 'woof_products_query', array( $this, 'website_query' ), 30 );
 		add_filter( 'posts_clauses', array( $this, 'clauses' ), 40, 2 );
+		add_filter( 'rest_request_after_callbacks', array( $this, 'available_sizes' ), 30, 3 );
+	}
+
+	/** Optional public facets, reusing Woo's validated collection scope and stock rules. */
+	public function available_sizes( $response, $handler, $request ) {
+		if ( 'GET' !== $request->get_method() || ! in_array( trim( $request->get_route(), '/' ), array( 'wc/store/products/collection-data', 'wc/store/v1/products/collection-data' ), true )
+			|| ! in_array( $request->get_param( 'mobishop_available_sizes' ), array( true, 1, '1', 'true' ), true ) || is_wp_error( $response ) ) return $response;
+		$response = rest_ensure_response( $response );
+		if ( $response->get_status() >= 400 || ! is_array( $response->get_data() ) ) return $response;
+		global $wpdb;
+		try {
+			$selects = array();
+			foreach ( get_taxonomies() as $taxonomy ) {
+				if ( ! str_starts_with( $taxonomy, 'pa_' ) || ! $this->is_size( $taxonomy ) ) continue;
+				$scope = clone $request;
+				$scope->set_param( 'attributes', array_values( array_filter( (array) $request->get_param( 'attributes' ), fn( $attribute ) => is_array( $attribute ) && $this->taxonomy( (string) ( $attribute['attribute'] ?? '' ) ) !== $taxonomy ) ) );
+				list( $sql, $query ) = $this->compile_scope( $scope );
+				$selected = (array) $query->get( 'mobishop_stock_attributes' );
+				// The candidate term comes from the fixed SQL alias below, not user SQL.
+				$selected[] = array( 'taxonomy' => $taxonomy, 'terms' => array(), 'facet' => true );
+				$query->set( 'mobishop_stock_attributes', $selected );
+				$predicate = $this->clauses( array( 'where' => '' ), $query )['where'];
+				$tax = $wpdb->prepare( '%s', $taxonomy );
+				// DISTINCT keeps the scoped IDs inside a materialized DB subquery.
+				// Otherwise MySQL may evaluate every store term/variant before search.
+				$selects[] = "SELECT DISTINCT {$tax} AS taxonomy, msfacet.slug AS term, msfacet.name AS label
+					FROM (SELECT DISTINCT msraw.ID FROM ({$sql}) msraw) msscope
+					INNER JOIN {$wpdb->posts} ON {$wpdb->posts}.ID=msscope.ID
+					INNER JOIN {$wpdb->term_relationships} msfrel ON msfrel.object_id={$wpdb->posts}.ID
+					INNER JOIN {$wpdb->term_taxonomy} msftax ON msftax.term_taxonomy_id=msfrel.term_taxonomy_id AND msftax.taxonomy={$tax}
+					INNER JOIN {$wpdb->terms} msfacet ON msfacet.term_id=msftax.term_id
+					WHERE 1=1 {$predicate}";
+			}
+			$rows = $selects ? $wpdb->get_results( implode( ' UNION ALL ', $selects ), ARRAY_A ) : array(); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Woo-generated scope and fixed clauses with prepared taxonomy/meta/term values.
+			if ( $wpdb->last_error || ! is_array( $rows ) ) throw new RuntimeException( 'Facet query failed.' );
+			usort( $rows, fn( $a, $b ) => strnatcasecmp( $a['label'], $b['label'] ) );
+			$data = $response->get_data();
+			$data['available_sizes'] = $rows;
+			$response->set_data( $data );
+			return $response;
+		} catch ( Throwable $error ) {
+			// Do not turn an unavailable metadata read into an authoritative empty list.
+			return new WP_Error( 'mobishop_facets_unavailable', __( 'Filters could not be loaded. Please try again.', 'mobishop' ), array( 'status' => 503 ) );
+		}
+	}
+
+	/** Compile the existing Woo query without materializing every product ID. */
+	private function compile_scope( $request ): array {
+		$products = new \Automattic\WooCommerce\StoreApi\Utilities\ProductQuery();
+		$query = new WP_Query();
+		$args = $this->store_query( $products->prepare_objects_query( $request ), $request );
+		// Woo omits zero bounds from prepared args; keep validated REST values.
+		foreach ( array( 'min_price', 'max_price' ) as $key ) {
+			if ( is_numeric( $request->get_param( $key ) ) ) $args[$key] = $request->get_param( $key );
+		}
+		$args = array_merge( $args, array( 'fields' => 'ids', 'posts_per_page' => -1, 'paged' => 1, 'offset' => 0, 'no_found_rows' => true, 'cache_results' => false, 'orderby' => '', 'order' => '' ) );
+		$clauses = static fn( $parts, $current ) => $current === $query ? $products->add_query_clauses( $parts, $current ) : $parts;
+		$skip = static fn( $posts, $current ) => $current === $query ? array() : $posts;
+		add_filter( 'posts_clauses', $clauses, 10, 2 );
+		add_filter( 'posts_pre_query', $skip, PHP_INT_MAX, 2 );
+		try {
+			$query->query( $args );
+			if ( ! is_string( $query->request ) || '' === $query->request ) throw new RuntimeException( 'Missing collection scope.' );
+			return array( $query->request, $query );
+		} finally {
+			remove_filter( 'posts_clauses', $clauses, 10 );
+			remove_filter( 'posts_pre_query', $skip, PHP_INT_MAX );
+		}
 	}
 
 	private function taxonomy( string $name ): string {
@@ -166,13 +234,15 @@ final class MobiShop_Attribute_Stock_Filter {
 		$conditions = array();
 		$parent_conditions = array();
 		foreach ( $selected as $index => $entry ) {
-			if ( empty( $entry['terms'] ) ) { $clauses['where'] .= ' AND 1=0'; return $clauses; }
-			$ids = implode( ',', array_map( 'absint', $entry['terms'] ) );
+			$facet = ! empty( $entry['facet'] );
+			if ( ! $facet && empty( $entry['terms'] ) ) { $clauses['where'] .= ' AND 1=0'; return $clauses; }
+			$ids = $facet ? 'msfacet.term_id' : implode( ',', array_map( 'absint', $entry['terms'] ) );
 			$keys = array_unique( array( 'attribute_' . rawurldecode( $entry['taxonomy'] ), 'attribute_' . strtolower( rawurlencode( rawurldecode( $entry['taxonomy'] ) ) ) ) );
 			$key_sql = implode( ',', array_map( fn($key) => $wpdb->prepare('%s', $key), $keys ) );
 			$slugs = array( '' ); // WooCommerce's explicit "Any" variation value.
 			foreach ( $entry['terms'] as $id ) { $term = get_term($id, $entry['taxonomy']); if ($term && !is_wp_error($term)) $slugs[] = $term->slug; }
 			$value_sql = implode( ',', array_map( fn($value) => $wpdb->prepare('%s', $value), $slugs ) );
+			if ( $facet ) $value_sql .= ',msfacet.slug';
 			$parent_conditions[] = "EXISTS (SELECT 1 FROM {$wpdb->term_relationships} msatr JOIN {$wpdb->term_taxonomy} msatt ON msatt.term_taxonomy_id=msatr.term_taxonomy_id WHERE msatr.object_id={$wpdb->posts}.ID AND msatt.term_id IN ({$ids}))";
 			// Read the actual variation attributes, not the asynchronously rebuilt
 			// attribute lookup table. All selected dimensions match the same variant.
@@ -194,6 +264,12 @@ final class MobiShop_Attribute_Stock_Filter {
 		} else {
 			$other_products = "(EXISTS (SELECT 1 FROM {$stock} msasimple WHERE msasimple.product_id={$wpdb->posts}.ID AND msasimple.stock_status='instock') AND NOT EXISTS (SELECT 1 FROM {$wpdb->posts} msc WHERE msc.post_parent={$wpdb->posts}.ID AND msc.post_type='product_variation'))";
 			$stock_test = "msas.stock_status = 'instock'";
+			if ( array_filter( $selected, fn( $entry ) => ! empty( $entry['facet'] ) ) ) $conditions[] = $this->variation_price( $query, $api );
+		}
+		if ( array_filter( $selected, fn( $entry ) => ! empty( $entry['facet'] ) ) ) {
+			$type = get_term_by( 'slug', 'variable', 'product_type' );
+			if ( $type && ! is_wp_error( $type ) ) $other_products .= $wpdb->prepare( " AND NOT EXISTS (SELECT 1 FROM {$wpdb->term_relationships} msftype WHERE msftype.object_id={$wpdb->posts}.ID AND msftype.term_taxonomy_id=%d)", $type->term_taxonomy_id );
+			$other_products = "({$other_products} AND EXISTS (SELECT 1 FROM {$wpdb->postmeta} msfprice WHERE msfprice.post_id={$wpdb->posts}.ID AND msfprice.meta_key='_price' AND msfprice.meta_value<>''))";
 		}
 		$matching_variant = "EXISTS (SELECT 1 FROM {$wpdb->posts} msav INNER JOIN {$stock} msas ON msas.product_id=msav.ID WHERE msav.post_parent={$wpdb->posts}.ID AND msav.post_status='publish' AND msav.post_type='product_variation' AND {$stock_test} AND " . implode( ' AND ', $conditions ) . ')';
 		$parent_conditions[] = "({$matching_variant} OR {$other_products})";

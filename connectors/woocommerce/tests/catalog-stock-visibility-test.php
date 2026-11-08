@@ -30,8 +30,9 @@ function get_object_taxonomies( $v ) { return array( 'product_cat', 'pa_size', '
 function wc_attribute_label( $t ) { return $t; }
 function absint( $v ) { return abs( (int) $v ); }
 function sanitize_title( $v ) { return strtolower( $v ); }
-function is_wp_error( $v ) { return false; }
+function is_wp_error( $v ) { return $v instanceof WP_Error; }
 function get_term_by( $field, $value, $tax ) {
+	foreach ( $GLOBALS['facet_terms'] ?? array() as $term ) { if ( $tax === $term->taxonomy && ( ( 'id' === $field && (int) $value === $term->term_id ) || ( 'slug' === $field && $value === $term->slug ) ) ) return $term; }
 	if ( 'product_type' === $tax && 'variable' === $value ) return (object) array( 'term_taxonomy_id' => 99 );
 	if ( 'pa_size' === $tax && in_array( $value, array( 21, 'm' ), true ) ) return (object) array( 'term_id' => 21, 'slug' => 'm' );
 	return false;
@@ -58,9 +59,15 @@ class CatalogStockFixtureQuery {
 
 $db = new PDO( 'sqlite::memory:' );
 $wpdb = new class( $db ) {
+	public $terms = 'terms', $facet_queries = array();
 	public $posts = 'posts', $prefix = '', $postmeta = 'postmeta', $term_relationships = 'term_relationships', $term_taxonomy = 'term_taxonomy';
 	public $stock_queries = array(), $last_error = '', $simulate = '';
 	public function __construct( private PDO $db ) {}
+	public function get_results( $sql, $format ) {
+		$this->facet_queries[] = $sql;
+		$this->last_error = $this->simulate === 'error' ? 'Synthetic database failure' : '';
+		return $this->last_error ? null : $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+	}
 	public function get_col( $sql ) {
 		$this->stock_queries[] = $sql;
 		$this->last_error = $this->simulate === 'error' ? 'Synthetic database failure' : '';

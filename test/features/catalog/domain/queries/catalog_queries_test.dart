@@ -4,7 +4,7 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 
 void main() {
   group('CatalogProductQuery', () {
-    test('Arabic display taxonomy returns to its canonical WordPress slug', () {
+    test('Arabic taxonomy is decoded before URI query serialization', () {
       const canonical = 'pa_%d8%a7%d9%84%d9%85%d9%82%d8%a7%d8%b3';
       for (final taxonomy in ['pa_المقاس', canonical]) {
         final query = CatalogProductQuery(
@@ -14,7 +14,7 @@ void main() {
             CatalogAttributeFilter(taxonomy: 'pa_color', terms: ['red']),
           ],
         ).toStoreApiQuery();
-        expect(query['attributes[0][attribute]'], canonical);
+        expect(query['attributes[0][attribute]'], 'pa_المقاس');
         expect(query['attributes[0][slug]'], '6y,8y');
         expect(query['attributes[1][attribute]'], 'pa_color');
         expect(query['attribute_relation'], 'and');

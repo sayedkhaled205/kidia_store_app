@@ -73,6 +73,13 @@ jobs:
           python3 tool/test_unified_workflow.py
       - name: Run Builder browser contract tests
         run: npm run test:builders
+      - name: Check Publish save-all and available product options
+        run: |
+          npm run test:publish
+          php connectors/woocommerce/tests/product-variation-public-access-test.php
+          php connectors/woocommerce/tests/catalog-stock-visibility-test.php api
+          php connectors/woocommerce/tests/catalog-stock-visibility-test.php
+          php connectors/woocommerce/tests/available-size-facets-test.php
       - name: Verify shared live publication controls
         run: |
           python3 tool/generate_app_ui_controls.py --check

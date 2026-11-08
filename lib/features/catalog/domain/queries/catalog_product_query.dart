@@ -115,10 +115,9 @@ class CatalogProductQuery {
 
     for (int index = 0; index < attributes.length; index++) {
       final CatalogAttributeFilter filter = attributes[index];
-      // Store API displays decoded names; WordPress filters require slug bytes.
-      query['attributes[$index][attribute]'] = filter.taxonomy.replaceAllMapped(
-        RegExp(r'[^\x00-\x7f]+'),
-        (match) => Uri.encodeComponent(match[0]!).toLowerCase(),
+      // Uri serializes query values; pre-encoding here would encode '%' twice.
+      query['attributes[$index][attribute]'] = _decodedTaxonomy(
+        filter.taxonomy,
       );
       query['attributes[$index][slug]'] = filter.terms.join(',');
       query['attributes[$index][operator]'] =
@@ -126,6 +125,17 @@ class CatalogProductQuery {
     }
 
     return query;
+  }
+
+  static String _decodedTaxonomy(String taxonomy) {
+    if (!taxonomy.contains('%')) return taxonomy;
+    try {
+      return Uri.decodeComponent(taxonomy);
+    } on FormatException {
+      return taxonomy;
+    } on ArgumentError {
+      return taxonomy;
+    }
   }
 
   static Map<String, String> _sortQuery(

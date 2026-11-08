@@ -144,7 +144,22 @@ class ProductDetailController extends ChangeNotifier {
   CatalogMoney? get displayedPrice =>
       selectedVariation?.prices ?? _product?.prices;
 
-  CatalogImage? get selectedImage => selectedVariation?.image;
+  CatalogImage? get selectedImage {
+    final exactImage = selectedVariation?.image;
+    if (exactImage != null && exactImage.source.toString().isNotEmpty) {
+      return exactImage;
+    }
+    // Show the chosen color immediately, while size selection still controls
+    // price and purchase eligibility. Never borrow another color's image.
+    for (final group in optionGroups) {
+      final value = _selectedAttributes[group.key];
+      if (group.isColor && value != null && value.isNotEmpty) {
+        final image = imageForOption(group.key, value);
+        if (image != null) return image;
+      }
+    }
+    return null;
+  }
 
   /// Use the source variation image for this option, never another color's
   /// product image. Prefer a match for the other currently selected options.

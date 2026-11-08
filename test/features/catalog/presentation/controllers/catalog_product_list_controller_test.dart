@@ -14,6 +14,64 @@ import 'package:mobishop_store_app/features/catalog/presentation/controllers/cat
 
 void main() {
   group('CatalogProductListController', () {
+    test(
+      'failed facets keep products usable without inventing stock choices',
+      () async {
+        final repository = _FakeCatalogRepository(
+          products: (q) async => _page(
+            q,
+            items: [_product(q.page, withSizes: true)],
+            totalPages: 2,
+            totalItems: 2,
+          ),
+          filters: (q) async => throw StateError('Metadata unavailable'),
+        );
+        final controller = CatalogProductListController(
+          repository,
+          request: const CatalogProductListRequest(),
+        );
+        addTearDown(controller.dispose);
+        await controller.loadInitial();
+        await Future<void>.delayed(Duration.zero);
+        expect(controller.state.items, isNotEmpty);
+        expect(controller.state.availableSizes, isEmpty);
+        await controller.loadMore();
+        expect(controller.state.availableSizes, isEmpty);
+      },
+    );
+    for (final options in <List<CatalogSizeOption>>[
+      const [],
+      const [CatalogSizeOption(taxonomy: 'pa_size', term: 's', label: 'Small')],
+    ]) {
+      test(
+        'stock-aware sizes replace parent terms and survive paging (${options.length})',
+        () async {
+          final pending = Completer<CatalogFilterData>();
+          final repository = _FakeCatalogRepository(
+            products: (q) async => _page(
+              q,
+              items: [_product(q.page, withSizes: true)],
+              totalPages: 2,
+              totalItems: 2,
+            ),
+            filters: (q) => pending.future,
+          );
+          final controller = CatalogProductListController(
+            repository,
+            request: const CatalogProductListRequest(),
+          );
+          addTearDown(controller.dispose);
+          await controller.loadInitial();
+          expect(controller.state.items, isNotEmpty);
+          expect(controller.state.availableSizes, isEmpty);
+          pending.complete(CatalogFilterData(availableSizes: options));
+          await Future<void>.delayed(Duration.zero);
+          expect(controller.state.availableSizes, options);
+          await controller.loadMore();
+          expect(controller.state.availableSizes, options);
+        },
+      );
+    }
     test('side panel asks only for displayed metadata', () async {
       final source = _FilterOptionsRepository();
       final controller = CatalogProductListController(
