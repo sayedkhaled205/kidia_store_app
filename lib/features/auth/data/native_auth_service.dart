@@ -81,6 +81,21 @@ class NativeAuthService
           json['methods'] is! Map) {
         throw const FormatException('Invalid native configuration.');
       }
+      final recoveryUrl = json['password_reset_url'];
+      final recovery = recoveryUrl is String && recoveryUrl.length <= 2048
+          ? Uri.tryParse(recoveryUrl)
+          : null;
+      if (recovery != null &&
+          recovery.hasAuthority &&
+          recovery.host.isNotEmpty) {
+        try {
+          _checkOrigin(recovery);
+        } on AuthRepositoryException {
+          json['password_reset_url'] = '';
+        }
+      } else {
+        json['password_reset_url'] = '';
+      }
       return NativeAuthConfig.fromJson(json);
     } on AuthRepositoryException catch (error) {
       if (error.statusCode != 404) rethrow;
@@ -148,6 +163,7 @@ class NativeAuthService
       }
       final json = await _post('identify', attempt, {
         'identifier': identifier.trim(),
+        'supports_email_password_recovery': true,
       });
       return NativeAuthIdentity.fromJson(json);
     });
@@ -774,7 +790,8 @@ class NativeAuthService
           'الحساب ده محتاج تأكيد إضافي. استخدم كلمة مرور حساب المتجر أو رقم الموبايل.',
       'mobishop_native_account_conflict':
           'تعذر ربط الحساب بالطريقة دي. استخدم طريقة الدخول المعتادة للحساب.',
-      'mobishop_native_phone_account_conflict': 'الرقم ده مرتبط بحساب ماينفعش تكمل تسجيله بالطريقة دي. استخدم طريقة دخوله الأصلية أو رقم مختلف.',
+      'mobishop_native_phone_account_conflict':
+          'الرقم ده مرتبط بحساب ماينفعش تكمل تسجيله بالطريقة دي. استخدم طريقة دخوله الأصلية أو رقم مختلف.',
       'mobishop_native_account_deletion_pending':
           'حذف الحساب لسه بيتم. بعد اكتمال الحذف تقدر تسجّل حساب جديد.',
       'mobishop_auth_account_deletion_pending':

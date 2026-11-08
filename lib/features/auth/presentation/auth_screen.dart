@@ -11,6 +11,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:mobishop_store_app/core/app_design/application_identity_provider58.dart';
 import 'package:mobishop_store_app/core/config/app_config.dart';
 import 'package:mobishop_store_app/core/theme/mobishop_colors.dart';
@@ -319,6 +320,29 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                     ),
                               child: Text(copy.useOtp),
                             ),
+                          if ([
+                                _AuthStep.method,
+                                _AuthStep.password,
+                                _AuthStep.recovery,
+                              ].contains(_step) &&
+                              config.passwordResetUri != null)
+                            TextButton(
+                              key: const Key('auth-forgot-password'),
+                              onPressed: _busy
+                                  ? null
+                                  : () => _perform((flow) async {
+                                      final opened = await launchUrl(
+                                        config.passwordResetUri!,
+                                        mode: LaunchMode.externalApplication,
+                                      );
+                                      if (!opened && _active(flow)) {
+                                        throw StateError(
+                                          'Password recovery did not open.',
+                                        );
+                                      }
+                                    }),
+                              child: Text(copy.forgotPassword),
+                            ),
                           if (_step == _AuthStep.otp)
                             TextButton(
                               key: const Key('auth-resend'),
@@ -480,10 +504,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                           tapTargetSize:
                                               MaterialTapTargetSize.shrinkWrap,
                                           fixedSize: Size.square(
-                                            _ui.numberOr('auth_google_button_height', 52),
+                                            _ui.numberOr(
+                                              'auth_google_button_height',
+                                              52,
+                                            ),
                                           ),
                                           minimumSize: Size.square(
-                                            _ui.numberOr('auth_google_button_height', 52),
+                                            _ui.numberOr(
+                                              'auth_google_button_height',
+                                              52,
+                                            ),
                                           ),
                                           padding: EdgeInsets.zero,
                                           backgroundColor: Colors.white,
@@ -586,7 +616,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _AuthStep.accounts => copy.chooseAccount,
     _AuthStep.registration => copy.completeAccount,
     _AuthStep.phone =>
-      _existingContactPhone ? copy.existingTitle : copy.verifyPhone,
+      _existingContactPhone ? copy.existingPhoneTitle : copy.verifyPhone,
   };
 
   List<Widget> _identitySummary(AuthCopy copy) {
@@ -652,6 +682,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ];
       case _AuthStep.method:
         return [
+          if (_identity!.allows('email_password') &&
+              config.allows('email_password'))
+            _methodButton(
+              key: const Key('auth-use-email'),
+              label: copy.useAccountEmail,
+              icon: Icons.email_outlined,
+              onPressed: () {
+                _changeIdentifier();
+                _identifier.clear();
+              },
+            ),
           if (_identity!.allows('password') && _phonePasswordEnabled(config))
             _methodButton(
               key: const Key('auth-use-password'),
@@ -894,6 +935,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   _challenge = null;
                   _otpTicket = null;
                   _password.clear();
+                  _confirmation.clear();
+                  _otp.clear();
+                  _name.clear();
+                  _email.clear();
+                  _pendingCommit = null;
                   _step = _AuthStep.method;
                   _existingContactPhone = false;
                   _confirmContactPhone = false;
@@ -1260,8 +1306,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           _identifier.text = identity.identifier;
           if (identity.allows('create_password')) {
             setState(() => _step = _AuthStep.createPassword);
-          } else if (identity.allows('password') &&
-              identity.allows('phone_otp')) {
+          } else if (identity.allows('email_password') ||
+              (identity.allows('password') && identity.allows('phone_otp'))) {
             setState(() => _step = _AuthStep.method);
           } else if (identity.allows('password')) {
             setState(() => _step = _AuthStep.password);
@@ -1291,7 +1337,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 await _acceptResult(result, flow);
               }
             } on AuthRepositoryException catch (error) {
-              if (error.code != 'mobishop_native_existing_phone') rethrow;
+              if (!_isExistingPhoneConflict(error)) rethrow;
               if (_active(flow)) _offerExistingPhone(phone);
             }
             return;
@@ -1328,8 +1374,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             );
             if (_active(flow)) await _acceptResult(result, flow);
           } on AuthRepositoryException catch (error) {
-            if (error.code != 'mobishop_native_existing_phone' ||
-                _recoveryPhone == null) {
+            if (!_isExistingPhoneConflict(error) || _recoveryPhone == null) {
               rethrow;
             }
             if (_active(flow)) _offerExistingPhone(_recoveryPhone!);
@@ -1402,7 +1447,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         );
       } on AuthRepositoryException catch (error) {
         if (!_active(flow) || epoch != _otpEpoch) return;
-        if (error.code == 'mobishop_native_existing_phone') {
+        if (_isExistingPhoneConflict(error)) {
           _offerExistingPhone(phone);
           return;
         }
@@ -1465,16 +1510,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   void _offerExistingPhone(String phone) {
     _otpEpoch++;
+    _resendTimer?.cancel();
     setState(() {
       _existingContactPhone = true;
       _confirmContactPhone = false;
       _recoveryPhone = phone;
       _phone.text = phone;
       _challenge = null;
+      _otpTicket = null;
+      _otp.clear();
+      _error = null;
       _step = _AuthStep.phone;
       _busy = false;
     });
   }
+
+  bool _isExistingPhoneConflict(Object error) =>
+      error is AuthRepositoryException &&
+      const {
+        'mobishop_native_existing_phone',
+        'mobishop_native_phone_account_conflict',
+      }.contains(error.code);
 
   bool _isOtpSendFailure(Object error) =>
       error is AuthRepositoryException &&
@@ -1511,8 +1567,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     String? ticket,
     bool sendFailed = false,
   }) {
-    if (error is AuthRepositoryException &&
-        error.code == 'mobishop_native_existing_phone') {
+    if (_isExistingPhoneConflict(error)) {
       _offerExistingPhone(phone);
       return;
     }
@@ -1578,8 +1633,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             password: _password.text,
           );
         } on AuthRepositoryException catch (error) {
-          if (error.code == 'mobishop_native_existing_phone' &&
-              _recoveryPhone != null) {
+          if (_isExistingPhoneConflict(error) && _recoveryPhone != null) {
             if (_active(flow)) _offerExistingPhone(_recoveryPhone!);
             return;
           }

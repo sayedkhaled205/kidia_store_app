@@ -11,6 +11,7 @@ class NativeAuthConfig {
     this.supportsUnverifiedPhoneEnrollment = false,
     this.supportsExpectedPhoneGoogle = false,
     this.privacyPolicyUrl = '',
+    this.passwordResetUrl = '',
   });
   final bool enabled;
   final Map<String, bool> methods;
@@ -21,6 +22,18 @@ class NativeAuthConfig {
   final bool supportsUnverifiedPhoneEnrollment;
   final bool supportsExpectedPhoneGoogle;
   final String privacyPolicyUrl;
+  final String passwordResetUrl;
+
+  Uri? get passwordResetUri {
+    final uri = passwordResetUrl.length <= 2048
+        ? Uri.tryParse(passwordResetUrl)
+        : null;
+    return uri?.scheme == 'https' &&
+            uri!.host.isNotEmpty &&
+            uri.userInfo.isEmpty
+        ? uri
+        : null;
+  }
 
   String get phoneHint => phoneCountryCode == '20' ? '01XXXXXXXXX' : '';
 
@@ -58,6 +71,9 @@ class NativeAuthConfig {
         enabled: json['enabled'] == true,
         privacyPolicyUrl: json['privacy_policy_url'] is String
             ? json['privacy_policy_url'] as String
+            : '',
+        passwordResetUrl: json['password_reset_url'] is String
+            ? json['password_reset_url'] as String
             : '',
         supportsUnverifiedPhoneEnrollment:
             json['supports_unverified_phone_enrollment'] == true,

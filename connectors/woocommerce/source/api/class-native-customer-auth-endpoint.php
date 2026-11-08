@@ -83,6 +83,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return array(
 			'version' => 1, 'enabled' => $enabled,
 			'privacy_policy_url' => function_exists( 'get_privacy_policy_url' ) ? esc_url_raw( get_privacy_policy_url(), array( 'https' ) ) : '',
+			'password_reset_url' => $this->password_reset_url(),
 			'supports_unverified_phone_enrollment' => $registration,
 			'supports_expected_phone_google' => $enabled && $google,
 			'phone_country_code' => preg_replace( '/\D/', '', (string) ( $s['phone_country_code'] ?? '' ) ),
@@ -95,6 +96,21 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			'google' => $enabled && $google ? array( 'server_client_id' => $client, 'ios_client_id' => $platform === 'ios' ? $g['ios_client_id'] : null ) : null,
 			'facebook' => $facebook_native ? array( 'app_id' => $fb['app_id'], 'client_token' => $fb['client_token'] ) : null,
 		);
+	}
+
+	private function password_reset_url(): string {
+		$url = '';
+		if ( class_exists( 'Kidia_Store_Custom_Login_Page_V020' ) ) {
+			$page = Kidia_Store_Custom_Login_Page_V020::instance()->get_page_id();
+			if ( $page > 0 && get_permalink( $page ) ) $url = add_query_arg( 'kidia_stage', 'forgot', get_permalink( $page ) );
+		}
+		if ( ! $url && function_exists( 'wc_get_page_id' ) && function_exists( 'wc_get_endpoint_url' ) ) {
+			$page = wc_get_page_id( 'myaccount' );
+			// Avoid filtered guest account URLs that point to a custom login page.
+			if ( $page > 0 && get_permalink( $page ) ) $url = wc_get_endpoint_url( 'lost-password', '', get_permalink( $page ) );
+		}
+		if ( ! $url && function_exists( 'wp_lostpassword_url' ) ) $url = wp_lostpassword_url();
+		return $url && function_exists( 'esc_url_raw' ) ? esc_url_raw( $url, array( 'https' ) ) : '';
 	}
 
 	/** Nextend's server credentials are authoritative; native settings may only confirm, never silently diverge from, them. */
@@ -139,9 +155,12 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$c = $this->capabilities( $request );
 		if ( $identity['kind'] === 'phone' ) {
 			$methods = array( 'password' );
-			if ( $c['methods']['phone_otp'] ) {
+			$users = $this->phone_users( $identity['identifier'], true );
+			if ( is_wp_error( $users ) && $request->get_param( 'supports_email_password_recovery' ) === true ) {
+				// A conflicting or protected identity must use its original email proof.
+				$methods = array( 'email_password' );
+			} elseif ( $c['methods']['phone_otp'] ) {
 				// New customers have no password yet. Existing accounts retain password recovery if SMS fails.
-				$users = $this->phone_users( $identity['identifier'], true );
 				$methods = $users === array() ? array( 'phone_otp' ) : array( 'password', 'phone_otp' );
 			}
 		} else {

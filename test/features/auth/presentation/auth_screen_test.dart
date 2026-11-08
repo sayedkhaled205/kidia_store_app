@@ -25,14 +25,185 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets('direct protected phone sign-in offers email recovery', (
+    tester,
+  ) async {
+    final actions = _Actions()..identityMethods = ['email_password'];
+    await _Fixture(actions: actions).pump(tester);
+    await _identify(tester, '01012345678');
+    expect(find.byKey(const Key('auth-use-email')), findsOneWidget);
+    expect(find.byKey(const Key('auth-forgot-password')), findsOneWidget);
+    expect(find.byKey(const Key('auth-error')), findsNothing);
+    expect(actions.sentPhones, isEmpty);
+    expect(actions.commits, 0);
+  });
+  testWidgets(
+    'protected phone offers existing email proof and password recovery',
+    (tester) async {
+      final actions = _EnrollmentActions()
+        ..identityMethods = ['email_password']
+        ..googleResult = const NativeAuthResult(
+          status: NativeAuthStatus.registrationRequired,
+          ticket: 'new-social-ticket',
+          fields: ['phone'],
+          expiresIn: 300,
+        )
+        ..prepareError = const AuthRepositoryException(
+          kind: AuthFailureKind.conflict,
+          message: 'Raw conflict details',
+          code: 'mobishop_native_phone_account_conflict',
+        );
+      final launched = <MethodCall>[];
+      const channel = MethodChannel('plugins.flutter.io/url_launcher');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            launched.add(call);
+            return true;
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null),
+      );
+      await _Fixture(actions: actions).pump(tester);
+      await _tap(tester, 'auth-google');
+      await tester.enterText(
+        find.byKey(const Key('auth-phone')),
+        '01012345678',
+      );
+      await _tap(tester, 'auth-send-otp');
+      await _tap(tester, 'auth-existing-phone-signin');
+      expect(find.byKey(const Key('auth-use-email')), findsOneWidget);
+      expect(find.byKey(const Key('auth-use-otp')), findsNothing);
+      expect(find.byKey(const Key('auth-use-password')), findsNothing);
+      expect(find.byKey(const Key('auth-forgot-password')), findsOneWidget);
+      await _tap(tester, 'auth-forgot-password');
+      expect(
+        launched.single.arguments['url'],
+        'https://shop.example/login/?kidia_stage=forgot',
+      );
+      expect(actions.commits, 0);
+      expect(actions.sentPhones, isEmpty);
+      await _tap(tester, 'auth-use-email');
+      final field = tester.widget<TextFormField>(
+        find.byKey(const Key('auth-email')),
+      );
+      expect(field.controller!.text, isEmpty);
+      expect(find.byKey(const Key('auth-error')), findsNothing);
+    },
+  );
+  for (final code in [
+    'mobishop_native_existing_phone',
+    'mobishop_native_phone_account_conflict',
+  ]) {
+    testWidgets('$code during social enrollment offers independent sign-in', (
+      tester,
+    ) async {
+      final actions = _EnrollmentActions()
+        ..googleResult = const NativeAuthResult(
+          status: NativeAuthStatus.registrationRequired,
+          ticket: 'new-social-ticket',
+          fields: ['phone'],
+          expiresIn: 300,
+        )
+        ..prepareError = AuthRepositoryException(
+          kind: AuthFailureKind.conflict,
+          message: 'Raw conflict details must not be displayed',
+          code: code,
+        );
+      await _Fixture(actions: actions).pump(tester);
+      await _tap(tester, 'auth-google');
+      await tester.enterText(
+        find.byKey(const Key('auth-phone')),
+        '01012345678',
+      );
+      await _tap(tester, 'auth-send-otp');
+      expect(
+        find.byKey(const Key('auth-existing-phone-signin')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('auth-different-phone')), findsOneWidget);
+      expect(find.byKey(const Key('auth-error')), findsNothing);
+      expect(find.byKey(const Key('auth-send-otp')), findsNothing);
+      expect(actions.sentPhones, isEmpty);
+      await _tap(tester, 'auth-existing-phone-signin');
+      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-use-otp')), findsOneWidget);
+      expect(find.byKey(const Key('auth-forgot-password')), findsOneWidget);
+      await _tap(tester, 'auth-use-otp');
+      expect(actions.otpTickets, [null]);
+      expect(actions.commits, 0);
+      await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
+      await _tap(tester, 'auth-verify-otp');
+      expect(actions.verifyTicket, isNull);
+      expect(actions.registrationTicket, isNull);
+      expect(actions.commits, 1);
+    });
+
+    testWidgets(
+      '$code allows another phone without losing new email enrollment',
+      (tester) async {
+        final actions = _EnrollmentActions()
+          ..identityMethods = ['create_password']
+          ..passwordResult = const NativeAuthResult(
+            status: NativeAuthStatus.registrationRequired,
+            ticket: 'new-email-ticket',
+            fields: ['phone'],
+            expiresIn: 300,
+          )
+          ..prepareError = AuthRepositoryException(
+            kind: AuthFailureKind.conflict,
+            message: 'Raw conflict details must not be displayed',
+            code: code,
+          );
+        await _Fixture(actions: actions).pump(tester);
+        await _identify(tester, 'new-customer@example.invalid');
+        await tester.enterText(find.byKey(const Key('auth-name')), 'Test');
+        await tester.enterText(
+          find.byKey(const Key('auth-create-password')),
+          'test-password',
+        );
+        await tester.enterText(
+          find.byKey(const Key('auth-confirm-password')),
+          'test-password',
+        );
+        await _tap(tester, 'auth-register');
+        await tester.enterText(
+          find.byKey(const Key('auth-phone')),
+          '01012345678',
+        );
+        await _tap(tester, 'auth-send-otp');
+        expect(find.byKey(const Key('auth-different-phone')), findsOneWidget);
+        actions.prepareError = null;
+        await _tap(tester, 'auth-different-phone');
+        expect(find.byKey(const Key('auth-error')), findsNothing);
+        await tester.enterText(
+          find.byKey(const Key('auth-phone')),
+          '01112345678',
+        );
+        await _tap(tester, 'auth-send-otp');
+        expect(actions.prepareTickets, [
+          'new-email-ticket',
+          'new-email-ticket',
+        ]);
+        expect(actions.sentPhones, ['+201112345678']);
+        expect(actions.commits, 0);
+      },
+    );
+  }
   testWidgets(
     'published Google size updates and rolls back without losing input',
     (tester) async {
       final controls = ValueNotifier<Map<String, dynamic>>({});
       addTearDown(controls.dispose);
-      final actions = _Actions()..configuration = const NativeAuthConfig(
-        methods: {'email_password': true, 'google': true, 'facebook': true, 'apple': true},
-      );
+      final actions = _Actions()
+        ..configuration = const NativeAuthConfig(
+          methods: {
+            'email_password': true,
+            'google': true,
+            'facebook': true,
+            'apple': true,
+          },
+        );
       await _Fixture(actions: actions).pump(tester, controls: controls);
       await tester.enterText(
         find.byKey(const Key('auth-email')),
@@ -51,7 +222,10 @@ void main() {
           tester.getSize(find.byKey(const Key('auth-facebook'))),
           const Size.square(52),
         );
-        expect(tester.getSize(find.byKey(const Key('auth-apple'))), const Size.square(52));
+        expect(
+          tester.getSize(find.byKey(const Key('auth-apple'))),
+          const Size.square(52),
+        );
         expect(
           tester.getSize(find.byKey(const Key('auth-google-brand'))),
           const Size.square(28),
@@ -1408,14 +1582,17 @@ class _EnrollmentActions extends _Actions
       methods: configuration.methods,
       supportsUnverifiedPhoneEnrollment: supported,
       supportsExpectedPhoneGoogle: configuration.supportsExpectedPhoneGoogle,
+      passwordResetUrl: configuration.passwordResetUrl,
     );
   }
   int prepareCalls = 0;
+  final prepareTickets = <String?>[];
   int confirmCalls = 0;
   Object? prepareError;
   @override
   Future<NativeAuthResult> preparePhone(String phone, {String? ticket}) async {
     prepareCalls++;
+    prepareTickets.add(ticket);
     if (prepareError != null) throw prepareError!;
     return NativeAuthResult(
       status: NativeAuthStatus.registrationRequired,
@@ -1454,6 +1631,7 @@ class _Actions
   );
   NativeAuthConfig configuration = const NativeAuthConfig(
     phoneCountryCode: '20',
+    passwordResetUrl: 'https://shop.example/login/?kidia_stage=forgot',
     supportsExpectedPhoneGoogle: true,
     methods: {
       'email_password': true,

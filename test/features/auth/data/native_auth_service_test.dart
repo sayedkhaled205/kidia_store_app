@@ -80,6 +80,32 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
+  for (final url in [
+    'https://shop.example/login/?kidia_stage=forgot',
+    'https://outside.example/reset',
+    'http://shop.example/reset',
+    'https://user:password@shop.example/reset',
+    'https://',
+    '/reset',
+    'not a url',
+  ]) {
+    test(
+      'password recovery accepts only the store HTTPS origin: $url',
+      () async {
+        final h = _Harness()..configStatus = -1;
+        h.handler = (request) async =>
+            h.response(request, {..._configuration, 'password_reset_url': url});
+        final config = await h.service.config();
+        expect(
+          config.passwordResetUri?.toString(),
+          url == 'https://shop.example/login/?kidia_stage=forgot' ? url : null,
+        );
+        expect(config.allows('phone_otp'), isTrue);
+        expect(config.allows('email_password'), isTrue);
+        expect(h.store.writes, 0);
+      },
+    );
+  }
   for (final entry in {
     'mobishop_native_phone_account_conflict': 'الرقم ده مرتبط بحساب',
     'mobishop_native_account_deletion_pending': 'حذف الحساب لسه بيتم',
