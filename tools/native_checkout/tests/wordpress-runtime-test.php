@@ -144,15 +144,10 @@ function cq_worker(): array {
     add_filter('pre_wp_mail',static function(){update_option('cq_mail_blocked',(int)get_option('cq_mail_blocked',0)+1,false);return true;},PHP_INT_MAX);
     add_action('phpmailer_init',static function(){throw new RuntimeException('Mail transport must never initialize.');},PHP_INT_MIN);
     $_SERVER['HTTPS']='on'; $_SERVER['REMOTE_ADDR']='127.0.0.1';
-    $input=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR);
+    $input=$GLOBALS['cq_input']??null;
+    cq_assert(is_array($input) && isset($GLOBALS['cq_safety']), 'Fixture initializes before Woo schemas and sessions');
     $repo=realpath((string)getenv('GITHUB_WORKSPACE'));
     if($repo===false || !is_file($repo.'/connectors/woocommerce/source/api/class-native-checkout-safety50.php')) throw new RuntimeException('Missing real connector source');
-    if(defined('MOBISHOP_NATIVE_CHECKOUT50_HMAC_KEY')) throw new RuntimeException('Unexpected preconfigured ledger key');
-    define('MOBISHOP_NATIVE_CHECKOUT50_HMAC_KEY',hash('sha256','disposable-checkout-fixture-only-key'));
-    require_once $repo.'/tools/customer_identity/connector/class-customer-identity-links.php';
-    require_once $repo.'/tools/customer_identity/connector/class-customer-identity-guard.php';
-    require_once $repo.'/connectors/woocommerce/source/api/class-customer-auth-endpoint.php';
-    require_once $repo.'/connectors/woocommerce/source/api/class-native-checkout-safety50.php';
     if($input['phase']==='seed') {
         if(get_option('cq_seed',false)!==false) throw new RuntimeException('Fixture requires a fresh database, not reset/reuse');
         $store=new MobiShop_Native_Checkout_Wpdb50();
@@ -191,13 +186,8 @@ function cq_worker(): array {
             'priced_stock'=>(int)(new WC_Product_Simple($seed['priced_product']))->get_stock_quantity(),
             'processed'=>(int)get_option('cq_order_processed',0),'mail_blocked'=>(int)get_option('cq_mail_blocked',0)];
     }
-    cq_assert($input['phase']==='request' && !did_action('rest_api_init'),'REST extension registers before schemas');
-    if(!defined('REST_REQUEST')) define('REST_REQUEST',true);
-    $_SERVER['HTTP_X_MOBISHOP_SESSION']=$input['session']; $_SERVER['HTTP_CART_TOKEN']=$input['cart'];
-    $_SERVER['REQUEST_METHOD']=$input['method']; $_SERVER['REQUEST_URI']='/wp-json'.$input['route'];
+    cq_assert($input['phase']==='request', 'Isolated request phase');
     $GLOBALS['wp']->query_vars['rest_route']=$input['route'];
-    $auth=new MobiShop_Customer_Auth_Endpoint(); $auth->register();
-    $safety=new MobiShop_Native_Checkout_Safety50(); $safety->register(); $safety->register_extension();
     // Actual native determine_current_user executes; no wp_set_current_user(owner) shortcut.
     unset($GLOBALS['current_user']); wp_get_current_user();
     add_action('woocommerce_store_api_checkout_order_processed',static function(){

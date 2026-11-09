@@ -1,0 +1,32 @@
+<?php
+/** Load as a CI-only MU plugin, before Woo initializes its routes and session. */
+if (getenv('CI') !== 'true' || getenv('KIDIA_CHECKOUT_RUNTIME_TEST') !== '1'
+    || !defined('DB_NAME') || DB_NAME !== 'kidia_identity_ci'
+    || !defined('WP_ENVIRONMENT_TYPE') || WP_ENVIRONMENT_TYPE !== 'local') {
+    throw new RuntimeException('Checkout fixture bootstrap requires disposable CI.');
+}
+$input=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR);
+if(!is_array($input) || !in_array($input['phase']??'', ['seed','snapshot','request'], true)) {
+    throw new RuntimeException('Invalid checkout fixture phase.');
+}
+$GLOBALS['cq_input']=$input;
+$_SERVER['HTTPS']='on'; $_SERVER['REMOTE_ADDR']='127.0.0.1';
+if($input['phase']==='request') {
+    define('REST_REQUEST',true);
+    $_SERVER['HTTP_X_MOBISHOP_SESSION']=$input['session'];
+    $_SERVER['HTTP_CART_TOKEN']=$input['cart'];
+    $_SERVER['REQUEST_METHOD']=$input['method'];
+    $_SERVER['REQUEST_URI']='/wp-json'.$input['route'];
+}
+define('MOBISHOP_NATIVE_CHECKOUT50_HMAC_KEY',hash('sha256','disposable-checkout-fixture-only-key'));
+add_action('plugins_loaded',static function() {
+    $repo=realpath((string)getenv('GITHUB_WORKSPACE'));
+    if($repo===false) throw new RuntimeException('Missing fixture source');
+    require_once $repo.'/tools/customer_identity/connector/class-customer-identity-links.php';
+    require_once $repo.'/tools/customer_identity/connector/class-customer-identity-guard.php';
+    require_once $repo.'/connectors/woocommerce/source/api/class-customer-auth-endpoint.php';
+    require_once $repo.'/connectors/woocommerce/source/api/class-native-checkout-safety50.php';
+    $auth=new MobiShop_Customer_Auth_Endpoint(); $auth->register();
+    $safety=new MobiShop_Native_Checkout_Safety50(); $safety->register();
+    $GLOBALS['cq_safety']=$safety;
+},1);

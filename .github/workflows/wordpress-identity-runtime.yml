@@ -73,6 +73,7 @@ jobs:
         run: |
           php -l tools/customer_identity/tests/wordpress-runtime-test.php
           php -l tools/native_checkout/tests/wordpress-runtime-test.php
+          php -l tools/native_checkout/tests/wordpress-bootstrap.php
       - name: Install official WordPress and WooCommerce in disposable database
         shell: bash
         run: |
@@ -100,6 +101,9 @@ jobs:
           if (getenv('KIDIA_IDENTITY_RUNTIME_TEST') === '1' || getenv('KIDIA_CHECKOUT_RUNTIME_TEST') === '1') {
               add_filter('pre_http_request', static fn() => new WP_Error('ci_network_disabled', 'No outbound HTTP in runtime fixture.'), PHP_INT_MAX);
               add_filter('pre_wp_mail', static fn() => true, PHP_INT_MAX);
+          }
+          if (getenv('KIDIA_CHECKOUT_RUNTIME_TEST') === '1') {
+              require getenv('GITHUB_WORKSPACE').'/tools/native_checkout/tests/wordpress-bootstrap.php';
           }
           PHP
       - name: Exercise real WordPress MySQL lifecycle with external provider stub only
