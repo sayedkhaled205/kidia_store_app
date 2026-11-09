@@ -6,15 +6,15 @@
  * not leak between requests. Only official WP/Woo and the real connector are used.
  * Synthetic accounts/addresses only. Session tokens remain in anonymous pipes.
  */
-declare(strict_types=1);
 
+declare(strict_types=1);
 function cq_assert(bool $condition, string $label): void {
     if (!$condition) throw new RuntimeException('FAIL: '.$label);
     if (!defined('ABSPATH')) echo 'PASS: '.$label.PHP_EOL;
 }
 
 function cq_child(array $input): array {
-    $command = [PHP_BINARY, getenv('WP_CLI'), 'eval-file', __FILE__, '--path='.getenv('WP_PATH'), '--quiet'];
+    $command = [PHP_BINARY, getenv('WP_CLI'), 'eval-file', __FILE__, '--use-include', '--path='.getenv('WP_PATH'), '--quiet'];
     $process = proc_open($command, [['pipe','r'],['pipe','w'],['pipe','w']], $pipes);
     cq_assert(is_resource($process), 'Start isolated WordPress request');
     fwrite($pipes[0], json_encode($input, JSON_THROW_ON_ERROR)); fclose($pipes[0]);
