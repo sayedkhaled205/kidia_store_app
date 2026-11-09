@@ -57,6 +57,7 @@ jobs:
           php connectors/woocommerce/tests/native-email-ownership336-test.php
           php connectors/woocommerce/tests/native-phone-registration-guard336-test.php
           php connectors/woocommerce/tests/native-registration-rollback336-test.php
+          php connectors/woocommerce/tests/native-registration-persistence336-test.php
           php connectors/woocommerce/tests/native-website-contact-identity336-test.php
           php connectors/woocommerce/tests/native-checkout-setup-contract-test.php
           php connectors/woocommerce/tests/native-checkout-safety50-contract-test.php

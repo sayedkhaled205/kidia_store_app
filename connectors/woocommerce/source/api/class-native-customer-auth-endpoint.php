@@ -879,6 +879,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( $is_facebook ) $identities[] = 'facebook-link:sub:' . $p['facebook_app_id'] . ':' . $p['facebook_subject'];
 		$locks = $this->lock( $identities );
 		if ( $locks === null ) return $this->error( 'retry', 409 );
+		$created_id = 0;
+		$profile_completed = false;
 		try {
 			if ( ! empty( $p['user_id'] ) ) {
 				// Completion may have changed while this request acquired its identity leases.
@@ -908,15 +910,16 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( ! $this->consume( $ticket, $row ) ) return $this->error( 'invalid_ticket', 401 );
 			$is_new_account = ! $user;
 			if ( ! $user ) {
-				$create = function () use ( $p, $password, $name ) {
+				$create = function () use ( $p, $password, $name, &$created_id ) {
 					$id = wp_insert_user( array( 'user_login' => 'mobile_' . bin2hex( random_bytes( 12 ) ),
 					'user_email' => $p['email'] ?? '', 'user_pass' => $password, 'display_name' => $name, 'first_name' => $name, 'role' => 'customer' ) );
 					if ( is_wp_error( $id ) ) return $this->error( 'registration_failed', 409 );
+					$created_id = (int) $id;
 					// Keep a partial signup unusable until its identity is durable.
 					update_user_meta( $id, 'kidia_phone_setup_required', 'account' );
-					if ( ! $this->persist_phone_identity( (int) $id, $p ) ) {
-						if ( ! function_exists( 'wp_delete_user' ) ) require_once ABSPATH . 'wp-admin/includes/user.php';
-						wp_delete_user( (int) $id, 0 );
+					if ( get_user_meta( $id, 'kidia_phone_setup_required', true ) !== 'account'
+						|| ! $this->persist_phone_identity( (int) $id, $p ) ) {
+						$this->discard_new_registration( (int) $id );
 						return $this->error( 'identity_link_failed', 503 );
 					}
 					return get_user_by( 'id', (int) $id );
@@ -927,7 +930,10 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 					} elseif ( isset( $p['phone_firebase_identity'] ) && defined( 'MOBISHOP_ACCOUNT_DELETION_ENABLED' ) && MOBISHOP_ACCOUNT_DELETION_ENABLED === true ) {
 						return $this->error( 'identity_link_failed', 503 );
 					} else { $user = $create(); }
-				} catch ( Throwable $error ) { return $this->error( 'identity_link_failed', 503 ); }
+				} catch ( Throwable $error ) {
+					if ( $created_id ) $this->discard_new_registration( $created_id );
+					return $this->error( 'identity_link_failed', 503 );
+				}
 				if ( is_wp_error( $user ) ) return $user;
 			} else {
 				if ( ! $this->persist_phone_identity( $user->ID, $p ) ) return $this->error( 'identity_link_failed', 503 );
@@ -943,11 +949,20 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 				if ( $is_new_account ) $this->discard_new_registration( $user->ID );
 				return $this->error( 'account_conflict', 409 );
 			}
-			if ( ! empty( $p['unverified_phone'] ) ) update_user_meta( $user->ID, 'kidia_unverified_phone', $p['unverified_phone'] );
+			$contact_meta = array();
+			if ( ! empty( $p['unverified_phone'] ) ) $contact_meta['kidia_unverified_phone'] = $p['unverified_phone'];
 			if ( ! empty( $p['phone'] ) ) {
-				update_user_meta( $user->ID, 'kidia_login_phone', $p['phone'] );
-				update_user_meta( $user->ID, 'fme_billing_phone', $p['phone'] );
-				if ( ! get_user_meta( $user->ID, 'billing_phone', true ) ) update_user_meta( $user->ID, 'billing_phone', $p['phone'] );
+				$contact_meta['kidia_login_phone'] = $p['phone'];
+				$contact_meta['fme_billing_phone'] = $p['phone'];
+				if ( ! get_user_meta( $user->ID, 'billing_phone', true ) ) $contact_meta['billing_phone'] = $p['phone'];
+			}
+			foreach ( $contact_meta as $key => $value ) {
+				update_user_meta( $user->ID, $key, $value );
+				// A false write can also mean unchanged; verify the durable value.
+				if ( get_user_meta( $user->ID, $key, true ) !== $value ) {
+					if ( $is_new_account ) $this->discard_new_registration( $user->ID );
+					return $this->error( 'identity_link_failed', 503 );
+				}
 			}
 			if ( ! empty( $p['sub'] ) && ! $this->link_google( $user->ID, $p['sub'], true ) ) {
 				if ( $is_new_account ) $this->discard_new_registration( $user->ID );
@@ -955,8 +970,13 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			}
 			if ( $is_new_account && $request->get_param( 'client_channel' ) !== 'website' ) update_user_meta( $user->ID, '_mobishop_app_registered_at', gmdate( 'c' ) );
 			delete_user_meta( $user->ID, 'kidia_phone_setup_required' );
+			if ( get_user_meta( $user->ID, 'kidia_phone_setup_required', true ) ) return $this->error( 'identity_link_failed', 503 );
+			$profile_completed = true;
 			do_action( 'mobishop_native_auth_profile_completed', $user->ID, $p['kind'] );
 			return $this->finish( get_user_by( 'id', $user->ID ), $p, $request );
+		} catch ( Throwable $error ) {
+			if ( $created_id && ! $profile_completed ) $this->discard_new_registration( $created_id );
+			return $this->error( 'identity_link_failed', 503 );
 		} finally {
 			$this->unlock( $locks );
 		}
