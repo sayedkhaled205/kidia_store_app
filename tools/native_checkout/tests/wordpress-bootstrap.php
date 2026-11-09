@@ -16,6 +16,24 @@ if(!is_array($input) || !in_array($input['phase']??'', ['seed','snapshot','reque
     throw new RuntimeException('Invalid checkout fixture phase.');
 }
 $GLOBALS['cq_input']=$input;
+$GLOBALS['cq_checkout_diagnostic']=[];
+// Observe the real callback's exception class/code, without replacing its result.
+add_filter('rest_endpoints',static function($routes) {
+    foreach($routes['/wc/store/v1/checkout']??[] as $index=>$endpoint) {
+        if(!is_array($endpoint) || !isset($endpoint['callback']) || empty($endpoint['methods']['POST'])) continue;
+        $callback=$endpoint['callback'];
+        $routes['/wc/store/v1/checkout'][$index]['callback']=static function($request) use($callback) {
+            try { return call_user_func($callback,$request); }
+            catch(Throwable $error) {
+                $GLOBALS['cq_checkout_diagnostic']=['exception'=>get_class($error),
+                    'code'=>method_exists($error,'getErrorCode') ? $error->getErrorCode() : $error->getCode(),
+                    'file'=>basename($error->getFile()),'line'=>$error->getLine()];
+                throw $error;
+            }
+        };
+    }
+    return $routes;
+});
 $_SERVER['HTTPS']='on'; $_SERVER['REMOTE_ADDR']='127.0.0.1';
 if($input['phase']==='request') {
     define('REST_REQUEST',true);

@@ -36,6 +36,7 @@ function cq_request(string $method,string $route,array $body=[],string $session=
     $GLOBALS['cq_last_http']=['status'=>(int)$response['status'],
         'code'=>preg_replace('/[^a-zA-Z0-9_-]/','',(string)($response['data']['code']??'')),
         'state'=>preg_replace('/[^a-zA-Z0-9_-]/','',(string)($response['data']['state']??''))];
+    $GLOBALS['cq_last_http']['diagnostic']=$response['diagnostic']??[];
     return $response;
 }
 function cq_cart_header(array $response): string {
@@ -209,7 +210,8 @@ function cq_worker(): array {
     if($input['method']!=='GET') $request->set_body(wp_json_encode($input['body']));
     $response=rest_do_request($request);
     if(WC()->session && is_callable([WC()->session,'save_data'])) WC()->session->save_data();
-    return ['status'=>$response->get_status(),'headers'=>$response->get_headers(),'data'=>$response->get_data()];
+    return ['status'=>$response->get_status(),'headers'=>$response->get_headers(),'data'=>$response->get_data(),
+        'diagnostic'=>$GLOBALS['cq_checkout_diagnostic']??[]];
 }
 
 try {
