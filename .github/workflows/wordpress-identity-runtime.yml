@@ -7,6 +7,9 @@ on:
     paths:
       - '.github/workflows/wordpress-identity-runtime.yml'
       - 'tools/customer_identity/**'
+      - 'tools/native_checkout/**'
+      - 'connectors/woocommerce/source/api/class-native-checkout-*.php'
+      - 'connectors/woocommerce/source/includes/class-native-checkout-*.php'
       - 'connectors/woocommerce/source/api/class-*auth*.php'
       - 'connectors/woocommerce/source/api/class-customer-account-deletion.php'
       - 'connectors/woocommerce/source/api/class-storefront-admin.php'
@@ -15,6 +18,9 @@ on:
     paths:
       - '.github/workflows/wordpress-identity-runtime.yml'
       - 'tools/customer_identity/**'
+      - 'tools/native_checkout/**'
+      - 'connectors/woocommerce/source/api/class-native-checkout-*.php'
+      - 'connectors/woocommerce/source/includes/class-native-checkout-*.php'
       - 'connectors/woocommerce/source/api/class-customer-auth-endpoint.php'
       - 'connectors/woocommerce/source/api/class-native-customer-auth-endpoint.php'
       - 'connectors/woocommerce/source/api/class-website-auth-endpoint.php'
@@ -56,7 +62,9 @@ jobs:
         run: |
           printf 'WP_PATH=%s/kidia-wordpress\nWP_CLI=%s/wp-cli.phar\n' "$RUNNER_TEMP" "$RUNNER_TEMP" >> "$GITHUB_ENV"
       - name: Lint integration test
-        run: php -l tools/customer_identity/tests/wordpress-runtime-test.php
+        run: |
+          php -l tools/customer_identity/tests/wordpress-runtime-test.php
+          php -l tools/native_checkout/tests/wordpress-runtime-test.php
       - name: Install official WordPress and WooCommerce in disposable database
         shell: bash
         run: |
@@ -79,7 +87,7 @@ jobs:
           mkdir -p "$WP_PATH/wp-content/mu-plugins"
           cat > "$WP_PATH/wp-content/mu-plugins/kidia-ci-network.php" <<'PHP'
           <?php
-          if (getenv('KIDIA_IDENTITY_RUNTIME_TEST') === '1') {
+          if (getenv('KIDIA_IDENTITY_RUNTIME_TEST') === '1' || getenv('KIDIA_CHECKOUT_RUNTIME_TEST') === '1') {
               add_filter('pre_http_request', static fn() => new WP_Error('ci_network_disabled', 'No outbound HTTP in runtime fixture.'), PHP_INT_MAX);
               add_filter('pre_wp_mail', static fn() => true, PHP_INT_MAX);
           }
@@ -88,3 +96,7 @@ jobs:
         env:
           KIDIA_IDENTITY_RUNTIME_TEST: '1'
         run: php "$WP_CLI" eval-file "$GITHUB_WORKSPACE/tools/customer_identity/tests/wordpress-runtime-test.php" --path="$WP_PATH"
+      - name: Exercise real Store API checkout and durable replay without payment
+        env:
+          KIDIA_CHECKOUT_RUNTIME_TEST: '1'
+        run: php "$GITHUB_WORKSPACE/tools/native_checkout/tests/wordpress-runtime-test.php"
