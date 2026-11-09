@@ -132,11 +132,13 @@ function cq_parent(): void {
 }
 
 function cq_worker(): array {
-    if(getenv('CI')!=='true' || getenv('KIDIA_CHECKOUT_RUNTIME_TEST')!=='1' || !defined('DB_NAME') || DB_NAME!=='kidia_identity_ci'
-        || !defined('WP_ENVIRONMENT_TYPE') || WP_ENVIRONMENT_TYPE!=='local' || !defined('DB_HOST')
-        || !preg_match('/^(127\.0\.0\.1|localhost)(:3306)?$/D',DB_HOST)
-        || get_option('active_plugins')!==['woocommerce/woocommerce.php'] || !defined('WC_VERSION') || WC_VERSION!=='10.9.4'
-        || home_url('/', 'https')!=='https://kidia-identity.test/') throw new RuntimeException('Disposable runtime guard failed');
+    cq_assert(getenv('CI')==='true' && getenv('KIDIA_CHECKOUT_RUNTIME_TEST')==='1', 'Worker CI opt-in');
+    cq_assert(defined('DB_NAME') && DB_NAME==='kidia_identity_ci', 'Worker disposable database');
+    cq_assert(defined('WP_ENVIRONMENT_TYPE') && WP_ENVIRONMENT_TYPE==='local', 'Worker local environment');
+    cq_assert(defined('DB_HOST') && (bool)preg_match('/^(127\.0\.0\.1|localhost)(:3306)?$/D',DB_HOST), 'Worker loopback database host');
+    cq_assert(get_option('active_plugins')===['woocommerce/woocommerce.php'], 'Worker sole official Woo plugin');
+    cq_assert(defined('WC_VERSION') && WC_VERSION==='10.9.4', 'Worker pinned Woo version');
+    cq_assert(home_url('/', 'https')==='https://kidia-identity.test/', 'Worker disposable site origin');
     global $wpdb;
     add_filter('pre_http_request',static fn()=>new WP_Error('ci_network_disabled','Outbound HTTP disabled.'),PHP_INT_MAX);
     add_filter('pre_wp_mail',static function(){update_option('cq_mail_blocked',(int)get_option('cq_mail_blocked',0)+1,false);return true;},PHP_INT_MAX);
@@ -219,6 +221,8 @@ try {
 } catch(Throwable $error) {
     if(defined('ABSPATH')) {
         // No exception arguments, SQL, headers or response dumps in CI logs.
-        echo 'KIDIA_CHECKOUT_RESULT='.json_encode(['failure'=>get_class($error).' at '.basename($error->getFile()).':'.$error->getLine()]).PHP_EOL;
+        $detail=$error instanceof RuntimeException && str_starts_with($error->getMessage(),'FAIL: ')
+            ? $error->getMessage() : get_class($error).' at '.basename($error->getFile()).':'.$error->getLine();
+        echo 'KIDIA_CHECKOUT_RESULT='.json_encode(['failure'=>$detail]).PHP_EOL;
     } else {fwrite(STDERR,$error->getMessage().PHP_EOL); exit(1);}
 }
