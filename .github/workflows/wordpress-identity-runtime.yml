@@ -35,9 +35,17 @@ jobs:
   wordpress-mysql:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - database: mysql:8.0
+            health: mysqladmin ping --silent
+          - database: mariadb:11.4
+            health: healthcheck.sh --connect --innodb_initialized
     services:
       mysql:
-        image: mysql:8.0
+        image: ${{ matrix.database }}
         env:
           MYSQL_ROOT_PASSWORD: kidia-ci-only
           MYSQL_ROOT_HOST: '%'
@@ -45,7 +53,7 @@ jobs:
         ports:
           - '127.0.0.1:3306:3306'
         options: >-
-          --health-cmd="mysqladmin ping --silent"
+          --health-cmd="${{ matrix.health }}"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=12
@@ -99,6 +107,9 @@ jobs:
           KIDIA_IDENTITY_RUNTIME_TEST: '1'
         run: php "$WP_CLI" eval-file "$GITHUB_WORKSPACE/tools/customer_identity/tests/wordpress-runtime-test.php" --path="$WP_PATH"
       - name: Exercise real Store API checkout and durable replay without payment
+        # Safety50 requires MariaDB's explicit in_transaction guard. MySQL
+        # remains covered by identity CI; checkout correctly fails closed there.
+        if: matrix.database == 'mariadb:11.4'
         env:
           KIDIA_CHECKOUT_RUNTIME_TEST: '1'
         run: php "$GITHUB_WORKSPACE/tools/native_checkout/tests/wordpress-runtime-test.php"

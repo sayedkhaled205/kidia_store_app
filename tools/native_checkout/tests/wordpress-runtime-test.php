@@ -157,6 +157,7 @@ function cq_worker(): array {
         if(get_option('cq_seed',false)!==false) throw new RuntimeException('Fixture requires a fresh database, not reset/reuse');
         $store=new MobiShop_Native_Checkout_Wpdb50();
         foreach($store->installation_sql() as $sql) cq_assert($wpdb->query($sql)!==false,'Create exact real safety ledger');
+        cq_assert((string)$wpdb->get_var('SELECT @@in_transaction')==='0', 'Database supports explicit inactive transaction guard');
         cq_assert($store->ready(),'Exact transactional ledger passes production readiness');
         update_option('woocommerce_currency','USD'); update_option('woocommerce_price_num_decimals','2');
         update_option('woocommerce_default_country','US:CA'); update_option('woocommerce_calc_taxes','no');
