@@ -32,7 +32,11 @@ function cq_child(array $input): array {
 }
 
 function cq_request(string $method,string $route,array $body=[],string $session='',string $cart='',string $key='',string $fault=''): array {
-    return cq_child(compact('method','route','body','session','cart','key','fault')+['phase'=>'request']);
+    $response=cq_child(compact('method','route','body','session','cart','key','fault')+['phase'=>'request']);
+    $GLOBALS['cq_last_http']=['status'=>(int)$response['status'],
+        'code'=>preg_replace('/[^a-zA-Z0-9_-]/','',(string)($response['data']['code']??'')),
+        'state'=>preg_replace('/[^a-zA-Z0-9_-]/','',(string)($response['data']['state']??''))];
+    return $response;
 }
 function cq_cart_header(array $response): string {
     foreach($response['headers'] as $key=>$value) if(strtolower($key)==='cart-token') return (string)$value;
@@ -217,5 +221,5 @@ try {
         $detail=$error instanceof RuntimeException && str_starts_with($error->getMessage(),'FAIL: ')
             ? $error->getMessage() : get_class($error).' at '.basename($error->getFile()).':'.$error->getLine();
         echo 'KIDIA_CHECKOUT_RESULT='.json_encode(['failure'=>$detail]).PHP_EOL;
-    } else {fwrite(STDERR,$error->getMessage().PHP_EOL); exit(1);}
+    } else {fwrite(STDERR,$error->getMessage().PHP_EOL.json_encode($GLOBALS['cq_last_http']??[]).PHP_EOL); exit(1);}
 }
