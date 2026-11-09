@@ -64,7 +64,7 @@ function cq_parent(): void {
     cq_assert($invalid['status']>=400 && $invalid['status']<500, 'Invalid zero quantity is rejected by actual Store API schema');
     $added=cq_request('POST','/wc/store/v1/cart/add-item',['id'=>$seed['zero_product'],'quantity'=>2],$session,$cart);
     $safeCode=preg_replace('/[^a-zA-Z0-9_-]/','',(string)($added['data']['code']??''));
-    cq_assert($added['status']===200 && ($added['data']['items'][0]['quantity']??0)===2, 'Real cart persists quantity across fresh WP requests: status='.(int)$added['status'].' code='.$safeCode.' quantity='.(int)($added['data']['items'][0]['quantity']??0));
+    cq_assert($added['status']===201 && ($added['data']['items'][0]['quantity']??0)===2, 'Real cart persists quantity across fresh WP requests: status='.(int)$added['status'].' code='.$safeCode.' quantity='.(int)($added['data']['items'][0]['quantity']??0));
     $body=cq_checkout_body('checkout-a@example.invalid'); $key='ci-zero-order-1';
     $checkout=cq_request('POST','/wc/store/v1/checkout',$body,$session,$cart,$key);
     $order=(int)($checkout['data']['order_id']??0);
@@ -82,7 +82,7 @@ function cq_parent(): void {
     cq_assert($same['orders']===$snapshot['orders'] && $same['zero_stock']===4 && $same['processed']===1,
         'Duplicate POST creates no second order and performs no second stock reduction');
     $added=cq_request('POST','/wc/store/v1/cart/add-item',['id'=>$seed['zero_product'],'quantity'=>1],$session,$cart);
-    cq_assert($added['status']===200,'A new basket can start after successful purchase');
+    cq_assert($added['status']===201,'A new basket can start after successful purchase');
     cq_request('POST','/wc/store/v1/checkout',$body,$session,$cart,$key);
     $after=cq_request('GET','/wc/store/v1/cart',[],$session,$cart);
     cq_assert(($after['data']['items'][0]['quantity']??0)===1, 'Old-attempt replay cannot empty a new basket');
@@ -91,7 +91,7 @@ function cq_parent(): void {
 
     // Price mismatch before payment, then explicit reconfirmation using a new key.
     $priced=cq_request('POST','/wc/store/v1/cart/add-item',['id'=>$seed['priced_product'],'quantity'=>1],$session,$cart);
-    cq_assert($priced['status']===200 && $priced['data']['totals']['total_price']==='2000','Actual priced basket has expected confirmed total');
+    cq_assert($priced['status']===201 && $priced['data']['totals']['total_price']==='2000','Actual priced basket has expected confirmed total');
     $mismatch=cq_request('POST','/wc/store/v1/checkout',$body,$session,$cart,'ci-stale-total');
     cq_assert($mismatch['status']===409 && ($mismatch['data']['code']??'')==='mobishop_native_checkout50_confirmed_total_mismatch', 'Changed total rejects checkout before payment');
     $check=cq_child(['phase'=>'snapshot']);
@@ -116,7 +116,7 @@ function cq_parent(): void {
     $stock=cq_request('POST','/wc/store/v1/cart/add-item',['id'=>$seed['zero_product'],'quantity'=>999],$other,$otherCart);
     cq_assert($stock['status']>=400 && $stock['status']<500,'Actual Woo stock limit rejects excessive quantity');
     $added=cq_request('POST','/wc/store/v1/cart/add-item',['id'=>$seed['zero_product'],'quantity'=>1],$other,$otherCart);
-    cq_assert($added['status']===200,'Valid quantity remains available after stock rejection');
+    cq_assert($added['status']===201,'Valid quantity remains available after stock rejection');
     $faultBody=cq_checkout_body('checkout-b@example.invalid');
     $unknown=cq_request('POST','/wc/store/v1/checkout',$faultBody,$other,$otherCart,'ci-before-payment-fault','throw_before_payment');
     cq_assert($unknown['status']===503 && ($unknown['data']['code']??'')==='mobishop_native_checkout50_outcome_unknown', 'Injected pre-payment exception produces unknown outcome');
