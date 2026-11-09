@@ -41,7 +41,7 @@ jobs:
         include:
           - database: mysql:8.0
             health: mysqladmin ping --silent
-          - database: mariadb:11.4
+          - database: mariadb:10.11
             health: healthcheck.sh --connect --innodb_initialized
     services:
       mysql:
@@ -113,7 +113,7 @@ jobs:
       - name: Exercise real Store API checkout and durable replay without payment
         # Safety50 requires MariaDB's explicit in_transaction guard. MySQL
         # remains covered by identity CI; checkout correctly fails closed there.
-        if: matrix.database == 'mariadb:11.4'
+        if: matrix.database == 'mariadb:10.11'
         env:
           KIDIA_CHECKOUT_RUNTIME_TEST: '1'
         run: php "$GITHUB_WORKSPACE/tools/native_checkout/tests/wordpress-runtime-test.php"

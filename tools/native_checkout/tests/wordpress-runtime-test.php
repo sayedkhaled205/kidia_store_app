@@ -63,7 +63,8 @@ function cq_parent(): void {
     $invalid=cq_request('POST','/wc/store/v1/cart/add-item',['id'=>$seed['zero_product'],'quantity'=>0],$session,$cart);
     cq_assert($invalid['status']>=400 && $invalid['status']<500, 'Invalid zero quantity is rejected by actual Store API schema');
     $added=cq_request('POST','/wc/store/v1/cart/add-item',['id'=>$seed['zero_product'],'quantity'=>2],$session,$cart);
-    cq_assert($added['status']===200 && ($added['data']['items'][0]['quantity']??0)===2, 'Real cart persists quantity across fresh WP requests');
+    $safeCode=preg_replace('/[^a-zA-Z0-9_-]/','',(string)($added['data']['code']??''));
+    cq_assert($added['status']===200 && ($added['data']['items'][0]['quantity']??0)===2, 'Real cart persists quantity across fresh WP requests: status='.(int)$added['status'].' code='.$safeCode.' quantity='.(int)($added['data']['items'][0]['quantity']??0));
     $body=cq_checkout_body('checkout-a@example.invalid'); $key='ci-zero-order-1';
     $checkout=cq_request('POST','/wc/store/v1/checkout',$body,$session,$cart,$key);
     $order=(int)($checkout['data']['order_id']??0);
