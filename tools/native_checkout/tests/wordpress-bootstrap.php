@@ -5,6 +5,12 @@ if (getenv('CI') !== 'true' || getenv('KIDIA_CHECKOUT_RUNTIME_TEST') !== '1'
     || !defined('WP_ENVIRONMENT_TYPE') || WP_ENVIRONMENT_TYPE !== 'local') {
     throw new RuntimeException('Checkout fixture bootstrap requires disposable CI.');
 }
+register_shutdown_function(static function() {
+    $error=error_get_last();
+    if($error && in_array($error['type'],[E_ERROR,E_PARSE,E_CORE_ERROR,E_COMPILE_ERROR],true)) {
+        echo 'KIDIA_CHECKOUT_RESULT='.json_encode(['failure'=>'Bootstrap fatal at '.basename($error['file']).':'.(int)$error['line']]).PHP_EOL;
+    }
+});
 $input=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR);
 if(!is_array($input) || !in_array($input['phase']??'', ['seed','snapshot','request'], true)) {
     throw new RuntimeException('Invalid checkout fixture phase.');
@@ -22,6 +28,9 @@ define('MOBISHOP_NATIVE_CHECKOUT50_HMAC_KEY',hash('sha256','disposable-checkout-
 add_action('plugins_loaded',static function() {
     $repo=realpath((string)getenv('GITHUB_WORKSPACE'));
     if($repo===false) throw new RuntimeException('Missing fixture source');
+    // Match the real plugin entrypoint constants before its init callbacks run.
+    define('MOBISHOP_URL', 'https://kidia-identity.test/wp-content/plugins/mobishop/');
+    define('MOBISHOP_VERSION', 'ci-checkout');
     require_once $repo.'/tools/customer_identity/connector/class-customer-identity-links.php';
     require_once $repo.'/tools/customer_identity/connector/class-customer-identity-guard.php';
     require_once $repo.'/connectors/woocommerce/source/api/class-customer-auth-endpoint.php';

@@ -23,10 +23,11 @@ function cq_child(array $input): array {
     $stderr=stream_get_contents($pipes[2]); fclose($pipes[2]);
     $exit=proc_close($process);
     $marker='KIDIA_CHECKOUT_RESULT='; $position=strrpos($output,$marker);
-    cq_assert($exit===0 && $position!==false, 'WordPress request returns structured result');
+    cq_assert($position!==false, 'WordPress request returns structured result');
     $line=explode("\n",substr($output,$position+strlen($marker)),2)[0];
     $result=json_decode($line,true,512,JSON_THROW_ON_ERROR);
     if(isset($result['failure'])) throw new RuntimeException('Worker failure: '.$result['failure']);
+    cq_assert($exit===0, 'Isolated WordPress request exits successfully');
     return $result;
 }
 
