@@ -136,7 +136,7 @@ function cq_worker(): array {
         || !defined('WP_ENVIRONMENT_TYPE') || WP_ENVIRONMENT_TYPE!=='local' || !defined('DB_HOST')
         || !preg_match('/^(127\.0\.0\.1|localhost)(:3306)?$/D',DB_HOST)
         || get_option('active_plugins')!==['woocommerce/woocommerce.php'] || !defined('WC_VERSION') || WC_VERSION!=='10.9.4'
-        || home_url('/')!=='https://kidia-identity.test/') throw new RuntimeException('Disposable runtime guard failed');
+        || home_url('/', 'https')!=='https://kidia-identity.test/') throw new RuntimeException('Disposable runtime guard failed');
     global $wpdb;
     add_filter('pre_http_request',static fn()=>new WP_Error('ci_network_disabled','Outbound HTTP disabled.'),PHP_INT_MAX);
     add_filter('pre_wp_mail',static function(){update_option('cq_mail_blocked',(int)get_option('cq_mail_blocked',0)+1,false);return true;},PHP_INT_MAX);
