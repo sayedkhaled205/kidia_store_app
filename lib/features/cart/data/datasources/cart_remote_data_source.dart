@@ -106,12 +106,14 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
 
   @override
   Future<CartModel> fetchCart() async {
+    await _restoreToken();
     final String? token = _validToken;
     final session = _currentSessionToken?.call();
     final generation = _tokenGeneration;
     _assertCurrentSession(session, generation);
     try {
-      final StoreApiResponse response = token == null && (session?.isEmpty ?? true)
+      final StoreApiResponse response =
+          token == null && (session?.isEmpty ?? true)
           ? await _storeApiClient.get(_cartPath)
           : await _transport.request(
               CartApiMethod.get,
@@ -119,10 +121,15 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
               headers: <String, String>{'Cart-Token': ?token},
             );
       _assertCurrentSession(session, generation);
-      return _parseSuccess(response);
+      final cart = await _parseSuccess(response);
+      _assertCurrentSession(session, generation);
+      return cart;
     } on CartApiTransportException catch (error, stackTrace) {
       _assertCurrentSession(session, generation);
       Error.throwWithStackTrace(_parseTransportFailure(error), stackTrace);
+    } catch (_) {
+      _assertCurrentSession(session, generation);
+      rethrow;
     }
   }
 
@@ -171,6 +178,7 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
   }
 
   Future<CartModel> _mutate(String path, Map<String, dynamic> body) async {
+    await _restoreToken();
     final session = _currentSessionToken?.call();
     final generation = _tokenGeneration;
     _assertCurrentSession(session, generation);
@@ -195,15 +203,29 @@ class StoreApiCartRemoteDataSource implements CartRemoteDataSource {
         headers: <String, String>{'Cart-Token': token},
       );
       _assertCurrentSession(session, generation);
-      return _parseSuccess(response);
+      final cart = await _parseSuccess(response);
+      _assertCurrentSession(session, generation);
+      return cart;
     } on CartApiTransportException catch (error, stackTrace) {
       _assertCurrentSession(session, generation);
       Error.throwWithStackTrace(_parseTransportFailure(error), stackTrace);
+    } catch (_) {
+      _assertCurrentSession(session, generation);
+      rethrow;
     }
   }
 
-  CartModel _parseSuccess(StoreApiResponse response) {
+  Future<void> _restoreToken() async {
+    if (_tokenStore case final RestorableCartTokenStore store) {
+      await store.restore();
+    }
+  }
+
+  Future<CartModel> _parseSuccess(StoreApiResponse response) async {
     _captureToken(response.header('cart-token'));
+    if (_tokenStore case final RestorableCartTokenStore store) {
+      await store.flush();
+    }
     return CartModel.fromJson(CartJson.object(response.data, 'cart'));
   }
 

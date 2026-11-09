@@ -11,6 +11,11 @@ abstract interface class CartTokenGeneration {
   int get generation;
 }
 
+abstract interface class RestorableCartTokenStore {
+  Future<void> restore();
+  Future<void> flush();
+}
+
 /// Cart tokens identify a shopper's cart and are intentionally kept in memory
 /// by default. Applications that need process-restoration can inject a secure,
 /// store-scoped implementation without changing the repository.

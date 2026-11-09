@@ -48,6 +48,7 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
     this.onShareRequested,
     this.onWishlistToggle,
     this.isWishlisted,
+    this.wishlistIdentity,
   });
 
   final int productId;
@@ -58,6 +59,7 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
   final ValueChanged<CatalogProduct>? onShareRequested;
   final ProductWishlistToggleCallback? onWishlistToggle;
   final ProductWishlistStatusCallback? isWishlisted;
+  final Object? wishlistIdentity;
 
   @override
   ConsumerState<ProductDetailScreen> createState() =>
@@ -68,6 +70,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   late ProductDetailController _controller;
   bool _isWishlisted = false;
   bool _isWishlistMutating = false;
+  int _wishlistRevision = 0;
   bool _footerHidden = false;
   int _trackedProductId = 0;
 
@@ -86,7 +89,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       _controller.removeListener(_onControllerChanged);
       _controller.dispose();
       _createController();
+    }
+    if (oldWidget.productId != widget.productId ||
+        !identical(oldWidget.repository, widget.repository) ||
+        oldWidget.wishlistIdentity != widget.wishlistIdentity ||
+        (widget.wishlistIdentity == null &&
+            oldWidget.isWishlisted != widget.isWishlisted)) {
       _isWishlisted = false;
+      _isWishlistMutating = false;
       _loadWishlistState();
     }
   }
@@ -296,13 +306,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   Future<void> _loadWishlistState() async {
+    final revision = ++_wishlistRevision;
     final ProductWishlistStatusCallback? lookup = widget.isWishlisted;
     if (lookup == null) {
       return;
     }
     try {
       final bool saved = await lookup(widget.productId);
-      if (mounted) {
+      if (mounted && revision == _wishlistRevision) {
         setState(() => _isWishlisted = saved);
       }
     } catch (_) {
@@ -316,22 +327,29 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       return;
     }
     final bool previous = _isWishlisted;
+    final revision = ++_wishlistRevision;
     setState(() {
       _isWishlistMutating = true;
       _isWishlisted = !previous;
     });
     try {
       final bool saved = await toggle(product);
-      if (mounted) {
+      if (mounted && revision == _wishlistRevision) {
         setState(() => _isWishlisted = saved);
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && revision == _wishlistRevision) {
         setState(() => _isWishlisted = previous);
       }
     } finally {
-      if (mounted) {
+      if (mounted && revision == _wishlistRevision) {
         setState(() => _isWishlistMutating = false);
+      } else if (mounted &&
+          product.id == widget.productId &&
+          !_isWishlistMutating) {
+        // Signing in can change the owner while the requested save continues.
+        // Re-read the current owner instead of applying the old callback result.
+        _loadWishlistState();
       }
     }
   }

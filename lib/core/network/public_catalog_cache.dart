@@ -22,7 +22,14 @@ class PublicCatalogCache implements StoreApiClient {
   final DateTime Function() _now;
   final _entries = <String, Map<String, dynamic>>{};
   final _invalidated = <String>{};
-  void invalidate() => _invalidated.addAll(_entries.keys);
+  int _generation = 0;
+  void invalidate() {
+    _generation++;
+    _invalidated.addAll(_entries.keys);
+    _pending.clear();
+    _checked.clear();
+  }
+
   final _pending = <String, Future<StoreApiResponse>>{};
   final _checked = <String, DateTime>{};
   Future<void>? _loaded;
@@ -46,6 +53,7 @@ class PublicCatalogCache implements StoreApiClient {
             value['headers'] is Map &&
             value.containsKey('data')) {
           _entries[entry.key] = value;
+          if (_generation > 0) _invalidated.add(entry.key);
         }
       }
     } catch (_) {
@@ -100,7 +108,7 @@ class PublicCatalogCache implements StoreApiClient {
             (k, v) => MapEntry('$k', (v as List).cast<String>()),
           ),
         );
-        if (_invalidated.remove(key)) {
+        if (_invalidated.contains(key)) {
           try {
             return await _refresh(key, path, queryParameters);
           } on StoreApiException catch (error) {
@@ -139,6 +147,7 @@ class PublicCatalogCache implements StoreApiClient {
     String path,
     Map<String, dynamic>? query,
   ) {
+    final generation = _generation;
     return _pending[key] ??= (() async {
       _checked[key] = _now();
       while (_checked.length > 192) {
@@ -146,6 +155,8 @@ class PublicCatalogCache implements StoreApiClient {
       }
       try {
         final response = await network.get(path, queryParameters: query);
+        // A response started before Publish belongs only to its original caller.
+        if (generation != _generation) return response;
         if (response.statusCode != null && response.statusCode != 200) {
           return response;
         }
@@ -162,19 +173,21 @@ class PublicCatalogCache implements StoreApiClient {
           }
           await _save();
         }
+        if (generation == _generation) _invalidated.remove(key);
         return response;
       } on StoreApiException catch (error) {
-        if (!{
-          StoreApiFailureKind.connection,
-          StoreApiFailureKind.timeout,
-          StoreApiFailureKind.server,
-        }.contains(error.kind)) {
+        if (generation == _generation &&
+            !{
+              StoreApiFailureKind.connection,
+              StoreApiFailureKind.timeout,
+              StoreApiFailureKind.server,
+            }.contains(error.kind)) {
           _entries.remove(key);
           await _save();
         }
         rethrow;
       } finally {
-        _pending.remove(key);
+        if (generation == _generation) _pending.remove(key);
       }
     })();
   }

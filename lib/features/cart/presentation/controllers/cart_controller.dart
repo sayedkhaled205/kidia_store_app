@@ -101,7 +101,9 @@ class CartController extends AsyncNotifier<CartViewState> {
     );
     try {
       final Cart cart = await _repository.getCart();
-      if (!ref.mounted || ownerToken != _authToken || revision != _mutationRevision) {
+      if (!ref.mounted ||
+          ownerToken != _authToken ||
+          revision != _mutationRevision) {
         return;
       }
       _captureCart(cart);
@@ -109,7 +111,11 @@ class CartController extends AsyncNotifier<CartViewState> {
         CartViewState(cart: cart, isRefreshing: false),
       );
     } catch (error) {
-      if (!ref.mounted || ownerToken != _authToken || revision != _mutationRevision) return;
+      if (!ref.mounted ||
+          ownerToken != _authToken ||
+          revision != _mutationRevision) {
+        return;
+      }
       final CartRepositoryException failure = _failure(error);
       state = AsyncData<CartViewState>(
         current.copyWith(
@@ -266,30 +272,65 @@ class CartController extends AsyncNotifier<CartViewState> {
       }
       final CartRepositoryException failure = _failure(error);
       Cart reconciledCart = failure.serverCart ?? current.cart;
-      if ((failure.apiError?.code ?? '').contains('stock')) {
-        // A rejected add is never replayed. Re-read the customer's actual basket
-        // and invalidate public stock snapshots after the purchase callback ends.
+      final bool stockRejected = (failure.apiError?.code ?? '').contains(
+        'stock',
+      );
+      final bool uncertain = switch (failure.kind) {
+        CartFailureKind.timeout ||
+        CartFailureKind.connection ||
+        CartFailureKind.cancelled ||
+        CartFailureKind.server ||
+        CartFailureKind.invalidResponse ||
+        CartFailureKind.unknown => true,
+        _ => false,
+      };
+      if (stockRejected || (uncertain && failure.serverCart == null)) {
+        // A lost acknowledgement may follow a successful write. Read the cart
+        // before allowing another action; never replay the mutation.
         try {
           reconciledCart = await _repository.getCart();
-        } catch (_) {
-          // Keep the last authoritative snapshot and original stock rejection.
+        } catch (refreshError, stackTrace) {
+          if (!ref.mounted || ownerToken != _authToken) {
+            return const CartActionResult.failure(
+              'The customer session changed.',
+            );
+          }
+          if (uncertain) {
+            const message =
+                'Unable to confirm the cart update. Open your cart and refresh before trying again.';
+            state = AsyncError<CartViewState>(
+              CartRepositoryException(
+                kind: CartFailureKind.unknown,
+                message: message,
+                cause: refreshError,
+              ),
+              stackTrace,
+            );
+            return const CartActionResult.failure(message);
+          }
+          // A stock rejection is definitive, so the prior cart remains usable.
         }
         if (!ref.mounted || ownerToken != _authToken) {
-          return const CartActionResult.failure('The customer session changed.');
+          return const CartActionResult.failure(
+            'The customer session changed.',
+          );
         }
+      }
+      if (stockRejected) {
         Future<void>(() {
           if (ref.mounted && ownerToken == _authToken) {
             ref.read(storeCatalogChangeBusProvider).notifyCatalogChanged();
           }
         });
       }
+      final message = uncertain
+          ? 'Check your refreshed cart before trying again; the previous update could not be confirmed.'
+          : failure.message;
+      if (uncertain) _captureCart(reconciledCart);
       state = AsyncData<CartViewState>(
-        CartViewState(
-          cart: reconciledCart,
-          lastErrorMessage: failure.message,
-        ),
+        CartViewState(cart: reconciledCart, lastErrorMessage: message),
       );
-      return CartActionResult.failure(failure.message);
+      return CartActionResult.failure(message);
     }
   }
 

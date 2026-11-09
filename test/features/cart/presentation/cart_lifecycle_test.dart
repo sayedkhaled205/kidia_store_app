@@ -9,6 +9,7 @@ import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.da
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_user.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/auth_providers.dart';
 import 'package:mobishop_store_app/features/cart/data/network/cart_api_transport.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mobishop_store_app/features/cart/presentation/adapters/product_purchase_selection.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_providers.dart';
 import 'package:mobishop_store_app/features/cart/presentation/providers/cart_state_providers.dart';
@@ -22,6 +23,8 @@ import '../data/cart_test_fixture.dart';
 import '../../product/support/product_test_data.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  setUp(() => FlutterSecureStorage.setMockInitialValues({}));
   test(
     'a saved product callback survives route disposal and cart invalidation',
     () async {

@@ -97,7 +97,8 @@ function cq_parent(): void {
     // Price mismatch before payment, then explicit reconfirmation using a new key.
     $priced=cq_request('POST','/wc/store/v1/cart/add-item',['id'=>$seed['priced_product'],'quantity'=>1],$session,$cart);
     cq_assert($priced['status']===201 && $priced['data']['totals']['total_price']==='2000','Actual priced basket has expected confirmed total');
-    $mismatch=cq_request('POST','/wc/store/v1/checkout',$body,$session,$cart,'ci-stale-total');
+    $staleBody=$body; $staleBody['payment_method']='cod';
+    $mismatch=cq_request('POST','/wc/store/v1/checkout',$staleBody,$session,$cart,'ci-stale-total');
     cq_assert($mismatch['status']===409 && ($mismatch['data']['code']??'')==='mobishop_native_checkout50_confirmed_total_mismatch', 'Changed total rejects checkout before payment');
     $check=cq_child(['phase'=>'snapshot']);
     cq_assert($check['priced_stock']===8 && $check['processed']===1,'Total rejection does not reduce stock or process payment');
@@ -165,6 +166,9 @@ function cq_worker(): array {
         update_option('woocommerce_default_country','US:CA'); update_option('woocommerce_calc_taxes','no');
         update_option('woocommerce_manage_stock','yes'); update_option('woocommerce_hold_stock_minutes','60');
         update_option('woocommerce_enable_guest_checkout','no');
+        // A priced order needs an enabled method before Woo reaches total
+        // validation. COD is core/offline; this stale-total attempt is rejected.
+        update_option('woocommerce_cod_settings',['enabled'=>'yes','enable_for_virtual'=>'yes']);
         $users=[];
         foreach(['a','b'] as $letter) {
             $user=wp_insert_user(['user_login'=>'ci-checkout-'.$letter,'user_email'=>'checkout-'.$letter.'@example.invalid',

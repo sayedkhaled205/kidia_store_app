@@ -438,7 +438,7 @@ class _CatalogProductFilterSheetState extends State<CatalogProductFilterSheet> {
   }
 
   String? _priceValidator(String? value, CatalogCopy copy) {
-    final String normalized = (value ?? '').trim().replaceAll(',', '.');
+    final String normalized = _normalizePrice(value ?? '');
     if (normalized.isEmpty) {
       return null;
     }
@@ -523,7 +523,7 @@ String _minorToDecimal(String source, int minorUnit) {
 }
 
 String _decimalToMinor(String source, int minorUnit) {
-  final String value = source.trim().replaceAll(',', '.');
+  final String value = _normalizePrice(source);
   if (value.isEmpty || !RegExp(r'^\d+(?:\.\d+)?$').hasMatch(value)) {
     return '';
   }
@@ -536,6 +536,16 @@ String _decimalToMinor(String source, int minorUnit) {
       ? ''
       : fraction.padRight(scale, '0').substring(0, scale);
   return BigInt.parse('$whole$scaledFraction').toString();
+}
+
+String _normalizePrice(String value) {
+  return String.fromCharCodes(
+    value.trim().runes.map((rune) {
+      if (rune >= 0x0660 && rune <= 0x0669) return rune - 0x0660 + 0x30;
+      if (rune >= 0x06f0 && rune <= 0x06f9) return rune - 0x06f0 + 0x30;
+      return rune == 0x066b || rune == 0x2c ? 0x2e : rune;
+    }),
+  );
 }
 
 int _safeMinorUnit(int value) {

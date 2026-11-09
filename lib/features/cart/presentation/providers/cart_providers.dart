@@ -10,6 +10,7 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/auth_pro
 import 'package:mobishop_store_app/features/cart/data/datasources/cart_remote_data_source.dart';
 import 'package:mobishop_store_app/features/cart/data/network/cart_api_transport.dart';
 import 'package:mobishop_store_app/features/cart/data/network/cart_token_store.dart';
+import 'package:mobishop_store_app/features/cart/data/network/secure_cart_token_store.dart';
 import 'package:mobishop_store_app/features/cart/data/repositories/cart_repository_impl.dart';
 import 'package:mobishop_store_app/features/cart/data/repositories/shopify_cart_repository.dart';
 import 'package:mobishop_store_app/features/cart/data/shopify/shopify_buyer_cart_session.dart';
@@ -67,7 +68,15 @@ final cartApiTransportProvider = Provider.autoDispose<CartApiTransport>((
 
 final cartTokenStoreProvider = Provider<CartTokenStore>((Ref ref) {
   AppConfig.requireWooCommerceCustomerTransport('cart');
-  final store = MemoryCartTokenStore();
+  final store = SecureCartTokenStore(
+    storeUri: ref.watch(cartStoreUriProvider),
+    currentOwner: () async {
+      final session = await ref.read(authControllerProvider.future);
+      return session == null || session.isExpired
+          ? null
+          : CartTokenOwner(session.user.id, session.token);
+    },
+  );
   ref.listen<(int?, String?)>(
     authControllerProvider.select(
       (AsyncValue<AuthSession?> state) =>
@@ -80,9 +89,13 @@ final cartTokenStoreProvider = Provider<CartTokenStore>((Ref ref) {
           (next.$2 == null || previous?.$1 != next.$1)) {
         store.clear();
       }
+      store.setOwner(
+        next.$1 == null || next.$2 == null
+            ? null
+            : CartTokenOwner(next.$1!, next.$2!),
+      );
     },
   );
-  ref.onDispose(store.clear);
   return store;
 });
 

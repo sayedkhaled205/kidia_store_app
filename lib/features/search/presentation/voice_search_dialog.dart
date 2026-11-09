@@ -39,6 +39,7 @@ class _VoiceSearchDialogState extends State<VoiceSearchDialog> {
   void dispose() { unawaited(widget.engine.cancel()); _text.dispose(); super.dispose(); }
   @override
   Widget build(BuildContext context) => AlertDialog(
+    scrollable: true,
     title: Text(copy('البحث بالصوت', 'Voice search')),
     content: Column(mainAxisSize: MainAxisSize.min, children: [
       Icon(_listening ? Icons.mic : Icons.mic_off, size: 36),

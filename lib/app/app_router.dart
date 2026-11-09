@@ -180,9 +180,13 @@ GoRouter createAppRouter({
                             final addToCart = ref.read(
                               addProductPurchaseSelectionProvider,
                             );
+                            final wishlist = ref.watch(
+                              wishlistRepositoryProvider,
+                            );
                             return ProductDetailScreen(
                               productId: parsedProductId,
                               repository: ref.watch(catalogRepositoryProvider),
+                              wishlistIdentity: wishlist,
                               onAddToCart:
                                   (
                                     product_selection.ProductPurchaseSelection
@@ -216,27 +220,40 @@ GoRouter createAppRouter({
                                     }
                                   },
                               isWishlisted: (int productId) async {
-                                final repository = ref.read(
-                                  wishlistRepositoryProvider,
-                                );
-                                final ids = await repository.loadProductIds();
+                                final ids = await wishlist.loadProductIds();
                                 return ids.contains(productId);
                               },
                               onWishlistToggle: (product) async {
                                 final access = ref.read(wishlistAccessProvider);
                                 if (access.loading) return false;
+                                var addAfterSignIn = false;
                                 if (access.requiresSignIn && !access.signedIn) {
-                                  await context.push('/auth');
-                                  return false;
+                                  final signedIn = await context.push<bool>(
+                                    '/auth',
+                                  );
+                                  if (!context.mounted || signedIn != true) {
+                                    return false;
+                                  }
+                                  final current = ref.read(
+                                    wishlistAccessProvider,
+                                  );
+                                  if (current.loading || !current.signedIn) {
+                                    return false;
+                                  }
+                                  addAfterSignIn = true;
                                 }
                                 final repository = ref.read(
                                   wishlistRepositoryProvider,
                                 );
                                 var saved = false;
                                 await repository.updateProductIds((ids) {
-                                  saved = !ids.contains(product.id);
+                                  saved =
+                                      addAfterSignIn ||
+                                      !ids.contains(product.id);
                                   return saved
-                                      ? <int>[product.id, ...ids]
+                                      ? (ids.contains(product.id)
+                                            ? ids
+                                            : <int>[product.id, ...ids])
                                       : ids
                                             .where((id) => id != product.id)
                                             .toList();
