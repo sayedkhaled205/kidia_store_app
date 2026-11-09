@@ -138,7 +138,7 @@ function cq_worker(): array {
     cq_assert(defined('DB_HOST') && (bool)preg_match('/^(127\.0\.0\.1|localhost)(:3306)?$/D',DB_HOST), 'Worker loopback database host');
     cq_assert(get_option('active_plugins')===['woocommerce/woocommerce.php'], 'Worker sole official Woo plugin');
     cq_assert(defined('WC_VERSION') && WC_VERSION==='10.9.4', 'Worker pinned Woo version');
-    cq_assert(home_url('/', 'https')==='https://kidia-identity.test/', 'Worker disposable site origin: '.home_url('/', 'https'));
+    cq_assert(home_url('/', 'https')==='https://kidia-identity.test/', 'Worker disposable site origin');
     global $wpdb;
     add_filter('pre_http_request',static fn()=>new WP_Error('ci_network_disabled','Outbound HTTP disabled.'),PHP_INT_MAX);
     add_filter('pre_wp_mail',static function(){update_option('cq_mail_blocked',(int)get_option('cq_mail_blocked',0)+1,false);return true;},PHP_INT_MAX);
