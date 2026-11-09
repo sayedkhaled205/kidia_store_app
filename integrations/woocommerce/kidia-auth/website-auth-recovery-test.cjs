@@ -93,6 +93,25 @@ async function using(kind, handler, fn, scripts) { const e = environment(kind, h
     assert.equal(confirmations, 1); e.w.document.dispatchEvent(new e.w.CustomEvent('kidia:otp-reset'));
     release({ user: { getIdToken: async () => 'fixture-token' } }); await Promise.all([first, second]); assert.equal(sent, 0);
   }, ['kidia-shared-auth.js']));
+  for (const registration of [false, true]) await test(`existing OTP picker carries binding and completes registration=${registration}`, () => using('anonymous', undefined, async e => {
+    const requests = []; let resumed = null, completed = 0;
+    e.w.fmelwpDataObj = { ajaxurl: '/ajax', nonce: 'fixture' };
+    e.w.jQuery = { ajax: options => {
+      requests.push(options.data);
+      return Promise.resolve(requests.length === 1 ? {success:true,chooseAccount:true,accounts:[{id:7,name:'Fixture',email_hint:'f***@example.invalid'},{id:8,name:'Other fixture'}]} : {success:true,registration,ticket:'selected-fixture-ticket'});
+    }};
+    e.w.KidiaVerifiedPhoneRegistration = (...args) => { resumed = args; };
+    e.w.document.addEventListener('kidia:auth-complete', () => completed++);
+    e.w.eval(fs.readFileSync(path.join(__dirname, 'website/kidia-firebase-otp.js'), 'utf8'));
+    e.w.confirmationResult = {confirm:async()=>({user:{getIdToken:async()=> 'signed-fixture-proof'}})};
+    await e.w.fma_lwp_firebase_otp_validation('+201000000001','123456',false); await settle();
+    const choice = e.w.document.querySelector('.kidia-account-option'); assert.ok(choice); choice.click(); await settle();
+    assert.equal(requests.length,2); assert.match(requests[0].kidia_native_verifier,/^[a-f0-9]{64}$/);
+    assert.equal(requests[1].kidia_native_verifier,requests[0].kidia_native_verifier);
+    assert.equal(requests[1].kidia_account_id,7); assert.equal(requests[1].firebaseIdToken,'signed-fixture-proof');
+    if (registration) assert.deepEqual(resumed,['+201000000001','selected-fixture-ticket',requests[0].kidia_native_verifier]);
+    else assert.equal(resumed,null);
+  }, ['kidia-shared-auth.js']));
   await test('Google and Facebook choices remain after email signup/back', () => using('anonymous', async () => ({ exists: false }), async e => {
     input(e, '#kidia-identifier', 'new@example.test'); submit(e, '.kidia-identifier-form'); await settle();
     e.w.document.querySelector('[data-kidia-back]').click(); await settle();

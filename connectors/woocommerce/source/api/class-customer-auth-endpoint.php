@@ -22,7 +22,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 	public function register(): void {
 		require_once __DIR__ . '/class-native-customer-auth-endpoint.php';
 		$native = new MobiShop_Native_Customer_Auth_Endpoint(
-			fn( WP_User $user ) => $this->issue_session_response( $user ),
+			fn( WP_User $user, ?array $owner_proof = null ) => $this->issue_session_response( $user, $owner_proof ),
 			fn( WP_User $user ): bool => $this->is_allowed_customer( $user ),
 			null, array( 'MobiShop_Storefront_Admin', 'resolve' )
 		);
@@ -33,6 +33,9 @@ final class MobiShop_Customer_Auth_Endpoint {
 			fn( WP_User $user ): bool => $this->is_allowed_customer( $user ) || MobiShop_Storefront_Admin::accepts( $user )
 		);
 		$website->register();
+		add_action( 'wp_set_password', array( $this, 'password_was_set' ), 10, 3 );
+		add_action( 'after_password_reset', array( $this, 'password_was_reset' ), 10, 1 );
+		add_action( 'profile_update', array( $this, 'password_profile_updated' ), 10, 2 );
 		add_action(
 			'rest_api_init',
 			array( $this, 'register_routes' )
@@ -48,6 +51,39 @@ final class MobiShop_Customer_Auth_Endpoint {
 			10,
 			2
 		);
+	}
+
+	public function password_was_set( string $password, int $user_id, $old_user = null ): void {
+		// WordPress also uses this hook to upgrade an unchanged password hash.
+		if ( $old_user instanceof WP_User && ! empty( $old_user->user_pass ) && wp_check_password( $password, $old_user->user_pass, $user_id ) ) return;
+		$this->invalidate_password_sessions( $user_id );
+	}
+
+	public function password_was_reset( WP_User $user ): void {
+		$this->invalidate_password_sessions( $user->ID );
+	}
+
+	public function password_profile_updated( int $user_id, WP_User $old_user ): void {
+		wp_cache_delete( $user_id, 'users' );
+		$current = get_user_by( 'id', $user_id );
+		if ( $current instanceof WP_User && (string) $current->user_pass !== (string) $old_user->user_pass ) $this->invalidate_password_sessions( $user_id );
+	}
+
+	private function invalidate_password_sessions( int $user_id ): void {
+		$result = $this->mutate_sessions( $user_id, static function ( array $sessions ) use ( $user_id ): array {
+			$version = bin2hex( random_bytes( 32 ) );
+			update_user_meta( $user_id, '_mobishop_auth_generation_v1', $version );
+			wp_cache_delete( $user_id, 'user_meta' );
+			if ( get_user_meta( $user_id, '_mobishop_auth_generation_v1', true ) !== $version ) throw new RuntimeException( 'Could not revoke prior sign-in credentials.' );
+			return array();
+		} );
+		if ( is_wp_error( $result ) ) throw new RuntimeException( 'Could not revoke prior sign-in sessions.' );
+		// The owner lock is released before taking the distinct shopping-profile lock.
+		// Resolve only an existing, verified alias; a reset must never create one.
+		$alias = get_user_by( 'login', 'mobishop_shop_' . get_current_blog_id() . '_' . $user_id );
+		if ( $alias instanceof WP_User && $alias->ID !== $user_id && MobiShop_Storefront_Admin::data_owner_id( $alias->ID ) === $user_id ) {
+			$this->invalidate_password_sessions( $alias->ID );
+		}
 	}
 
 	/** Register the progressive email/password customer flow. */
@@ -199,6 +235,11 @@ final class MobiShop_Customer_Auth_Endpoint {
 			$email,
 			(string) $request->get_param( 'password' )
 		);
+		if ( $user instanceof WP_User ) {
+			wp_cache_delete( $user->ID, 'users' );
+			$user = get_user_by( 'id', $user->ID );
+			if ( ! $user instanceof WP_User || ! wp_check_password( (string) $request->get_param( 'password' ), $user->user_pass, $user->ID ) ) return $this->unauthorized_error();
+		}
 		if ( is_wp_error( $user ) || ! $user instanceof WP_User || ( ! $this->is_allowed_customer( $user ) && ! MobiShop_Storefront_Admin::accepts( $user ) ) ) {
 			return new WP_Error(
 				'mobishop_auth_invalid_credentials',
@@ -366,6 +407,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 			$this->social_key( 'code', $code ),
 			array(
 				'user_id'       => $user->ID,
+				'generation'    => (string) get_user_meta( $user->ID, '_mobishop_auth_generation_v1', true ),
 				'request_id'    => $request_id,
 				'state_hash'    => (string) ( $pending['state_hash'] ?? '' ),
 				'verifier_hash' => (string) ( $pending['verifier_hash'] ?? '' ),
@@ -441,6 +483,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 		if ( ! $user instanceof WP_User || ( ! $this->is_allowed_customer( $user ) && ! MobiShop_Storefront_Admin::accepts( $user ) ) ) {
 			return $this->unauthorized_error();
 		}
+		if ( (string) ( $handoff['generation'] ?? '' ) !== (string) get_user_meta( $user->ID, '_mobishop_auth_generation_v1', true ) ) return $this->unauthorized_error();
 
 		// Only the atomic deletion winner may redeem this immutable handoff.
 		if ( ! delete_transient( $code_key ) ) {
@@ -638,15 +681,18 @@ final class MobiShop_Customer_Auth_Endpoint {
 	}
 
 	private function issue_verified_session( WP_User $user ) {
+		$owner_proof = null;
 		if ( MobiShop_Storefront_Admin::accepts( $user ) ) {
+			$owner_proof = array( 'id' => $user->ID, 'password' => (string) $user->user_pass,
+				'generation' => (string) get_user_meta( $user->ID, '_mobishop_auth_generation_v1', true ) );
 			$user = MobiShop_Storefront_Admin::resolve( $user );
 			if ( is_wp_error( $user ) ) return $user;
 		}
-		return $this->issue_session_response( $user );
+		return $this->issue_session_response( $user, $owner_proof );
 	}
 
 	/** Issue a random, revocable, expiring customer session. */
-	private function issue_session_response( WP_User $user ) {
+	private function issue_session_response( WP_User $user, ?array $owner_proof = null ) {
 		if ( ! $this->is_allowed_customer( $user ) ) return $this->unauthorized_error();
 		// Apply the store's required profile step to every session entry point,
 		// including the older email and browser social endpoints.
@@ -680,11 +726,33 @@ final class MobiShop_Customer_Auth_Endpoint {
 			'hash'    => $this->token_hash( $token ),
 			'created' => $now,
 			'expires' => $expires,
+			'generation' => (string) get_user_meta( $user->ID, '_mobishop_auth_generation_v1', true ),
 		);
 		$blocked = false;
+		$credentials_changed = false;
 		$result  = $this->mutate_sessions(
 			$user->ID,
-			static function ( array $current ) use ( $now, $new_session, $user, &$blocked ): array {
+			static function ( array $current ) use ( $now, $new_session, $user, $owner_proof, &$blocked, &$credentials_changed ): array {
+				if ( $owner_proof !== null ) {
+					$owner_id = (int) ( $owner_proof['id'] ?? 0 );
+					wp_cache_delete( $owner_id, 'users' );
+					wp_cache_delete( $owner_id, 'user_meta' );
+					$owner = get_user_by( 'id', $owner_id );
+					if ( ! MobiShop_Storefront_Admin::accepts( $owner ) || MobiShop_Storefront_Admin::data_owner_id( $user->ID ) !== $owner_id
+						|| (string) $owner->user_pass !== $owner_proof['password']
+						|| (string) get_user_meta( $owner_id, '_mobishop_auth_generation_v1', true ) !== $owner_proof['generation'] ) {
+						$credentials_changed = true;
+						return $current;
+					}
+				}
+				wp_cache_delete( $user->ID, 'users' );
+				wp_cache_delete( $user->ID, 'user_meta' );
+				$fresh = get_user_by( 'id', $user->ID );
+				if ( ! $fresh instanceof WP_User || (string) $fresh->user_pass !== (string) $user->user_pass
+					|| (string) get_user_meta( $user->ID, '_mobishop_auth_generation_v1', true ) !== $new_session['generation'] ) {
+					$credentials_changed = true;
+					return $current;
+				}
 				// Re-checked inside the same per-user lock a pending deletion uses to
 				// revoke sessions, so a login already queued for this lock cannot
 				// resurrect a session for a user whose deletion just committed.
@@ -706,6 +774,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 		if ( is_wp_error( $result ) ) {
 			return $result;
 		}
+		if ( $credentials_changed ) return $this->unauthorized_error();
 		if ( $blocked ) {
 			return new WP_Error(
 				'mobishop_auth_account_deletion_pending',
@@ -736,12 +805,14 @@ final class MobiShop_Customer_Auth_Endpoint {
 		$target  = $this->token_hash( $token );
 		$now     = time();
 		$matched = false;
+		wp_cache_delete( $user_id, 'user_meta' );
 
 		foreach ( $this->sessions_for( $user_id ) as $session ) {
 			if ( (int) $session['expires'] <= $now ) {
 				continue;
 			}
-			if ( hash_equals( (string) $session['hash'], $target ) ) {
+			if ( hash_equals( (string) $session['hash'], $target )
+				&& (string) ( $session['generation'] ?? '' ) === (string) get_user_meta( $user_id, '_mobishop_auth_generation_v1', true ) ) {
 				$matched = true;
 				break;
 			}
@@ -794,6 +865,7 @@ final class MobiShop_Customer_Auth_Endpoint {
 				'hash'    => $hash,
 				'created' => $created,
 				'expires' => $expires,
+				'generation' => is_string( $session['generation'] ?? null ) ? $session['generation'] : '',
 			);
 		}
 		return array_slice( $sessions, -self::MAX_SESSIONS );

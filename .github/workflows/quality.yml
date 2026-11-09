@@ -115,6 +115,16 @@ jobs:
           php connectors/woocommerce/tests/native-post-deletion-login-test.php
           php connectors/woocommerce/tests/native-apple-deletion-proof-test.php
           php connectors/woocommerce/tests/auth-boundary-regressions-test.php
+          php connectors/woocommerce/tests/native-linked-phone-recovery-test.php
+          php connectors/woocommerce/tests/native-phone-after-deletion-test.php
+          php connectors/woocommerce/tests/password-session-lifecycle336-test.php
+          php connectors/woocommerce/tests/native-email-ownership336-test.php
+          php connectors/woocommerce/tests/native-phone-registration-guard336-test.php
+          php connectors/woocommerce/tests/native-registration-rollback336-test.php
+          php connectors/woocommerce/tests/native-website-contact-identity336-test.php
+          php connectors/woocommerce/tests/storefront-admin-native-entry-test.php
+          php integrations/woocommerce/kidia-auth/website-facebook-policy-test.php
+          php integrations/woocommerce/kidia-auth/website-firebase-identity-test.php
           php connectors/woocommerce/tests/native-auth-completion-race-test.php
           php integrations/woocommerce/kidia-auth/website-auth-logic-regression-test.php
           node integrations/woocommerce/kidia-auth/website-auth-recovery-test.cjs
@@ -142,6 +152,8 @@ jobs:
       - run: flutter pub get
       - run: flutter analyze
       - run: flutter test
+      - name: Check deletion recovery with a configured merchant
+        run: flutter test --dart-define=STORE_URL=https://fixture.example.invalid test/features/account/data/account_deletion_recovery_provider336_test.dart
       - name: Verify desktop preview gestures and idle selection
         run: flutter test --dart-define=CMS_PREVIEW=true test/features/home/presentation/widgets/preview_interaction_test.dart test/features/page_builder/preview_edit_inspector_test.dart test/app/app_locale_test.dart
       - name: Build embedded CMS Flutter Web preview

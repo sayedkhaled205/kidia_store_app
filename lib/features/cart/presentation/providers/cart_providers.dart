@@ -30,6 +30,7 @@ final cartDioProvider = Provider<Dio>((Ref ref) {
       receiveTimeout: const Duration(seconds: 25),
     ),
   );
+  dio.interceptors.add(ref.watch(sessionRejectionInterceptorProvider));
   ref.onDispose(dio.close);
   return dio;
 });

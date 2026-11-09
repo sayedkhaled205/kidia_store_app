@@ -165,11 +165,18 @@
             // Revalidate the same signed phone proof and exact selected ID on the server.
             activeRequest = jQuery.ajax({url:fmelwpDataObj.ajaxurl,method:'POST',timeout:20000,dataType:'json',data:{
                 action:'fme_lwp_process_otp_validation',phone_number:session.phone,
-                nonce:fmelwpDataObj.nonce,firebaseIdToken:session.token,kidia_account_id:id
+                nonce:fmelwpDataObj.nonce,firebaseIdToken:session.token,kidia_account_id:id,
+                kidia_native_verifier:session.nativeVerifier
             }});
             var response = await bounded(activeRequest, 21000);
             if (choiceSession !== session || session.current !== generation) { return; }
             if (!response || !response.success || response.chooseAccount) { throw {kidiaMessage:response && response.message}; }
+            if (response.registration) {
+                if (typeof window.KidiaVerifiedPhoneRegistration !== 'function') throw new Error('registration-not-ready');
+                window.KidiaVerifiedPhoneRegistration(session.phone,response.ticket,session.nativeVerifier);
+                choiceSession = null;
+                return;
+            }
             choiceSession = null;
             completeLogin();
         } catch (error) {
@@ -263,7 +270,7 @@
                 }});
                 return bounded(activeRequest, 21000).then(function (response) {
                     if (response && response.chooseAccount && response.success && current === generation) {
-                        showChoices(response.accounts, {phone:phone, token:idToken, current:current});
+                        showChoices(response.accounts, {phone:phone, token:idToken, nativeVerifier:nativeVerifier, current:current});
                     }
                     return response;
                 });

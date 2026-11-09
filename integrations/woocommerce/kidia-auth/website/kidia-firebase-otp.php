@@ -9,6 +9,8 @@ defined('ABSPATH') || exit;
 final class Kidia_Firebase_OTP_265 {
     private static $selected_customer = 0;
     private static $verified_phone = "";
+    private static $verified_token = "";
+    private static $verified_verifier = "";
     public static function decode(string $part) {
         if (!preg_match('/^[A-Za-z0-9_-]+$/D', $part)) { return false; }
         return base64_decode(strtr($part, '-_', '+/'), true);
@@ -112,6 +114,8 @@ final class Kidia_Firebase_OTP_265 {
         if ($eligible) {
             self::$selected_customer = (int) $eligible[0]->ID;
             self::$verified_phone = $phone;
+            self::$verified_token = $token;
+            self::$verified_verifier = is_string($_POST['kidia_native_verifier'] ?? null) ? wp_unslash($_POST['kidia_native_verifier']) : '';
         }
         // Unknown phones retain the existing verified registration flow. Existing
         // customers are logged in by exact ID once WooCommerce has initialized.
@@ -169,10 +173,31 @@ final class Kidia_Firebase_OTP_265 {
             || $controller->is_phone_violating_login_count_restriction(self::$verified_phone)) {
             self::reject('محاولات كثيرة خلال وقت قصير. حاول لاحقًا أو استخدم الإيميل أو جوجل.');
         }
-        update_user_meta($id, 'kidia_login_phone', self::$verified_phone);
-        update_user_meta($id, 'fme_billing_phone', self::$verified_phone);
-        // Reuse the vendor's established auth-cookie, wp_login and cart restore path.
-        $controller->login_user($id);
+        if (!function_exists('kidia_website_auth_engine')) self::reject('تعذر إكمال التحقق. حاول مرة أخرى.');
+        // Use the same signed proof and deletion identity guard as native login.
+        // The selected customer still receives the established vendor cart/cookie path.
+        $engine = kidia_website_auth_engine(static function($proved) use ($id, $controller) {
+            if ((int)$proved->ID !== $id) return new WP_Error('kidia_phone_selection_changed', 'Account selection changed.', ['status'=>409]);
+            $controller->login_user($id);
+            return new WP_REST_Response(['status'=>'authenticated']);
+        });
+        $request = new WP_REST_Request('POST');
+        $params = ['phone'=>self::$verified_phone, 'id_token'=>self::$verified_token,
+            'client_channel'=>'website', 'verifier'=>self::$verified_verifier];
+        self::$verified_token = self::$verified_verifier = '';
+        $request->set_body_params($params);
+        $result = $engine->phone_verify($request);
+        if (!is_wp_error($result) && ($result->get_data()['status'] ?? '') === 'select_account') {
+            $request->set_body_params(['ticket'=>$result->get_data()['ticket'], 'account_id'=>$id,
+                'client_channel'=>'website', 'verifier'=>$params['verifier']]);
+            $result = $engine->select($request);
+        }
+        if (!is_wp_error($result) && ($result->get_data()['status'] ?? '') === 'registration_required') {
+            wp_send_json(['success'=>true, 'registration'=>true, 'ticket'=>$result->get_data()['ticket']]);
+        }
+        if (is_wp_error($result) || ($result->get_data()['status'] ?? '') !== 'authenticated') {
+            self::reject('تعذر إكمال التحقق من الحساب. أعد المحاولة أو استخدم البريد وكلمة المرور.');
+        }
         nocache_headers();
         wp_send_json(['success' => true]);
     }

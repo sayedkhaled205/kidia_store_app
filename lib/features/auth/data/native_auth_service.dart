@@ -220,13 +220,10 @@ class NativeAuthService
     return _run(attempt, () async {
       final configuration = await _wait(config(), attempt);
       if (!configuration.supportsUnverifiedPhoneEnrollment) throw _unavailable;
-      return _result(
-        await _post('phone/enroll', attempt, {
-          'phone': phone,
-          'ticket': ?ticket,
-        }),
-        attempt,
-      );
+      return _continuationResult('phone/enroll', attempt, {
+        'phone': phone,
+        'ticket': ?ticket,
+      });
     });
   }
 
@@ -354,13 +351,14 @@ class NativeAuthService
             NativeAuthStatus.registrationRequired,
           );
         }
-        final response = await _post('phone/verify', operation.attempt, {
-          'phone': operation.phone,
-          'id_token': token,
-          if (operation.ticket != null) 'ticket': operation.ticket,
-        });
+        final result =
+            await _continuationResult('phone/verify', operation.attempt, {
+              'phone': operation.phone,
+              'id_token': token,
+              if (operation.ticket != null) 'ticket': operation.ticket,
+            });
         _checkPhone(operation);
-        return _result(response, operation.attempt);
+        return result;
       }).then(
         completer.complete,
         onError: (Object error, StackTrace stack) {
@@ -517,20 +515,21 @@ class NativeAuthService
       return _ticketRequests.putIfAbsent(ticket, () {
         final future = _run(
           continuation.attempt,
-          () async => _result(
-            await _post(action, continuation.attempt, {
-              'ticket': ticket,
-              ...body,
-            }),
-            continuation.attempt,
-          ),
+          () => _continuationResult(action, continuation.attempt, {
+            'ticket': ticket,
+            ...body,
+          }),
         );
         unawaited(
           future.then<void>(
             (_) {},
             onError: (Object error, StackTrace _) {
               if (error is AuthRepositoryException &&
-                  (error.statusCode == 400 || error.statusCode == 422)) {
+                  (error.statusCode == 400 ||
+                      error.statusCode == 422 ||
+                      error.statusCode == 429 ||
+                      (error.statusCode == 409 &&
+                          error.code == 'mobishop_native_retry'))) {
                 _ticketRequests.remove(ticket);
               }
             },
@@ -548,6 +547,34 @@ class NativeAuthService
       _continue(ticket, NativeAuthStatus.selectAccount, 'select', {
         'account_id': accountId,
       });
+
+  Future<NativeAuthResult> _continuationResult(
+    String action,
+    _Attempt attempt,
+    Map<String, dynamic> body,
+  ) async {
+    try {
+      return _result(await _post(action, attempt, body), attempt);
+    } catch (error) {
+      final failure = _safe(error);
+      if (const {
+        AuthFailureKind.connection,
+        AuthFailureKind.timeout,
+        AuthFailureKind.server,
+        AuthFailureKind.invalidResponse,
+      }.contains(failure.kind)) {
+        // A one-use request may have completed before its reply was lost.
+        // Preserve deduplication and require a new independent sign-in attempt.
+        throw AuthRepositoryException(
+          kind: failure.kind,
+          statusCode: failure.statusCode,
+          code: 'continuation_restart_required',
+          message: 'تعذر تأكيد نتيجة المحاولة. ابدأ تسجيل الدخول من جديد.',
+        );
+      }
+      rethrow;
+    }
+  }
 
   @override
   Future<NativeAuthResult> register(
@@ -776,6 +803,8 @@ class NativeAuthService
     }
     final code = value is Map ? value['code'] : null;
     const messages = {
+      'mobishop_native_retry':
+          'في محاولة تانية بتكمل دلوقتي. انتظر قليلًا وحاول تاني.',
       'mobishop_native_google_phone_mismatch':
           'حساب جوجل ده مش مرتبط بالحساب المطلوب. جرّب حساب جوجل تاني أو الباسورد.',
       'mobishop_native_existing_phone':

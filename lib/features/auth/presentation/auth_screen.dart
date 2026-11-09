@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:mobishop_store_app/core/app_design/store_privacy_provider.dart';
 import '../../account/presentation/store_privacy_link.dart';
+import '../../account/application/account_deletion_recovery.dart';
 import '../data/storage/last_login_method_store.dart';
 import 'package:mobishop_store_app/features/auth/data/cms_preview_auth_actions.dart';
 import 'package:mobishop_store_app/features/auth/data/website_auth_service.dart';
@@ -54,6 +55,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _otp = TextEditingController();
   final _name = TextEditingController();
   bool _registrationDetailsCollected = false;
+  bool _restartRequired = false;
   final _email = TextEditingController();
   final _phone = TextEditingController();
   NativeAuthActions? _actions;
@@ -87,6 +89,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.invalidate(accountDeletionRecoveryProvider);
+    });
     // A failed background prefetch must not strand a newly opened sign-in page.
     if (ref.read(nativeAuthConfigProvider).hasError) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -123,6 +128,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(accountDeletionRecoveryProvider);
     ref.watch(authControllerProvider);
     _actions = ref.watch(nativeAuthActionsProvider);
     final configState = ref.watch(nativeAuthConfigProvider);
@@ -273,7 +279,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                             ],
                           )
                         else ...[
-                          ..._fields(copy, config),
+                          if (!_restartRequired) ..._fields(copy, config),
                           if (_error != null) ...[
                             const SizedBox(height: 12),
                             Semantics(
@@ -288,7 +294,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               ),
                             ),
                           ],
-                          if (_hasSubmit &&
+                          if (_restartRequired)
+                            _primaryButton(
+                              key: const Key('auth-restart'),
+                              label: copy.restartSignIn,
+                              onPressed: _changeIdentifier,
+                            ),
+                          if (!_restartRequired &&
+                              _hasSubmit &&
                               (_step != _AuthStep.identifier ||
                                   hasIdentifier)) ...[
                             const SizedBox(height: 20),
@@ -1301,6 +1314,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
   Future<void> _submit(AuthCopy copy, NativeAuthConfig config) async {
     if (_busy) return;
+    if (_restartRequired) return;
     if (_pendingCommit case final result?) {
       await _perform((flow) => _acceptResult(result, flow));
       return;
@@ -1416,7 +1430,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       await operation(flow);
     } catch (error) {
       if (_active(flow) && request == _operation) {
-        setState(() => _error = _messageFor(error));
+        _showError(error);
       }
     } finally {
       if (_active(flow) && request == _operation) setState(() => _busy = false);
@@ -1430,6 +1444,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     String? ticket,
   }) async {
     final epoch = ++_otpEpoch;
+    _recoveryPhone = phone;
     NativeOtpChallenge challenge;
     var boundTicket = ticket;
     var preparedContact = false;
@@ -1603,6 +1618,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _step = _AuthStep.recovery;
       _busy = false;
       _error = message;
+      _restartRequired = _requiresRestart(error);
     });
   }
 
@@ -1677,7 +1693,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           });
       }
     } catch (error) {
-      if (_active(flow)) setState(() => _error = _messageFor(error));
+      if (_active(flow)) _showError(error);
     } finally {
       if (_active(flow)) {
         setState(() {
@@ -1686,6 +1702,21 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         });
       }
     }
+  }
+
+  bool _requiresRestart(Object error) =>
+      error is AuthRepositoryException &&
+      const {
+        'expired',
+        'mobishop_native_invalid_ticket',
+        'continuation_restart_required',
+      }.contains(error.code);
+
+  void _showError(Object error) {
+    setState(() {
+      _error = _messageFor(error);
+      _restartRequired = _requiresRestart(error);
+    });
   }
 
   String _messageFor(Object error) {
@@ -1726,6 +1757,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _resendTimer?.cancel();
     setState(() {
       _step = _AuthStep.identifier;
+      _restartRequired = false;
       _identity = null;
       _continuation = null;
       _challenge = null;
@@ -1771,7 +1803,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         actions is NativeFacebookAuthActions) {
       try {
         final result = await (actions as NativeFacebookAuthActions).facebook();
-        if (_active(flow)) await _acceptResult(result, flow);
+        if (_active(flow)) {
+          _identity = null;
+          _registrationDetailsCollected = false;
+          await _acceptResult(result, flow);
+        }
         return;
       } on AuthRepositoryException catch (error) {
         // A previously installed binary may predate this store's SDK setup.

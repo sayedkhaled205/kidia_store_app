@@ -52,7 +52,7 @@ $beforeGoogle=NextendSocialLogin::$providers['google']->links;
 native_rejected(owner_password('wrong-fixture'),'Invalid owner password rejected');
 native_assert(!$issued && !$resolved,'Unauthenticated request cannot provision shopper');
 storefront_authenticated(owner_password('owner-fixture'),$shadowId,'Valid password');
-storefront_authenticated(owner_google(),$shadowId,'Signed authoritative Gmail proof');
+native_rejected(owner_google(),'Unlinked Gmail proof cannot adopt a preclaimed owner email');
 native_assert(NextendSocialLogin::$providers['google']->links === $beforeGoogle,'Google native flow cannot change dashboard SSO links');
 native_rejected(owner_google(['email_verified'=>false]),'Unverified email rejected');
 native_rejected(owner_google(['aud'=>'other-fixture.apps.googleusercontent.com']),'Wrong Google audience rejected');
@@ -64,6 +64,6 @@ $unlinked = native_data(facebook_exchange(facebook_challenge(),['access_token'=>
 native_assert(($unlinked['status'] ?? '') !== 'authenticated','Matching Facebook email alone never signs in owner');
 $provider->linkUserToProviderIdentifier($ownerId,'812001');
 storefront_authenticated(facebook_exchange(facebook_challenge(),['access_token'=>'fixture-access-token']),$shadowId,'Previously linked Facebook subject');
-native_assert($issued === [$shadowId,$shadowId,$shadowId,$shadowId] && count($resolved) === count($issued),'Every and only proven owner receives shopper session');
+native_assert($issued === [$shadowId,$shadowId,$shadowId] && count($resolved) === count($issued),'Every and only proven owner receives shopper session');
 native_assert($GLOBALS['native_users'][$ownerId] === $beforeRow && empty($GLOBALS['native_meta'][$ownerId]['_mobishop_app_last_auth_method']),'Dashboard account stays unmodified');
 echo 'Storefront administrator native entry points: '.($GLOBALS['native_checks']-$before)." additional checks passed.\n";

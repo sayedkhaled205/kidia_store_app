@@ -48,7 +48,7 @@ function runtime_rest(string $route,array $body,string $token=''): WP_REST_Respo
     return rest_do_request($request);
 }
 $auth=new MobiShop_Customer_Auth_Endpoint();
-add_action('rest_api_init',array($auth,'register_routes'));
+$auth->register();
 $deletion=new MobiShop_Customer_Account_Deletion();$deletion->register();
 if(did_action('rest_api_init')){$auth->register_routes();$deletion->register_routes();}else{rest_get_server();}
 wp_set_current_user(0);
@@ -162,5 +162,36 @@ runtime_check(get_user_by('id',$admin) instanceof WP_User&&get_user_by('id',$ali
  &&get_user_meta($admin,'billing_address_1',true)==='Synthetic protected canonical address'&&get_user_meta($admin,'shipping_address_1',true)==='Synthetic protected shipping address'
  &&(int)$canonicalReload->get_customer_id()===$admin,'Protected administrator, alias, canonical addresses and order remain intact');
 runtime_check(MobiShop_Customer_Identity_Client::$attempts+MobiShop_Customer_Identity_Client::$snapshot_calls===$providerBefore,'Protected owner never reaches identity provider prepare, lookup or erase');
+
+// Real WordPress password hooks must revoke native sessions and the owner's alias.
+$resetUser=wp_insert_user(array('user_login'=>'ci-password-lifecycle','user_email'=>'password-lifecycle@example.invalid','user_pass'=>'ci-password-before','role'=>'customer'));
+runtime_check(!is_wp_error($resetUser),'Create disposable password lifecycle customer');
+$passwordLogin=runtime_rest('auth/login',array('email'=>'password-lifecycle@example.invalid','password'=>'ci-password-before'));
+$passwordToken=$passwordLogin->get_data()['token']??'';
+$passwordRequest=new WP_REST_Request();$passwordRequest->set_header('X-MobiShop-Session',$passwordToken);
+runtime_check($passwordLogin->get_status()===200&&!is_wp_error($auth->authenticate_route($passwordRequest)),'Password lifecycle starts with valid native session');
+$beforeReset=get_user_by('id',$resetUser);
+wp_set_password('ci-password-after',$resetUser);
+runtime_check(is_wp_error($auth->authenticate_route($passwordRequest)),'Real wp_set_password hook rejects prior native token');
+$issuer=new ReflectionMethod($auth,'issue_session_response');
+runtime_check(is_wp_error($issuer->invoke($auth,$beforeReset)),'Stale password snapshot cannot mint a token after real reset');
+$passwordLogin=runtime_rest('auth/login',array('email'=>'password-lifecycle@example.invalid','password'=>'ci-password-after'));
+runtime_check($passwordLogin->get_status()===200,'New password signs in after reset');
+$passwordRequest->set_header('X-MobiShop-Session',$passwordLogin->get_data()['token']);
+reset_password(get_user_by('id',$resetUser),'ci-password-after');
+runtime_check(is_wp_error($auth->authenticate_route($passwordRequest)),'Real reset_password revokes sessions even when password is unchanged');
+$passwordLogin=runtime_rest('auth/login',array('email'=>'password-lifecycle@example.invalid','password'=>'ci-password-after'));
+$passwordRequest->set_header('X-MobiShop-Session',$passwordLogin->get_data()['token']);
+wp_update_user(array('ID'=>$resetUser,'display_name'=>'Renamed fixture'));
+runtime_check(!is_wp_error($auth->authenticate_route($passwordRequest)),'Real ordinary profile update preserves native session');
+wp_update_user(array('ID'=>$resetUser,'user_pass'=>'ci-password-profile'));
+runtime_check(is_wp_error($auth->authenticate_route($passwordRequest)),'Real profile password change revokes native session');
+$ownerSnapshot=get_user_by('id',$admin);
+$ownerProof=array('id'=>$admin,'password'=>$ownerSnapshot->user_pass,'generation'=>(string)get_user_meta($admin,'_mobishop_auth_generation_v1',true));
+wp_set_password('ci-owner-password-after',$admin);
+runtime_check(is_wp_error($auth->authenticate_route($aliasSession)),'Real owner reset revokes the isolated customer session');
+runtime_check(is_wp_error($issuer->invoke($auth,get_user_by('id',$alias->ID),$ownerProof)),'Real owner reset between resolution and issue rejects stale owner proof');
+$ownerLogin=runtime_rest('auth/login',array('email'=>'identity-owner@example.invalid','password'=>'ci-owner-password-after'));
+runtime_check($ownerLogin->get_status()===200&&($ownerLogin->get_data()['user']['id']??0)===$alias->ID,'Fresh owner password reuses isolated customer profile');
 
 echo 'WordPress/MySQL identity lifecycle: '.$checks.' checks passed; external identity provider only is stubbed.'.PHP_EOL;

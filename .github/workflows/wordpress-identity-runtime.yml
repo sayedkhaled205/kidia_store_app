@@ -2,11 +2,23 @@ name: WordPress identity lifecycle
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main, 'codex/**']
+    paths:
+      - '.github/workflows/wordpress-identity-runtime.yml'
+      - 'tools/customer_identity/**'
+      - 'connectors/woocommerce/source/api/class-*auth*.php'
+      - 'connectors/woocommerce/source/api/class-customer-account-deletion.php'
+      - 'connectors/woocommerce/source/api/class-storefront-admin.php'
+      - 'integrations/woocommerce/kidia-auth/**'
   pull_request:
     paths:
       - '.github/workflows/wordpress-identity-runtime.yml'
       - 'tools/customer_identity/**'
       - 'connectors/woocommerce/source/api/class-customer-auth-endpoint.php'
+      - 'connectors/woocommerce/source/api/class-native-customer-auth-endpoint.php'
+      - 'connectors/woocommerce/source/api/class-website-auth-endpoint.php'
+      - 'integrations/woocommerce/kidia-auth/**'
       - 'connectors/woocommerce/source/api/class-customer-account-deletion.php'
       - 'connectors/woocommerce/source/api/class-storefront-admin.php'
 

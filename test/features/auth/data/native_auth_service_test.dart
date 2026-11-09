@@ -80,6 +80,54 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
+  for (final action in ['register', 'phone/confirm', 'select']) {
+    for (final rejection in [
+      (409, 'mobishop_native_retry'),
+      (429, 'rate_limited'),
+    ]) {
+      test(
+        '$action retries a definite pre-execution rejection ${rejection.$1}',
+        () async {
+          final h = _Harness();
+          var calls = 0;
+          h.handler = (request) async {
+            if (!request.uri.path.endsWith('/$action')) {
+              return h.response(
+                request,
+                action == 'select' ? _picker() : _registration(),
+              );
+            }
+            calls++;
+            return calls == 1
+                ? h.response(request, {
+                    'code': rejection.$2,
+                  }, status: rejection.$1)
+                : h.response(request, _session());
+          };
+          final pending = await h.service.google();
+          Future<NativeAuthResult> submit() => switch (action) {
+            'select' => h.service.selectAccount(pending.ticket, 7),
+            'phone/confirm' => h.service.confirmUnverifiedPhone(
+              pending.ticket,
+              '+201012345678',
+            ),
+            _ => h.service.register(
+              pending.ticket,
+              name: 'Fixture',
+              password: 'fixture-password',
+            ),
+          };
+          await expectLater(submit(), throwsA(_failure));
+          await _flush();
+          final result = await submit();
+          expect(calls, 2);
+          expect(h.store.writes, 0);
+          await h.service.commit(result);
+          expect(h.store.writes, 1);
+        },
+      );
+    }
+  }
   test(
     'identify opts into safe registration recovery without issuing proof',
     () async {

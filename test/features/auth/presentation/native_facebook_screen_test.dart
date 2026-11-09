@@ -33,6 +33,65 @@ AuthRepositoryException _error(String code) => AuthRepositoryException(
 );
 
 void main() {
+  for (final conflict in [false, true]) {
+    testWidgets(
+      'Facebook phone enrollment replaces previous email identity conflict=$conflict',
+      (tester) async {
+        final fixture = _Fixture();
+        fixture.actions.enrollment = true;
+        fixture.actions.conflict = conflict;
+        await fixture.pump(tester);
+        await tester.enterText(
+          find.byKey(const Key('auth-email')),
+          'existing@example.invalid',
+        );
+        await _tapKey(tester, 'auth-continue');
+        expect(find.byKey(const Key('auth-sign-in')), findsOneWidget);
+        await _tapFacebook(tester);
+        await tester.enterText(
+          find.byKey(const Key('auth-phone')),
+          '01012345678',
+        );
+        await _tapKey(tester, 'auth-send-otp');
+        expect(fixture.actions.prepares, 1);
+        if (conflict) {
+          expect(
+            find.byKey(const Key('auth-existing-phone-signin')),
+            findsOneWidget,
+          );
+          expect(find.byKey(const Key('auth-different-phone')), findsOneWidget);
+          expect(fixture.actions.confirms, 0);
+          expect(fixture.actions.commits, 0);
+        } else {
+          await tester.enterText(
+            find.byKey(const Key('auth-phone')),
+            '01012345678',
+          );
+          await _tapKey(tester, 'auth-send-otp');
+          expect(fixture.actions.confirms, 1);
+          expect(fixture.actions.commits, 0);
+          await tester.enterText(
+            find.byKey(const Key('auth-name')),
+            'New Fixture',
+          );
+          await tester.enterText(
+            find.byKey(const Key('auth-create-password')),
+            'fixture-password',
+          );
+          await tester.enterText(
+            find.byKey(const Key('auth-confirm-password')),
+            'fixture-password',
+          );
+          await _tapKey(tester, 'auth-register');
+          expect(fixture.actions.registrations, 1);
+          expect(fixture.actions.commits, 1);
+          expect(find.text('SIGNED IN'), findsOneWidget);
+        }
+        expect(tester.takeException(), isNull);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+    );
+  }
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
     for (final websiteEnabled in [false, true]) {
       testWidgets(
@@ -155,9 +214,18 @@ Future<void> _tapFacebook(WidgetTester tester, {bool settle = true}) async {
   }
 }
 
+Future<void> _tapKey(WidgetTester tester, String key) async {
+  final button = find.byKey(Key(key));
+  await tester.ensureVisible(button);
+  await tester.tap(button);
+  await tester.pumpAndSettle();
+}
+
 class _Fixture {
   _Fixture({bool nativeEnabled = true, bool websiteEnabled = true})
     : configuration = NativeAuthConfig(
+        supportsUnverifiedPhoneEnrollment: true,
+        phoneCountryCode: '20',
         methods: {
           'email_password': true,
           'facebook_native': nativeEnabled,
@@ -212,7 +280,74 @@ class _Fixture {
   }
 }
 
-class _Actions implements NativeAuthActions, NativeFacebookAuthActions {
+class _Actions
+    implements
+        NativeAuthActions,
+        NativeFacebookAuthActions,
+        NativePhoneEnrollmentActions {
+  bool enrollment = false;
+  bool conflict = false;
+  int prepares = 0;
+  int confirms = 0;
+  @override
+  Future<NativeAuthIdentity> identify(String identifier) async =>
+      NativeAuthIdentity(
+        identifier: identifier,
+        kind: 'email',
+        methods: ['password'],
+      );
+  @override
+  Future<NativeAuthResult> preparePhone(String phone, {String? ticket}) async {
+    prepares++;
+    if (conflict) throw _error('mobishop_native_existing_phone');
+    expect(ticket, 'facebook-enrollment');
+    return const NativeAuthResult(
+      status: NativeAuthStatus.registrationRequired,
+      ticket: 'prepared-phone',
+      fields: ['phone'],
+      expiresIn: 300,
+    );
+  }
+
+  @override
+  Future<NativeOtpChallenge> sendOtp(
+    String phone, {
+    NativeOtpChallenge? resend,
+    String? ticket,
+  }) async => throw _error('unavailable');
+  @override
+  Future<NativeAuthResult> confirmUnverifiedPhone(
+    String ticket,
+    String phone,
+  ) async {
+    confirms++;
+    expect(ticket, 'prepared-phone');
+    return const NativeAuthResult(
+      status: NativeAuthStatus.registrationRequired,
+      ticket: 'confirmed-contact',
+      fields: ['name', 'password'],
+      expiresIn: 300,
+    );
+  }
+
+  int registrations = 0;
+  @override
+  Future<NativeAuthResult> register(
+    String ticket, {
+    required String name,
+    required String password,
+    String? email,
+  }) async {
+    expect(ticket, 'confirmed-contact');
+    expect(name, 'New Fixture');
+    expect(password, 'fixture-password');
+    registrations++;
+    return NativeAuthResult(
+      status: NativeAuthStatus.authenticated,
+      session: _session(),
+    );
+  }
+
   int facebookCalls = 0;
   int commits = 0;
   void Function(AuthSession)? onCommit;
@@ -224,6 +359,16 @@ class _Actions implements NativeAuthActions, NativeFacebookAuthActions {
   @override
   Future<NativeAuthResult> facebook() {
     facebookCalls++;
+    if (enrollment) {
+      return Future.value(
+        const NativeAuthResult(
+          status: NativeAuthStatus.registrationRequired,
+          ticket: 'facebook-enrollment',
+          fields: ['phone'],
+          expiresIn: 300,
+        ),
+      );
+    }
     return issue();
   }
 

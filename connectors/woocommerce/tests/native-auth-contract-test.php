@@ -573,14 +573,15 @@ native_clear_rate();
 $google_user_lock = native_lock_key( 'google-link:user:11' );
 $GLOBALS['native_options'][$google_user_lock] = array( 'owner' => 'expired-owner', 'expires' => time() - 1 );
 $next_owner = array( 'owner' => 'later-owner', 'expires' => time() + 300 );
-$GLOBALS['native_google_link_hook'] = function () use ( $endpoint, $verifier, $google_user_lock, $next_owner ) {
-    $GLOBALS['native_overlapping_link'] = $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'competing-google-subject' ), array( 'email' => 'different@gmail.com' ) ) ), 'verifier' => $verifier ) ) );
+$google_link = new ReflectionMethod( $endpoint, 'link_google' );
+$GLOBALS['native_google_link_hook'] = function () use ( $endpoint, $google_link, $google_user_lock, $next_owner ) {
+    $GLOBALS['native_overlapping_link'] = $google_link->invoke( $endpoint, 11, 'competing-google-subject' );
     // Simulate a new owner after an expired lease was replaced before the first worker returned.
     $GLOBALS['native_options'][$google_user_lock] = $next_owner;
 };
-$linked = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'new-google-eleven' ), array( 'email' => 'different@gmail.com' ) ) ), 'verifier' => $verifier ) ) ), 'Recovered Google linking lease' );
-native_assert( $linked['user_id'] === 11, 'An expired linking lease is recoverable' );
-native_rejected( $GLOBALS['native_overlapping_link'], 'Overlapping Google linking for the same user is rejected' );
+$linked = $google_link->invoke( $endpoint, 11, 'new-google-eleven' );
+native_assert( $linked === true, 'An expired linking lease is recoverable after independent proof' );
+native_assert( $GLOBALS['native_overlapping_link'] === false, 'Overlapping Google linking for the same user is rejected' );
 native_assert( ! isset( NextendSocialLogin::$providers['google']->links['competing-google-subject'] ), 'Rejected competing link creates no provider mapping' );
 native_assert( $GLOBALS['native_options'][$google_user_lock] === $next_owner, 'An old worker cannot release a newer owner lease' );
 do_action( 'mobishop_native_auth_cleanup', $google_user_lock );
@@ -913,8 +914,9 @@ native_assert( $bounded_match['user_id'] === 7, 'Matching Google identity signs 
 $claimant_google = array( 'id_token' => native_jwt( array_merge( native_google_claims( 'contact-only-google' ), array( 'email' => 'contact-only-google@gmail.com' ) ) ), 'verifier' => $verifier, 'expected_phone' => '+201066666662' );
 native_rejected( $endpoint->google( native_request( $claimant_google ) ), 'A Google account with only an unverified claim cannot override the independently verified phone owner' );
 $unlinked_bounded['expected_phone'] = '+201112345678';
-$bounded_email_match = native_data( $endpoint->google( native_request( $unlinked_bounded ) ), 'Google authoritative email proving its own expected account' );
-native_assert( $bounded_email_match['user_id'] === 12, 'An email-proven Google account is linked only after expected phone matches its own account' );
+$bounded_email_match = $endpoint->google( native_request( $unlinked_bounded ) );
+native_rejected( $bounded_email_match, 'Knowing an expected phone and matching Google email is not independent account proof' );
+native_assert( ! isset( NextendSocialLogin::$providers['google']->links['bounded-unlinked-shipping'] ), 'Unproved email match never creates a link' );
 
 // HTTP calls stay fixed, do not follow redirects, and verify TLS.
 foreach ( $GLOBALS['native_http'] as $call ) {

@@ -115,6 +115,9 @@ class AccountDeletionReceiptStore {
   Future<AccountDeletionReceipt?> read({int? userId}) =>
       _exclusive(() => _readOne(userId));
 
+  Future<List<AccountDeletionReceipt>> readAll() =>
+      _exclusive(() async => List.unmodifiable(await _readAll()));
+
   Future<AccountDeletionReceipt?> _readOne(int? userId) async {
     final all = await _readAll();
     if (all.isEmpty) return null;

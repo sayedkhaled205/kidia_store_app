@@ -150,6 +150,7 @@ class AccountScreen extends ConsumerWidget {
                           isArabic: isArabic,
                           onTap: () => _openAction(
                             context,
+                            ref: ref,
                             session: session,
                             action: visibleActions[index],
                           ),
@@ -245,12 +246,15 @@ class AccountScreen extends ConsumerWidget {
 
   Future<void> _openAction(
     BuildContext context, {
+    required WidgetRef ref,
     required AuthSession? session,
     required _AccountAction action,
   }) async {
-    if (session == null && action.id != 'support') {
-      await context.push<bool>('/auth');
-      return;
+    if ((session == null || session.isExpired) && action.id != 'support') {
+      final signedIn = await context.push<bool>('/auth');
+      if (!context.mounted || signedIn != true) return;
+      final current = ref.read(authControllerProvider).value;
+      if (current == null || current.isExpired) return;
     }
     if (!context.mounted) {
       return;
@@ -453,18 +457,14 @@ class _AccountActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compactCards = !flat &&
-        Theme.of(context).platform == TargetPlatform.iOS;
+    final compactCards =
+        !flat && Theme.of(context).platform == TargetPlatform.iOS;
     return ListTile(
       key: Key('account-action-${action.id}'),
-      visualDensity: compactCards
-          ? const VisualDensity(vertical: -1)
-          : null,
+      visualDensity: compactCards ? const VisualDensity(vertical: -1) : null,
       contentPadding: EdgeInsets.symmetric(
         horizontal: MobiShopSpacing.md,
-        vertical: compactCards
-            ? 0
-            : MobiShopSpacing.xs,
+        vertical: compactCards ? 0 : MobiShopSpacing.xs,
       ),
       minTileHeight: flat
           ? (Theme.of(context).platform == TargetPlatform.iOS ? 48 : 64)

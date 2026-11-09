@@ -25,19 +25,32 @@ class ProductWishlistButton extends ConsumerStatefulWidget {
 }
 
 class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
-  late final WishlistRepository _repository;
+  late WishlistRepository _repository;
   bool _selected = false;
   bool _busy = false;
   bool _loading = true;
   StreamSubscription<List<int>>? _changes;
   int _revision = 0;
+  int _binding = 0;
 
   @override
   void initState() {
     super.initState();
-    _repository = ref.read(wishlistRepositoryProvider);
-    _changes = _repository.productIdChanges.listen((ids) {
-      if (!mounted) return;
+    _bind(ref.read(wishlistRepositoryProvider));
+    ref.listenManual(wishlistRepositoryProvider, (_, next) {
+      if (identical(next, _repository)) return;
+      setState(() => _bind(next));
+    });
+  }
+
+  void _bind(WishlistRepository repository) {
+    _changes?.cancel();
+    _repository = repository;
+    final binding = ++_binding;
+    _busy = false;
+    _selected = false;
+    _changes = repository.productIdChanges.listen((ids) {
+      if (!mounted || binding != _binding) return;
       _revision++;
       setState(() {
         _selected = ids.contains(widget.productId);
@@ -50,7 +63,7 @@ class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
   @override
   void didUpdateWidget(covariant ProductWishlistButton oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.productId != widget.productId) _load();
+    if (oldWidget.productId != widget.productId) _bind(_repository);
   }
 
   @override
@@ -79,21 +92,34 @@ class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
     if (_busy || _loading) return;
     final access = ref.read(wishlistAccessProvider);
     if (access.loading) return;
+    var addAfterSignIn = false;
     if (access.requiresSignIn && !access.signedIn) {
-      await context.push('/auth');
-      return;
+      final productId = widget.productId;
+      final signedIn = await context.push<bool>('/auth');
+      if (!mounted || signedIn != true || widget.productId != productId) return;
+      final current = ref.read(wishlistAccessProvider);
+      if (current.loading || !current.signedIn) return;
+      final repository = ref.read(wishlistRepositoryProvider);
+      if (!identical(repository, _repository)) _bind(repository);
+      addAfterSignIn = true;
     }
+    final binding = _binding;
+    final repository = _repository;
     setState(() => _busy = true);
     try {
       final id = widget.productId;
-      final ids = await _repository.updateProductIds(
-        (current) => current.contains(id)
+      final ids = await repository.updateProductIds(
+        (current) => addAfterSignIn
+            ? (current.contains(id) ? current : [id, ...current])
+            : current.contains(id)
             ? current.where((value) => value != id).toList()
             : [id, ...current],
       );
-      if (mounted) setState(() => _selected = ids.contains(widget.productId));
+      if (mounted && binding == _binding) {
+        setState(() => _selected = ids.contains(widget.productId));
+      }
     } catch (_) {
-      if (mounted) {
+      if (mounted && binding == _binding) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -105,7 +131,7 @@ class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
         );
       }
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted && binding == _binding) setState(() => _busy = false);
     }
   }
 

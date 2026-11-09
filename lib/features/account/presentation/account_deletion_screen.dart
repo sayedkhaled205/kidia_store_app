@@ -8,6 +8,9 @@ import '../../auth/presentation/providers/auth_providers.dart';
 import '../../auth/presentation/providers/native_auth_providers.dart';
 import '../../auth/data/native_auth_sdk.dart';
 import '../application/account_identity_deletion.dart';
+import '../application/account_deletion_recovery.dart';
+export '../application/account_deletion_recovery.dart'
+    show accountDeletionReceiptStoreProvider, accountDeletionReceiptProvider;
 import '../data/network/customer_account_api_transport.dart';
 import '../data/storage/account_deletion_receipt_store.dart';
 import 'providers/customer_account_providers.dart';
@@ -36,15 +39,6 @@ final accountDeletionAvailabilityProvider = FutureProvider.autoDispose<bool>((
       .deletionAvailability();
   return response['available'] == true;
 });
-
-final accountDeletionReceiptStoreProvider =
-    Provider<AccountDeletionReceiptStore>(
-      (ref) => AccountDeletionReceiptStore(AppConfig.apiBaseUrl),
-    );
-final accountDeletionReceiptProvider =
-    FutureProvider.autoDispose<AccountDeletionReceipt?>(
-      (ref) => ref.watch(accountDeletionReceiptStoreProvider).read(),
-    );
 
 /// Capturing the account ID prevents reauthentication from changing the target.
 class AccountDeletionScreen extends ConsumerStatefulWidget {

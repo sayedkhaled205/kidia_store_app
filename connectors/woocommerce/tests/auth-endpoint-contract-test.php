@@ -119,6 +119,7 @@ class WP_Error {
 }
 
 class WP_User {
+	public string $user_pass;
 	public int $ID;
 	public string $user_email;
 	public string $user_login;
@@ -128,6 +129,7 @@ class WP_User {
 
 	public function __construct( int $id, array $record ) {
 		$this->ID           = $id;
+		$this->user_pass = (string) ( $record['password_hash'] ?? 'fixture-hash:' . ( $record['password'] ?? '' ) );
 		$this->user_login = (string)($record['login'] ?? 'customer-'.$id);
 		$this->user_email   = (string) $record['email'];
 		$this->display_name = (string) $record['display_name'];
@@ -138,6 +140,10 @@ class WP_User {
 
 function add_action( string $hook, $callback, int $priority = 10, int $accepted_args = 1 ): void {
 	$GLOBALS['mobishop_actions'][ $hook ][] = $callback;
+}
+
+function wp_check_password( $password, $hash, $id = '' ): bool {
+	return hash_equals( 'fixture-hash:' . $password, $hash ) || hash_equals( 'fixture-rehashed:' . $password, $hash );
 }
 
 function add_filter( string $hook, $callback, int $priority = 10 ): void {
@@ -262,6 +268,11 @@ function email_exists( string $email ) {
 }
 
 function get_user_by( string $field, $value ) {
+	if ( 'login' === $field ) {
+		foreach ( $GLOBALS['mobishop_users'] as $id => $record ) {
+			if ( ( $record['login'] ?? 'customer-' . $id ) === $value ) return new WP_User( (int) $id, $record );
+		}
+	}
 	if ( 'id' === $field ) {
 		$id = (int) $value;
 		return isset( $GLOBALS['mobishop_users'][ $id ] )

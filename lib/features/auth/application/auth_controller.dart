@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/core/analytics/mobile_analytics.dart';
 import 'package:mobishop_store_app/features/auth/data/website_auth_service.dart';
@@ -13,6 +14,7 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/website_
 class AuthController extends AsyncNotifier<AuthSession?> {
   Future<void>? _signOutOperation;
   String? _signOutToken;
+  Timer? _expiryTimer;
   AuthRepository get _repository => ref.read(authRepositoryProvider);
 
   /// The deletion endpoint already revoked the captured server session.
@@ -28,7 +30,36 @@ class AuthController extends AsyncNotifier<AuthSession?> {
   }
 
   @override
-  Future<AuthSession?> build() => _repository.restoreSession();
+  Future<AuthSession?> build() {
+    ref.onDispose(() => _expiryTimer?.cancel());
+    listenSelf((_, next) {
+      _expiryTimer?.cancel();
+      final session = next.value;
+      if (session == null) return;
+      final remaining = session.expiresAt.difference(DateTime.now().toUtc());
+      _expiryTimer = Timer(
+        remaining.isNegative ? Duration.zero : remaining,
+        () {
+          unawaited(expireSession(session.token).catchError((Object _) {}));
+        },
+      );
+    });
+    return _repository.restoreSession();
+  }
+
+  /// Rejection of an old request must never clear a replacement account.
+  Future<void> expireSession(String token) async {
+    final store = ref.read(authSessionStoreProvider);
+    try {
+      if (store is ConditionalAuthSessionStore) {
+        await (store as ConditionalAuthSessionStore).clearIfToken(token);
+      }
+    } finally {
+      if (ref.mounted && state.value?.token == token) {
+        state = const AsyncData<AuthSession?>(null);
+      }
+    }
+  }
 
   Future<AuthIdentity> identify(String email) {
     return _repository.identify(email.trim());

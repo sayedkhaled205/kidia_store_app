@@ -3,9 +3,9 @@
  * Reuses the connector's registration and identity protections for the website.
  */
 defined('ABSPATH') || exit;
-function kidia_website_auth_engine() {
+function kidia_website_auth_engine(?callable $issue = null) {
     return new MobiShop_Native_Customer_Auth_Endpoint(
-        static function($user) {
+        $issue ?? static function($user) {
             wp_set_current_user((int)$user->ID);
             wp_set_auth_cookie((int)$user->ID,true,is_ssl());
             do_action('wp_login',(string)$user->user_login,$user);

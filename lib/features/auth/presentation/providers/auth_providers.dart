@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:mobishop_store_app/core/config/app_config.dart';
+import 'package:mobishop_store_app/features/auth/data/network/session_rejection_interceptor.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobishop_store_app/features/auth/application/auth_controller.dart';
 import 'package:mobishop_store_app/features/auth/data/network/auth_api_transport.dart';
@@ -8,6 +10,20 @@ import 'package:mobishop_store_app/features/auth/data/storage/social_auth_pendin
 import 'package:mobishop_store_app/features/auth/domain/entities/auth_session.dart';
 import 'package:mobishop_store_app/features/auth/domain/repositories/auth_repository.dart';
 
+final sessionRejectionInterceptorProvider =
+    Provider<SessionRejectionInterceptor>(
+      (ref) => SessionRejectionInterceptor(
+        storeUri: Uri.tryParse(AppConfig.apiBaseUrl.trim()),
+        onRejected: (token) async {
+          if (ref.mounted) {
+            await ref
+                .read(authControllerProvider.notifier)
+                .expireSession(token);
+          }
+        },
+      ),
+    );
+
 final authDioProvider = Provider<Dio>((Ref ref) {
   final Dio dio = Dio(
     BaseOptions(
@@ -16,19 +32,24 @@ final authDioProvider = Provider<Dio>((Ref ref) {
       receiveTimeout: const Duration(seconds: 25),
     ),
   );
+  dio.interceptors.add(ref.watch(sessionRejectionInterceptorProvider));
   ref.onDispose(dio.close);
   return dio;
 });
 
 final authApiTransportProvider = Provider<AuthApiTransport>((Ref ref) {
-  return DioAuthApiTransport.forConfiguredStore(dio: ref.watch(authDioProvider));
+  return DioAuthApiTransport.forConfiguredStore(
+    dio: ref.watch(authDioProvider),
+  );
 });
 
 final authSessionStoreProvider = Provider<AuthSessionStore>((Ref ref) {
   return SecureAuthSessionStore.forConfiguredStore();
 });
 
-final socialAuthPendingStoreProvider = Provider<SocialAuthPendingStore>((Ref ref) {
+final socialAuthPendingStoreProvider = Provider<SocialAuthPendingStore>((
+  Ref ref,
+) {
   return SecureSocialAuthPendingStore.forConfiguredStore();
 });
 

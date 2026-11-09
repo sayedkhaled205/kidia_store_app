@@ -146,6 +146,7 @@ final class MobiShop_Website_Auth_Endpoint {
 		if ( $row['code'] !== '' ) return;
 		$next = $row;
 		$next['user'] = $user->ID;
+		$next['generation'] = (string) get_user_meta( $user->ID, '_mobishop_auth_generation_v1', true );
 		$this->change( $id, $row, $next );
 	}
 
@@ -291,6 +292,8 @@ final class MobiShop_Website_Auth_Endpoint {
 		if ( ! $row || ! hash_equals( $row['code'], hash( 'sha256', $code ) ) || ! hash_equals( $row['state'], $state ) || ! hash_equals( $row['challenge'], hash( 'sha256', $verifier ) ) ) return $this->error( 'expired', 401 );
 		$user = get_user_by( 'id', (int) $row['user'] );
 		if ( ! $user instanceof WP_User || ! ( $this->allowed )( $user ) ) return $this->error( 'customer_required', 403 );
+		wp_cache_delete( $user->ID, 'user_meta' );
+		if ( (string) ( $row['generation'] ?? '' ) !== (string) get_user_meta( $user->ID, '_mobishop_auth_generation_v1', true ) ) return $this->error( 'expired', 401 );
 		if ( ! $this->customer_ready( $user ) ) return $this->error( 'profile_required', 403 );
 		if ( ! $this->change( $match[1], $row, null ) ) return $this->error( 'expired', 401 );
 		return ( $this->issue )( $user );

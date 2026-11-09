@@ -1,4 +1,5 @@
 import 'package:mobishop_store_app/features/account/data/storage/account_deletion_receipt_store.dart';
+import 'package:mobishop_store_app/features/auth/application/auth_controller.dart';
 import 'package:mobishop_store_app/features/account/presentation/account_deletion_screen.dart';
 import 'package:mobishop_store_app/features/account/presentation/store_privacy_body_loader.dart';
 import '../../../support/viewport_rotation.dart';
@@ -25,54 +26,177 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/native_a
 import '../../auth/support/idle_native_auth_actions.dart';
 
 void main() {
-  for (final screenSize in [const Size(375, 812), const Size(390, 844)]) {
-  for (final language in ['en', 'ar']) {
-  for (final hasReceipt in [false, true]) {
-  testWidgets('iPhone $screenSize $language receipt=$hasReceipt published account cards fit above navigation', (tester) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = screenSize;
-    tester.view.padding = const FakeViewPadding(top: 44, bottom: 34);
-    tester.view.viewPadding = const FakeViewPadding(top: 44, bottom: 34);
-    addTearDown(tester.view.reset);
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        authRepositoryProvider.overrideWithValue(_SignedInRepository()),
-        accountDeletionAvailabilityProvider.overrideWith((ref) async => true),
-        accountDeletionReceiptProvider.overrideWith((ref) async => hasReceipt
-            ? const AccountDeletionReceipt(receipt: 'fixture', userId: 7, sessionHash: 'fixture')
-            : null),
-        storePrivacyProvider.overrideWithValue(Uri.parse('https://merchant.example/privacy')),
-        cmsPageLayoutProvider('account').overrideWith((ref) async {
-          final base = CmsPageLayout.fallback('account');
-          return CmsPageLayout(page: base.page, header: base.header, footer: base.footer,
-            elements: [for (final element in base.elements) CmsPageComponent(
-              id: element.id, type: element.type, enabled: element.enabled,
-              settings: {...element.settings, if (element.id == 'account_menu') 'compact_family': false},
-            )]);
-        }),
-      ],
-      child: MaterialApp(theme: ThemeData(platform: TargetPlatform.iOS),
-        locale: Locale(language),
-        supportedLocales: const [Locale('en'), Locale('ar')],
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
-        home: const Scaffold(body: AccountScreen(), bottomNavigationBar: SafeArea(child: SizedBox(height: 64)))),
-    ));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('account-deletion-status')), findsNothing);
-    final privacy = tester.getRect(find.byKey(const Key('store-privacy-policy')));
-    final deletion = tester.getRect(find.byKey(const Key('account-delete')));
-    final languageTile = tester.getRect(find.byKey(const Key('account-language')));
-    expect(privacy.center.dy, closeTo(deletion.center.dy, 1));
-    expect(privacy.top - languageTile.bottom, greaterThanOrEqualTo(8));
-    for (final key in ['account-action-orders', 'account-action-addresses', 'account-action-profile', 'account-action-support', 'account-language', 'account-delete', 'account-sign-out']) {
-      expect(find.byKey(Key(key)).hitTestable(), findsOneWidget, reason: key);
-      expect(tester.getSize(find.byKey(Key(key))).height, greaterThanOrEqualTo(44), reason: key);
+  for (final action in ['orders', 'addresses', 'profile']) {
+    for (final outcome in ['success', 'cancel', 'false-success']) {
+      testWidgets('$action continues only after real sign-in: $outcome', (
+        tester,
+      ) async {
+        final auth = _TransitionAuth();
+        final router = GoRouter(
+          initialLocation: '/account',
+          routes: [
+            GoRoute(path: '/account', builder: (_, _) => const AccountScreen()),
+            GoRoute(
+              path: '/$action',
+              builder: (_, _) => const Scaffold(body: Text('DESTINATION')),
+            ),
+            GoRoute(
+              path: '/auth',
+              builder: (context, _) => Scaffold(
+                body: TextButton(
+                  child: const Text('finish fixture'),
+                  onPressed: () {
+                    if (outcome == 'success') auth.publish();
+                    context.pop(outcome != 'cancel');
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+        addTearDown(router.dispose);
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              authControllerProvider.overrideWith(() => auth),
+              cmsPageLayoutProvider(
+                'account',
+              ).overrideWith((_) async => CmsPageLayout.fallback('account')),
+            ],
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.ensureVisible(find.byKey(Key('account-action-$action')));
+        await tester.tap(find.byKey(Key('account-action-$action')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('finish fixture'));
+        await tester.pumpAndSettle();
+        expect(
+          find.text('DESTINATION'),
+          outcome == 'success' ? findsOneWidget : findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      });
     }
-    expect(tester.state<ScrollableState>(find.byType(Scrollable).first).position.maxScrollExtent, 0);
-    expect(tester.takeException(), isNull);
-  });
   }
-  }
+  for (final screenSize in [const Size(375, 812), const Size(390, 844)]) {
+    for (final language in ['en', 'ar']) {
+      for (final hasReceipt in [false, true]) {
+        testWidgets(
+          'iPhone $screenSize $language receipt=$hasReceipt published account cards fit above navigation',
+          (tester) async {
+            tester.view.devicePixelRatio = 1;
+            tester.view.physicalSize = screenSize;
+            tester.view.padding = const FakeViewPadding(top: 44, bottom: 34);
+            tester.view.viewPadding = const FakeViewPadding(
+              top: 44,
+              bottom: 34,
+            );
+            addTearDown(tester.view.reset);
+            await tester.pumpWidget(
+              ProviderScope(
+                overrides: [
+                  authRepositoryProvider.overrideWithValue(
+                    _SignedInRepository(),
+                  ),
+                  accountDeletionAvailabilityProvider.overrideWith(
+                    (ref) async => true,
+                  ),
+                  accountDeletionReceiptProvider.overrideWith(
+                    (ref) async => hasReceipt
+                        ? const AccountDeletionReceipt(
+                            receipt: 'fixture',
+                            userId: 7,
+                            sessionHash: 'fixture',
+                          )
+                        : null,
+                  ),
+                  storePrivacyProvider.overrideWithValue(
+                    Uri.parse('https://merchant.example/privacy'),
+                  ),
+                  cmsPageLayoutProvider('account').overrideWith((ref) async {
+                    final base = CmsPageLayout.fallback('account');
+                    return CmsPageLayout(
+                      page: base.page,
+                      header: base.header,
+                      footer: base.footer,
+                      elements: [
+                        for (final element in base.elements)
+                          CmsPageComponent(
+                            id: element.id,
+                            type: element.type,
+                            enabled: element.enabled,
+                            settings: {
+                              ...element.settings,
+                              if (element.id == 'account_menu')
+                                'compact_family': false,
+                            },
+                          ),
+                      ],
+                    );
+                  }),
+                ],
+                child: MaterialApp(
+                  theme: ThemeData(platform: TargetPlatform.iOS),
+                  locale: Locale(language),
+                  supportedLocales: const [Locale('en'), Locale('ar')],
+                  localizationsDelegates: GlobalMaterialLocalizations.delegates,
+                  home: const Scaffold(
+                    body: AccountScreen(),
+                    bottomNavigationBar: SafeArea(child: SizedBox(height: 64)),
+                  ),
+                ),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(
+              find.byKey(const Key('account-deletion-status')),
+              findsNothing,
+            );
+            final privacy = tester.getRect(
+              find.byKey(const Key('store-privacy-policy')),
+            );
+            final deletion = tester.getRect(
+              find.byKey(const Key('account-delete')),
+            );
+            final languageTile = tester.getRect(
+              find.byKey(const Key('account-language')),
+            );
+            expect(privacy.center.dy, closeTo(deletion.center.dy, 1));
+            expect(privacy.top - languageTile.bottom, greaterThanOrEqualTo(8));
+            for (final key in [
+              'account-action-orders',
+              'account-action-addresses',
+              'account-action-profile',
+              'account-action-support',
+              'account-language',
+              'account-delete',
+              'account-sign-out',
+            ]) {
+              expect(
+                find.byKey(Key(key)).hitTestable(),
+                findsOneWidget,
+                reason: key,
+              );
+              expect(
+                tester.getSize(find.byKey(Key(key))).height,
+                greaterThanOrEqualTo(44),
+                reason: key,
+              );
+            }
+            expect(
+              tester
+                  .state<ScrollableState>(find.byType(Scrollable).first)
+                  .position
+                  .maxScrollExtent,
+              0,
+            );
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+    }
   }
 
   viewportRotationTests(
@@ -292,28 +416,30 @@ void main() {
     });
   }
 
-  testWidgets('preview guest account subtitle omits the selected application name', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
-          previewIdentityProvider.overrideWith(
-            (ref) => Stream.value({'app_name': 'كيديا ستور'}),
+  testWidgets(
+    'preview guest account subtitle omits the selected application name',
+    (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(_SignedOutRepository()),
+            previewIdentityProvider.overrideWith(
+              (ref) => Stream.value({'app_name': 'كيديا ستور'}),
+            ),
+          ],
+          child: MaterialApp(
+            locale: const Locale('ar'),
+            supportedLocales: const [Locale('ar')],
+            localizationsDelegates: GlobalMaterialLocalizations.delegates,
+            home: const AccountScreen(),
           ),
-        ],
-        child: MaterialApp(
-          locale: const Locale('ar'),
-          supportedLocales: const [Locale('ar')],
-          localizationsDelegates: GlobalMaterialLocalizations.delegates,
-          home: const AccountScreen(),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('تابع طلباتك وبياناتك'), findsOneWidget);
-  }, skip: !AppConfig.isCmsPreview);
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('تابع طلباتك وبياناتك'), findsOneWidget);
+    },
+    skip: !AppConfig.isCmsPreview,
+  );
 
   testWidgets(
     'private signed-out account actions require the same auth screen',
@@ -505,4 +631,16 @@ class _SignedInRepository extends _SignedOutRepository {
       user: AuthUser(id: 7, email: email, displayName: 'Customer'),
     );
   }
+}
+
+class _TransitionAuth extends AuthController {
+  @override
+  Future<AuthSession?> build() async => null;
+  void publish() => state = AsyncData(
+    AuthSession(
+      token: 'fixture-transition',
+      expiresAt: DateTime.now().toUtc().add(const Duration(hours: 1)),
+      user: const AuthUser(id: 7, email: 'fixture@example.invalid'),
+    ),
+  );
 }

@@ -17,5 +17,5 @@ if(count($matches[0])!==2) throw new RuntimeException('Expected explicit provide
 foreach($matches[0] as $statement) eval($statement);
 if(policy_filter('nsl_facebook_auto_link_allowed',true)!==false) throw new RuntimeException('Facebook matching email must require independent account proof');
 if(policy_filter('nsl_facebook_auto_link_allowed',false)!==false) throw new RuntimeException('Facebook must preserve an earlier denied auto-link');
-if(policy_filter('nsl_google_auto_link_allowed',true)!==true) throw new RuntimeException('Separate Google policy must remain unchanged');
+if(policy_filter('nsl_google_auto_link_allowed',true)!==false) throw new RuntimeException('Google matching email must require independent account proof');
 echo 'Facebook website auto-link policy: 3 checks passed.'.PHP_EOL;

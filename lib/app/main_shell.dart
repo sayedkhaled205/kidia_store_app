@@ -9,6 +9,7 @@ import '../core/theme/mobishop_colors.dart';
 import '../core/config/app_config.dart';
 import '../core/commerce/commerce_connection.dart';
 import '../features/auth/presentation/providers/native_auth_providers.dart';
+import '../features/account/application/account_deletion_recovery.dart';
 import '../core/analytics/mobile_analytics.dart';
 import '../features/page_builder/domain/cms_page_layout.dart';
 import '../features/page_builder/domain/cms_footer_label.dart';
@@ -102,6 +103,7 @@ class _MainShellState extends ConsumerState<MainShell>
     if (!AppConfig.isCmsPreview && state == AppLifecycleState.resumed) {
       ref.read(mobileAnalyticsProvider).trackInBackground('app_resume');
       _refreshRemoteSettings();
+      ref.invalidate(accountDeletionRecoveryProvider);
     }
   }
 
@@ -119,6 +121,7 @@ class _MainShellState extends ConsumerState<MainShell>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(accountDeletionRecoveryProvider);
     final String routePath = GoRouterState.of(context).uri.path;
     final String page = _pageForPath(routePath);
     final AsyncValue<CmsPageLayout> pageLayoutState = ref.watch(
