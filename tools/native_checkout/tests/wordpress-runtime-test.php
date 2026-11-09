@@ -8,6 +8,7 @@
  */
 
 declare(strict_types=1);
+require_once __DIR__.'/wordpress-shipping-variation-runtime.php';
 function cq_assert(bool $condition, string $label): void {
     if (!$condition) throw new RuntimeException('FAIL: '.$label);
     if (!defined('ABSPATH')) echo 'PASS: '.$label.PHP_EOL;
@@ -136,6 +137,7 @@ function cq_parent(): void {
     cq_assert($final['orders']===$unknownSnapshot['orders'] && $final['processed']===3 && $final['zero_stock']===4,
         'Failure and retries do not create another order or repeat stock side effects');
     cq_assert($final['mail_blocked']>0,'Real order emails reached the suppression filter without delivery');
+    cq_sv_parent($seed);
     echo 'Real WordPress/MySQL/Store API checkout passed all runtime assertions.'.PHP_EOL;
 }
 
@@ -183,9 +185,10 @@ function cq_worker(): array {
             $product->save(); $products[$name.'_product']=$product->get_id();
         }
         $coupon=new WC_Coupon(); $coupon->set_code('ci-checkout-free'); $coupon->set_discount_type('percent'); $coupon->set_amount(100); $coupon->save();
-        $seed=$products+['users'=>$users]; add_option('cq_seed',$seed,'',false); return $seed;
+        $seed=$products+['users'=>$users]+cq_sv_seed(); add_option('cq_seed',$seed,'',false); return $seed;
     }
     $seed=get_option('cq_seed'); cq_assert(is_array($seed),'Disposable seed exists');
+    if($input['phase']==='sv_snapshot') return cq_sv_snapshot($seed,(int)($input['order_id']??0));
     if($input['phase']==='snapshot') {
         $orders=[];
         foreach($seed['users'] as $customer) {

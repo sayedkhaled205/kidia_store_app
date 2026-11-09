@@ -74,6 +74,7 @@ jobs:
           php -l tools/customer_identity/tests/wordpress-runtime-test.php
           php -l tools/native_checkout/tests/wordpress-runtime-test.php
           php -l tools/native_checkout/tests/wordpress-bootstrap.php
+          php -l tools/native_checkout/tests/wordpress-shipping-variation-runtime.php
       - name: Install official WordPress and WooCommerce in disposable database
         shell: bash
         run: |

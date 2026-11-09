@@ -12,7 +12,7 @@ register_shutdown_function(static function() {
     }
 });
 $input=json_decode(stream_get_contents(STDIN),true,512,JSON_THROW_ON_ERROR);
-if(!is_array($input) || !in_array($input['phase']??'', ['seed','snapshot','request'], true)) {
+if(!is_array($input) || !in_array($input['phase']??'', ['seed','snapshot','request','sv_snapshot'], true)) {
     throw new RuntimeException('Invalid checkout fixture phase.');
 }
 $GLOBALS['cq_input']=$input;
