@@ -34,6 +34,8 @@ enum _AuthStep {
   accounts,
   registration,
   phone,
+  accountEmailPassword,
+  emailRegistration,
 }
 
 class AuthScreen extends ConsumerStatefulWidget {
@@ -66,6 +68,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   NativeOtpChallenge? _challenge;
   String? _otpTicket;
   String? _recoveryPhone;
+  String? _registrationPhone;
   bool _canRetryCode = false;
   bool _confirmContactPhone = false;
   bool _existingContactPhone = false;
@@ -136,27 +139,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final hasIdentifier =
         config?.supportsPhone == true ||
         config?.allows('email_password') == true;
+    const independentProviderSteps = [
+      _AuthStep.identifier,
+      _AuthStep.method,
+      _AuthStep.password,
+      _AuthStep.recovery,
+      _AuthStep.accountEmailPassword,
+      _AuthStep.emailRegistration,
+    ];
     final showGoogle =
-        [
-          _AuthStep.identifier,
-          _AuthStep.method,
-          _AuthStep.password,
-          _AuthStep.recovery,
-        ].contains(_step) &&
+        independentProviderSteps.contains(_step) &&
         config?.allows('google') == true &&
         (_expectedGooglePhone == null ||
             (config!.supportsExpectedPhoneGoogle &&
                 _actions is NativeExistingPhoneGoogleActions));
     final showFacebook =
-        [_AuthStep.identifier, _AuthStep.password].contains(_step) &&
-        _expectedGooglePhone == null &&
+        independentProviderSteps.contains(_step) &&
         (config?.allows('facebook') == true ||
             config?.allows('facebook_native') == true);
     final showApple =
         !kIsWeb &&
         defaultTargetPlatform == TargetPlatform.iOS &&
-        [_AuthStep.identifier, _AuthStep.password].contains(_step) &&
-        _expectedGooglePhone == null &&
+        independentProviderSteps.contains(_step) &&
         config?.allows('apple') == true &&
         _actions is NativeAppleAuthActions;
     final copy = AuthCopy.of(context);
@@ -336,6 +340,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           if ([
                                 _AuthStep.method,
                                 _AuthStep.password,
+                                _AuthStep.accountEmailPassword,
                                 _AuthStep.recovery,
                               ].contains(_step) &&
                               _identity?.requiresEmailRegistration != true &&
@@ -356,6 +361,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                       }
                                     }),
                               child: Text(copy.forgotPassword),
+                            ),
+                          if ([
+                                _AuthStep.password,
+                                _AuthStep.accountEmailPassword,
+                                _AuthStep.emailRegistration,
+                              ].contains(_step) &&
+                              _identity?.kind == 'phone')
+                            TextButton(
+                              key: const Key('auth-choose-method'),
+                              onPressed: _busy
+                                  ? null
+                                  : () => _chooseMethodStep(_AuthStep.method),
+                              child: Text(copy.chooseAnotherWay),
                             ),
                           if (_step == _AuthStep.otp)
                             TextButton(
@@ -427,6 +445,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                                   _challenge = null;
                                                   _otpTicket = null;
                                                   _continuation = null;
+                                                  _pendingCommit = null;
                                                   _canRetryCode = false;
                                                 });
                                                 _registrationDetailsCollected =
@@ -436,7 +455,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                                             as NativeAppleAuthActions)
                                                         .apple();
                                                 if (_active(flow)) {
-                                                  _identity = null;
+                                                  if (result.status ==
+                                                      NativeAuthStatus
+                                                          .registrationRequired) {
+                                                    _identity = null;
+                                                  }
                                                   await _acceptResult(
                                                     result,
                                                     flow,
@@ -487,6 +510,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                                   _challenge = null;
                                                   _otpTicket = null;
                                                   _continuation = null;
+                                                  _pendingCommit = null;
                                                   _canRetryCode = false;
                                                 });
                                                 _registrationDetailsCollected =
@@ -634,6 +658,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _AuthStep.registration => copy.completeAccount,
     _AuthStep.phone =>
       _existingContactPhone ? copy.existingPhoneTitle : copy.verifyPhone,
+    _AuthStep.accountEmailPassword => copy.accountEmailPasswordTitle,
+    _AuthStep.emailRegistration => copy.newAccountEmailTitle,
   };
 
   List<Widget> _identitySummary(AuthCopy copy) {
@@ -715,20 +741,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   ? copy.createWithEmail
                   : copy.useAccountEmail,
               icon: Icons.email_outlined,
-              onPressed: () {
-                _changeIdentifier();
-                _identifier.clear();
-              },
+              onPressed: () => _chooseMethodStep(
+                _identity!.requiresEmailRegistration
+                    ? _AuthStep.emailRegistration
+                    : _AuthStep.accountEmailPassword,
+              ),
             ),
           if (_identity!.allows('password') && _phonePasswordEnabled(config))
             _methodButton(
               key: const Key('auth-use-password'),
               label: copy.usePassword,
               icon: Icons.password_rounded,
-              onPressed: () => setState(() {
-                _step = _AuthStep.password;
-                _error = null;
-              }),
+              onPressed: () => _chooseMethodStep(_AuthStep.password),
             ),
           if (_identity!.allows('phone_otp') && config.allows('phone_otp')) ...[
             const SizedBox(height: 12),
@@ -772,6 +796,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 }
                 setState(() {
                   _identity = identity;
+                  _pendingCommit = null;
                   _registrationDetailsCollected = false;
                   _continuation = null;
                   _challenge = null;
@@ -833,6 +858,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ];
       case _AuthStep.password:
         return _passwordFields(copy, creating: false);
+      case _AuthStep.accountEmailPassword:
+      case _AuthStep.emailRegistration:
+        return [
+          _textField(
+            key: const Key('auth-account-email'),
+            controller: _email,
+            label: copy.email,
+            keyboard: TextInputType.emailAddress,
+            autofill: AutofillHints.username,
+            validator: (value) =>
+                _validEmail(value ?? '') ? null : copy.emailRequired,
+            onSubmitted: () => _submit(copy, config),
+          ),
+          if (_step == _AuthStep.accountEmailPassword) ...[
+            const SizedBox(height: 14),
+            ..._passwordFields(copy, creating: false),
+          ],
+        ];
       case _AuthStep.otp:
         return [
           _textField(
@@ -1102,7 +1145,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final field = TextFormField(
       key: key,
       controller: controller,
-      enabled: !_busy,
+      enabled: !_busy && _pendingCommit == null,
       keyboardType: keyboard,
       textInputAction: onSubmitted == null
           ? TextInputAction.next
@@ -1144,7 +1187,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     child: TextFormField(
       key: key,
       controller: controller,
-      enabled: !_busy,
+      enabled: !_busy && _pendingCommit == null,
       obscureText: obscure,
       textInputAction: creating ? TextInputAction.next : TextInputAction.done,
       autofillHints: [
@@ -1278,8 +1321,26 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       ? config.allows('phone_password')
       : config.allows('password');
 
+  Future<void> _chooseMethodStep(_AuthStep step) => _perform((flow) async {
+    _otpEpoch++;
+    await _actions!.cancel();
+    if (!_active(flow)) return;
+    setState(() {
+      _pendingCommit = null;
+      _continuation = null;
+      _challenge = null;
+      _otpTicket = null;
+      _canRetryCode = false;
+      _registrationDetailsCollected = false;
+      _password.clear();
+      _step = step;
+    });
+  });
+
   String? get _expectedGooglePhone =>
-      _identity?.kind == 'phone' && _identity?.allows('password') == true
+      _recoveryPhone != null &&
+          _identity?.kind == 'phone' &&
+          _identity?.allows('password') == true
       ? _identity!.identifier
       : null;
 
@@ -1293,7 +1354,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ].contains(_step));
   String get _submitKey => switch (_step) {
     _AuthStep.identifier => 'auth-continue',
-    _AuthStep.password => 'auth-sign-in',
+    _AuthStep.password || _AuthStep.accountEmailPassword => 'auth-sign-in',
     _AuthStep.createPassword || _AuthStep.registration => 'auth-register',
     _AuthStep.otp => 'auth-verify-otp',
     _AuthStep.phone => 'auth-send-otp',
@@ -1303,7 +1364,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       ? copy.continueLabel
       : switch (_step) {
           _AuthStep.identifier => copy.continueLabel,
-          _AuthStep.password => copy.signIn,
+          _AuthStep.password || _AuthStep.accountEmailPassword => copy.signIn,
           _AuthStep.createPassword ||
           _AuthStep.registration => copy.createAccount,
           _AuthStep.otp => copy.verifyCode,
@@ -1335,7 +1396,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           if (identity.allows('create_password')) {
             setState(() => _step = _AuthStep.createPassword);
           } else if (identity.allows('email_password') ||
-              (identity.allows('password') && identity.allows('phone_otp'))) {
+              (identity.kind == 'phone' && identity.allows('password'))) {
             setState(() => _step = _AuthStep.method);
           } else if (identity.allows('password')) {
             setState(() => _step = _AuthStep.password);
@@ -1352,6 +1413,30 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             _password.text,
           );
           if (_active(flow)) await _acceptResult(result, flow);
+        case _AuthStep.accountEmailPassword:
+          final result = await _actions!.password(
+            _email.text.trim(),
+            _password.text,
+          );
+          if (_active(flow)) await _acceptResult(result, flow);
+        case _AuthStep.emailRegistration:
+          final phone = _identity!.identifier;
+          final identity = await _actions!.identify(_email.text.trim());
+          if (!_active(flow)) return;
+          if (identity.kind != 'email' ||
+              (!identity.allows('password') &&
+                  !identity.allows('create_password'))) {
+            throw StateError('Email authentication is unavailable.');
+          }
+          setState(() {
+            _registrationPhone = phone;
+            _phone.text = phone;
+            _identity = identity;
+            _identifier.text = identity.identifier;
+            _step = identity.allows('create_password')
+                ? _AuthStep.createPassword
+                : _AuthStep.password;
+          });
         case _AuthStep.phone:
           final phone = config.normalizeOtpPhone(_phone.text)!;
           if (_confirmContactPhone &&
@@ -1444,6 +1529,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     String? ticket,
   }) async {
     final epoch = ++_otpEpoch;
+    _pendingCommit = null;
     _recoveryPhone = phone;
     NativeOtpChallenge challenge;
     var boundTicket = ticket;
@@ -1687,6 +1773,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         case NativeAuthStatus.registrationRequired:
           setState(() {
             _continuation = result;
+            if (result.fields.contains('phone') &&
+                _registrationPhone != null &&
+                _phone.text.isEmpty) {
+              _phone.text = _registrationPhone!;
+            }
             _step = result.fields.contains('phone')
                 ? _AuthStep.phone
                 : _AuthStep.registration;
@@ -1728,7 +1819,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (error.kind == AuthFailureKind.unauthorized &&
           (error.code == null || error.code == 'invalid-verification-code')) {
         if (_step == _AuthStep.otp) return copy.otpIncorrect;
-        if (_step == _AuthStep.password || _step == _AuthStep.createPassword) {
+        if (_step == _AuthStep.password ||
+            _step == _AuthStep.createPassword ||
+            _step == _AuthStep.accountEmailPassword) {
           return copy.passwordIncorrect;
         }
       }
@@ -1763,6 +1856,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _challenge = null;
       _otpTicket = null;
       _recoveryPhone = null;
+      _registrationPhone = null;
       _canRetryCode = false;
       _confirmContactPhone = false;
       _existingContactPhone = false;
@@ -1797,6 +1891,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     }
     await _actions!.cancel();
     if (!_active(flow)) return;
+    _otpEpoch++;
+    setState(() {
+      _challenge = null;
+      _otpTicket = null;
+      _continuation = null;
+      _pendingCommit = null;
+      _canRetryCode = false;
+    });
+    _registrationDetailsCollected = false;
     final actions = _actions;
     if (ref.read(nativeAuthConfigProvider).value?.allows('facebook_native') ==
             true &&
@@ -1804,7 +1907,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       try {
         final result = await (actions as NativeFacebookAuthActions).facebook();
         if (_active(flow)) {
-          _identity = null;
+          if (result.status == NativeAuthStatus.registrationRequired) {
+            _identity = null;
+          }
           _registrationDetailsCollected = false;
           await _acceptResult(result, flow);
         }

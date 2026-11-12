@@ -2,11 +2,46 @@ import plistlib
 import tempfile
 import unittest
 from pathlib import Path
-from configure_ios_store import configure, _google_auth_settings, _apply_google_auth
+from configure_ios_store import configure, _google_auth_settings, _apply_google_auth, _apply_firebase_auth_callback
 from native_auth_build import apple_required, from_environment
 
 
 class StoreIdentityTest(unittest.TestCase):
+    def test_firebase_callback_rejects_invalid_input_and_preserves_providers(self):
+        for value in ('https://invalid.example', '1:123:android:abc', '1:123:ios:abc/other', 123):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                _apply_firebase_auth_callback({}, {'firebase': {'appId': value}})
+        info = {'CFBundleURLTypes': [{'CFBundleURLSchemes': ['mobishop-store-app', 'fb123']} ]}
+        auth = {'firebase': {'appId': '1:123:ios:abc'}}
+        _apply_firebase_auth_callback(info, auth)
+        _apply_firebase_auth_callback(info, auth)
+        self.assertEqual(len(info['CFBundleURLTypes']), 2)
+        self.assertEqual(info['CFBundleURLTypes'][0]['CFBundleURLSchemes'], ['mobishop-store-app', 'fb123'])
+        empty = {}
+        _apply_firebase_auth_callback(empty, None)
+        self.assertEqual(empty, {})
+
+    def test_phone_callback_uses_explicit_auth_app_even_before_remote_activation(self):
+        # Native FirebaseOptions has no OAuth client ID, so phone auth uses the
+        # encoded app ID callback, independently of Google Sign-In's callback.
+        for nested in (False, True):
+            with self.subTest(nested=nested), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                project = root / 'ios/Runner.xcodeproj/project.pbxproj'
+                project.parent.mkdir(parents=True)
+                project.write_text('PRODUCT_BUNDLE_IDENTIFIER = com.example.mobishopStoreApp;\n' * 3)
+                info_path = root / 'ios/Runner/Info.plist'
+                info_path.parent.mkdir()
+                info_path.write_bytes(plistlib.dumps({'CFBundleURLTypes': [{'CFBundleURLSchemes': ['mobishop-store-app']}]}))
+                firebase = {'appId': '1:123456:ios:abc123', 'iosBundleId': 'com.customer.store'}
+                auth = {'methods': {'phone_otp': False}, 'firebase': {'ios': firebase} if nested else firebase,
+                        'google': {'ios_client_id': '123-ios.apps.googleusercontent.com'}}
+                configure(root, 'com.customer.store', 'AB12345678', 'Store', native_auth=auth)
+                schemes = [s for e in plistlib.loads(info_path.read_bytes())['CFBundleURLTypes'] for s in e['CFBundleURLSchemes']]
+                self.assertEqual(schemes.count('app-1-123456-ios-abc123'), 1)
+                self.assertIn('mobishop-store-app', schemes)
+                self.assertIn('com.googleusercontent.apps.123-ios', schemes)
+
     def test_apple_capability_requires_boolean_and_explicit_input(self):
         for value in ([], {"methods": []}, {"methods": {"apple": "true"}}, {"methods": {"apple": 1}}):
             with self.subTest(value=value), self.assertRaises(ValueError):

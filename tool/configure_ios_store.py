@@ -92,6 +92,32 @@ def _apply_google_auth(info, settings):
         })
 
 
+def _apply_firebase_auth_callback(info, native_auth):
+    firebase = (native_auth or {}).get('firebase') or {}
+    if not isinstance(firebase, dict):
+        raise ValueError('Invalid native Firebase authentication configuration')
+    firebase = firebase.get('ios', firebase)
+    if not isinstance(firebase, dict):
+        raise ValueError('Invalid native iOS Firebase authentication configuration')
+    app_id = firebase.get('appId')
+    if app_id is None:
+        return
+    if not isinstance(app_id, str) or not re.fullmatch(r'1:[0-9]+:ios:[a-fA-F0-9]+', app_id):
+        raise ValueError('Invalid native iOS Firebase authentication app ID')
+    # The runtime auth Firebase app has no clientID: Firebase phone auth uses
+    # this callback even when the separate Google Sign-In callback is present.
+    scheme = 'app-' + app_id.replace(':', '-')
+    entries = info.setdefault('CFBundleURLTypes', [])
+    if not isinstance(entries, list) or any(not isinstance(entry, dict)
+            or not isinstance(entry.get('CFBundleURLSchemes', []), list)
+            or any(not isinstance(s, str) for s in entry.get('CFBundleURLSchemes', [])) for entry in entries):
+        raise ValueError('Invalid existing iOS URL scheme configuration')
+    schemes = [s for entry in entries for s in entry.get('CFBundleURLSchemes', [])]
+    if scheme not in schemes:
+        entries.append({'CFBundleTypeRole': 'Editor', 'CFBundleURLName': 'com.mobishop.native-firebase-auth',
+                        'CFBundleURLSchemes': [scheme]})
+
+
 def configure(root, bundle, team, name, signing_required=True, native_auth=None, google_services_plist=None):
     apple = apple_required(native_auth)
     if not re.fullmatch(r"[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+", bundle):
@@ -117,6 +143,7 @@ def configure(root, bundle, team, name, signing_required=True, native_auth=None,
     info["CFBundleDisplayName"] = name
     info["CFBundleName"] = name
     _apply_google_auth(info, _google_auth_settings(bundle, native_auth, google_services_plist))
+    _apply_firebase_auth_callback(info, native_auth)
     info['FacebookAutoLogAppEventsEnabled'] = False
     info['FacebookAdvertiserIDCollectionEnabled'] = False
     facebook = facebook_settings(native_auth)

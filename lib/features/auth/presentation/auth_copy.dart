@@ -51,6 +51,14 @@ class AuthCopy {
   String get createWithEmail => isArabic
       ? 'إنشاء حساب بالبريد الإلكتروني'
       : 'Create an account with email';
+  String get accountEmailPasswordTitle => isArabic
+      ? 'الدخول بالبريد الإلكتروني وكلمة المرور'
+      : 'Sign in with email and password';
+  String get newAccountEmailTitle => isArabic
+      ? 'إنشاء حساب بالبريد الإلكتروني'
+      : 'Create an account with email';
+  String get chooseAnotherWay =>
+      isArabic ? 'اختيار طريقة أخرى' : 'Choose another way';
   String get otpSendFailed => isArabic
       ? 'تعذر إرسال رمز التحقق. اختار طريقة تانية للدخول.'
       : 'Unable to send the verification code. Choose another way to sign in.';

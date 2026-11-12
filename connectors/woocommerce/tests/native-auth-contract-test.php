@@ -371,12 +371,24 @@ native_assert( str_contains( $config_response->headers['Cache-Control'] ?? '', '
 native_assert( $config['methods']['phone_otp'] && $config['methods']['google'], 'Configured native providers are available' );
 native_assert( $config['phone_country_code'] === '20', 'Local phone input uses the configured store dialing code' );
 $settings_snapshot = $GLOBALS['native_options']['mobishop_native_auth_settings'];
-$GLOBALS['native_options']['mobishop_native_auth_settings']['firebase']['ios'] = array( 'apiKey' => 'fixture-ios-api', 'appId' => '1:123:ios:fixture', 'projectId' => 'test-project', 'messagingSenderId' => '123', 'iosBundleId' => 'app.fixture.native' );
+$GLOBALS['native_options']['mobishop_native_auth_settings']['firebase']['ios'] = array( 'apiKey' => 'fixture-ios-api', 'appId' => '1:123:ios:abc123', 'projectId' => 'test-project', 'messagingSenderId' => '123', 'iosBundleId' => 'app.fixture.native' );
 $ios_pending = native_data( $endpoint->config( native_request( array( 'platform' => 'ios' ) ) ), 'Pending iOS phone configuration' );
 native_assert( ! $ios_pending['methods']['phone_otp'] && $ios_pending['firebase'] === null, 'Native iOS SDK options alone do not advertise unverified secondary-app phone authentication' );
+native_assert( $ios_pending['ios_phone_callback'] === array( 'appId' => '1:123:ios:abc123', 'iosBundleId' => 'app.fixture.native' ), 'The build can freeze its public callback before SMS or Apple activation without provider credentials' );
 $GLOBALS['native_options']['mobishop_native_auth_settings']['ios_phone_native_ready'] = true;
-$ios_ready = native_data( $endpoint->config( native_request( array( 'platform' => 'ios' ) ) ), 'Verified iOS phone configuration' );
+$ios_legacy = native_data( $endpoint->config( native_request( array( 'platform' => 'ios' ) ) ), 'Legacy iOS phone configuration' );
+native_assert( ! $ios_legacy['methods']['phone_otp'], 'Older iOS binaries without the Firebase callback must not receive phone OTP' );
+$ios_ready = native_data( $endpoint->config( native_request( array( 'platform' => 'ios', 'ios_phone_callback_version' => 1 ) ) ), 'Verified iOS phone configuration' );
 native_assert( $ios_ready['methods']['phone_otp'], 'iOS phone requires its independent explicit readiness attestation' );
+foreach ( array( null, 0, 2, true, array( 1 ), '01' ) as $unsupported_callback ) {
+	$ios_unsupported = native_data( $endpoint->config( native_request( array( 'platform' => 'ios', 'ios_phone_callback_version' => $unsupported_callback ) ) ), 'Unsupported iOS callback version' );
+	native_assert( ! $ios_unsupported['methods']['phone_otp'], 'Unsupported callback versions cannot enable iOS phone authentication' );
+}
+$ios_query = native_data( $endpoint->config( native_request( array( 'platform' => 'ios', 'ios_phone_callback_version' => '1' ) ) ), 'iOS callback query version' );
+native_assert( $ios_query['methods']['phone_otp'], 'GET query callback versions are supported' );
+$GLOBALS['native_options']['mobishop_native_auth_settings']['ios_phone_native_ready'] = false;
+$ios_not_ready = native_data( $endpoint->config( native_request( array( 'platform' => 'ios', 'ios_phone_callback_version' => 1 ) ) ), 'Unverified iOS configuration' );
+native_assert( ! $ios_not_ready['methods']['phone_otp'], 'The app callback does not replace service readiness' );
 $GLOBALS['native_options']['mobishop_native_auth_settings'] = $settings_snapshot;
 $GLOBALS['native_options']['mobishop_native_auth_settings']['firebase']['android']['projectId'] = 'another-project';
 $misconfigured = native_data( $endpoint->config( native_request( array( 'platform' => 'android' ) ) ), 'Mismatched Firebase configuration' );

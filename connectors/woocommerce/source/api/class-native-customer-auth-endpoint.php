@@ -62,7 +62,9 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$phone = ! empty( $s['phone_enabled'] ) && preg_match( '/^[a-z][a-z0-9-]{3,62}$/', $project )
 			&& ( $f['projectId'] ?? '' ) === $project && ! empty( $f['apiKey'] ) && ! empty( $f['messagingSenderId'] )
 			&& strpos( (string) ( $f['appId'] ?? '' ), ':' . $platform . ':' ) !== false
-			&& ( $platform !== 'ios' || ( ! empty( $f['iosBundleId'] ) && ! empty( $s['ios_phone_native_ready'] ) ) );
+			// Old iOS binaries have no secondary-Firebase callback and must keep their existing fallback.
+			&& ( $platform !== 'ios' || ( ! empty( $f['iosBundleId'] ) && ! empty( $s['ios_phone_native_ready'] )
+				&& in_array( $request->get_param( 'ios_phone_callback_version' ), array( 1, '1' ), true ) ) );
 		$g = is_array( $s['google'] ?? null ) ? $s['google'] : array();
 		$client = (string) ( $g['server_client_id'] ?? '' );
 		$native = $platform === 'ios' ? array( $g['ios_client_id'] ?? '' ) : (array) ( $g['android_client_ids'] ?? array() );
@@ -80,6 +82,9 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		// New-account contact enrollment remains available without an operational SMS provider.
 		// It records an unverified number; it cannot authenticate an existing account.
 		$registration = $enabled && $this->registration_enabled();
+		// Signing needs this public identity even before SMS is activated. It grants no login method.
+		$ios_callback = $enabled && $platform === 'ios' && ! empty( $f['iosBundleId'] )
+			&& ( $f['projectId'] ?? '' ) === $project && preg_match( '/^1:[0-9]+:ios:[a-fA-F0-9]+$/D', (string) ( $f['appId'] ?? '' ) );
 		return array(
 			'version' => 1, 'enabled' => $enabled,
 			'privacy_policy_url' => function_exists( 'get_privacy_policy_url' ) ? esc_url_raw( get_privacy_policy_url(), array( 'https' ) ) : '',
@@ -93,6 +98,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 				'facebook_native' => $facebook_native,
 				'registration' => $registration, 'email_registration' => $registration ),
 			'firebase' => $enabled && ( $phone || $apple ) ? $f : null,
+			'ios_phone_callback' => $ios_callback ? array_intersect_key( $f, array_flip( array( 'appId', 'iosBundleId' ) ) ) : null,
 			'google' => $enabled && $google ? array( 'server_client_id' => $client, 'ios_client_id' => $platform === 'ios' ? $g['ios_client_id'] : null ) : null,
 			'facebook' => $facebook_native ? array( 'app_id' => $fb['app_id'], 'client_token' => $fb['client_token'] ) : null,
 		);

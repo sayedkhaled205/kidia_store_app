@@ -683,7 +683,12 @@ class NativeAuthService
   ) => _wait(
     _request(
       action,
-      body: {'platform': _platform, 'verifier': attempt.verifier, ...body},
+      body: {
+        'platform': _platform,
+        if (_platform == 'ios') 'ios_phone_callback_version': 1,
+        'verifier': attempt.verifier,
+        ...body,
+      },
     ),
     attempt,
   );
@@ -712,7 +717,12 @@ class NativeAuthService
     final path = _store.path.replaceFirst(RegExp(r'/+$'), '');
     final uri = _store.replace(
       path: '$path/wp-json/mobishop/v1/auth/native/$action',
-      queryParameters: method == 'GET' ? {'platform': _platform} : null,
+      queryParameters: method == 'GET'
+          ? {
+              'platform': _platform,
+              if (_platform == 'ios') 'ios_phone_callback_version': '1',
+            }
+          : null,
     );
     try {
       final response = await _dio.requestUri<Object?>(

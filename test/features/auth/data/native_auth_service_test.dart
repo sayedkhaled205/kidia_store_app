@@ -80,6 +80,24 @@ Future<void> _until(bool Function() ready) async {
 }
 
 void main() {
+  test(
+    'iOS advertises its secondary Firebase callback in config and proof requests',
+    () async {
+      final h = _Harness(platform: 'ios');
+      await h.service.config();
+      await h.service.apple();
+      expect(
+        h.requests
+            .where((r) => r.method == 'GET')
+            .single
+            .uri
+            .queryParameters['ios_phone_callback_version'],
+        '1',
+      );
+      expect(h.posts('apple').single.data['ios_phone_callback_version'], 1);
+      expect(h.store.writes, 0);
+    },
+  );
   for (final action in ['register', 'phone/confirm', 'select']) {
     for (final rejection in [
       (409, 'mobishop_native_retry'),

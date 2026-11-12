@@ -74,7 +74,14 @@ void main() {
           challenge.uri.toString(),
           'https://shop.example/store/wp-json/mobishop/v1/auth/native/facebook/challenge',
         );
-        expect(challenge.data.keys, unorderedEquals(['platform', 'verifier']));
+        expect(
+          challenge.data.keys,
+          unorderedEquals([
+            'platform',
+            if (platform == 'ios') 'ios_phone_callback_version',
+            'verifier',
+          ]),
+        );
         expect(challenge.data['platform'], platform);
         expect(challenge.data['verifier'], matches(r'^[a-f0-9]{64}$'));
         expect(
@@ -83,7 +90,13 @@ void main() {
         );
         expect(
           exchange.data.keys,
-          unorderedEquals(['platform', 'verifier', 'ticket', field]),
+          unorderedEquals([
+            'platform',
+            if (platform == 'ios') 'ios_phone_callback_version',
+            'verifier',
+            'ticket',
+            field,
+          ]),
         );
         expect(exchange.data['platform'], platform);
         expect(exchange.data['verifier'], challenge.data['verifier']);

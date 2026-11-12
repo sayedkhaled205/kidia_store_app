@@ -41,7 +41,8 @@ def prepare(environment, output, fetcher=fetch_public_config):
         config = load_json(raw)
     elif platform == 'woocommerce':
         target = 'ios' if environment.get('IOS_BUNDLE_ID') else 'android'
-        config = fetcher(store + '/wp-json/mobishop/v1/auth/native/config?platform=' + target)
+        query = target + ('&ios_phone_callback_version=1' if target == 'ios' else '')
+        config = fetcher(store + '/wp-json/mobishop/v1/auth/native/config?platform=' + query)
         if (not isinstance(config, dict) or config.get('version') != 1
                 or type(config.get('enabled')) is not bool
                 or not isinstance(config.get('methods'), dict)):
@@ -71,9 +72,9 @@ def prepare(environment, output, fetcher=fetch_public_config):
         selected['facebook'] = facebook
     for section, keys in (
         ('google', ('ios_client_id', 'server_client_id', 'ios_bundle_id')),
-        ('firebase', ('iosBundleId', 'projectId')),
+        ('firebase', ('iosBundleId', 'projectId', 'appId')),
     ):
-        source = config.get(section) or {}
+        source = config.get(section) or (config.get('ios_phone_callback') if section == 'firebase' else None) or {}
         if not isinstance(source, dict):
             raise ValueError('Invalid public native authentication settings.')
         if section == 'firebase' and 'ios' in source:
@@ -84,12 +85,14 @@ def prepare(environment, output, fetcher=fetch_public_config):
         if any(not isinstance(value, str) or len(value) > 512 for value in selected[section].values()):
             raise ValueError('Invalid public iOS client setting.')
     # Reuse the existing bundle/client validation before writing any snapshot.
-    from configure_ios_store import _google_auth_settings
+    from configure_ios_store import _google_auth_settings, _apply_firebase_auth_callback
     google = (_google_auth_settings(environment['IOS_BUNDLE_ID'], selected,
                                   environment.get('NATIVE_AUTH_GOOGLE_SERVICES_PLIST') or None)
               if environment.get('IOS_BUNDLE_ID') else None)
     if environment.get('IOS_BUNDLE_ID') and config.get('methods', {}).get('google') is True and google is None:
         raise ValueError('Enabled Google sign-in requires its iOS client settings.')
+    if environment.get('IOS_BUNDLE_ID'):
+        _apply_firebase_auth_callback({}, selected)
     if google:
         selected['google']['ios_client_id'] = google['client']
         if google['server']:

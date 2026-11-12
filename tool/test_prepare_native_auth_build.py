@@ -7,10 +7,37 @@ import unittest
 
 from native_auth_build import from_environment
 from prepare_native_auth_build import NoRedirect, prepare
+from configure_ios_store import configure
 from verify_ios_signing import identity, validate_entitlements, SigningError
 
 
 class NativeAuthSnapshotTest(unittest.TestCase):
+    def test_frozen_snapshot_reaches_ios_phone_callback(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.config['firebase']['appId'] = '1:123456:ios:abc123'
+            self.config['methods']['apple'] = False
+            self.config['methods']['phone_otp'] = True
+            output = root / 'auth.json'
+            def fetch(url):
+                if 'ios_phone_callback_version=1' in url:
+                    return self.config
+                return dict(self.config, firebase=None)
+            prepare(self.env, output, fetch)
+            config = from_environment(dict(self.env, NATIVE_AUTH_CONFIG_FILE=str(output)))
+            project = root / 'ios/Runner.xcodeproj/project.pbxproj'
+            project.parent.mkdir(parents=True)
+            project.write_text('PRODUCT_BUNDLE_IDENTIFIER = com.example.mobishopStoreApp;\n' * 3)
+            info = root / 'ios/Runner/Info.plist'
+            info.parent.mkdir()
+            info.write_bytes(plistlib.dumps({}))
+            (info.parent / 'Runner.entitlements').write_bytes(plistlib.dumps({}))
+            configure(root, self.env['IOS_BUNDLE_ID'], self.env['APPLE_TEAM_ID'], 'Store', native_auth=config)
+            schemes = [s for e in plistlib.loads(info.read_bytes())['CFBundleURLTypes'] for s in e['CFBundleURLSchemes']]
+            self.assertIn('app-1-123456-ios-abc123', schemes)
+            self.assertNotIn('public-client-key', output.read_text())
+            self.assertNotIn('must-not-be-copied', output.read_text())
+
     def setUp(self):
         self.env = dict(STORE_URL='https://shop.example/wp', STORE_PLATFORM='woocommerce',
                         IOS_BUNDLE_ID='com.customer.store', APPLE_TEAM_ID='AB12345678',
@@ -23,6 +50,14 @@ class NativeAuthSnapshotTest(unittest.TestCase):
                                      'apiKey': 'public-client-key'},
                            provider_secret='must-not-be-copied')
 
+    def test_callback_identity_is_frozen_before_sms_activation_without_apple(self):
+        with tempfile.TemporaryDirectory() as directory:
+            self.config.update(methods={'apple': False, 'phone_otp': False}, firebase=None,
+                               ios_phone_callback={'appId': '1:123456:ios:abc123', 'iosBundleId': 'com.customer.store'})
+            value = prepare(self.env, Path(directory) / 'auth.json', lambda _: self.config)
+            self.assertEqual(value['config']['firebase']['appId'], '1:123456:ios:abc123')
+            self.assertFalse(value['config']['methods']['apple'])
+
     def test_apple_is_frozen_before_signing_and_public_fields_only(self):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / 'auth.json'
@@ -31,7 +66,7 @@ class NativeAuthSnapshotTest(unittest.TestCase):
                 urls.append(url)
                 return self.config
             prepare(self.env, output, fetch)
-            self.assertEqual(urls, ['https://shop.example/wp/wp-json/mobishop/v1/auth/native/config?platform=ios'])
+            self.assertEqual(urls, ['https://shop.example/wp/wp-json/mobishop/v1/auth/native/config?platform=ios&ios_phone_callback_version=1'])
             frozen = dict(self.env, NATIVE_AUTH_CONFIG_FILE=str(output))
             self.config['methods']['apple'] = False
             config = from_environment(frozen)
