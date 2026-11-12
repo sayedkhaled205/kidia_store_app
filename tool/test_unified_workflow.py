@@ -7,6 +7,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class UnifiedWorkflowTests(unittest.TestCase):
+    def test_managed_dependency_recovery_does_not_retry_ipa_compilation(self):
+        workflow = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']['kidia-managed-dual-release']
+        steps = workflow['scripts']
+        prepare = next(i for i, step in enumerate(steps) if step['name'] == 'Prepare iOS dependencies with bounded network recovery')
+        ipa = next(i for i, step in enumerate(steps) if step['name'] == 'Build signed iOS IPA')
+        self.assertLess(prepare, ipa)
+        self.assertIn('flutter build ios --release --config-only', steps[prepare]['script'])
+        self.assertNotIn('retry_dependency_download', steps[ipa]['script'])
+        for value in ('--build-number="${BUILD_VERSION_CODE:?}"', '--dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json"'):
+            self.assertIn(value, steps[prepare]['script'])
+            self.assertIn(value, steps[ipa]['script'])
+
     def test_each_native_build_runs_explicit_platform_contracts(self):
         workflows = yaml.safe_load((ROOT / 'codemagic.yaml').read_text(encoding='utf-8'))['workflows']
         for name, workflow in workflows.items():

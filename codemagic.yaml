@@ -743,10 +743,11 @@ workflows:
       - name: Build Android APK
         script: |
           set -euo pipefail
+          python3 tool/test_retry_dependency_download.py
           source tool/android_build_version.sh
           python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
           ORG_GRADLE_PROJECT_APP_NAME="${STORE_NAME:-MobiShop Store}" \
-          ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" flutter build apk --release \
+          ORG_GRADLE_PROJECT_APPLICATION_ID="$ANDROID_APPLICATION_ID" python3 tool/retry_dependency_download.py -- flutter build apk --release \
             "${MOBISHOP_BUILD_VERSION_ARGS[@]}" \
             --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
             --dart-define="STORE_URL=$STORE_URL" \
@@ -769,6 +770,17 @@ workflows:
       - name: Apply existing iOS distribution profile
         script: |
           xcode-project use-profiles
+      - name: Prepare iOS dependencies with bounded network recovery
+        script: |
+          set -euo pipefail
+          python3 tool/native_build_defines81.py --output "${CM_BUILD_DIR:?}/.mobishop-native-defines.json"
+          python3 tool/retry_dependency_download.py -- flutter build ios --release --config-only \
+            --build-name="$BUILD_VERSION_NAME" --build-number="${BUILD_VERSION_CODE:?}" \
+            --dart-define-from-file="${CM_BUILD_DIR:?}/.mobishop-native-defines.json" \
+            --dart-define="STORE_URL=$STORE_URL" \
+            --dart-define="STORE_NAME=$STORE_NAME" \
+            --dart-define="STORE_LOCALE=${STORE_LOCALE:-en}" \
+            --dart-define="PUSH_CONFIG_URL=${PUSH_CONFIG_URL:-}"
       - name: Build signed iOS IPA
         script: |
           set -euo pipefail
