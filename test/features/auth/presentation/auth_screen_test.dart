@@ -26,6 +26,46 @@ import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart'
 
 void main() {
   testWidgets(
+    'owner phone uses password without email re-entry and keeps alternate sign-in',
+    (tester) async {
+      final actions = _Actions()
+        ..identityMethods = ['password']
+        ..configuration = const NativeAuthConfig(
+          passwordResetUrl: 'https://shop.example/login/?kidia_stage=forgot',
+          methods: {
+            'phone_password': true,
+            'email_password': true,
+            'phone_otp': true,
+            'apple': true,
+            'google': true,
+            'facebook_native': true,
+          },
+        );
+      await _Fixture(actions: actions).pump(tester);
+      await _identify(tester, '+201055550342');
+      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-use-email')), findsNothing);
+      expect(find.byKey(const Key('auth-use-otp')), findsNothing);
+      await _tap(tester, 'auth-use-password');
+      expect(find.byKey(const Key('auth-account-email')), findsNothing);
+      expect(find.byKey(const Key('auth-forgot-password')), findsOneWidget);
+      for (final provider in ['apple', 'google', 'facebook']) {
+        expect(find.byKey(Key('auth-$provider')), findsOneWidget);
+      }
+      await tester.enterText(
+        find.byKey(const Key('auth-password')),
+        'fixture-owner-password',
+      );
+      await _tap(tester, 'auth-sign-in');
+      expect(actions.passwordIdentifiers, ['+201055550342']);
+      expect(actions.commits, 1);
+      expect(actions.sentPhones, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
     'recovery password choice abandons failed Google session commit',
     (tester) async {
       final actions = _Actions()

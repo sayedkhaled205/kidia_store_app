@@ -162,10 +162,13 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$requires_email_registration = false;
 		if ( $identity['kind'] === 'phone' ) {
 			$methods = array( 'password' );
-			$users = $this->phone_users( $identity['identifier'], true );
+			$users = $this->phone_users( $identity['identifier'], true, true );
 			if ( is_wp_error( $users ) && $request->get_param( 'supports_email_password_recovery' ) === true ) {
 				// A conflicting or protected identity must use its original email proof.
 				$methods = array( 'email_password' );
+			} elseif ( ! is_wp_error( $users ) && $users && ! array_filter( $users, fn( $user ) => $this->eligible( $user ) ) ) {
+				// Store owners may prove their password, but a contact-number OTP cannot grant owner access.
+				$methods = array( 'password' );
 			} elseif ( $c['methods']['phone_otp'] ) {
 				// New customers have no password yet. Existing accounts retain password recovery if SMS fails.
 				$methods = $users === array() ? array( 'phone_otp' ) : array( 'password', 'phone_otp' );
@@ -198,7 +201,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( $this->can_shop_as_owner( $user ) && strtolower( $user->user_email ) === $identity['identifier'] ) return $this->owner_session( $user, 'password' );
 			if ( $user instanceof WP_User && $this->eligible( $user ) && strtolower( $user->user_email ) === $identity['identifier'] ) $matched[] = $user;
 		} else {
-			$candidates = $this->phone_users( $identity['identifier'], true );
+			$candidates = $this->phone_users( $identity['identifier'], true, true );
 			if ( is_wp_error( $candidates ) ) return $this->error( 'invalid_credentials', 401 );
 			// Bound password hashing work; excessive ambiguous records require OTP.
 			if ( count( $candidates ) > 20 ) return $this->error( 'invalid_credentials', 401 );
@@ -208,7 +211,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 				if ( $verified instanceof WP_User && $verified->ID === $user->ID ) {
 					wp_cache_delete( $verified->ID, 'users' );
 					$verified = get_user_by( 'id', $verified->ID );
-					if ( $this->eligible( $verified ) && wp_check_password( $password, $verified->user_pass, $verified->ID ) && $this->user_phone( $verified, $identity['identifier'], true ) === $identity['identifier'] ) $matched[] = $verified;
+					if ( ( $this->eligible( $verified ) || $this->can_shop_as_owner( $verified ) ) && wp_check_password( $password, $verified->user_pass, $verified->ID ) && $this->user_phone( $verified, $identity['identifier'], true ) === $identity['identifier'] ) $matched[] = $verified;
 				}
 			}
 		}
@@ -218,6 +221,10 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 				return $this->registration_ticket( array( 'kind' => 'email_registration', 'email' => $identity['identifier'] ), $request );
 			}
 			return $this->error( 'invalid_credentials', 401 );
+		}
+		// Never choose a protected owner implicitly when the same proof matches another account.
+		foreach ( $matched as $user ) {
+			if ( $this->can_shop_as_owner( $user ) ) return count( $matched ) === 1 ? $this->owner_session( $user, 'password' ) : $this->error( 'invalid_credentials', 401 );
 		}
 		// Password proof is scoped to the accounts whose own password matched.
 		$versions = array();
@@ -1088,7 +1095,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return '';
 	}
 
-	private function phone_users( string $phone, bool $include_unverified = false ) {
+	private function phone_users( string $phone, bool $include_unverified = false, bool $allow_password_owner = false ) {
 		$values = array( $phone, ltrim( $phone, '+' ), '00' . ltrim( $phone, '+' ) );
 		$country = preg_replace( '/\D/', '', (string) ( $this->settings()['phone_country_code'] ?? '' ) );
 		if ( $country && strpos( $phone, '+' . $country ) === 0 ) {
@@ -1100,7 +1107,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$users = $this->phone_candidates( $keys, $pattern );
 		if ( count( $users ) > 50 ) return $this->error( 'phone_account_conflict', 409 );
 		if ( ! $include_unverified ) $users = array_values( array_filter( $users, fn( $user ) => ! get_user_meta( $user->ID, 'kidia_unverified_phone', true ) || $this->user_phone( $user, $phone ) !== '' ) );
-		$eligible = array_values( array_filter( $users, fn( $user ) => $this->eligible( $user ) && $this->user_phone( $user, $phone, $include_unverified ) === $phone ) );
+		$eligible = array_values( array_filter( $users, fn( $user ) => ( $this->eligible( $user ) || ( $allow_password_owner && $this->can_shop_as_owner( $user ) ) ) && $this->user_phone( $user, $phone, $include_unverified ) === $phone ) );
 		return $users && ! $eligible ? $this->error( 'phone_account_conflict', 409 ) : $eligible;
 	}
 
