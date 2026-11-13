@@ -25,6 +25,287 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  for (final provider in ['apple', 'google', 'facebook']) {
+    testWidgets(
+      '$provider enrollment never inherits the previous registration details',
+      (tester) async {
+        final actions = _Actions()
+          ..identityMethods = ['create_password']
+          ..passwordResult = const NativeAuthResult(
+            status: NativeAuthStatus.registrationRequired,
+            ticket: 'previous-email-proof',
+            fields: ['phone'],
+            expiresIn: 300,
+          )
+          ..configuration = const NativeAuthConfig(
+            phoneCountryCode: '20',
+            methods: {
+              'email_password': true,
+              'phone_otp': true,
+              'apple': true,
+              'google': true,
+              'facebook_native': true,
+            },
+          );
+        final enrollment = const NativeAuthResult(
+          status: NativeAuthStatus.registrationRequired,
+          ticket: 'new-provider-proof',
+          fields: ['phone'],
+          expiresIn: 300,
+        );
+        actions.appleResult = actions.googleResult = actions.facebookResult =
+            enrollment;
+        actions.verifyResult = const NativeAuthResult(
+          status: NativeAuthStatus.registrationRequired,
+          ticket: 'new-phone-proof',
+          fields: ['name', 'email', 'password'],
+          expiresIn: 300,
+        );
+        await _Fixture(actions: actions).pump(tester);
+        await _identify(tester, 'previous@example.invalid');
+        await tester.enterText(
+          find.byKey(const Key('auth-name')),
+          'Previous name',
+        );
+        await tester.enterText(
+          find.byKey(const Key('auth-create-password')),
+          'previous-password',
+        );
+        await tester.enterText(
+          find.byKey(const Key('auth-confirm-password')),
+          'previous-password',
+        );
+        await _tap(tester, 'auth-register');
+        await tester.enterText(
+          find.byKey(const Key('auth-phone')),
+          '01112345678',
+        );
+        await _tap(tester, 'auth-$provider');
+        expect(
+          tester
+              .widget<TextFormField>(find.byKey(const Key('auth-phone')))
+              .controller!
+              .text,
+          isEmpty,
+        );
+        await tester.enterText(
+          find.byKey(const Key('auth-phone')),
+          '01012345678',
+        );
+        await _tap(tester, 'auth-send-otp');
+        await tester.enterText(find.byKey(const Key('auth-otp')), '123456');
+        await _tap(tester, 'auth-verify-otp');
+        for (final key in [
+          'auth-name',
+          'auth-registration-email',
+          'auth-create-password',
+          'auth-confirm-password',
+        ]) {
+          expect(
+            tester.widget<TextFormField>(find.byKey(Key(key))).controller!.text,
+            isEmpty,
+          );
+        }
+        expect(actions.registrationTicket, isNull);
+        expect(actions.commits, 0);
+        expect(actions.otpTickets, ['new-provider-proof']);
+        await tester.enterText(
+          find.byKey(const Key('auth-registration-email')),
+          'previous-profile@example.invalid',
+        );
+        actions.appleResult = actions.googleResult = actions.facebookResult =
+            actions.verifyResult;
+        await _tap(tester, 'auth-$provider');
+        expect(
+          tester
+              .widget<TextFormField>(
+                find.byKey(const Key('auth-registration-email')),
+              )
+              .controller!
+              .text,
+          isEmpty,
+        );
+        expect(actions.registrationTicket, isNull);
+        expect(tester.takeException(), isNull);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+    );
+  }
+
+  testWidgets(
+    'direct phone password and OTP stay usable on a small large-text screen',
+    (tester) async {
+      tester.platformDispatcher.textScaleFactorTestValue = 2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      final fixture = _Fixture();
+      await fixture.pump(tester, size: const Size(320, 640));
+      await _identify(tester, '01012345678');
+      expect(find.byKey(const Key('auth-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-use-password')), findsNothing);
+      expect(find.byKey(const Key('auth-choose-method')), findsNothing);
+      expect(find.byKey(const Key('auth-social-or')), findsOneWidget);
+      await _tap(tester, 'auth-use-otp');
+      expect(find.byKey(const Key('auth-otp')), findsOneWidget);
+      expect(find.byKey(const Key('auth-google')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final step in [
+    'createPassword',
+    'otp',
+    'accounts',
+    'phone',
+    'registration',
+  ]) {
+    for (final provider in ['apple', 'google', 'facebook']) {
+      testWidgets(
+        '$step keeps every social method and safely switches to $provider',
+        (tester) async {
+          final automatic = Completer<NativeAuthResult?>();
+          final actions = _Actions()
+            ..configuration = const NativeAuthConfig(
+              phoneCountryCode: '20',
+              supportsExpectedPhoneGoogle: true,
+              methods: {
+                'email_password': true,
+                'phone_password': true,
+                'phone_otp': true,
+                'google': true,
+                'apple': true,
+                'facebook_native': true,
+              },
+            );
+          final fixture = _Fixture(actions: actions);
+          await fixture.pump(tester, route: '/checkout');
+          switch (step) {
+            case 'createPassword':
+              actions.identityMethods = ['create_password'];
+              await _identify(tester, 'new@example.invalid');
+              await tester.enterText(
+                find.byKey(const Key('auth-name')),
+                'Test',
+              );
+            case 'otp':
+            case 'accounts':
+              actions.automaticResults.add(automatic.future);
+              await _startOtp(tester);
+              if (step == 'accounts') {
+                actions.verifyResult = const NativeAuthResult(
+                  status: NativeAuthStatus.selectAccount,
+                  ticket: 'old-account-proof',
+                  accounts: [
+                    NativeAuthAccount(id: 12, name: 'Fixture account'),
+                  ],
+                  expiresIn: 300,
+                );
+                await tester.enterText(
+                  find.byKey(const Key('auth-otp')),
+                  '123456',
+                );
+                await _tap(tester, 'auth-verify-otp');
+                expect(
+                  find.byKey(const Key('auth-account-12')),
+                  findsOneWidget,
+                );
+              }
+            case 'phone':
+            case 'registration':
+              actions.googleResult = NativeAuthResult(
+                status: NativeAuthStatus.registrationRequired,
+                ticket: 'old-enrollment-proof',
+                fields: step == 'phone' ? ['phone'] : ['name'],
+                expiresIn: 300,
+              );
+              await _tap(tester, 'auth-google');
+              expect(
+                find.byKey(Key(step == 'phone' ? 'auth-phone' : 'auth-name')),
+                findsOneWidget,
+              );
+          }
+          for (final method in ['apple', 'google', 'facebook']) {
+            expect(find.byKey(Key('auth-$method')), findsOneWidget);
+          }
+          expect(find.byKey(const Key('auth-social-or')), findsOneWidget);
+          final error = PlatformException(code: 'sign_in_canceled');
+          actions.appleError = actions.googleError = actions.facebookError =
+              error;
+          await _tap(tester, 'auth-$provider');
+          expect(
+            fixture.router.routeInformationProvider.value.uri.path,
+            '/checkout',
+          );
+          expect(actions.commits, 0);
+          expect(actions.registrationTicket, isNull);
+          expect(actions.selectionTicket, isNull);
+          expect(find.byKey(const Key('auth-account-12')), findsNothing);
+          expect(find.byKey(const Key('auth-otp')), findsNothing);
+          expect(find.byKey(const Key('auth-phone')), findsNothing);
+          expect(
+            find.byKey(
+              Key(switch (step) {
+                'createPassword' => 'auth-create-password',
+                'otp' || 'accounts' => 'auth-password',
+                _ => 'auth-email',
+              }),
+            ),
+            findsOneWidget,
+          );
+          automatic.complete(_authenticated());
+          await tester.pumpAndSettle();
+          expect(
+            actions.commits,
+            0,
+            reason: 'Old OTP cannot win after a provider switch',
+          );
+          for (final method in ['apple', 'google', 'facebook']) {
+            expect(find.byKey(Key('auth-$method')), findsOneWidget);
+          }
+          actions.appleError = actions.googleError = actions.facebookError =
+              null;
+          actions.appleResult = actions.googleResult = actions.facebookResult =
+              _authenticated();
+          await _tap(tester, 'auth-$provider');
+          expect(actions.commits, 1);
+          expect(find.text('CUSTOMER 7'), findsOneWidget);
+          expect(
+            fixture.router.routeInformationProvider.value.uri.path,
+            '/checkout',
+          );
+          expect(tester.takeException(), isNull);
+        },
+        variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+      );
+    }
+  }
+
+  testWidgets(
+    'new phone OTP can restart after social cancellation with no old proof',
+    (tester) async {
+      final actions = _Actions()
+        ..identityMethods = ['phone_otp']
+        ..googleError = PlatformException(code: 'sign_in_canceled');
+      await _Fixture(actions: actions).pump(tester);
+      await _identify(tester, '01012345678');
+      await _tap(tester, 'auth-google');
+      expect(find.byKey(const Key('auth-email')), findsOneWidget);
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('auth-email')))
+            .controller!
+            .text,
+        '01012345678',
+      );
+      expect(find.byKey(const Key('auth-otp')), findsNothing);
+      await _tap(tester, 'auth-continue');
+      expect(actions.sentPhones, hasLength(2));
+      expect(actions.otpTickets, [null, null]);
+      expect(actions.resends.last, isNull);
+      expect(find.byKey(const Key('auth-otp')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets(
     'owner phone uses password without email re-entry and keeps alternate sign-in',
     (tester) async {
@@ -43,10 +324,11 @@ void main() {
         );
       await _Fixture(actions: actions).pump(tester);
       await _identify(tester, '+201055550342');
-      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-use-password')), findsNothing);
+      expect(find.byKey(const Key('auth-choose-method')), findsNothing);
       expect(find.byKey(const Key('auth-use-email')), findsNothing);
       expect(find.byKey(const Key('auth-use-otp')), findsNothing);
-      await _tap(tester, 'auth-use-password');
       expect(find.byKey(const Key('auth-account-email')), findsNothing);
       expect(find.byKey(const Key('auth-forgot-password')), findsOneWidget);
       for (final provider in ['apple', 'google', 'facebook']) {
@@ -210,7 +492,7 @@ void main() {
   );
 
   testWidgets(
-    'registered phone chooses password explicitly when SMS is unavailable',
+    'registered phone opens password directly when SMS is unavailable',
     (tester) async {
       final actions = _Actions()
         ..identityMethods = ['password']
@@ -219,10 +501,9 @@ void main() {
         );
       await _Fixture(actions: actions).pump(tester);
       await _identify(tester, '+201012345678');
-      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-password')), findsOneWidget);
       expect(find.byKey(const Key('auth-use-otp')), findsNothing);
       expect(actions.sentPhones, isEmpty);
-      await _tap(tester, 'auth-use-password');
       expect(find.byKey(const Key('auth-password')), findsOneWidget);
       expect(find.text('+201012345678'), findsOneWidget);
     },
@@ -231,7 +512,7 @@ void main() {
   for (final provider in ['apple', 'google', 'facebook']) {
     for (final cancelled in [true, false]) {
       testWidgets(
-        '$provider cancellation or failure retains iOS phone method choice: $cancelled',
+        '$provider cancellation or failure retains iOS phone password form: $cancelled',
         (tester) async {
           final error = AuthRepositoryException(
             kind: AuthFailureKind.unauthorized,
@@ -257,13 +538,12 @@ void main() {
             expect(find.byKey(Key('auth-$method')), findsOneWidget);
           }
           await _tap(tester, 'auth-$provider');
-          expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+          expect(find.byKey(const Key('auth-password')), findsOneWidget);
           expect(find.byKey(const Key('auth-email')), findsNothing);
           expect(find.text('+201012345678'), findsOneWidget);
           expect(actions.commits, 0);
           expect(actions.expectedGooglePhone, isNull);
           expect(tester.takeException(), isNull);
-          await _tap(tester, 'auth-use-password');
           for (final method in ['apple', 'google', 'facebook']) {
             expect(find.byKey(Key('auth-$method')), findsOneWidget);
           }
@@ -273,37 +553,39 @@ void main() {
     }
   }
   for (final provider in ['apple', 'facebook']) {
-    testWidgets('$provider delayed failed commit keeps method screen intact', (
-      tester,
-    ) async {
-      final commit = Completer<void>();
-      final actions = _Actions()
-        ..configuration = const NativeAuthConfig(
-          methods: {
-            'phone_password': true,
-            'phone_otp': true,
-            'apple': true,
-            'facebook_native': true,
-          },
-        )
-        ..appleResult = _authenticated()
-        ..facebookResult = _authenticated()
-        ..commitFuture = commit.future
-        ..commitError = StateError('Fixture storage failure');
-      await _Fixture(actions: actions).pump(tester);
-      await _identify(tester, '+201012345678');
-      await tester.ensureVisible(find.byKey(Key('auth-$provider')));
-      await tester.tap(find.byKey(Key('auth-$provider')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
-      expect(tester.takeException(), isNull);
-      commit.complete();
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('auth-error')), findsOneWidget);
-      expect(find.text('+201012345678'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+    testWidgets(
+      '$provider delayed failed commit keeps password screen intact',
+      (tester) async {
+        final commit = Completer<void>();
+        final actions = _Actions()
+          ..configuration = const NativeAuthConfig(
+            methods: {
+              'phone_password': true,
+              'phone_otp': true,
+              'apple': true,
+              'facebook_native': true,
+            },
+          )
+          ..appleResult = _authenticated()
+          ..facebookResult = _authenticated()
+          ..commitFuture = commit.future
+          ..commitError = StateError('Fixture storage failure');
+        await _Fixture(actions: actions).pump(tester);
+        await _identify(tester, '+201012345678');
+        await tester.ensureVisible(find.byKey(Key('auth-$provider')));
+        await tester.tap(find.byKey(Key('auth-$provider')));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        expect(find.byKey(const Key('auth-password')), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        commit.complete();
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('auth-error')), findsOneWidget);
+        expect(find.text('+201012345678'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+      variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+    );
   }
   testWidgets(
     'protected phone opens credentials without resetting its number',
@@ -487,7 +769,7 @@ void main() {
       expect(find.byKey(const Key('auth-send-otp')), findsNothing);
       expect(actions.sentPhones, isEmpty);
       await _tap(tester, 'auth-existing-phone-signin');
-      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-password')), findsOneWidget);
       expect(find.byKey(const Key('auth-use-otp')), findsOneWidget);
       expect(find.byKey(const Key('auth-forgot-password')), findsOneWidget);
       await _tap(tester, 'auth-use-otp');
@@ -706,7 +988,7 @@ void main() {
       await _Fixture(actions: actions).pump(tester);
       expect(find.byKey(const Key('auth-google')), findsOneWidget);
       await _identify(tester, '+201012345678');
-      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-password')), findsOneWidget);
       expect(find.byKey(const Key('auth-use-otp')), findsOneWidget);
       expect(find.byKey(const Key('auth-google')), findsOneWidget);
       await _tap(tester, 'auth-use-otp');
@@ -784,7 +1066,7 @@ void main() {
       expect(actions.expectedGooglePhone, isNull);
       expect(actions.commits, 0);
       expect(actions.registrationTicket, isNull);
-      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-password')), findsOneWidget);
       expect(find.byKey(const Key('auth-google')), findsOneWidget);
     },
   );
@@ -802,7 +1084,7 @@ void main() {
       );
     await _Fixture(actions: actions).pump(tester);
     await _identify(tester, '+201012345678');
-    expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+    expect(find.byKey(const Key('auth-password')), findsOneWidget);
     expect(find.byKey(const Key('auth-use-otp')), findsNothing);
     expect(find.byKey(const Key('auth-google')), findsNothing);
   });
@@ -876,7 +1158,7 @@ void main() {
   });
 
   testWidgets(
-    'existing enrollment phone offers sign-in methods and a different number',
+    'existing enrollment phone opens password directly or accepts a different number',
     (tester) async {
       final actions = _EnrollmentActions()
         ..identityMethods = ['phone_otp']
@@ -906,10 +1188,9 @@ void main() {
       expect(change.top - signIn.bottom, greaterThanOrEqualTo(12));
       actions.identityMethods = ['password', 'phone_otp'];
       await _tap(tester, 'auth-existing-phone-signin');
-      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-password')), findsOneWidget);
       expect(find.byKey(const Key('auth-use-otp')), findsOneWidget);
       expect(find.byKey(const Key('auth-google')), findsOneWidget);
-      await _tap(tester, 'auth-use-password');
       expect(find.byKey(const Key('auth-password')), findsOneWidget);
       expect(actions.commits, 0);
     },
@@ -1227,10 +1508,9 @@ void main() {
       await fixture.pump(tester);
       await _identify(tester, '٠١٠١٢٣٤٥٦٧٨');
       expect(fixture.actions.identifiers.single, '01012345678');
-      expect(find.byKey(const Key('auth-use-password')), findsOneWidget);
+      expect(find.byKey(const Key('auth-password')), findsOneWidget);
       expect(find.byKey(const Key('auth-use-otp')), findsOneWidget);
       expect(find.byKey(const Key('auth-account-9')), findsNothing);
-      await _tap(tester, 'auth-use-password');
       await tester.enterText(
         find.byKey(const Key('auth-password')),
         'valid-password',

@@ -139,28 +139,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     final hasIdentifier =
         config?.supportsPhone == true ||
         config?.allows('email_password') == true;
-    const independentProviderSteps = [
-      _AuthStep.identifier,
-      _AuthStep.method,
-      _AuthStep.password,
-      _AuthStep.recovery,
-      _AuthStep.accountEmailPassword,
-      _AuthStep.emailRegistration,
-    ];
     final showGoogle =
-        independentProviderSteps.contains(_step) &&
         config?.allows('google') == true &&
         (_expectedGooglePhone == null ||
             (config!.supportsExpectedPhoneGoogle &&
                 _actions is NativeExistingPhoneGoogleActions));
     final showFacebook =
-        independentProviderSteps.contains(_step) &&
         (config?.allows('facebook') == true ||
-            config?.allows('facebook_native') == true);
+        config?.allows('facebook_native') == true);
     final showApple =
         !kIsWeb &&
         defaultTargetPlatform == TargetPlatform.iOS &&
-        independentProviderSteps.contains(_step) &&
         config?.allows('apple') == true &&
         _actions is NativeAppleAuthActions;
     final copy = AuthCopy.of(context);
@@ -327,15 +316,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               !_existingOtpSendFailed &&
                               config.allows('phone_otp') &&
                               _identity?.allows('phone_otp') == true)
-                            TextButton(
-                              key: const Key('auth-use-otp'),
-                              onPressed: _busy
-                                  ? null
-                                  : () => _perform(
-                                      (flow) =>
-                                          _sendOtp(flow, _identity!.identifier),
-                                    ),
-                              child: Text(copy.useOtp),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Text(copy.or, style: _secondaryStyle),
+                                  TextButton(
+                                    key: const Key('auth-use-otp'),
+                                    onPressed: _busy
+                                        ? null
+                                        : () => _perform(
+                                            (flow) => _sendOtp(
+                                              flow,
+                                              _identity!.identifier,
+                                            ),
+                                          ),
+                                    child: Text(copy.useOtp),
+                                  ),
+                                ],
+                              ),
                             ),
                           if ([
                                 _AuthStep.method,
@@ -363,7 +364,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                               child: Text(copy.forgotPassword),
                             ),
                           if ([
-                                _AuthStep.password,
                                 _AuthStep.accountEmailPassword,
                                 _AuthStep.emailRegistration,
                               ].contains(_step) &&
@@ -440,27 +440,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         onPressed: _busy
                                             ? null
                                             : () => _perform((flow) async {
-                                                _otpEpoch++;
-                                                setState(() {
-                                                  _challenge = null;
-                                                  _otpTicket = null;
-                                                  _continuation = null;
-                                                  _pendingCommit = null;
-                                                  _canRetryCode = false;
-                                                });
-                                                _registrationDetailsCollected =
-                                                    false;
+                                                _resetForProviderSwitch();
                                                 final result =
                                                     await (_actions
                                                             as NativeAppleAuthActions)
                                                         .apple();
                                                 if (_active(flow)) {
-                                                  if (result.status ==
-                                                      NativeAuthStatus
-                                                          .registrationRequired) {
-                                                    _identity = null;
-                                                  }
-                                                  await _acceptResult(
+                                                  await _acceptProviderResult(
                                                     result,
                                                     flow,
                                                   );
@@ -503,20 +489,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                         onPressed: _busy
                                             ? null
                                             : () => _perform((flow) async {
-                                                _otpEpoch++;
-                                                // Google starts a new service attempt, so
-                                                // the previous phone proof cannot be reused.
-                                                setState(() {
-                                                  _challenge = null;
-                                                  _otpTicket = null;
-                                                  _continuation = null;
-                                                  _pendingCommit = null;
-                                                  _canRetryCode = false;
-                                                });
-                                                _registrationDetailsCollected =
-                                                    false;
                                                 final expectedPhone =
-                                                    _expectedGooglePhone;
+                                                    _resetForProviderSwitch();
                                                 final result =
                                                     expectedPhone == null
                                                     ? await _actions!.google()
@@ -526,12 +500,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                                             expectedPhone,
                                                           );
                                                 if (_active(flow)) {
-                                                  if (result.status ==
-                                                      NativeAuthStatus
-                                                          .registrationRequired) {
-                                                    _identity = null;
-                                                  }
-                                                  await _acceptResult(
+                                                  await _acceptProviderResult(
                                                     result,
                                                     flow,
                                                   );
@@ -999,7 +968,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                 final identity = await _actions!.identify(_recoveryPhone!);
                 if (!_active(flow)) return;
                 setState(() {
-                  _identity = identity;
                   _registrationDetailsCollected = false;
                   _continuation = null;
                   _challenge = null;
@@ -1010,10 +978,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   _name.clear();
                   _email.clear();
                   _pendingCommit = null;
-                  _step = _AuthStep.method;
                   _existingContactPhone = false;
                   _confirmContactPhone = false;
                 });
+                await _routeIdentity(flow, identity, config);
               }),
             ),
             const SizedBox(height: 12),
@@ -1321,6 +1289,53 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       ? config.allows('phone_password')
       : config.allows('password');
 
+  // A provider starts a new service attempt. Never keep a step that requires
+  // the old attempt's proof; cancellation must leave an actionable form.
+  String? _resetForProviderSwitch() {
+    final expectedGooglePhone = _expectedGooglePhone;
+    _otpEpoch++;
+    if (_step != _AuthStep.recovery) {
+      _resendTimer?.cancel();
+      _resendSeconds = 0;
+    }
+    _registrationDetailsCollected = false;
+    final isProofStep = const {
+      _AuthStep.otp,
+      _AuthStep.phone,
+      _AuthStep.registration,
+      _AuthStep.accounts,
+    }.contains(_step);
+    setState(() {
+      _continuation = null;
+      _challenge = null;
+      _otpTicket = null;
+      _pendingCommit = null;
+      _canRetryCode = false;
+      _restartRequired = false;
+      _confirmContactPhone = false;
+      _existingContactPhone = false;
+      _registrationPhone = null;
+      _otp.clear();
+      if (isProofStep) {
+        if (_identity?.allows('password') == true &&
+            (_identity?.kind != 'phone' ||
+                _phonePasswordEnabled(
+                  ref.read(nativeAuthConfigProvider).requireValue,
+                ))) {
+          _step = _AuthStep.password;
+        } else if (_identity?.allows('create_password') == true) {
+          _step = _AuthStep.createPassword;
+        } else if (_identity?.allows('email_password') == true) {
+          _step = _AuthStep.method;
+        } else {
+          _identity = null;
+          _step = _AuthStep.identifier;
+        }
+      }
+    });
+    return expectedGooglePhone;
+  }
+
   Future<void> _chooseMethodStep(_AuthStep step) => _perform((flow) async {
     _otpEpoch++;
     await _actions!.cancel();
@@ -1336,6 +1351,52 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _step = step;
     });
   });
+
+  Future<void> _acceptProviderResult(NativeAuthResult result, int flow) async {
+    if (result.status != NativeAuthStatus.authenticated) {
+      // A new provider identity must not inherit the previous account's form.
+      _identity = null;
+      _recoveryPhone = null;
+      _registrationPhone = null;
+      _existingOtpSendFailed = false;
+      for (final controller in [
+        _name,
+        _email,
+        _phone,
+        _password,
+        _confirmation,
+      ]) {
+        controller.clear();
+      }
+    }
+    await _acceptResult(result, flow);
+  }
+
+  // Direct entry and existing-phone conflicts share the same routing rules.
+  Future<void> _routeIdentity(
+    int flow,
+    NativeAuthIdentity identity,
+    NativeAuthConfig config,
+  ) async {
+    _identity = identity;
+    _identifier.text = identity.identifier;
+    if (identity.allows('create_password')) {
+      setState(() => _step = _AuthStep.createPassword);
+    } else if (identity.kind == 'phone' &&
+        identity.allows('password') &&
+        _phonePasswordEnabled(config)) {
+      setState(() => _step = _AuthStep.password);
+    } else if (identity.allows('email_password') ||
+        (identity.kind == 'phone' && identity.allows('password'))) {
+      setState(() => _step = _AuthStep.method);
+    } else if (identity.allows('password')) {
+      setState(() => _step = _AuthStep.password);
+    } else if (identity.allows('phone_otp')) {
+      await _sendOtp(flow, identity.identifier);
+    } else {
+      throw StateError('No native authentication method.');
+    }
+  }
 
   String? get _expectedGooglePhone =>
       _recoveryPhone != null &&
@@ -1391,20 +1452,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             _digits(_identifier.text.trim()),
           );
           if (!_active(flow)) return;
-          _identity = identity;
-          _identifier.text = identity.identifier;
-          if (identity.allows('create_password')) {
-            setState(() => _step = _AuthStep.createPassword);
-          } else if (identity.allows('email_password') ||
-              (identity.kind == 'phone' && identity.allows('password'))) {
-            setState(() => _step = _AuthStep.method);
-          } else if (identity.allows('password')) {
-            setState(() => _step = _AuthStep.password);
-          } else if (identity.allows('phone_otp')) {
-            await _sendOtp(flow, identity.identifier);
-          } else {
-            throw StateError('No native authentication method.');
-          }
+          await _routeIdentity(flow, identity, config);
         case _AuthStep.password:
         case _AuthStep.createPassword:
           _registrationDetailsCollected = _step == _AuthStep.createPassword;
@@ -1889,17 +1937,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             : 'This is a sign-in preview. Try signing in from the mobile app.',
       );
     }
+    _resetForProviderSwitch();
     await _actions!.cancel();
     if (!_active(flow)) return;
-    _otpEpoch++;
-    setState(() {
-      _challenge = null;
-      _otpTicket = null;
-      _continuation = null;
-      _pendingCommit = null;
-      _canRetryCode = false;
-    });
-    _registrationDetailsCollected = false;
     final actions = _actions;
     if (ref.read(nativeAuthConfigProvider).value?.allows('facebook_native') ==
             true &&
@@ -1907,11 +1947,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       try {
         final result = await (actions as NativeFacebookAuthActions).facebook();
         if (_active(flow)) {
-          if (result.status == NativeAuthStatus.registrationRequired) {
-            _identity = null;
-          }
-          _registrationDetailsCollected = false;
-          await _acceptResult(result, flow);
+          await _acceptProviderResult(result, flow);
         }
         return;
       } on AuthRepositoryException catch (error) {

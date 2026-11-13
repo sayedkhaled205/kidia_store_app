@@ -308,7 +308,7 @@ void main() {
           expect(find.byKey(const Key('auth-different-phone')), findsOneWidget);
           if (outcome == 'conflict-existing') {
             await _tap(tester, 'auth-existing-phone-signin');
-            await _tap(tester, 'auth-use-password');
+            expect(find.byKey(const Key('auth-use-password')), findsNothing);
             await tester.enterText(
               find.byKey(const Key('auth-password')),
               'existing-password',
