@@ -48,3 +48,15 @@ mobishop_auth_assert(count(array_filter($GLOBALS['delete_orders'],fn($o)=>$o->ow
 mobishop_auth_assert(wp_next_scheduled('mobishop_delete_customer_batch',[7])!==false,'Large-account cleanup retains its retry.');
 
 echo "Immediate deletion344 lifecycle checks passed.\n";
+
+intent_reset();$GLOBALS['delete_pause_worker']=false;$login=deletion_login();$request=intent_request($login);
+$GLOBALS['intent_links'][7]=[['project'=>'fixture-project','uid'=>'slow-first','provider'=>'phone','key'=>'first'],['project'=>'fixture-project','uid'=>'second','provider'=>'phone','key'=>'second']];
+$deletion->prepare_deletion($request);$GLOBALS['intent_erase_delay']=4050000;
+$result=$deletion->finalize_deletion($request);
+$job=unserialize($GLOBALS['delete_options']['mobishop_account_deletion_v1_7']);
+mobishop_auth_assert($result->status===202&&$job['identityStage']['cursor']===1&&$job['phase']===0,'A provider step that consumes the inline budget yields before the next identity or merchant erasure.');
+mobishop_auth_assert(count($GLOBALS['intent_erase_timeouts'])===1&&$GLOBALS['intent_erase_timeouts'][0]>0&&$GLOBALS['intent_erase_timeouts'][0]<=4,'Actual worker passes its remaining inline deadline to the provider.');
+mobishop_auth_assert(wp_next_scheduled('mobishop_delete_customer_batch',[7])!==false,'Elapsed inline budget retains the durable retry.');
+unset($GLOBALS['intent_erase_delay']);deletion_tick();
+mobishop_auth_assert($deletion->deletion_status($request)->data['status']==='completed','Cron resumes from the captured next identity after the inline budget expires.');
+echo "Inline deadline344 checks passed.\n";

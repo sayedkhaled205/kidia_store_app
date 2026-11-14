@@ -9,7 +9,7 @@ class MobiShop_Customer_Identity_Links {
 class MobiShop_Customer_Identity_Client {
  public static function capabilities(){if(!empty($GLOBALS['intent_outage']))throw new RuntimeException('fixture outage');return array('available'=>true,'project_id'=>'fixture-project');}
  public static function lookup($project,$uid){if(!empty($GLOBALS['intent_outage']))throw new RuntimeException('fixture outage');if(!empty($GLOBALS['intent_fail_after_lookup']))$GLOBALS['intent_outage']=true;return !empty($GLOBALS['intent_absent'])?array('status'=>'absent'):array('status'=>'present','created_at'=>'12345');}
- public static function erase($project,$uid,$created){if(!empty($GLOBALS['intent_outage']))throw new RuntimeException('fixture outage');$GLOBALS['intent_advanced']=true;return array('status'=>'absent');}
+ public static function erase($project,$uid,$created,$timeout=25){if(!empty($GLOBALS['intent_outage']))throw new RuntimeException('fixture outage');$GLOBALS['intent_erase_timeouts'][]=$timeout;if(!empty($GLOBALS['intent_erase_delay']))usleep($GLOBALS['intent_erase_delay']);$GLOBALS['intent_advanced']=true;return array('status'=>'absent');}
 }
 require __DIR__.'/../source/api/class-customer-identity-erasure-stage.php';
 class MobiShop_Native_Customer_Auth_Endpoint {
@@ -20,7 +20,7 @@ class IntentRequest extends DeletionRequest {
  public function get_json_params(){return array('confirmation'=>$this->get_param('confirmation'),'receipt'=>$this->get_param('receipt'),'apple_revoked'=>$this->get_param('apple_revoked'));}
 }
 function intent_request($login,$params=array()) {return new IntentRequest(array_merge(array('confirmation'=>'delete-my-account','receipt'=>str_repeat('d',64),'platform'=>'ios'),$params),array('X-MobiShop-Session'=>$login->data['token']));}
-function intent_reset() {deletion_reset();foreach(array('intent_links','intent_shared','intent_absent','intent_outage','intent_advanced','intent_fail_after_lookup')as $key)unset($GLOBALS[$key]);}
+function intent_reset() {deletion_reset();foreach(array('intent_links','intent_shared','intent_absent','intent_outage','intent_advanced','intent_fail_after_lookup','intent_erase_delay','intent_erase_timeouts')as $key)unset($GLOBALS[$key]);}
 intent_reset(); $login=deletion_login();$request=intent_request($login,array('user_id'=>8));
 $r=$deletion->prepare_deletion($request);
 mobishop_auth_assert($r->data===array('status'=>'prepared','intent_id'=>$r->data['intent_id'],'user_id'=>7,'apple_revocation_required'=>false)&&preg_match('/^[a-f0-9]{64}$/D',$r->data['intent_id'])===1,'Prepare binds authenticated account, never body user_id');
