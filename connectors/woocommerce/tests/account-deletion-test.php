@@ -81,6 +81,8 @@ class DeletionDb extends Mobishop_WPDB_Stub {
 	function esc_like($v){return addcslashes($v,'_%');}
 	function get_var(string $q) {
 		$this->last_error=''; [$sql,$a]=$this->prepared[$q]??array($q,array());
+		// Existing lifecycle fixtures advance the worker explicitly, as if another worker owns its lock.
+		if(str_starts_with($sql,'SELECT GET_LOCK')&&str_starts_with($a[0]??'','mobishop_del_')&&!empty($GLOBALS['delete_pause_worker']))return '0';
 		if(str_starts_with($sql,'SELECT GET_LOCK')&&isset($GLOBALS['delete_intent_lock_race'])){$race=$GLOBALS['delete_intent_lock_race'];unset($GLOBALS['delete_intent_lock_race']);$race();}
 		if(str_starts_with($sql,'SELECT option_value')) {
 			if(isset($GLOBALS['delete_before_option_read'])) { $f=$GLOBALS['delete_before_option_read'];$f($a[0]); }
@@ -143,6 +145,7 @@ $deletion=new MobiShop_Customer_Account_Deletion();
 $saved_users=$GLOBALS['mobishop_users'];
 function deletion_reset() {
 	global $saved_users;
+	$GLOBALS['delete_pause_worker']=true;
 	$GLOBALS['mobishop_users']=$saved_users;
 	foreach(array('delete_options','delete_flags','delete_tables','delete_orders','delete_posts','delete_comments','delete_cron','mobishop_transients','mobishop_user_meta_store','mobishop_user_meta_cache') as $key) $GLOBALS[$key]=array();
 	$GLOBALS['mobishop_force_meta_write_failure']=false;
@@ -157,10 +160,12 @@ function deletion_request($login,$params=array()) {
 	return new DeletionRequest(array_merge(array('confirmation'=>'delete-my-account','receipt'=>str_repeat('a',64)),$params),array('X-MobiShop-Session'=>$login->data['token']));
 }
 function deletion_tick() {
+	$paused=$GLOBALS['delete_pause_worker']??false;$GLOBALS['delete_pause_worker']=false;
 	foreach($GLOBALS['delete_cron'] as $t=>&$hooks) unset($hooks['mobishop_delete_customer_batch']);
 	// WordPress reschedules recurring jobs before invoking their callbacks.
 	wp_schedule_event(time()+60,'mobishop_deletion_minute','mobishop_delete_customer_batch',array(7));
 	MobiShop_Customer_Account_Deletion::run_worker(7);
+	$GLOBALS['delete_pause_worker']=$paused;
 	mobishop_auth_assert(empty($GLOBALS['mobishop_held_locks']),'Worker must release locks.');
 }
 function phase() {return maybe_unserialize($GLOBALS['delete_options']['mobishop_account_deletion_v1_7'])['phase'];}

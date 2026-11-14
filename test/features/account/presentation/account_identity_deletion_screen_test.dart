@@ -92,6 +92,19 @@ void main() {
   }
 
   deletionWidgetTest(
+    'installed flow recovers a synchronous completed response without another Apple prompt',
+    (tester) async {
+      transport.completeInline = true;
+      await open(tester);
+      await confirm(tester);
+      expect(find.text('Account deleted'), findsOneWidget);
+      expect(sessions.value, null);
+      expect(calls.where((step) => step == 'apple').length, 1);
+      expect(calls.where((step) => step == 'finalize:true').length, 1);
+      expect(find.textContaining('not confirmed'), findsNothing);
+    },
+  );
+  deletionWidgetTest(
     'receipt is persisted before Apple and successful confirmation',
     (tester) async {
       await open(tester);
@@ -477,6 +490,7 @@ class _Transport extends _Legacy
   final AccountDeletionReceiptStore receipts;
   bool requiresApple = true;
   bool failFinalize = false;
+  bool completeInline = false;
   CustomerAccountTransportException? proofError;
   String status = 'unknown';
   @override
@@ -528,8 +542,8 @@ class _Transport extends _Legacy
       );
     }
     if (failFinalize) throw StateError('Synthetic lost connection');
-    status = 'pending';
-    return {'status': 'pending', 'user_id': 7};
+    status = completeInline ? 'completed' : 'pending';
+    return {'status': status, 'user_id': 7};
   }
 }
 

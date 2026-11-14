@@ -24,7 +24,7 @@ final class MobiShop_Customer_Identity_Erasure_Stage {
     }
 
     /** One bounded provider step. Persist returned state before advancing the merchant worker. */
-    public static function advance(int $id, array $state): array {
+    public static function advance(int $id, array $state, float $timeout = 25): array {
         if (($state['version'] ?? null) !== 1 || ($state['user_id'] ?? null) !== $id
             || !is_array($state['entries'] ?? null)
             || ($state['entries'] !== [] && array_keys($state['entries']) !== range(0, count($state['entries']) - 1))
@@ -47,7 +47,7 @@ final class MobiShop_Customer_Identity_Erasure_Stage {
                 $state['entries'][$state['cursor']]['action'] = 'retain_shared';
             } else {
                 if (!is_string($entry['created_at'] ?? null)) throw new RuntimeException('Identity generation unavailable.');
-                $result = MobiShop_Customer_Identity_Client::erase($entry['project'], $entry['uid'], $entry['created_at']);
+                $result = MobiShop_Customer_Identity_Client::erase($entry['project'], $entry['uid'], $entry['created_at'], $timeout);
                 if ($result !== ['status' => 'absent']) throw new RuntimeException('Identity erasure unconfirmed.');
                 $state['entries'][$state['cursor']]['action'] = 'absent';
             }

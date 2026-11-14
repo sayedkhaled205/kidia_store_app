@@ -13,6 +13,8 @@ final class MobiShop_Customer_Account_Deletion {
 	private const RECEIPT_CLEANUP = 'mobishop_cleanup_deletion_receipts';
 	private const MAX_STEPS = 10;
 	private const STEP_BUDGET = 2;
+	private const INLINE_STEPS = 40;
+	private const INLINE_BUDGET = 4;
 	private MobiShop_Customer_Auth_Endpoint $auth;
 
 	public function __construct() { $this->auth = new MobiShop_Customer_Auth_Endpoint(); }
@@ -81,11 +83,12 @@ final class MobiShop_Customer_Account_Deletion {
 		$hash = self::receipt_hash( $receipt );
 		// No caller-supplied user ID, email or WordPress admin cookie is a target.
 		$prepared = 0;
+		$proof_deadline = microtime( true ) + 8;
 		try {
-			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( &$prepared, $hash, $request, $body ): bool {
+			$result = $this->auth->begin_self_deletion( $request, 600, static function ( int $id ) use ( &$prepared, $hash, $request, $body, $proof_deadline ): bool {
 				$user = get_user_by( 'id', $id );
 				if ( ! $user instanceof WP_User || ! self::ordinary_customer( $user ) ) return false;
-				return self::guarded( $id, $hash, static function () use ( $id, &$prepared, $hash, $request, $body ): bool {
+				return self::guarded( $id, $hash, static function () use ( $id, &$prepared, $hash, $request, $body, $proof_deadline ): bool {
 				// Fail before revocation: the customer must retain access to resolve
 				// an in-flight checkout, including when its ledger cannot be read.
 				if ( self::has_pending_payment( $id ) ) return false;
@@ -102,8 +105,10 @@ final class MobiShop_Customer_Account_Deletion {
 						foreach ( $intent['inventory'] as $link ) if ( $link['provider'] === 'apple' && MobiShop_Customer_Identity_Links::shared( $id, $link ) !== false ) return false;
 						foreach ( $intent['identityStage']['entries'] as &$entry ) {
 							if ( $entry['provider'] !== 'apple' || $entry['action'] === 'retain_shared' ) continue;
-							if ( MobiShop_Customer_Identity_Client::lookup( $entry['project'], $entry['uid'] ) !== array( 'status' => 'absent' ) ) return false;
+							$remaining = $proof_deadline - microtime( true );
+							if ( $remaining <= 0 || MobiShop_Customer_Identity_Client::lookup( $entry['project'], $entry['uid'], $remaining ) !== array( 'status' => 'absent' ) ) return false;
 							$entry['apple_revoked'] = true;
+							$entry['action'] = 'absent'; // The SDK-erased UID was authoritatively checked above.
 						}
 						unset( $entry );
 					}
@@ -128,7 +133,13 @@ final class MobiShop_Customer_Account_Deletion {
 			$intent = self::intent( $hash );
 			if ( $intent ) self::remove_intent( $hash, $intent );
 			if ( class_exists( 'WP_Session_Tokens' ) ) WP_Session_Tokens::get_instance( $prepared )->destroy_all();
-			// Start only after the response is flushed; the durable cron retry remains authoritative.
+			// Finish ordinary accounts now; a confirmed cron retry survives slow providers and large histories.
+			self::run_worker( $prepared, true );
+			$record = self::receipt_record( $hash );
+			if ( $record && $record['status'] === 'completed' && $record['userId'] === $prepared && ! self::job( $prepared ) && ! get_user_by( 'id', $prepared ) ) {
+				return self::response( array( 'status' => 'completed', 'user_id' => $prepared ) );
+			}
+			// Continue accepted work after flushing where supported; cron remains the fallback.
 			if ( function_exists( 'fastcgi_finish_request' ) ) add_action( 'shutdown', static function () use ( $prepared ): void {
 				if ( fastcgi_finish_request() ) self::run_worker( $prepared );
 			}, PHP_INT_MAX );
@@ -150,12 +161,12 @@ final class MobiShop_Customer_Account_Deletion {
 			return MobiShop_Customer_Identity_Guard::with_links( array_merge( $current, $row['inventory'] ?? array() ), $action );
 		} );
 	}
-	private static function process_guarded( array &$job ): bool {
-		if ( ! isset( $job['identityLinks'] ) ) return self::process( $job ); // Legacy fixtures only; process denies production legacy jobs.
-		return MobiShop_Customer_Identity_Guard::with_owner( $job['userId'], static function () use ( &$job ): bool {
-			return MobiShop_Customer_Identity_Guard::with_links( $job['identityLinks'], static function () use ( &$job ): bool {
+	private static function process_guarded( array &$job, ?float $deadline = null ): bool {
+		if ( ! isset( $job['identityLinks'] ) ) return self::process( $job, $deadline ); // Legacy fixtures only; process denies production legacy jobs.
+		return MobiShop_Customer_Identity_Guard::with_owner( $job['userId'], static function () use ( &$job, $deadline ): bool {
+			return MobiShop_Customer_Identity_Guard::with_links( $job['identityLinks'], static function () use ( &$job, $deadline ): bool {
 				MobiShop_Customer_Identity_Guard::accept( $job['userId'], $job['receiptHash'], $job['identityLinks'] );
-				return self::process( $job );
+				return self::process( $job, $deadline );
 			} );
 		} );
 	}
@@ -463,7 +474,7 @@ final class MobiShop_Customer_Account_Deletion {
 		$result = wp_schedule_event( time() + 60, 'mobishop_deletion_minute', self::HOOK, $args, true );
 		return ! is_wp_error( $result ) && true === $result;
 	}
-	public static function run_worker( int $id ): void {
+	public static function run_worker( int $id, bool $inline = false ): void {
 		// Closing rollout also pauses accepted jobs without discarding their retry.
 		if ( $id < 1 || ! self::enabled() || is_multisite() ) return;
 		global $wpdb;
@@ -478,7 +489,8 @@ final class MobiShop_Customer_Account_Deletion {
 			}
 			if ( ! self::schedule( $id ) || -1 === (int) $job['phase'] ) return;
 			$started = microtime( true );
-			for ( $step = 0; $step < self::MAX_STEPS; $step++ ) {
+			$deadline = $inline ? $started + self::INLINE_BUDGET : null;
+			for ( $step = 0; $step < ( $inline ? self::INLINE_STEPS : self::MAX_STEPS ); $step++ ) {
 				$user = get_user_by( 'id', $id );
 				if ( $user && ! self::ordinary_customer( $user ) ) return;
 				if ( self::has_pending_payment( $id ) ) return;
@@ -491,7 +503,7 @@ final class MobiShop_Customer_Account_Deletion {
 					return;
 				}
 				$phase_before = (int) $job['phase'];
-				if ( self::process_guarded( $job ) ) {
+				if ( self::process_guarded( $job, $deadline ) ) {
 					$hash = $job['receiptHash'] ?? '';
 					if ( $hash !== '' ) {
 						$record = self::receipt_record( $hash );
@@ -505,9 +517,9 @@ final class MobiShop_Customer_Account_Deletion {
 					return;
 				}
 				self::save( $job );
-				// An unchanged phase means a row/provider batch limit was hit; retry on the next callback.
-				if ( (int) $job['phase'] === $phase_before ) return;
-				if ( microtime( true ) - $started >= self::STEP_BUDGET ) return;
+				// Cron retains its small batches; inline deletion drains ordinary histories within its budget.
+				if ( ! $inline && (int) $job['phase'] === $phase_before ) return;
+				if ( microtime( true ) - $started >= ( $inline ? self::INLINE_BUDGET : self::STEP_BUDGET ) ) return;
 			}
 		} catch ( Throwable $error ) {
 			// The pre-scheduled retry handles transient failures and process crashes.
@@ -543,14 +555,16 @@ final class MobiShop_Customer_Account_Deletion {
 		if ( $wpdb->last_error ) throw new RuntimeException( 'Payment lookup unavailable' );
 		return ! empty( $active );
 	}
-	/** Each run mutates at most 50 owned rows; no lookup by editable email. */
-	private static function process( array &$job ): bool {
+	/** Each step mutates at most 50 owned rows; no lookup by editable email. */
+	private static function process( array &$job, ?float $deadline = null ): bool {
 		global $wpdb;
 		$id = (int) $job['userId'];
 		$phase = (int) $job['phase'];
 		if ( isset( $job['identityStage'] ) ) {
 			if ( ! class_exists( 'MobiShop_Customer_Identity_Erasure_Stage' ) ) throw new RuntimeException( 'Identity erasure unavailable' );
-			$job['identityStage'] = MobiShop_Customer_Identity_Erasure_Stage::advance( $id, $job['identityStage'] );
+			$remaining = $deadline === null ? 25.0 : $deadline - microtime( true );
+			if ( $remaining <= 0 ) return false;
+			$job['identityStage'] = MobiShop_Customer_Identity_Erasure_Stage::advance( $id, $job['identityStage'], $remaining );
 			// Persist each bounded provider step before merchant data erasure begins.
 			self::save( $job );
 			if ( $job['identityStage']['cursor'] !== count( $job['identityStage']['entries'] ) ) return false;

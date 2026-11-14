@@ -9,6 +9,7 @@ deletion_reset();$GLOBALS['mobishop_actions']['shutdown']=[];
 $result=$deletion->request_deletion(deletion_request(deletion_login()));
 mobishop_auth_assert($result->status===202&&isset($GLOBALS['mobishop_users'][7]),'Accepted HTTP response precedes background cleanup.');
 mobishop_auth_assert(count($GLOBALS['mobishop_actions']['shutdown'])===1,'Only the accepted self-deletion schedules response-side work.');
+$GLOBALS['delete_pause_worker']=false;
 ($GLOBALS['mobishop_actions']['shutdown'][0])();
 mobishop_auth_assert($GLOBALS['fixture_response_flushes']===1&&!isset($GLOBALS['mobishop_users'][7]),'Flushing the response starts the bounded worker.');
 mobishop_auth_assert(deletion_status()->data['status']==='completed','Immediate work retains the same durable completion receipt.');

@@ -6,14 +6,15 @@ final class MobiShop_Customer_Identity_Client {
     private const BASE = 'https://api.woomobile.app/v1/stores/';
 
     public static function capabilities(): array { return self::request('capabilities', 'GET'); }
-    public static function lookup(string $project, string $uid): array {
-        return self::request('lookup', 'POST', ['project_id' => $project, 'uid' => $uid]);
+    public static function lookup(string $project, string $uid, float $timeout = 25): array {
+        return self::request('lookup', 'POST', ['project_id' => $project, 'uid' => $uid], $timeout);
     }
-    public static function erase(string $project, string $uid, string $created_at): array {
-        return self::request('erase', 'POST', ['project_id' => $project, 'uid' => $uid, 'created_at' => $created_at]);
+    public static function erase(string $project, string $uid, string $created_at, float $timeout = 25): array {
+        return self::request('erase', 'POST', ['project_id' => $project, 'uid' => $uid, 'created_at' => $created_at], $timeout);
     }
 
-    private static function request(string $operation, string $method, array $body = []): array {
+    private static function request(string $operation, string $method, array $body = [], float $timeout = 25): array {
+        if ($timeout <= 0 || !is_finite($timeout)) throw new RuntimeException('Identity operation budget exhausted.');
         $connection = class_exists('MobiShop_Store_Notifications') ? MobiShop_Store_Notifications::connection() : [];
         if (!is_string($connection['store_id'] ?? null)
             || preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/D', $connection['store_id']) !== 1
@@ -21,7 +22,7 @@ final class MobiShop_Customer_Identity_Client {
             || preg_match('/^[A-Za-z0-9]{80}$/D', $connection['token']) !== 1) {
             throw new RuntimeException('Identity service connection unavailable.');
         }
-        $args = ['method' => $method, 'timeout' => 25, 'redirection' => 0, 'limit_response_size' => 8192,
+        $args = ['method' => $method, 'timeout' => min(25, $timeout), 'redirection' => 0, 'limit_response_size' => 8192,
             'headers' => ['Authorization' => 'Bearer '.$connection['token'], 'Accept' => 'application/json', 'Content-Type' => 'application/json']];
         if ($method === 'POST') $args['body'] = wp_json_encode($body);
         $response = wp_remote_request(self::BASE.$connection['store_id'].'/customer-identities/'.$operation, $args);

@@ -32,4 +32,15 @@ foreach ([['status' => 503, 'body' => '{}'], ['status' => 200, 'body' => '{"ok":
 }
 $GLOBALS['responses'] = [['status' => 200, 'body' => '{"ok":true,"status":"absent"}']];
 verify(MobiShop_Customer_Identity_Client::erase('synthetic-auth-project', 'uid', '12345') === ['status' => 'absent'], 'Confirmed absence accepted');
+$GLOBALS['responses'] = [['status' => 200, 'body' => '{"ok":true,"status":"absent"}']];
+MobiShop_Customer_Identity_Client::erase('synthetic-auth-project', 'uid', '12345', 1.25);
+verify(end($GLOBALS['calls'])[1]['timeout'] === 1.25, 'Inline deletion propagates remaining provider time budget');
+$GLOBALS['responses'] = [['status' => 200, 'body' => '{"ok":true,"status":"absent"}']];
+MobiShop_Customer_Identity_Client::lookup('synthetic-auth-project', 'uid', 0.75);
+verify(end($GLOBALS['calls'])[1]['timeout'] === 0.75, 'Final Apple absence lookup respects remaining proof budget');
+foreach ([0, -1, INF, NAN] as $timeout) {
+    $count = count($GLOBALS['calls']);
+    verify(rejected(fn() => MobiShop_Customer_Identity_Client::erase('synthetic-auth-project', 'uid', '12345', $timeout)), 'Invalid provider budget rejected');
+    verify(count($GLOBALS['calls']) === $count, 'Exhausted provider budget never sends an unbounded request');
+}
 echo $checks.' connector identity transport checks passed.'.PHP_EOL;

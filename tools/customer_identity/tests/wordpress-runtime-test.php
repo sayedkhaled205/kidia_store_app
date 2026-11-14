@@ -88,6 +88,7 @@ $hash=hash_hmac('sha256',home_url('/').'|'.$wpdb->options.'|'.$receipt,wp_salt('
 $intent=get_option('mobishop_deletion_intent_v1_'.$hash);
 runtime_check(is_array($intent)&&array_column($intent['identityStage']['entries'],'uid')===array($first['uid'],$second['uid']),'Frozen durable intent includes both identities despite primed stale cache');
 runtime_check(!MobiShop_Customer_Account_Deletion::is_pending($target),'Prepare does not mark account pending or revoke session');
+MobiShop_Customer_Identity_Client::$failure=true;
 $accepted=runtime_rest('customer/account/deletion/finalize',$body,$token);
 runtime_check($accepted->get_status()===202&&($accepted->get_data()['user_id']??0)===$target,'Real finalize accepts exact authenticated owner');
 $sessionRequest=new WP_REST_Request();$sessionRequest->set_header('X-MobiShop-Session',$token);
@@ -95,7 +96,7 @@ runtime_check(is_wp_error($auth->authenticate_route($sessionRequest)),'Accepted 
 MobiShop_Customer_Identity_Client::$failure=true;
 MobiShop_Customer_Account_Deletion::run_worker($target);
 $job=get_option('mobishop_account_deletion_v1_'.$target);
-runtime_check(MobiShop_Customer_Identity_Client::$attempts===1&&is_array($job)&&$job['phase']===0&&$job['identityStage']['cursor']===0,'Provider failure is reached and durable worker stage does not advance');
+runtime_check(MobiShop_Customer_Identity_Client::$attempts===2&&is_array($job)&&$job['phase']===0&&$job['identityStage']['cursor']===0,'Inline and retry provider failures preserve the durable worker stage');
 runtime_check(get_user_by('id',$target) instanceof WP_User&&get_comment($review)!==null&&(int)wc_get_order($order->get_id())->get_customer_id()===$target,'Provider outage preserves WordPress account, review and owned order');
 MobiShop_Customer_Identity_Client::$failure=false;
 $stalls=0;$previous='';
@@ -122,6 +123,21 @@ $remaining=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->opti
 runtime_check($remaining===0&&get_option('mobishop_deletion_intent_v1_'.$hash,false)===false,'Real owner/UID reservations and identity intent are cleaned after completion');
 $status=runtime_rest('customer/account/deletion/status',array('receipt'=>$receipt));
 runtime_check(($status->get_data()['status']??'')==='completed','Receipt recovers durable completion without authentication');
+
+// Reuse the deleted email and captured provider UID, with a new merchant owner and no inherited data.
+$replacement=wp_insert_user(array('user_login'=>'ci-replacement-customer','user_email'=>'identity-target@example.invalid','user_pass'=>'ci-fixture-password-only','role'=>'customer'));
+runtime_check(!is_wp_error($replacement)&&(int)$replacement!==$target,'Deleted email can create a fresh account immediately');$replacement=(int)$replacement;
+MobiShop_Customer_Identity_Guard::writer($replacement,$first,static fn()=>update_user_meta($replacement,$identityKey($first),$first));
+runtime_check(get_user_meta($replacement,'billing_address_1',true)===''&&get_user_meta($replacement,'_mobishop_wishlist_product_ids',true)==='','Fresh account has no deleted address or wishlist');
+$attempts=MobiShop_Customer_Identity_Client::$attempts;MobiShop_Customer_Account_Deletion::run_worker($target,true);
+runtime_check(MobiShop_Customer_Identity_Client::$attempts===$attempts&&get_user_by('id',$replacement) instanceof WP_User,'Late old callback neither erases the new identity nor removes its owner');
+$freshLogin=runtime_rest('auth/login',array('email'=>'identity-target@example.invalid','password'=>'ci-fixture-password-only'));
+$freshToken=$freshLogin->get_data()['token']??'';
+runtime_check($freshLogin->get_status()===200&&$freshToken!=='','Same email and password can log in to the newly registered account');
+$freshBody=array('receipt'=>bin2hex(random_bytes(32)),'confirmation'=>'delete-my-account');
+runtime_check(runtime_rest('customer/account/deletion/prepare',$freshBody,$freshToken)->get_status()===200,'Fresh account prepares its own independent deletion');
+$freshResult=runtime_rest('customer/account/deletion/finalize',$freshBody,$freshToken);
+runtime_check($freshResult->get_status()===200&&($freshResult->get_data()['status']??'')==='completed'&&get_user_by('id',$replacement)===false,'Healthy provider and ordinary account complete in the finalize request without cron');
 
 // Privileged owner's customer-only shopping alias is not an independently erasable account.
 $admin=wp_insert_user(array('user_login'=>'ci-protected-owner','user_email'=>'identity-owner@example.invalid','user_pass'=>'ci-owner-password-only','role'=>'administrator'));
