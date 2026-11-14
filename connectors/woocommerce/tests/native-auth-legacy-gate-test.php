@@ -45,7 +45,7 @@ legacy_gate_assert( is_wp_error( $endpoint->authenticate_route( $token_request )
 update_user_meta( 7, 'kidia_phone_setup_required', false );
 legacy_gate_assert( $endpoint->current_customer( $token_request ) instanceof WP_REST_Response, 'Existing token resolves again when its required profile step is completed' );
 $GLOBALS['mobishop_users'][7]['allcaps']['edit_users'] = true;
-legacy_gate_assert( is_wp_error( $endpoint->login( $login_request ) ) && is_wp_error( $endpoint->authenticate_route( $token_request ) ), 'A customer with user-editing privileges cannot log in or reuse an older customer token' );
+legacy_gate_assert( is_wp_error( $rawIssuer->invoke( $endpoint, get_user_by('id',7) ) ) && is_wp_error( $endpoint->authenticate_route( $token_request ) ), 'A promoted customer cannot receive a raw privileged token or reuse an older customer token' );
 unset( $GLOBALS['mobishop_users'][7]['allcaps']['edit_users'] );
 
 // Simulate the website registration hook marking a newly allocated customer incomplete.

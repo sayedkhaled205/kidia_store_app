@@ -141,7 +141,7 @@ function maybe_serialize( $value ) { return is_array( $value ) || is_object( $va
 function wp_cache_delete( $key, $group = '' ) {}
 function wp_schedule_single_event( $timestamp, $hook, $args = array() ) { return true; }
 function get_user_meta( $id, $key = '', $single = false ) { $value = $GLOBALS['native_meta'][(int) $id][$key] ?? null; if ( ! empty( $GLOBALS['native_meta_rows_format'] ) ) return $single ? ( $value[0] ?? '' ) : ( $value ?? array() ); return $value === null ? ( $single ? '' : array() ) : ( $single ? $value : array( $value ) ); }
-function update_user_meta( $id, $key, $value ) { if (str_starts_with((string) $key, '_mobishop_phone_firebase_identity_') && ($GLOBALS['native_meta'][(int) $id][$key] ?? null) === $value) return false; if (($GLOBALS['native_fail_meta'] ?? '') === $key) return false; $GLOBALS['native_meta'][(int) $id][$key] = $value; return true; }
+function update_user_meta( $id, $key, $value, $previous = null ) { if (func_num_args() === 4 && ($GLOBALS['native_meta'][(int)$id][$key] ?? null) !== $previous) return false; if (str_starts_with((string) $key, '_mobishop_phone_firebase_identity_') && ($GLOBALS['native_meta'][(int) $id][$key] ?? null) === $value) return false; if (($GLOBALS['native_fail_meta'] ?? '') === $key) return false; $GLOBALS['native_meta'][(int) $id][$key] = $value; return true; }
 function wp_delete_user( $id, $reassign = 0 ) { unset($GLOBALS['native_users'][(int)$id], $GLOBALS['native_meta'][(int)$id]); return true; }
 function delete_user_meta( $id, $key, $value = '' ) { unset( $GLOBALS['native_meta'][(int) $id][$key] ); return true; }
 function get_current_user_id() { return $GLOBALS['website_user'] ?? 0; }
@@ -188,7 +188,7 @@ function get_users( $args = array() ) {
         if ( isset( $args['include'] ) && ! in_array( $id, $args['include'], true ) ) continue;
         if ( isset( $args['meta_query'] ) && ! native_meta_matches( $id, $args['meta_query'] ) ) continue;
         if ( isset( $args['meta_key'] ) && get_user_meta( $id, $args['meta_key'], true ) !== ( $args['meta_value'] ?? '' ) ) continue;
-        $result[] = ( $args['fields'] ?? '' ) === 'ID' ? $id : new WP_User( $id, $record );
+        $result[] = ( $args['fields'] ?? '' ) === 'ID' ? ( ! empty($GLOBALS['native_string_ids']) ? (string)$id : $id ) : new WP_User( $id, $record );
     }
     return ! empty( $args['number'] ) && $args['number'] > 0 ? array_slice( $result, 0, (int) $args['number'] ) : $result;
 }

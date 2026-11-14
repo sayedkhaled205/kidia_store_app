@@ -460,15 +460,12 @@ mobishop_auth_assert( 1 === preg_match( '/^kma1\.7\.[a-f0-9]{64}$/', $token ), '
 $stored_sessions = $GLOBALS['mobishop_user_meta_store'][7]['_mobishop_customer_sessions_v1'];
 mobishop_auth_assert( false === str_contains( serialize( $stored_sessions ), $token ), 'Only the session hash may be stored.' );
 
-$elevated = $endpoint->login(
-	new WP_REST_Request(
-		array(
-			'email'    => 'manager@example.com',
-			'password' => 'manager-password',
-		)
-	)
-);
-mobishop_auth_assert( $elevated instanceof WP_Error, 'Elevated store accounts must not receive customer sessions.' );
+// Management authentication now maps to a separate shopper. The raw principal
+// still cannot be issued a customer token; mapping is exercised by staff tests.
+$rawIssuer = new ReflectionMethod($endpoint, 'issue_session_response');
+$rawIssuer->setAccessible(true);
+$elevated = $rawIssuer->invoke($endpoint, get_user_by('id', 8));
+mobishop_auth_assert($elevated instanceof WP_Error, 'Raw elevated account must never receive a customer token.');
 
 $profile = $endpoint->current_customer(
 	new WP_REST_Request( array(), array( 'X-MobiShop-Session' => $token ) )

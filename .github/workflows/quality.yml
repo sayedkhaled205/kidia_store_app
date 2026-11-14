@@ -125,6 +125,8 @@ jobs:
           php connectors/woocommerce/tests/native-website-contact-identity336-test.php
           php connectors/woocommerce/tests/storefront-admin-native-entry-test.php
           php connectors/woocommerce/tests/native-owner-phone342-test.php
+          php connectors/woocommerce/tests/native-management343-test.php
+          php connectors/woocommerce/tests/storefront-staff343-test.php
           php integrations/woocommerce/kidia-auth/website-facebook-policy-test.php
           php integrations/woocommerce/kidia-auth/website-firebase-identity-test.php
           php connectors/woocommerce/tests/native-auth-completion-race-test.php

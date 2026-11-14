@@ -166,9 +166,6 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( is_wp_error( $users ) && $request->get_param( 'supports_email_password_recovery' ) === true ) {
 				// A conflicting or protected identity must use its original email proof.
 				$methods = array( 'email_password' );
-			} elseif ( ! is_wp_error( $users ) && $users && ! array_filter( $users, fn( $user ) => $this->eligible( $user ) ) ) {
-				// Store owners may prove their password, but a contact-number OTP cannot grant owner access.
-				$methods = array( 'password' );
 			} elseif ( $c['methods']['phone_otp'] ) {
 				// New customers have no password yet. Existing accounts retain password recovery if SMS fails.
 				$methods = $users === array() ? array( 'phone_otp' ) : array( 'password', 'phone_otp' );
@@ -222,10 +219,6 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			}
 			return $this->error( 'invalid_credentials', 401 );
 		}
-		// Never choose a protected owner implicitly when the same proof matches another account.
-		foreach ( $matched as $user ) {
-			if ( $this->can_shop_as_owner( $user ) ) return count( $matched ) === 1 ? $this->owner_session( $user, 'password' ) : $this->error( 'invalid_credentials', 401 );
-		}
 		// Password proof is scoped to the accounts whose own password matched.
 		$versions = array();
 		foreach ( $matched as $user ) $versions[ $user->ID ] = $this->hash( $user->user_pass );
@@ -244,7 +237,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( ! $row || $row['purpose'] !== 'register' ) return $this->error( 'invalid_ticket', 401 );
 			$proof = $row['proof'];
 		}
-		$users = $this->phone_users( $phone, true );
+		$users = $this->phone_users( $phone, true, true );
 		if ( is_wp_error( $users ) ) return $users;
 		if ( $users ) return $this->error( 'existing_phone', 409 );
 		// Never relax account-completion proof for an existing account.
@@ -265,7 +258,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$proof = $row['proof'];
 		$phone = $this->phone( (string) $request->get_param( 'phone' ) );
 		if ( ! $phone || ! empty( $proof['user_id'] ) || ( $proof['attempted_phone'] ?? '' ) !== $phone ) return $this->error( 'phone_mismatch', 400 );
-		$users = $this->phone_users( $phone, true );
+		$users = $this->phone_users( $phone, true, true );
 		if ( is_wp_error( $users ) ) return $users;
 		if ( $users ) return $this->error( 'existing_phone', 409 );
 		if ( ! $this->consume( $ticket, $row ) ) return $this->error( 'invalid_ticket', 401 );
@@ -352,7 +345,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( ! $claims || ( $claims['aud'] ?? null ) !== $project || ( $claims['iss'] ?? null ) !== 'https://securetoken.google.com/' . $project
 			|| ! $this->fresh( $claims, true ) || ( $claims['phone_number'] ?? null ) !== $phone
 			|| ( $claims['firebase']['sign_in_provider'] ?? null ) !== 'phone' || strlen( $claims['sub'] ) > 128 ) return $this->error( 'invalid_proof', 401 );
-		$users = $this->phone_users( $phone );
+		$users = $this->phone_users( $phone, false, ! $website );
 		if ( is_wp_error( $users ) ) return $users;
 		$identity = array( 'project' => $project, 'uid' => $claims['sub'] );
 		$proof = array( 'kind' => 'phone', 'phone' => $phone, 'phone_firebase_identity' => $identity );
@@ -365,7 +358,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			$proof['phone'] = $phone;
 			$proof['phone_firebase_identity'] = $identity;
 			// Existing account completion cannot silently merge another account's phone.
-			$users = $this->phone_users( $phone );
+			$users = $this->phone_users( $phone, false, ! $website );
 			if ( is_wp_error( $users ) ) return $users;
 			if ( ! empty( $proof['user_id'] ) ) {
 				$target = get_user_by( 'id', (int) $proof['user_id'] );
@@ -379,7 +372,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			}
 			return $this->registration_ticket( $proof, $request );
 		}
-		$users = $this->phone_users( $phone );
+		$users = $this->phone_users( $phone, false, ! $website );
 		return is_wp_error( $users ) ? $users : $this->complete_proof( $users, $proof, $request );
 	}
 
@@ -406,10 +399,10 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			'authoritative' => (bool) preg_match( '/@(gmail|googlemail)\.com$/', $email ) || ( is_string( $claims['hd'] ?? null ) && $claims['hd'] !== '' ) );
 		if ( $expected_phone !== null ) $proof['expected_phone'] = $expected_phone;
 		$linked = $this->google_user( $proof['sub'] );
+		if ( $app_session = $this->shopping_provider_session( $proof, $request, $linked ) ) return $app_session;
 		if ( $linked ) {
 			$user = get_user_by( 'id', $linked );
-			if ( $this->can_shop_as_owner( $user ) && $expected_phone === null ) return $this->owner_session( $user, 'google' );
-			if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401, 'google_customer_policy' );
+			if ( ! $this->eligible( $user ) && ! $this->can_shop_as_owner( $user ) ) return $this->error( 'invalid_credentials', 401, 'google_customer_policy' );
 			if ( $expected_phone !== null && ! $this->google_matches_phone( $user, $expected_phone ) ) return $this->error( 'google_phone_mismatch', 403 );
 			return $this->complete_proof( array( $user ), $proof, $request );
 		}
@@ -433,7 +426,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$id = (int) $request->get_param( 'account_id' );
 		if ( ! $row || $row['purpose'] !== 'select' || ! in_array( $id, $row['ids'], true ) ) return $this->error( 'invalid_ticket', 401 );
 		$user = get_user_by( 'id', $id );
-		if ( ! $this->proof_allows( $user, $row['proof'] ) || ! $this->consume( $ticket, $row ) ) return $this->error( 'invalid_ticket', 401 );
+		if ( ! $this->proof_allows( $user, $row['proof'], true ) || ! $this->consume( $ticket, $row ) ) return $this->error( 'invalid_ticket', 401 );
 		return $this->finish( $user, $row['proof'], $request );
 	}
 
@@ -457,7 +450,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			$user = get_user_by( 'id', $id );
 			// Apple may recreate its Firebase UID before merchant erasure finishes.
 			if ( $id > 0 && class_exists( 'MobiShop_Customer_Account_Deletion' ) && MobiShop_Customer_Account_Deletion::is_pending( $id ) ) return $this->error( 'account_deletion_pending', 409 );
-			return $this->proof_allows( $user, $proof ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
+			return $this->proof_allows( $user, $proof, true ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
 		}
 		if ( ( $claims['email_verified'] ?? null ) !== true || ! is_string( $claims['email'] ?? null ) || ! is_email( $claims['email'] ) ) return $this->error( 'invalid_proof', 401 );
 		$proof['email'] = strtolower( $claims['email'] );
@@ -602,11 +595,11 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$proof = array( 'kind' => 'facebook', 'facebook_subject' => $subject, 'facebook_app_id' => $fb['app_id'] );
 		if ( is_string( $email ) && $email !== '' ) $proof['email'] = $email;
 		$linked = $this->facebook_user( $subject, $fb['app_id'] );
+		if ( $app_session = $this->shopping_provider_session( $proof, $request, $linked ) ) return $app_session;
 		if ( $linked === -1 ) return $this->error( 'account_conflict', 409 );
 		if ( $linked ) {
 			$user = get_user_by( 'id', $linked );
-			if ( $this->can_shop_as_owner( $user ) ) return $this->owner_session( $user, 'facebook' );
-			return $this->proof_allows( $user, $proof ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
+			return $this->proof_allows( $user, $proof, true ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
 		}
 		// Facebook is never authoritative for an arbitrary existing email: no auto-link.
 		return $this->registration_ticket( $proof, $request );
@@ -641,6 +634,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$locks = $this->lock( $identities );
 		if ( $locks === null ) return false;
 		try {
+			if ( $this->shopping_provider_reserved( 'facebook', $this->facebook_key( $app_id, $subject ) ) ) return false;
 			wp_cache_delete( $id, 'users' );
 			wp_cache_delete( $id, 'user_meta' );
 			if ( ! $this->eligible( get_user_by( 'id', $id ) ) ) return false;
@@ -774,6 +768,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( count( $users ) > 50 ) return $this->error( 'account_conflict', 409 );
 		if ( ! $users ) return $this->registration_ticket( $proof, $request );
 		$proof['ids'] = array_map( static fn( $user ) => (int) $user->ID, $users );
+		foreach ( $users as $user ) if ( $this->can_shop_as_owner( $user ) ) $proof['owners'][ $user->ID ] = $this->owner_version( $user );
 		if ( count( $users ) === 1 ) return $this->finish( $users[0], $proof, $request );
 		$ticket = $this->ticket( 'select', $proof, $request, $proof['ids'] );
 		if ( is_wp_error( $ticket ) ) return $ticket;
@@ -786,6 +781,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 	}
 
 	private function finish( WP_User $user, array $proof, WP_REST_Request $request ) {
+		if ( $this->can_shop_as_owner( $user ) ) return $this->finish_owner( $user, $proof, $request );
+		if ( isset( $proof['owners'][ $user->ID ] ) ) return $this->error( 'invalid_proof', 401 );
 		if ( ! $this->eligible( $user ) ) return $this->error( 'invalid_credentials', 401 );
 		if ( class_exists( 'MobiShop_Customer_Account_Deletion' ) && MobiShop_Customer_Account_Deletion::is_pending( $user->ID ) ) return $this->error( 'account_deletion_pending', 409 );
 		if ( in_array( $proof['kind'], array( 'facebook', 'facebook_phone' ), true )
@@ -855,8 +852,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return (bool) apply_filters( 'mobishop_native_auth_requires_phone', $s['require_phone'] ?? class_exists( 'Kidia_Firebase_OTP_265' ) );
 	}
 
-	private function registration_ticket( array $proof, WP_REST_Request $request ) {
-		if ( empty( $proof['user_id'] ) && ! $this->registration_enabled() ) return $this->error( 'registration_disabled', 403 );
+	private function registration_ticket( array $proof, WP_REST_Request $request, bool $existing_shopper = false ) {
+		if ( ! $existing_shopper && empty( $proof['user_id'] ) && ! $this->registration_enabled() ) return $this->error( 'registration_disabled', 403 );
 		if ( $proof['kind'] === 'password' && empty( $proof['user_id'] ) ) return $this->error( 'invalid_proof', 401 );
 		$fields = $proof['kind'] === 'apple' ? array( 'name' ) : array( 'name', 'password' );
 		// Email-originated registrations always require a verified phone, even if require_phone is globally off.
@@ -895,6 +892,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$created_id = 0;
 		$profile_completed = false;
 		try {
+			$shopping_identity = $this->shopping_provider_identity( $p );
+			if ( $shopping_identity && $this->shopping_provider_reserved( $shopping_identity['provider'], $shopping_identity['identity'] ) ) return $this->error( 'account_conflict', 409 );
 			if ( ! empty( $p['user_id'] ) ) {
 				// Completion may have changed while this request acquired its identity leases.
 				wp_cache_delete( (int) $p['user_id'], 'users' );
@@ -1006,7 +1005,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 
 	/** Google proves this account; a contact claim cannot override a verified owner. */
 	private function google_matches_phone( WP_User $user, string $phone ): bool {
-		$owners = $this->phone_users( $phone );
+		$owners = $this->phone_users( $phone, false, true );
 		if ( is_wp_error( $owners ) ) return false;
 		if ( $owners ) return in_array( (int) $user->ID, array_map( static fn( $owner ) => (int) $owner->ID, $owners ), true );
 		return $this->user_phone( $user, $phone, true ) === $phone;
@@ -1016,13 +1015,139 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return $this->shopping_profile !== null && MobiShop_Storefront_Admin::accepts( $user );
 	}
 
-	private function owner_session( WP_User $owner, string $method ) {
+	private function owner_version( WP_User $owner ): array {
+		return array( 'id' => $owner->ID, 'password' => $this->hash( $owner->user_pass ),
+			'generation' => (string) get_user_meta( $owner->ID, '_mobishop_auth_generation_v1', true ) );
+	}
+
+	/** App-only provider grants never add a credential to a management WordPress account. */
+	private function shopping_provider_identity( array $proof ): ?array {
+		if ( in_array( $proof['kind'], array( 'google', 'google_phone' ), true ) ) return array( 'provider' => 'google', 'identity' => hash( 'sha256', 'google|' . $proof['sub'] ), 'lock' => 'google-link:sub:' . $proof['sub'] );
+		if ( in_array( $proof['kind'], array( 'facebook', 'facebook_phone' ), true ) ) return array( 'provider' => 'facebook', 'identity' => $this->facebook_key( $proof['facebook_app_id'], $proof['facebook_subject'] ), 'lock' => 'facebook-link:sub:' . $proof['facebook_app_id'] . ':' . $proof['facebook_subject'] );
+		return null;
+	}
+
+	/** Called while holding the same provider-subject lease as ordinary customer linking. */
+	private function shopping_provider_reserved( string $provider, string $identity ): bool {
+		return (bool) get_users( array( 'meta_key' => '_mobishop_storefront_' . $provider . '_identity', 'meta_value' => $identity, 'fields' => 'ID', 'number' => 1 ) );
+	}
+
+	private function shopping_grant_current( int $customer_id, int $owner_id, array $proof, array $grant ): bool {
+		$spec = $this->shopping_provider_identity( $proof );
+		$key = '_mobishop_storefront_' . $spec['provider'];
+		wp_cache_delete( $customer_id, 'users' ); wp_cache_delete( $customer_id, 'user_meta' );
+		wp_cache_delete( $owner_id, 'users' ); wp_cache_delete( $owner_id, 'user_meta' );
+		$owner = get_user_by( 'id', $owner_id );
+		if ( ! $this->can_shop_as_owner( $owner ) || ( empty( $grant['active'] ) && ( $grant['owner'] ?? null ) !== $this->owner_version( $owner ) ) ) return false;
+		$ids = get_users( array( 'meta_key' => $key . '_identity', 'meta_value' => $spec['identity'], 'fields' => 'ID', 'number' => 2 ) );
+		$linked = $spec['provider'] === 'google' ? $this->google_user( $proof['sub'] ) : $this->facebook_user( $proof['facebook_subject'], $proof['facebook_app_id'] );
+		return array_map( 'intval', $ids ) === array( $customer_id ) && MobiShop_Storefront_Admin::data_owner_id( $customer_id ) === $owner_id
+			&& get_user_meta( $customer_id, $key . '_grant', true ) === $grant && in_array( $linked, array( 0, $owner_id, $customer_id ), true );
+	}
+
+	/** Resolve only a durable, site-bound app grant after the provider proof is verified. */
+	private function shopping_provider_session( array $proof, WP_REST_Request $request, int $linked ) {
+		$spec = $this->shopping_provider_identity( $proof );
+		if ( ! $spec ) return null;
+		$key = '_mobishop_storefront_' . $spec['provider'];
+		$ids = get_users( array( 'meta_key' => $key . '_identity', 'meta_value' => $spec['identity'], 'fields' => 'ID', 'number' => 2 ) );
+		if ( ! $ids ) return null;
+		if ( count( $ids ) !== 1 || $this->shopping_profile === null || $request->get_param( 'client_channel' ) === 'website' ) return $this->error( 'invalid_credentials', 401 );
+		$customer = get_user_by( 'id', (int) $ids[0] );
+		$owner_id = MobiShop_Storefront_Admin::data_owner_id( (int) $ids[0] );
+		$owner = get_user_by( 'id', $owner_id );
+		$grant = get_user_meta( (int) $ids[0], $key . '_grant', true );
+		if ( ! $this->eligible( $customer ) || $owner_id === (int) $ids[0] || ! $this->can_shop_as_owner( $owner )
+			|| ! is_array( $grant ) || ( $grant['identity'] ?? '' ) !== $spec['identity'] || ( $grant['owner']['id'] ?? 0 ) !== $owner_id
+			|| ( $linked !== 0 && $linked !== $owner_id && $linked !== $customer->ID ) ) return $this->error( 'invalid_credentials', 401 );
+		if ( ! empty( $proof['expected_phone'] ) && ! $this->google_matches_phone( $owner, $proof['expected_phone'] ) ) return $this->error( 'google_phone_mismatch', 403 );
+		if ( ( $grant['active'] ?? false ) !== true ) return $this->registration_ticket( $proof, $request, true );
+		$locks = $this->lock( array( $spec['lock'], 'shopping-provider:' . $spec['provider'] . ':' . $customer->ID ) );
+		if ( $locks === null ) return $this->error( 'retry', 409 );
+		try {
+			return $this->owner_session( $owner, $spec['provider'], function () use ( $customer, $owner_id, $proof, $grant ): bool {
+				return $this->shopping_grant_current( $customer->ID, $owner_id, $proof, $grant )
+					&& ( empty( $proof['expected_phone'] ) || $this->google_matches_phone( get_user_by( 'id', $owner_id ), $proof['expected_phone'] ) );
+			} );
+		} finally { $this->unlock( $locks ); }
+	}
+
+	private function link_shopping_provider( WP_User $customer, WP_User $owner, array $proof, ?array &$pending ): bool {
+		$spec = $this->shopping_provider_identity( $proof );
+		if ( ! $spec ) return false;
+		$key = '_mobishop_storefront_' . $spec['provider'];
+		$locks = $this->lock( array( $spec['lock'], 'shopping-provider:' . $spec['provider'] . ':' . $customer->ID ) );
+		if ( $locks === null ) return false;
+		try {
+			$linked = $spec['provider'] === 'google' ? $this->google_user( $proof['sub'] ) : $this->facebook_user( $proof['facebook_subject'], $proof['facebook_app_id'] );
+			if ( $linked !== 0 && $linked !== $owner->ID && $linked !== $customer->ID ) return false;
+			$ids = get_users( array( 'meta_key' => $key . '_identity', 'meta_value' => $spec['identity'], 'fields' => 'ID', 'number' => 2 ) );
+			if ( $ids && array_map( 'intval', $ids ) !== array( $customer->ID ) ) return false;
+			$old = get_user_meta( $customer->ID, $key . '_identity', true );
+			if ( $old && $old !== $spec['identity'] ) return false;
+			$previous = get_user_meta( $customer->ID, $key . '_grant', true );
+			if ( $old === $spec['identity'] && is_array( $previous ) && ( $previous['identity'] ?? '' ) === $spec['identity'] && ( $previous['active'] ?? false ) === true && ( $previous['owner']['id'] ?? 0 ) === $owner->ID ) return true;
+			$grant = array( 'identity' => $spec['identity'], 'owner' => $this->owner_version( $owner ), 'active' => false, 'attempt' => bin2hex( random_bytes( 16 ) ) );
+			update_user_meta( $customer->ID, $key . '_grant', $grant );
+			if ( get_user_meta( $customer->ID, $key . '_grant', true ) !== $grant ) return false;
+			update_user_meta( $customer->ID, $key . '_identity', $spec['identity'] );
+			$pending = array( 'key' => $key . '_grant', 'value' => $grant );
+			return get_user_meta( $customer->ID, $key . '_identity', true ) === $spec['identity'];
+		} finally { $this->unlock( $locks ); }
+	}
+
+	/** Authenticate the canonical identity, issue only its isolated shopping principal. */
+	private function finish_owner( WP_User $owner, array $proof, WP_REST_Request $request ) {
+		if ( $request->get_param( 'client_channel' ) === 'website' || ! isset( $proof['owners'][ $owner->ID ] ) ) return $this->error( 'invalid_proof', 401 );
+		if ( ! $this->proof_allows( $owner, $proof, true ) ) return $this->error( 'invalid_proof', 401 );
+		if ( ! empty( $proof['expected_phone'] ) && ! $this->google_matches_phone( $owner, $proof['expected_phone'] ) ) return $this->error( 'google_phone_mismatch', 403 );
+		if ( in_array( $proof['kind'], array( 'facebook', 'facebook_phone' ), true ) && ! $this->capabilities( $request )['methods']['facebook_native'] ) return $this->error( 'invalid_proof', 401 );
+		$owner_proof = array( 'id' => $owner->ID, 'password' => (string) $owner->user_pass, 'generation' => $proof['owners'][ $owner->ID ]['generation'] );
+		$customer = ( $this->shopping_profile )( $owner );
+		if ( is_wp_error( $customer ) ) return $customer;
+		if ( ! $this->eligible( $customer ) || $customer->ID === $owner->ID || MobiShop_Storefront_Admin::data_owner_id( $customer->ID ) !== $owner->ID ) return $this->error( 'invalid_credentials', 401 );
+		wp_cache_delete( $owner->ID, 'users' ); wp_cache_delete( $owner->ID, 'user_meta' );
+		$fresh = get_user_by( 'id', $owner->ID );
+		if ( ! $this->can_shop_as_owner( $fresh ) || ! $this->proof_allows( $fresh, $proof, true ) ) return $this->error( 'invalid_proof', 401 );
+		$pending = null;
+		if ( in_array( $proof['kind'], array( 'google_phone', 'facebook_phone' ), true ) && ! $this->link_shopping_provider( $customer, $fresh, $proof, $pending ) ) return $this->error( 'account_conflict', 409 );
+		if ( ! $this->persist_phone_identity( $customer->ID, $proof ) ) return $this->error( 'identity_link_failed', 503 );
+		wp_cache_delete( $owner->ID, 'users' ); wp_cache_delete( $owner->ID, 'user_meta' );
+		$fresh = get_user_by( 'id', $owner->ID );
+		if ( ! $this->can_shop_as_owner( $fresh ) || ! $this->proof_allows( $fresh, $proof, true ) ) return $this->error( 'invalid_proof', 401 );
+		$result = ( $this->issue )( $customer, $owner_proof );
+		if ( $result instanceof WP_REST_Response && $result->get_status() < 300 ) {
+			if ( $pending !== null ) {
+				wp_cache_delete( $owner->ID, 'users' ); wp_cache_delete( $owner->ID, 'user_meta' );
+				$fresh = get_user_by( 'id', $owner->ID );
+				if ( ! $this->can_shop_as_owner( $fresh ) || ! $this->proof_allows( $fresh, $proof, true ) ) return $this->error( 'invalid_proof', 401 );
+				$spec = $this->shopping_provider_identity( $proof );
+				$locks = $this->lock( array( $spec['lock'], 'shopping-provider:' . $spec['provider'] . ':' . $customer->ID ) );
+				if ( $locks === null ) return $this->error( 'retry', 409 );
+				try {
+					if ( ! $this->shopping_grant_current( $customer->ID, $owner->ID, $proof, $pending['value'] ) ) return $this->error( 'invalid_proof', 401 );
+					$active = $pending['value']; $active['active'] = true;
+					// Activate only this attempt after the session issuer accepted the captured owner proof.
+					update_user_meta( $customer->ID, $pending['key'], $active, $pending['value'] );
+					if ( get_user_meta( $customer->ID, $pending['key'], true ) !== $active ) return $this->error( 'identity_link_failed', 503 );
+				} finally { $this->unlock( $locks ); }
+			}
+			$result->set_data( array( 'status' => 'authenticated' ) + $result->get_data() );
+			update_user_meta( $customer->ID, '_mobishop_app_last_login_at', gmdate( 'c' ) );
+			update_user_meta( $customer->ID, '_mobishop_app_last_auth_method', sanitize_key( $proof['kind'] ) );
+		}
+		return $result;
+	}
+
+	private function owner_session( WP_User $owner, string $method, ?callable $validate = null ) {
 		$owner_proof = array( 'id' => $owner->ID, 'password' => (string) $owner->user_pass,
 			'generation' => (string) get_user_meta( $owner->ID, '_mobishop_auth_generation_v1', true ) );
 		$customer = ( $this->shopping_profile )( $owner );
 		if ( is_wp_error( $customer ) ) return $customer;
 		if ( ! $this->eligible( $customer ) || $customer->ID === $owner->ID ) return $this->error( 'invalid_credentials', 401 );
+		if ( $validate !== null && ! $validate() ) return $this->error( 'invalid_proof', 401 );
 		$result = ( $this->issue )( $customer, $owner_proof );
+		if ( $validate !== null && ! $validate() ) return $this->error( 'invalid_proof', 401 );
 		if ( $result instanceof WP_REST_Response && $result->get_status() < 300 ) {
 			$result->set_data( array( 'status' => 'authenticated' ) + $result->get_data() );
 			update_user_meta( $customer->ID, '_mobishop_app_last_login_at', gmdate( 'c' ) );
@@ -1035,8 +1160,9 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		return $user instanceof WP_User && empty( $user->allcaps['edit_users'] ) && (bool) call_user_func( $this->allowed, $user );
 	}
 
-	private function proof_allows( $user, array $p ): bool {
-		if ( ! $this->eligible( $user ) ) return false;
+	private function proof_allows( $user, array $p, bool $shopping_login = false ): bool {
+		if ( ! $this->eligible( $user ) && ! ( $shopping_login && $this->can_shop_as_owner( $user ) ) ) return false;
+		if ( isset( $p['owners'][ $user->ID ] ) && ( ! $this->can_shop_as_owner( $user ) || $p['owners'][ $user->ID ] !== $this->owner_version( $user ) ) ) return false;
 		if ( ! empty( $p['user_id'] ) && (int) $p['user_id'] !== $user->ID ) return false;
 		if ( in_array( $p['kind'], array( 'facebook', 'facebook_phone' ), true ) ) {
 			$linked = $this->facebook_user( $p['facebook_subject'], $p['facebook_app_id'] );
@@ -1174,6 +1300,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$locks = $this->lock( $identities );
 		if ( $locks === null ) return false;
 		try {
+			if ( $this->shopping_provider_reserved( 'google', hash( 'sha256', 'google|' . $sub ) ) ) return false;
 			$existing = $this->google_user( $sub );
 			if ( $existing ) return $existing === $id;
 			$old = get_user_meta( $id, '_mobishop_google_subject', true );

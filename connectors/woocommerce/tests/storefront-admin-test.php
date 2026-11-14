@@ -115,8 +115,8 @@ reset_storefront_fixture();
 $owner = get_userdata(10);
 $before = serialize($owner);
 verify_storefront(MobiShop_Storefront_Admin::accepts($owner), 'Store administrator can request a shopper');
-foreach ([11,12] as $id) {
-    verify_storefront(!MobiShop_Storefront_Admin::accepts(get_userdata($id)), 'Customer and manager cannot claim owner flow');
+foreach ([11] as $id) {
+    verify_storefront(!MobiShop_Storefront_Admin::accepts(get_userdata($id)), 'Ordinary customer cannot claim management flow');
     verify_storefront(is_wp_error(MobiShop_Storefront_Admin::resolve(get_userdata($id))), 'Non-owner cannot create a shadow');
 }
 $shadow = MobiShop_Storefront_Admin::resolve($owner);
@@ -142,6 +142,7 @@ verify_storefront(get_user_meta($shadow->ID,'kidia_phone_setup_required',true) =
 $original = clone $GLOBALS['fixture_users'][10];
 foreach (['user_email' => 'later@example.test','user_pass'=>'rotated-fixture-hash','roles'=>['customer']] as $field=>$newValue) {
     $GLOBALS['fixture_users'][10]->$field = $newValue;
+    if ($field === 'roles') $GLOBALS['fixture_users'][10]->allcaps = ['read'=>true];
     verify_storefront(is_wp_error(MobiShop_Storefront_Admin::resolve($owner)), 'Stale owner proof rejected after '.$field.' changes');
     $GLOBALS['fixture_users'][10] = clone $original;
 }
@@ -175,8 +176,10 @@ $GLOBALS['fixture_meta'][$shadow->ID]['_mobishop_storefront_owner_4']='13';
 verify_storefront(MobiShop_Storefront_Admin::data_owner_id($shadow->ID) === 0, 'Forged marker fails closed for data access');
 $GLOBALS['fixture_meta'][$shadow->ID]['_mobishop_storefront_owner_4']='10';
 $GLOBALS['fixture_users'][10]->roles=['customer'];
+$GLOBALS['fixture_users'][10]->allcaps=['read'=>true];
 verify_storefront(MobiShop_Storefront_Admin::data_owner_id($shadow->ID) === 0, 'Owner removed from administrator role invalidates historic access');
 $GLOBALS['fixture_users'][10]->roles=['administrator'];
+$GLOBALS['fixture_users'][10]->allcaps=['manage_options'=>true,'edit_users'=>true,'read'=>true];
 $GLOBALS['fixture_users'][$shadow->ID]->allcaps['edit_posts']=true;
 verify_storefront(MobiShop_Storefront_Admin::data_owner_id($shadow->ID) === 0, 'Privileged shopper cannot resolve data owner');
 

@@ -4,7 +4,11 @@ defined( 'ABSPATH' ) || exit;
 
 final class MobiShop_Storefront_Admin {
 	public static function accepts( $user ): bool {
-		return $user instanceof WP_User && in_array( 'administrator', (array) $user->roles, true );
+		if ( ! $user instanceof WP_User ) return false;
+		$roles = (array) $user->roles;
+		$caps = (array) $user->allcaps;
+		return (bool) array_intersect( array( 'administrator', 'shop_manager' ), $roles )
+			|| ! empty( $caps['manage_options'] ) || ! empty( $caps['edit_users'] ) || ! empty( $caps['manage_woocommerce'] );
 	}
 
 	private static function login( int $owner ): string {

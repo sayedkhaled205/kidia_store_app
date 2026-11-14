@@ -5,6 +5,8 @@ $connector = $argv[1] ?? dirname(__DIR__);
 require $connector.'/tests/native-facebook-auth-test.php';
 require_once $connector.'/source/api/class-storefront-admin.php';
 
+function get_current_blog_id() { return 1; }
+function is_multisite() { return false; }
 $before = $GLOBALS['native_checks'];
 $verifier = str_repeat('c', 64);
 $ownerId = 81200;
@@ -14,9 +16,10 @@ $GLOBALS['native_users'][$ownerId] = [
     'name'=>'Owner','roles'=>['administrator'],'allcaps'=>['manage_options'=>true,'edit_users'=>true]
 ];
 $GLOBALS['native_users'][$shadowId] = [
-    'login'=>'fixture-shopping','email'=>'','password'=>'unusable-fixture',
+    'login'=>'mobishop_shop_1_81200','email'=>'','password'=>'unusable-fixture',
     'name'=>'Owner','roles'=>['customer'],'allcaps'=>['read'=>true]
 ];
+$GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_owner_1'] = (string)$ownerId;
 $issued = [];
 $resolved = [];
 $endpoint = new MobiShop_Native_Customer_Auth_Endpoint(
