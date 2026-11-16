@@ -2,17 +2,30 @@
 
 Dart2JS symbol names and Flutter's build ID are not reproducible across paths.
 All other assets remain byte-checked, with narrow normalization for license
-block ordering and the shell's optional blank line before its startup wrapper.
+block ordering, generated WASM hash-map ordering and the shell's optional blank
+line before its startup wrapper.
 No generated files or committed assets are changed by this verifier.
 """
 from collections import Counter
 from pathlib import Path
 import argparse
+import json
 import re
 import subprocess
 
 PREFIX = 'mobishop/admin/flutter-preview/'
 LICENSE_SEPARATOR = '\n' + '-' * 80 + '\n'
+
+
+def ordered_wasm_hashes(match):
+    # Flutter discovers these files in filesystem order; every key/value stays checked.
+    try:
+        pairs = json.loads(match[2], object_pairs_hook=lambda pairs: pairs)
+        if len(dict(pairs)) != len(pairs) or any(not isinstance(value, str) for _, value in pairs):
+            return match[0]
+        return match[1] + json.dumps(dict(sorted(pairs)), separators=(',', ':'), ensure_ascii=False)
+    except (ValueError, TypeError):
+        return match[0]
 
 
 def comparable(name, content):
@@ -23,7 +36,8 @@ def comparable(name, content):
         return Counter(text.split(LICENSE_SEPARATOR))
     if name == 'flutter_bootstrap.js':
         text = content.decode('utf-8').replace('\r\n', '\n')
-        return re.sub(r'\n\n+(?=window\.__mobishopStartFlutterPreview=function\(\)\{)', '\n', text)
+        text = re.sub(r'\n\n+(?=window\.__mobishopStartFlutterPreview=function\(\)\{)', '\n', text)
+        return re.sub(r'("wasmHashes"\s*:\s*)(\{[^{}\n]*\})', ordered_wasm_hashes, text)
     return content
 
 

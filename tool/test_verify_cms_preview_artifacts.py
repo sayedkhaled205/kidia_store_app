@@ -26,6 +26,23 @@ class PreviewArtifactComparisonTest(unittest.TestCase):
         self.assertIsNotNone(difference('assets/logo.png', b'logo', b'new logo'))
         self.assertIsNotNone(difference('index.html', b'a\nb', b'a\r\nb'))
 
+    def test_generated_wasm_hash_map_order_is_not_a_runtime_change(self):
+        a = b'_flutter.buildConfig={"wasmHashes":{"a.wasm":"hash-a","b.wasm":"hash-b"},"builds":[{"renderer":"canvaskit"},{}]};'
+        b = a.replace(b'"a.wasm":"hash-a","b.wasm":"hash-b"', b'"b.wasm":"hash-b","a.wasm":"hash-a"')
+        self.assertIsNone(difference('flutter_bootstrap.js', a, b))
+        for changed in [b.replace(b'hash-a', b'changed'), b.replace(b'a.wasm', b'other.wasm'), b.replace(b'"b.wasm":"hash-b",', b'')]:
+            self.assertIsNotNone(difference('flutter_bootstrap.js', a, changed))
+
+    def test_build_order_and_loader_code_still_must_match(self):
+        a = b'loader();_flutter.buildConfig={"wasmHashes":{"a.wasm":"hash-a"},"builds":[{"renderer":"canvaskit"},{}]};'
+        for changed in [a.replace(b'loader()', b'changed()'), a.replace(b'[{"renderer":"canvaskit"},{}]', b'[{}, {"renderer":"canvaskit"}]')]:
+            self.assertIsNotNone(difference('flutter_bootstrap.js', a, changed))
+
+    def test_duplicate_or_malformed_wasm_hash_entries_are_not_hidden(self):
+        a = b'"wasmHashes":{"a.wasm":"hash-a"}'
+        for changed in [b'"wasmHashes":{"a.wasm":"hash-a","a.wasm":"hash-a"}', b'"wasmHashes":{"a.wasm":not_json}']:
+            self.assertIsNotNone(difference('flutter_bootstrap.js', a, changed))
+
     def test_build_identifier_is_generated_but_required(self):
         self.assertIsNone(difference('.last_build_id', b'a' * 32, b'b' * 32))
         self.assertIsNotNone(difference('.last_build_id', b'a' * 32, b''))
