@@ -40,7 +40,7 @@ function social_jwt(array $claims): string {
     if (!openssl_sign($input,$signature,$social_private_key,OPENSSL_ALGO_SHA256)) throw new RuntimeException('Fixture signing failed');
     return $input.'.'.$b64($signature);
 }
-function social_login($endpoint, string $kind, string $subject, string $platform, ?string $email=null) {
+function social_login($endpoint, string $kind, string $subject, string $platform, ?string $email=null, ?string $name=null) {
     $claims = ['sub'=>$subject,'iat'=>time(),'exp'=>time()+3600];
     if ($kind==='google') {
         $claims += ['aud'=>'web.apps.googleusercontent.com','azp'=>'web.apps.googleusercontent.com','iss'=>'https://accounts.google.com',
@@ -50,7 +50,8 @@ function social_login($endpoint, string $kind, string $subject, string $platform
             'firebase'=>['sign_in_provider'=>'apple.com','identities'=>['apple.com'=>[$subject]]]];
         if ($email !== null) $claims += ['email'=>$email,'email_verified'=>true];
     }
-    return $endpoint->$kind(social_request(['platform'=>$platform,'verifier'=>str_repeat('a',64),'id_token'=>social_jwt($claims)]));
+    if ($kind==='google' && $name!==null) $claims['name']=$name;
+    return $endpoint->$kind(social_request(['platform'=>$platform,'verifier'=>str_repeat('a',64),'id_token'=>social_jwt($claims),'name'=>$name]));
 }
 function social_data($response): array {
     if (is_wp_error($response)) throw new RuntimeException('Unexpected sign-in error: '.$response->get_error_code());
@@ -85,6 +86,15 @@ foreach ([['google','android'],['google','ios'],['apple','ios']] as [$kind,$plat
     social_check(!is_wp_error($auth->authenticate_route($session)), 'Issued merchant session is actually usable');
     $again=social_data(social_login($endpoint,$kind,$subject,$platform));
     social_check(explode('.',$again['token'])[1]===(string)$id, 'Returning provider keeps the same customer');
+    $named=social_data(social_login($endpoint,$kind,$subject,$platform,null,'Provider Person'));
+    social_check(get_user_by('id',$id)->display_name==='Provider Person' && get_user_meta($id,'first_name',true)==='Provider Person', 'Returning placeholder display and first names repaired in WordPress');
+    social_check(($named['user']['first_name']??'')==='Provider Person', 'Session payload exposes repaired first name to installed app');
+    wp_update_user(['ID'=>$id,'display_name'=>'Chosen Display','first_name'=>'Chosen First']);
+    social_login($endpoint,$kind,$subject,$platform,null,'Another Provider Name');
+    social_check(get_user_by('id',$id)->display_name==='Chosen Display' && get_user_meta($id,'first_name',true)==='Chosen First', 'Customer-edited names preserved');
+    wp_update_user(['ID'=>$id,'display_name'=>'Customer','first_name'=>'Chosen First']);
+    social_login($endpoint,$kind,$subject,$platform,null,'Provider Person');
+    social_check(get_user_by('id',$id)->display_name==='Provider Person' && get_user_meta($id,'first_name',true)==='Chosen First', 'Display repair preserves independently chosen first name');
     if ($kind==='apple') social_check(get_user_by('id',$id)->user_email==='', 'Apple without shared email creates a valid blank-email customer');
 }
 $old=(int)wp_insert_user(['user_login'=>'ci-social-existing','user_email'=>'ci-collision@gmail.com','user_pass'=>'synthetic-existing-password','role'=>'customer']);

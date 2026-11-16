@@ -397,6 +397,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		if ( $expected_input !== null && ! $expected_phone ) return $this->error( 'google_phone_mismatch', 403 );
 		$proof = array( 'kind' => 'google', 'sub' => $claims['sub'], 'email' => $email,
 			'authoritative' => (bool) preg_match( '/@(gmail|googlemail)\.com$/', $email ) || ( is_string( $claims['hd'] ?? null ) && $claims['hd'] !== '' ) );
+		$proof['provider_name'] = $this->social_name( $claims['name'] ?? null );
 		if ( $expected_phone !== null ) $proof['expected_phone'] = $expected_phone;
 		$linked = $this->google_user( $proof['sub'] );
 		if ( $app_session = $this->shopping_provider_session( $proof, $request, $linked ) ) return $app_session;
@@ -408,7 +409,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		}
 		if ( $request->get_param( 'client_channel' ) !== 'website' ) {
 			if ( $expected_phone !== null ) return $this->error( 'google_phone_mismatch', 403 );
-			return $this->register_social( $proof, $request, $claims['name'] ?? '' );
+			return $this->register_social( $proof, $request );
 		}
 		// Google is not authoritative for arbitrary third-party email accounts.
 		if ( ! $proof['authoritative'] ) return $this->error( 'additional_proof_required', 403 );
@@ -449,6 +450,9 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			|| ! is_array( $subjects ) || count( $subjects ) !== 1 || ! is_string( $subjects[0] )
 			|| ! preg_match( '/^[A-Za-z0-9._-]{1,255}$/D', $subjects[0] ) ) return $this->error( 'invalid_proof', 401 );
 		$proof = array( 'kind' => 'apple', 'apple_subject' => $subjects[0], 'firebase_project' => $project, 'firebase_uid' => $claims['sub'] );
+		// The installed native client already sends Apple's optional profile name.
+		// It is cosmetic only: never use it to identify, link or authorize a user.
+		$proof['provider_name'] = $this->social_name( $claims['name'] ?? null ) ?: $this->social_name( $request->get_param( 'name' ) );
 		$id = $this->apple_user( $proof );
 		if ( $id ) {
 			$user = get_user_by( 'id', $id );
@@ -460,7 +464,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( ( $claims['email_verified'] ?? null ) !== true || ! is_string( $claims['email'] ) || ! is_email( $claims['email'] ) ) return $this->error( 'invalid_proof', 401 );
 			$proof['email'] = strtolower( $claims['email'] );
 		}
-		if ( $request->get_param( 'client_channel' ) !== 'website' ) return $this->register_social( $proof, $request, $claims['name'] ?? '' );
+		if ( $request->get_param( 'client_channel' ) !== 'website' ) return $this->register_social( $proof, $request );
 		if ( empty( $proof['email'] ) ) return $this->error( 'invalid_proof', 401 );
 		// A matching email alone must not transfer an existing merchant account.
 		if ( email_exists( $proof['email'] ) ) return $this->error( 'additional_proof_required', 403 );
@@ -597,10 +601,12 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			$subject = $profile['subject'];
 			$email = $profile['email'];
 		} else {
-			$subject = $this->facebook_limited_subject( $id_token, $fb, $nonce );
-			if ( ! $subject ) return $this->error( 'invalid_proof', 401 );
+			$profile = $this->facebook_limited_subject( $id_token, $fb, $nonce );
+			if ( ! $profile ) return $this->error( 'invalid_proof', 401 );
+			$subject = $profile['subject'];
 		}
 		$proof = array( 'kind' => 'facebook', 'facebook_subject' => $subject, 'facebook_app_id' => $fb['app_id'] );
+		$proof['provider_name'] = $this->social_name( $profile['name'] ?? null );
 		if ( is_string( $email ) && $email !== '' ) $proof['email'] = $email;
 		$linked = $this->facebook_user( $subject, $fb['app_id'] );
 		if ( $app_session = $this->shopping_provider_session( $proof, $request, $linked ) ) return $app_session;
@@ -615,7 +621,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 	}
 
 	/** A verified provider subject can create its own customer without contact enrollment. */
-	private function register_social( array $proof, WP_REST_Request $request, $name = '' ) {
+	private function register_social( array $proof, WP_REST_Request $request ) {
 		$kind = $proof['kind'];
 		if ( ! in_array( $kind, array( 'google', 'apple', 'facebook' ), true ) ) return $this->error( 'invalid_proof', 401 );
 		$lookup = function () use ( $proof, $kind ): int {
@@ -642,8 +648,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( ! $this->registration_enabled() ) return $this->error( 'registration_disabled', 403 );
 			// An email collision never transfers the other account or its data.
 			if ( $email !== '' && email_exists( $email ) ) $email = '';
-			$name = is_string( $name ) ? sanitize_text_field( $name ) : '';
-			if ( $name === '' || strlen( $name ) > 120 ) $name = __( 'Customer', 'mobishop' );
+			$name = $this->social_name( $proof['provider_name'] ?? null ) ?: __( 'Customer', 'mobishop' );
 			$create = function () use ( $proof, $kind, $email, $name, &$created_id ) {
 				$id = wp_insert_user( array( 'user_login' => 'mobile_' . bin2hex( random_bytes( 12 ) ), 'user_email' => $email,
 					'user_pass' => wp_generate_password( 64, true, true ), 'display_name' => $name, 'first_name' => $name, 'role' => 'customer' ) );
@@ -754,17 +759,17 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$subject = (string) $subject;
 		if ( $subject === '' || strlen( $subject ) > 64 || ! preg_match( '/^[1-9][0-9]*$/D', $subject ) ) return null;
 		$proof = hash_hmac( 'sha256', $token, $fb['app_secret'] );
-		$me_url = self::FACEBOOK_GRAPH_ME . '?' . http_build_query( array( 'fields' => 'id,email', 'appsecret_proof' => $proof ) );
+		$me_url = self::FACEBOOK_GRAPH_ME . '?' . http_build_query( array( 'fields' => 'id,email,name', 'appsecret_proof' => $proof ) );
 		$me_response = wp_remote_get( $me_url, array( 'headers' => array( 'Authorization' => 'Bearer ' . $token ), 'timeout' => 10, 'redirection' => 0, 'sslverify' => true, 'limit_response_size' => 65536 ) );
 		if ( is_wp_error( $me_response ) || wp_remote_retrieve_response_code( $me_response ) !== 200 ) return null;
 		$me = json_decode( wp_remote_retrieve_body( $me_response ), true );
 		if ( ! is_array( $me ) || ! isset( $me['id'] ) || (string) $me['id'] !== $subject ) return null;
 		$email = is_string( $me['email'] ?? null ) && is_email( $me['email'] ) ? strtolower( $me['email'] ) : null;
-		return array( 'subject' => $subject, 'email' => $email );
+		return array( 'subject' => $subject, 'email' => $email, 'name' => $this->social_name( $me['name'] ?? null ) );
 	}
 
 	/** iOS Limited Login: a fixed-issuer RS256 JWT, never treated as a Graph access token. */
-	private function facebook_limited_subject( $token, array $fb, string $nonce ): ?string {
+	private function facebook_limited_subject( $token, array $fb, string $nonce ): ?array {
 		$claims = $this->facebook_jwt( $token );
 		if ( ! $claims ) return null;
 		$now = time();
@@ -776,7 +781,8 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$subject = $claims['sub'] ?? null;
 		if ( ! is_string( $subject ) && ! is_int( $subject ) ) return null;
 		$subject = (string) $subject;
-		return $subject !== '' && strlen( $subject ) <= 64 && preg_match( '/^[1-9][0-9]*$/D', $subject ) ? $subject : null;
+		return $subject !== '' && strlen( $subject ) <= 64 && preg_match( '/^[1-9][0-9]*$/D', $subject )
+			? array( 'subject' => $subject, 'name' => $this->social_name( $claims['name'] ?? null ) ) : null;
 	}
 
 	/** Independent RS256 verification against the fixed Meta OpenID JWKS; key material is JWK, not an x509 cert. */
@@ -865,6 +871,26 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			}, $users ) ) );
 	}
 
+	private function social_name( $value ): string {
+		if ( ! is_string( $value ) ) return '';
+		$name = trim( sanitize_text_field( $value ) );
+		return strlen( $name ) <= 120 ? $name : '';
+	}
+
+	/** Repair only our generated placeholder; keep a customer's chosen profile. */
+	private function sync_social_name( WP_User $user, array $proof ): WP_User {
+		$name = $this->social_name( $proof['provider_name'] ?? null );
+		$placeholders = array( '', 'customer', strtolower( __( 'Customer', 'mobishop' ) ), 'عميل', 'العميل' );
+		if ( $name === '' || in_array( strtolower( $name ), $placeholders, true )
+			|| get_user_meta( $user->ID, '_mobishop_social_login_only', true ) !== '1'
+			|| ! in_array( strtolower( trim( $user->display_name ) ), $placeholders, true ) ) return $user;
+		$profile = array( 'ID' => $user->ID, 'display_name' => $name );
+		$first_name = (string) get_user_meta( $user->ID, 'first_name', true );
+		if ( in_array( strtolower( trim( $first_name ) ), $placeholders, true ) ) $profile['first_name'] = $name;
+		if ( is_wp_error( wp_update_user( $profile ) ) ) return $user;
+		return get_user_by( 'id', $user->ID ) ?: $user;
+	}
+
 	private function finish( WP_User $user, array $proof, WP_REST_Request $request ) {
 		if ( $this->can_shop_as_owner( $user ) ) return $this->finish_owner( $user, $proof, $request );
 		if ( isset( $proof['owners'][ $user->ID ] ) ) return $this->error( 'invalid_proof', 401 );
@@ -912,6 +938,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		}
 		// Only the selected, fully authenticated account receives this verified OTP identity.
 		if ( ! $this->persist_phone_identity( $user->ID, $proof ) ) return $this->error( 'identity_link_failed', 503 );
+		if ( $request->get_param( 'client_channel' ) !== 'website' && in_array( $proof['kind'], array( 'google', 'apple', 'facebook' ), true ) ) $user = $this->sync_social_name( $user, $proof );
 		$result = call_user_func( $this->issue, $user );
 		if ( $result instanceof WP_REST_Response ) {
 			if ( $result->get_status() < 300 && $request->get_param( 'client_channel' ) !== 'website' ) {
