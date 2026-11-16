@@ -26,6 +26,43 @@ import 'package:mobishop_store_app/features/auth/presentation/providers/native_a
 import '../../auth/support/idle_native_auth_actions.dart';
 
 void main() {
+  for (final unavailable in [false, true]) {
+    testWidgets(
+      'deletion remains discoverable when availability fails=$unavailable',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(390, 1200);
+        addTearDown(tester.view.reset);
+        var checks = 0;
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              authRepositoryProvider.overrideWithValue(_SignedInRepository()),
+              accountDeletionAvailabilityProvider.overrideWith((ref) async {
+                checks++;
+                  if (unavailable) {
+                  throw StateError('Temporary connection failure');
+                  }
+                return false;
+              }),
+              cmsPageLayoutProvider(
+                'account',
+              ).overrideWith((_) async => CmsPageLayout.fallback('account')),
+            ],
+            child: const MaterialApp(home: Scaffold(body: AccountScreen())),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('account-delete')), findsOneWidget);
+        expect(
+          checks,
+          0,
+          reason: 'Check on the deletion screen, where errors can be retried',
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
   for (final action in ['orders', 'addresses', 'profile']) {
     for (final outcome in ['success', 'cancel', 'false-success']) {
       testWidgets('$action continues only after real sign-in: $outcome', (

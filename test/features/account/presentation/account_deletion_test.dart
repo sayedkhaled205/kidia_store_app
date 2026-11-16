@@ -25,6 +25,58 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
 
+  for (final failure in ['unavailable', 'connection']) {
+    testWidgets(
+      'deletion waits for availability and recovers with Retry: $failure',
+      (tester) async {
+        var attempts = 0;
+        final api = _Deletion('pending');
+        await tester.pumpWidget(
+          ProviderScope(
+            retry: (count, error) => null,
+            overrides: [
+              authControllerProvider.overrideWith(
+                () => _Auth(session('original')),
+              ),
+              accountDeletionTransportProvider.overrideWithValue(api),
+              accountDeletionAvailabilityProvider.overrideWith((ref) async {
+                attempts++;
+                if (attempts > 1) return true;
+                  if (failure == 'connection') {
+                  throw StateError('Temporary connection failure');
+                  }
+                return false;
+              }),
+            ],
+            child: const MaterialApp(home: AccountDeletionScreen(userId: 7)),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('confirm-account-deletion')), findsNothing);
+        expect(find.byKey(const Key('request-account-deletion')), findsNothing);
+        expect(api.calls, 0);
+        await tester.ensureVisible(find.text('Retry'));
+        await tester.tap(find.text('Retry'));
+        await tester.pumpAndSettle();
+        expect(attempts, 2);
+        expect(
+          find.byKey(const Key('confirm-account-deletion')),
+          findsOneWidget,
+        );
+        expect(
+          tester
+              .widget<FilledButton>(
+                find.byKey(const Key('request-account-deletion')),
+              )
+              .onPressed,
+          isNull,
+        );
+        expect(api.calls, 0, reason: 'Retry never submits deletion');
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets('account switch while receipt persists cannot send deletion', (
     tester,
   ) async {
