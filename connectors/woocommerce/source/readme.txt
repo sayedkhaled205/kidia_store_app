@@ -5,7 +5,7 @@ Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 8.0
 Requires Plugins: woocommerce
-Stable tag: 1.46.138
+Stable tag: 1.46.139
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,7 +47,7 @@ The mobile application's configured Google/Firebase SDKs separately communicate 
 
 = Meta / Facebook sign-in =
 
-When Facebook sign-in is configured and the customer chooses it, the connector verifies the supplied access token with `https://graph.facebook.com/debug_token` using the merchant's Facebook app authorization, then requests the account ID and, if granted, email from `https://graph.facebook.com/me`. These requests send the Facebook access token and application authentication proof; they do not send a Facebook password. For supported Limited Login tokens, it instead fetches public keys from `https://www.facebook.com/.well-known/oauth/openid/jwks/` on a cache miss and validates the signed token locally. That public-key request contains no customer token or personal data. Website login can also reuse the merchant's configured Nextend Social Login authorization flow.
+When Facebook sign-in is configured and the customer chooses it, the connector verifies the supplied access token with `https://graph.facebook.com/debug_token` using the merchant's Facebook app authorization, then requests the account ID, profile name and, if granted, email from `https://graph.facebook.com/me`. These requests send the Facebook access token and application authentication proof; they do not send a Facebook password. For supported Limited Login tokens, it instead fetches public keys from `https://www.facebook.com/.well-known/oauth/openid/jwks/` on a cache miss and validates the signed token locally. That public-key request contains no customer token or personal data. Website login can also reuse the merchant's configured Nextend Social Login authorization flow.
 
 * Service: https://developers.facebook.com/docs/facebook-login/
 * Terms: https://www.facebook.com/legal/terms/
@@ -99,6 +99,12 @@ No. Store checkout is handled by the payment methods configured in WooCommerce, 
 Yes. Application language, direction, typography, and other visual settings can be configured from the builder.
 
 == Changelog ==
+
+= 1.46.139 =
+* Allow verified Google, Facebook and Apple sign-in without a separate phone enrollment step.
+* Use verified provider profile names and preserve customer-edited names.
+* Include the tested account deletion, sign-in recovery and identity ownership fixes.
+* Preserve each store's authentication configuration and deletion readiness checks. Existing installations require an update; native interface changes require a new application build.
 
 = 1.46.138 =
 

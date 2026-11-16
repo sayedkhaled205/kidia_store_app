@@ -1,7 +1,7 @@
 <?php
 /** Protocol orchestration fixtures; signed Apple proof has its separate real-JWT contract test. */
 require __DIR__.'/account-deletion-test.php';
-require __DIR__.'/../source/api/class-customer-identity-guard.php';
+require rtrim(getenv('MOBISHOP_CONNECTOR_TEST_ROOT') ?: dirname(__DIR__).'/source', '/\\').'/api/class-customer-identity-guard.php';
 class MobiShop_Customer_Identity_Links {
  public static function inventory($id) { return $GLOBALS['intent_links'][$id]??array(); }
  public static function shared($id,$link) { return !empty($GLOBALS['intent_shared']); }
@@ -11,7 +11,7 @@ class MobiShop_Customer_Identity_Client {
  public static function lookup($project,$uid){if(!empty($GLOBALS['intent_outage']))throw new RuntimeException('fixture outage');if(!empty($GLOBALS['intent_fail_after_lookup']))$GLOBALS['intent_outage']=true;return !empty($GLOBALS['intent_absent'])?array('status'=>'absent'):array('status'=>'present','created_at'=>'12345');}
  public static function erase($project,$uid,$created,$timeout=25){if(!empty($GLOBALS['intent_outage']))throw new RuntimeException('fixture outage');$GLOBALS['intent_erase_timeouts'][]=$timeout;if(!empty($GLOBALS['intent_erase_delay']))usleep($GLOBALS['intent_erase_delay']);$GLOBALS['intent_advanced']=true;return array('status'=>'absent');}
 }
-require __DIR__.'/../source/api/class-customer-identity-erasure-stage.php';
+require rtrim(getenv('MOBISHOP_CONNECTOR_TEST_ROOT') ?: dirname(__DIR__).'/source', '/\\').'/api/class-customer-identity-erasure-stage.php';
 class MobiShop_Native_Customer_Auth_Endpoint {
  public function __construct(...$args){}
  public function validate_deletion_apple_proof($request,$id) {return $request->get_param('id_token')==='fixture-valid-proof'&&$id===7&&empty($GLOBALS['intent_shared']);}

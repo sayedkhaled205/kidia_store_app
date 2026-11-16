@@ -140,7 +140,7 @@ class DeletionDb extends Mobishop_WPDB_Stub {
 	}
 }
 $GLOBALS['wpdb']=new DeletionDb();
-require dirname(__DIR__).'/source/api/class-customer-account-deletion.php';
+require rtrim(getenv('MOBISHOP_CONNECTOR_TEST_ROOT') ?: dirname(__DIR__).'/source', '/\\').'/api/class-customer-account-deletion.php';
 $deletion=new MobiShop_Customer_Account_Deletion();
 $saved_users=$GLOBALS['mobishop_users'];
 function deletion_reset() {

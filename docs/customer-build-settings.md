@@ -1,5 +1,31 @@
 # Customer build settings
 
+## Shared authentication release — 2026-11-17
+
+The shared native runtime is promoted from the tested Kidia 343 source
+`72b83bf7e3759ead1e9b498fccc07b0b27474e88`. This promotion changes no Flutter,
+Android or iOS application source relative to that tested release. It retains
+the existing shared runtime history and applies to subsequent builder builds.
+Installed application binaries and published merchant designs are unchanged.
+
+WooCommerce connector 1.46.139 packages the same tested social sign-in, profile
+name, account deletion and recovery source. Verified social sign-in completes
+without contact enrollment; real customer-edited names remain intact. The
+account deletion entry is reachable while the existing server readiness and
+confirmation checks remain authoritative.
+
+The public connector download is separate from installed merchant plugins.
+Existing stores must install the updated connector and build a new application
+to receive native interface changes; Publish alone does not replace app code.
+Each merchant retains its own provider credentials and application identities.
+Deletion still requires the store's existing enablement and verified central
+Auth-project mapping. This release does not enable deletion for unprepared
+stores, copy Kidia credentials, or change Shopify/Odoo authentication flows.
+
+Release checks cover the extracted connector, including direct social sign-in,
+provider names, management shopping identities and deletion/re-login recovery.
+Evidence is kept in the team evidence directory `shared-auth343-20261117`.
+
 ## Central builder audit — 2026-10-26
 
 The current API's `CodemagicClient` routes saved central designs carrying
