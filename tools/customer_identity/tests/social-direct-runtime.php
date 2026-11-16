@@ -106,13 +106,17 @@ delete_user_meta($owner,'kidia_phone_setup_required'); update_user_meta($owner,'
 $found=$lookup->invoke($endpoint,$phone);
 social_check(is_array($found) && count($found)===1 && $found[0]->ID===$owner, 'Verified owner after 55 shipping contacts remains reachable');
 // Real nested WP_Meta_Query fallback must not turn two legacy owners into one.
-require $repo.'/integrations/woocommerce/kidia-auth/website/kidia-login-page.php';
+// Load the exact website class; its plugin bootstrap also requires a separately deployed shipping package.
+$websiteSource=file_get_contents($repo.'/integrations/woocommerce/kidia-auth/website/kidia-login-page.php');
+$classStart=strpos($websiteSource,'final class Kidia_Store_Custom_Login_Page_V020');
+if ($classStart===false) throw new RuntimeException('Website class missing from source');
+eval(substr($websiteSource,$classStart));
 $website=Kidia_Store_Custom_Login_Page_V020::instance();
 $legacyPhone='+201099998887';
-foreach (['social','legacy-a','legacy-b'] as $suffix) {
+foreach (['0-social','1-legacy-a','2-legacy-b'] as $suffix) {
     $id=(int)wp_insert_user(['user_login'=>'ci-legacy-'.$suffix,'user_pass'=>wp_generate_password(32),'role'=>'customer']);
     delete_user_meta($id,'kidia_phone_setup_required'); update_user_meta($id,'billing_phone',$legacyPhone);
-    if ($suffix==='social') update_user_meta($id,'_mobishop_social_login_only','1');
+    if ($suffix==='0-social') update_user_meta($id,'_mobishop_social_login_only','1');
 }
 $find=new ReflectionMethod($website,'find_customer_by_phone');
 social_check($find->invoke($website,$legacyPhone)===false, 'Real website query preserves ambiguous legacy owners before LIMIT 2');
