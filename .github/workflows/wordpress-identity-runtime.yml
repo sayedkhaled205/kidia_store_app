@@ -118,3 +118,7 @@ jobs:
         env:
           KIDIA_CHECKOUT_RUNTIME_TEST: '1'
         run: php "$GITHUB_WORKSPACE/tools/native_checkout/tests/wordpress-runtime-test.php"
+      - name: Exercise direct social login with real persistence and sessions
+        env:
+          KIDIA_IDENTITY_RUNTIME_TEST: '1'
+        run: php "$WP_CLI" eval-file "$GITHUB_WORKSPACE/tools/customer_identity/tests/social-direct-runtime.php" --path="$WP_PATH"

@@ -14,7 +14,8 @@ function wp_set_current_user($id){$GLOBALS['current']=$id;}function wp_set_auth_
 function current_user_can(...$a){return false;}function user_can($user,$cap){return !empty($user->caps[$cap]);}
 function get_user_meta($id,$key,$single=true){return $GLOBALS['meta'][$id][$key]??'';}function update_user_meta($id,$key,$value){$GLOBALS['meta'][$id][$key]=$value;}function delete_user_meta($id,$key){unset($GLOBALS['meta'][$id][$key]);}
 function get_user_by($kind,$value){foreach($GLOBALS['users'] as $id=>$user){if(($kind==='id' && $id===$value)||($kind==='email'&&$user->user_email===$value))return $user;}return false;}
-function get_users($args){if(isset($args['meta_key']))return []; $result=[];foreach($GLOBALS['users'] as $id=>$user){foreach($args['meta_query'] as $clause){if(is_array($clause)&&in_array($GLOBALS['meta'][$id][$clause['key']]??'', $clause['value'],true)){$result[]=$id;break;}}}return array_slice($result,0,$args['number']);}
+require __DIR__.'/website-meta-query-fixture.php';
+function get_users($args){if(isset($args['meta_key']))return []; $result=[];foreach($GLOBALS['users'] as $id=>$user)if(website_fixture_meta_matches($id,$args['meta_query']))$result[]=$id;return array_slice($result,0,$args['number']);}
 function esc_attr($s){return htmlspecialchars($s,ENT_QUOTES,'UTF-8');}function esc_html($s){return esc_attr($s);}function wp_verify_nonce($a,$b){return $a==='fixture';}
 class Kidia_Firebase_OTP_265 {static function matching_users($phone){return [];}static function eligible_customer($u,$p){return false;}}
 $source=file_get_contents(__DIR__.'/website/kidia-login-page.php');$offset=strpos($source,'final class Kidia_Store_Custom_Login_Page_V020');eval(substr($source,$offset));

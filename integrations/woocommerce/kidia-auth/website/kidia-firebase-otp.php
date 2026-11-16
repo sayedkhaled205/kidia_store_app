@@ -131,7 +131,7 @@ final class Kidia_Firebase_OTP_265 {
         }
         $users = get_users(['number' => -1, 'count_total' => false, 'orderby' => 'ID', 'order' => 'ASC', 'meta_query' => $query]);
         // A checkout phone on a contact-only account is not an OTP owner.
-        return array_values(array_filter($users, static fn($user) => !get_user_meta($user->ID, 'kidia_unverified_phone', true) || get_user_meta($user->ID, 'kidia_login_phone', true)));
+        return array_values(array_filter($users, static fn($user) => (!get_user_meta($user->ID, 'kidia_unverified_phone', true) && !get_user_meta($user->ID, '_mobishop_social_login_only', true)) || get_user_meta($user->ID, 'kidia_login_phone', true)));
     }
 
     public static function eligible_customer($user, string $phone): bool {
@@ -140,7 +140,7 @@ final class Kidia_Firebase_OTP_265 {
         $forms = [$phone, substr($phone, 1), $local, substr($local, 1)];
         // A shipping number must never override a different established login identity.
         foreach (['kidia_login_phone', 'fme_billing_phone', 'billing_phone'] as $key) {
-            if (in_array($key, ['fme_billing_phone','billing_phone'], true) && get_user_meta($user->ID, 'kidia_unverified_phone', true)) continue;
+            if (in_array($key, ['fme_billing_phone','billing_phone'], true) && (get_user_meta($user->ID, 'kidia_unverified_phone', true) || get_user_meta($user->ID, '_mobishop_social_login_only', true))) continue;
             $identity = trim((string) get_user_meta($user->ID, $key, true));
             if ($identity !== '') { return in_array($identity, $forms, true); }
         }

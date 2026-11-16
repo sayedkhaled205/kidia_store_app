@@ -36,6 +36,14 @@ check(Kidia_Firebase_OTP_265::eligible_customer($GLOBALS['users'][0],'+201000000
 check(Kidia_Firebase_OTP_265::eligible_customer($GLOBALS['users'][1],'+201000000001'),'Dedicated verified identity wins over stale contact marker');
 check(!Kidia_Firebase_OTP_265::eligible_customer($GLOBALS['users'][2],'+201000000001'),'OTP cannot open contact claimant');
 check(!Kidia_Firebase_OTP_265::eligible_customer($GLOBALS['users'][3],'+201000000001'),'Shipping cannot override different primary identity');
+$social = (object)['ID'=>5,'caps'=>[]];
+$GLOBALS['users'][] = $social;
+$GLOBALS['meta'][5] = ['_mobishop_social_login_only'=>'1','billing_phone'=>'+201000000003','fme_billing_phone'=>'+201000000003'];
+check(Kidia_Firebase_OTP_265::matching_users('+201000000003') === [], 'Social shipping phone is not an OTP candidate');
+check(!Kidia_Firebase_OTP_265::eligible_customer($social,'+201000000003'), 'Social shipping contact cannot authenticate');
+$GLOBALS['meta'][5]['kidia_login_phone'] = '+201000000004';
+check(!Kidia_Firebase_OTP_265::eligible_customer($social,'+201000000003'), 'Different shipping contact cannot override social verified phone');
+check(Kidia_Firebase_OTP_265::eligible_customer($social,'+201000000004'), 'Explicit verified phone remains available on social account');
 $fixture_key_options=['private_key_bits'=>2048,'private_key_type'=>OPENSSL_KEYTYPE_RSA];$conf=dirname(PHP_BINARY).'/extras/ssl/openssl.cnf';if(is_file($conf))$fixture_key_options['config']=$conf;$key=openssl_pkey_new($fixture_key_options);if(!$key)throw new Exception('Cannot generate fixture key');$GLOBALS['certs']=['fixture-key'=>openssl_pkey_get_details($key)['key']];
 function b64($s){return rtrim(strtr(base64_encode($s),'+/','-_'),'=');}
 function token($phone){global $key;$h=b64(json_encode(['alg'=>'RS256','kid'=>'fixture-key']));$p=b64(json_encode(['aud'=>'website-project','iss'=>'https://securetoken.google.com/website-project','sub'=>'firebase-fixture','exp'=>time()+300,'iat'=>time(),'auth_time'=>time(),'phone_number'=>$phone,'firebase'=>['sign_in_provider'=>'phone']]));openssl_sign($h.'.'.$p,$sig,$key,OPENSSL_ALGO_SHA256);return $h.'.'.$p.'.'.b64($sig);}

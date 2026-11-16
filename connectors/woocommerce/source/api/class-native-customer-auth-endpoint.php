@@ -406,6 +406,10 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( $expected_phone !== null && ! $this->google_matches_phone( $user, $expected_phone ) ) return $this->error( 'google_phone_mismatch', 403 );
 			return $this->complete_proof( array( $user ), $proof, $request );
 		}
+		if ( $request->get_param( 'client_channel' ) !== 'website' ) {
+			if ( $expected_phone !== null ) return $this->error( 'google_phone_mismatch', 403 );
+			return $this->register_social( $proof, $request, $claims['name'] ?? '' );
+		}
 		// Google is not authoritative for arbitrary third-party email accounts.
 		if ( ! $proof['authoritative'] ) return $this->error( 'additional_proof_required', 403 );
 		$user = get_user_by( 'email', $email );
@@ -452,8 +456,12 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			if ( $id > 0 && class_exists( 'MobiShop_Customer_Account_Deletion' ) && MobiShop_Customer_Account_Deletion::is_pending( $id ) ) return $this->error( 'account_deletion_pending', 409 );
 			return $this->proof_allows( $user, $proof, true ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
 		}
-		if ( ( $claims['email_verified'] ?? null ) !== true || ! is_string( $claims['email'] ?? null ) || ! is_email( $claims['email'] ) ) return $this->error( 'invalid_proof', 401 );
-		$proof['email'] = strtolower( $claims['email'] );
+		if ( isset( $claims['email'] ) ) {
+			if ( ( $claims['email_verified'] ?? null ) !== true || ! is_string( $claims['email'] ) || ! is_email( $claims['email'] ) ) return $this->error( 'invalid_proof', 401 );
+			$proof['email'] = strtolower( $claims['email'] );
+		}
+		if ( $request->get_param( 'client_channel' ) !== 'website' ) return $this->register_social( $proof, $request, $claims['name'] ?? '' );
+		if ( empty( $proof['email'] ) ) return $this->error( 'invalid_proof', 401 );
 		// A matching email alone must not transfer an existing merchant account.
 		if ( email_exists( $proof['email'] ) ) return $this->error( 'additional_proof_required', 403 );
 		return $this->registration_ticket( $proof, $request );
@@ -602,7 +610,84 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			return $this->proof_allows( $user, $proof, true ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
 		}
 		// Facebook is never authoritative for an arbitrary existing email: no auto-link.
+		if ( $request->get_param( 'client_channel' ) !== 'website' ) return $this->register_social( $proof, $request );
 		return $this->registration_ticket( $proof, $request );
+	}
+
+	/** A verified provider subject can create its own customer without contact enrollment. */
+	private function register_social( array $proof, WP_REST_Request $request, $name = '' ) {
+		$kind = $proof['kind'];
+		if ( ! in_array( $kind, array( 'google', 'apple', 'facebook' ), true ) ) return $this->error( 'invalid_proof', 401 );
+		$lookup = function () use ( $proof, $kind ): int {
+			if ( $kind === 'apple' ) return $this->apple_user( $proof );
+			return $kind === 'google' ? $this->google_user( $proof['sub'] ) : $this->facebook_user( $proof['facebook_subject'], $proof['facebook_app_id'] );
+		};
+		$spec = $this->shopping_provider_identity( $proof );
+		$keys = array( $kind === 'apple' ? 'apple-link:' . $this->apple_key( $proof ) : $spec['lock'] );
+		// Only provider-authoritative email can become a password-recovery address.
+		$email = $kind === 'apple' || ( $kind === 'google' && ! empty( $proof['authoritative'] ) ) ? ( $proof['email'] ?? '' ) : '';
+		if ( $email !== '' ) $keys[] = 'register:email:' . $email;
+		$locks = $this->lock( $keys );
+		if ( $locks === null ) return $this->error( 'retry', 409 );
+		$created_id = 0;
+		$completed = false;
+		try {
+			if ( $spec && $this->shopping_provider_reserved( $spec['provider'], $spec['identity'] ) ) return $this->error( 'account_conflict', 409 );
+			$linked = $lookup();
+			if ( $linked < 0 ) return $this->error( 'account_conflict', 409 );
+			if ( $linked ) {
+				$user = get_user_by( 'id', $linked );
+				return $this->proof_allows( $user, $proof, true ) ? $this->complete_proof( array( $user ), $proof, $request ) : $this->error( 'invalid_credentials', 401 );
+			}
+			if ( ! $this->registration_enabled() ) return $this->error( 'registration_disabled', 403 );
+			// An email collision never transfers the other account or its data.
+			if ( $email !== '' && email_exists( $email ) ) $email = '';
+			$name = is_string( $name ) ? sanitize_text_field( $name ) : '';
+			if ( $name === '' || strlen( $name ) > 120 ) $name = __( 'Customer', 'mobishop' );
+			$create = function () use ( $proof, $kind, $email, $name, &$created_id ) {
+				$id = wp_insert_user( array( 'user_login' => 'mobile_' . bin2hex( random_bytes( 12 ) ), 'user_email' => $email,
+					'user_pass' => wp_generate_password( 64, true, true ), 'display_name' => $name, 'first_name' => $name, 'role' => 'customer' ) );
+				if ( is_wp_error( $id ) ) return $this->error( 'registration_failed', 409 );
+				$created_id = (int) $id;
+				update_user_meta( $id, 'kidia_phone_setup_required', 'account' );
+				update_user_meta( $id, '_mobishop_social_login_only', '1' );
+				update_user_meta( $id, '_mobishop_social_provisioning', '1' );
+				if ( get_user_meta( $id, 'kidia_phone_setup_required', true ) !== 'account'
+					|| get_user_meta( $id, '_mobishop_social_login_only', true ) !== '1'
+					|| get_user_meta( $id, '_mobishop_social_provisioning', true ) !== '1' ) return $this->error( 'identity_link_failed', 503 );
+				if ( $kind === 'apple' ) {
+					foreach ( array( '_mobishop_apple_identity' => $this->apple_key( $proof ), '_mobishop_apple_subject' => $proof['apple_subject'],
+						'_mobishop_firebase_project' => $proof['firebase_project'], '_mobishop_firebase_uid' => $proof['firebase_uid'] ) as $key => $value ) {
+						update_user_meta( $id, $key, $value );
+						if ( get_user_meta( $id, $key, true ) !== $value ) return $this->error( 'identity_link_failed', 503 );
+					}
+				} elseif ( $kind === 'google' ? ! $this->link_google( $id, $proof['sub'], true ) : ! $this->link_facebook( $id, $proof['facebook_subject'], $proof['facebook_app_id'], true ) ) {
+					return $this->error( 'account_conflict', 409 );
+				}
+				$user = get_user_by( 'id', $id );
+				if ( ! $this->proof_allows( $user, $proof ) ) return $this->error( 'identity_link_failed', 503 );
+				update_user_meta( $id, '_mobishop_app_registered_at', gmdate( 'c' ) );
+				delete_user_meta( $id, 'kidia_phone_setup_required' );
+				if ( get_user_meta( $id, 'kidia_phone_setup_required', true ) ) return $this->error( 'identity_link_failed', 503 );
+				return $user;
+			};
+			if ( $kind === 'apple' && class_exists( 'MobiShop_Customer_Identity_Guard' ) ) {
+				$user = MobiShop_Customer_Identity_Guard::new_identity( array( 'project' => $proof['firebase_project'], 'uid' => $proof['firebase_uid'] ), $create );
+			} elseif ( $kind === 'apple' && defined( 'MOBISHOP_ACCOUNT_DELETION_ENABLED' ) && MOBISHOP_ACCOUNT_DELETION_ENABLED === true ) {
+				return $this->error( 'identity_link_failed', 503 );
+			} else { $user = $create(); }
+			if ( is_wp_error( $user ) ) return $user;
+			$completed = true;
+			delete_user_meta( $user->ID, '_mobishop_social_provisioning' );
+			if ( get_user_meta( $user->ID, '_mobishop_social_provisioning', true ) ) return $this->error( 'identity_link_failed', 503 );
+			return $this->finish( $user, $proof, $request );
+		} catch ( Throwable $error ) {
+			return $this->error( 'identity_link_failed', 503 );
+		} finally {
+			try {
+				if ( $created_id && ! $completed ) $this->discard_new_registration( $created_id );
+			} finally { $this->unlock( $locks ); }
+		}
 	}
 
 	private function facebook_key( string $app_id, string $subject ): string {
@@ -795,6 +880,31 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			wp_cache_delete( $user->ID, 'user_meta' );
 			$user = get_user_by( 'id', $user->ID );
 			if ( ! $this->proof_allows( $user, $proof ) || $this->facebook_user( $proof['facebook_subject'], $proof['facebook_app_id'] ) !== $user->ID ) return $this->error( 'invalid_proof', 401 );
+		}
+		if ( $request->get_param( 'client_channel' ) !== 'website' && in_array( $proof['kind'], array( 'google', 'apple', 'facebook' ), true ) ) {
+			if ( ! $this->proof_allows( $user, $proof ) ) return $this->error( 'invalid_proof', 401 );
+			if ( get_user_meta( $user->ID, '_mobishop_social_provisioning', true ) || get_user_meta( $user->ID, 'kidia_phone_setup_required', true ) ) {
+				$spec = $this->shopping_provider_identity( $proof );
+				$lease = $this->lock( array( $proof['kind'] === 'apple' ? 'apple-link:' . $this->apple_key( $proof ) : $spec['lock'] ) );
+				if ( $lease === null ) return $this->error( 'retry', 409 );
+				try {
+					wp_cache_delete( $user->ID, 'user_meta' ); wp_cache_delete( $user->ID, 'users' );
+					$user = get_user_by( 'id', $user->ID );
+					if ( ! $this->proof_allows( $user, $proof ) ) return $this->error( 'invalid_proof', 401 );
+					if ( get_user_meta( $user->ID, '_mobishop_social_provisioning', true ) && get_user_meta( $user->ID, '_mobishop_social_login_only', true ) !== '1' ) return $this->error( 'identity_link_failed', 503 );
+					if ( class_exists( 'MobiShop_Customer_Account_Deletion' ) && MobiShop_Customer_Account_Deletion::is_pending( $user->ID ) ) return $this->error( 'account_deletion_pending', 409 );
+					$known_phone = false;
+					foreach ( $this->phone_keys() as $key ) if ( get_user_meta( $user->ID, $key, true ) ) $known_phone = true;
+					if ( ! $known_phone ) {
+						update_user_meta( $user->ID, '_mobishop_social_login_only', '1' );
+						if ( get_user_meta( $user->ID, '_mobishop_social_login_only', true ) !== '1' ) return $this->error( 'identity_link_failed', 503 );
+					}
+					delete_user_meta( $user->ID, 'kidia_phone_setup_required' );
+					if ( get_user_meta( $user->ID, 'kidia_phone_setup_required', true ) ) return $this->error( 'identity_link_failed', 503 );
+					delete_user_meta( $user->ID, '_mobishop_social_provisioning' );
+					if ( get_user_meta( $user->ID, '_mobishop_social_provisioning', true ) ) return $this->error( 'identity_link_failed', 503 );
+				} finally { $this->unlock( $lease ); }
+			}
 		}
 		if ( $proof['kind'] !== 'apple' && ! $this->ready( $user ) ) {
 			$proof['user_id'] = (int) $user->ID;
@@ -996,9 +1106,29 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 
 	/** Only for the customer created by this request, while its identity leases are held. */
 	private function discard_new_registration( int $id ): void {
+		global $wpdb;
+		$clean = true;
 		foreach ( array( $this->google_provider(), $this->facebook_provider() ) as $provider ) {
-			if ( $provider && method_exists( $provider, 'removeConnectionByUserID' ) ) $provider->removeConnectionByUserID( $id );
+			if ( ! $provider ) continue;
+			try {
+				if ( method_exists( $provider, 'removeConnectionByUserID' ) ) $provider->removeConnectionByUserID( $id );
+			} catch ( Throwable $error ) {
+				if ( ! method_exists( $provider, 'getDbID' ) ) $clean = false;
+			}
+			if ( method_exists( $provider, 'getDbID' ) ) {
+				// Nextend may fail before removing its mapping. Never leave it pointing to a deleted user.
+				// Scope the fallback to this request's new ID, not a subject now owned by somebody else.
+				try {
+					$type = $provider->getDbID();
+					$wpdb->last_error = '';
+					$deleted = $wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->prefix}social_users WHERE ID=%d AND type=%s", $id, $type ) );
+					if ( $deleted === false || $wpdb->last_error !== '' ) { $clean = false; continue; }
+					$remaining = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}social_users WHERE ID=%d AND type=%s", $id, $type ) );
+					if ( $remaining === null || (int) $remaining !== 0 || $wpdb->last_error !== '' ) $clean = false;
+				} catch ( Throwable $error ) { $clean = false; }
+			}
 		}
+		if ( ! $clean ) return; // Retain the blocked provisioning record if storage cleanup is unavailable.
 		if ( ! function_exists( 'wp_delete_user' ) ) require_once ABSPATH . 'wp-admin/includes/user.php';
 		wp_delete_user( $id, 0 );
 	}
@@ -1210,7 +1340,7 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 		$contact = (string) get_user_meta( $user->ID, 'kidia_unverified_phone', true );
 		// The first stored identity is authoritative: shipping metadata cannot override it.
 		foreach ( array_merge( $this->phone_keys(), $include_unverified ? array( 'kidia_unverified_phone' ) : array() ) as $key ) {
-			if ( in_array( $key, array( 'fme_billing_phone', 'billing_phone' ), true ) && $contact !== '' ) continue;
+			if ( in_array( $key, array( 'fme_billing_phone', 'billing_phone' ), true ) && ( $contact !== '' || get_user_meta( $user->ID, '_mobishop_social_login_only', true ) ) ) continue;
 			$value = (string) get_user_meta( $user->ID, $key, true );
 			if ( $value !== '' ) {
 				// Older providers also store E.164 without the leading plus.
@@ -1248,10 +1378,13 @@ final class MobiShop_Native_Customer_Auth_Endpoint {
 			"EXISTS (SELECT 1 FROM {$wpdb->usermeta} AS mobishop_phone_meta
 			LEFT JOIN {$wpdb->usermeta} AS mobishop_contact_meta
 			ON mobishop_contact_meta.user_id = mobishop_phone_meta.user_id AND mobishop_contact_meta.meta_key = 'kidia_unverified_phone'
+			LEFT JOIN {$wpdb->usermeta} AS mobishop_social_meta
+			ON mobishop_social_meta.user_id = mobishop_phone_meta.user_id AND mobishop_social_meta.meta_key = '_mobishop_social_login_only'
 			WHERE mobishop_phone_meta.user_id = {$wpdb->users}.ID
 			AND mobishop_phone_meta.meta_key IN ($placeholders) AND mobishop_phone_meta.meta_value REGEXP %s
 			AND (mobishop_phone_meta.meta_key NOT IN ('fme_billing_phone','billing_phone')
-			OR mobishop_contact_meta.user_id IS NULL OR mobishop_contact_meta.meta_value = ''))",
+			OR ((mobishop_contact_meta.user_id IS NULL OR mobishop_contact_meta.meta_value = '')
+			AND (mobishop_social_meta.user_id IS NULL OR mobishop_social_meta.meta_value = ''))))",
 			array_merge( $keys, array( $pattern ) )
 		);
 		$filter = static function( $query ) use ( $spec, $predicate ): void {

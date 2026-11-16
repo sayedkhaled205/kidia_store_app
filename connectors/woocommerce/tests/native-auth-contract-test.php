@@ -8,6 +8,13 @@
  */
 declare( strict_types=1 );
 
+/** Continue a restricted social ticket issued before direct sign-in was deployed. */
+function native_legacy_social_ticket($endpoint, array $proof, string $verifier, array $extra = array()): array {
+    native_clear_rate();
+    return native_data((new ReflectionMethod($endpoint, 'registration_ticket'))->invoke($endpoint, $proof,
+        native_request(array_merge(array('verifier'=>$verifier), $extra))), 'Pre-deployment social continuation');
+}
+
 define( 'ABSPATH', __DIR__ );
 define( 'MINUTE_IN_SECONDS', 60 );
 define( 'HOUR_IN_SECONDS', 3600 );
@@ -143,7 +150,7 @@ function wp_schedule_single_event( $timestamp, $hook, $args = array() ) { return
 function get_user_meta( $id, $key = '', $single = false ) { $value = $GLOBALS['native_meta'][(int) $id][$key] ?? null; if ( ! empty( $GLOBALS['native_meta_rows_format'] ) ) return $single ? ( $value[0] ?? '' ) : ( $value ?? array() ); return $value === null ? ( $single ? '' : array() ) : ( $single ? $value : array( $value ) ); }
 function update_user_meta( $id, $key, $value, $previous = null ) { if (func_num_args() === 4 && ($GLOBALS['native_meta'][(int)$id][$key] ?? null) !== $previous) return false; if (str_starts_with((string) $key, '_mobishop_phone_firebase_identity_') && ($GLOBALS['native_meta'][(int) $id][$key] ?? null) === $value) return false; if (($GLOBALS['native_fail_meta'] ?? '') === $key) return false; $GLOBALS['native_meta'][(int) $id][$key] = $value; return true; }
 function wp_delete_user( $id, $reassign = 0 ) { unset($GLOBALS['native_users'][(int)$id], $GLOBALS['native_meta'][(int)$id]); return true; }
-function delete_user_meta( $id, $key, $value = '' ) { unset( $GLOBALS['native_meta'][(int) $id][$key] ); return true; }
+function delete_user_meta( $id, $key, $value = '' ) { if (($GLOBALS['native_fail_delete_meta'] ?? '') === $key) return false; unset( $GLOBALS['native_meta'][(int) $id][$key] ); return true; }
 function get_current_user_id() { return $GLOBALS['website_user'] ?? 0; }
 function wp_get_session_token() { return $GLOBALS['website_session'] ?? 'browser-session'; }
 function wp_verify_nonce( $value, $action ) { return $value === 'fixture-nonce' && $action === 'mobishop_website_auth'; }
@@ -180,6 +187,7 @@ function get_users( $args = array() ) {
         foreach ($spec['keys'] as $key) {
             $clause = array('key'=>$key, 'value'=>$spec['pattern'], 'compare'=>'REGEXP');
             if (in_array($key,array('billing_phone','fme_billing_phone'),true)) $clause = array('relation'=>'AND',$clause,array('relation'=>'OR',array('key'=>'kidia_unverified_phone','compare'=>'NOT EXISTS'),array('key'=>'kidia_unverified_phone','value'=>'','compare'=>'=')));
+            if (in_array($key,array('billing_phone','fme_billing_phone'),true) && str_contains($query->query_where,'mobishop_social_meta')) $clause = array('relation'=>'AND',$clause,array('relation'=>'OR',array('key'=>'_mobishop_social_login_only','compare'=>'NOT EXISTS'),array('key'=>'_mobishop_social_login_only','value'=>'','compare'=>'=')));
             $args['meta_query'][] = $clause;
         }
     } elseif (str_contains($query->query_where,'mobishop_phone_meta')) throw new RuntimeException('Phone predicate leaked to unrelated query');
@@ -248,6 +256,15 @@ $wpdb = new class {
     public $prefix = 'wp_';
     public $last_error = '';
     public $race = false;
+    public function get_var($prepared) {
+        [$sql,$args]=$prepared;
+        if (str_contains($sql,'social_users') && str_contains($sql,'WHERE ID=')) {
+            [$id,$type]=$args;
+            if ($type==='google') return count(array_filter(NextendSocialLogin::$providers['google']->links,static fn($v)=>(int)$v===$id));
+            return count(array_filter($GLOBALS['native_facebook_rows']??[],static fn($r)=>$r['id']===$id&&$r['type']===$type));
+        }
+        throw new RuntimeException('Unexpected scalar query in isolated auth test.');
+    }
     public function get_col($prepared) {
         list($sql,$args) = $prepared;
         if (!str_contains($sql,'social_users') || !isset($GLOBALS['native_facebook_rows'])) throw new RuntimeException('Unexpected mapping query in isolated auth test.');
@@ -265,6 +282,16 @@ $wpdb = new class {
     public function query( $prepared ) {
         if ( $this->race ) { $this->race = false; return 0; }
         list( $sql, $args ) = $prepared;
+        if (str_contains($sql,'social_users') && str_starts_with($sql,'DELETE')) {
+            [$id,$type]=$args;
+            if ($type==='google') {
+                $links=&NextendSocialLogin::$providers['google']->links; $before=count($links);
+                $links=array_filter($links,static fn($v)=>(int)$v!==$id); return $before-count($links);
+            }
+            $rows=$GLOBALS['native_facebook_rows']??[];
+            $GLOBALS['native_facebook_rows']=array_values(array_filter($rows,static fn($r)=>$r['id']!==$id||$r['type']!==$type));
+            return count($rows)-count($GLOBALS['native_facebook_rows']);
+        }
         if ( str_starts_with( ltrim( $sql ), 'DELETE' ) ) {
             list( $key, $old ) = $args;
             if ( ! array_key_exists( $key, $GLOBALS['native_options'] ) || maybe_serialize( $GLOBALS['native_options'][$key] ) !== $old ) return 0;
@@ -578,7 +605,8 @@ native_rejected( $endpoint->google( native_request( array( 'id_token' => native_
 native_clear_rate();
 native_rejected( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'unlinked-external' ), array( 'email' => 'unverified@external.example', 'email_verified' => false ) ) ), 'verifier' => $verifier ) ) ), 'Unlinked Google identity cannot establish an unverified email' );
 native_clear_rate();
-native_rejected( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'unlinked-external' ), array( 'email' => 'verified@external.example', 'email_verified' => true ) ) ), 'verifier' => $verifier ) ) ), 'Unlinked third-party Google email needs additional account proof even when email_verified is true' );
+$external_google = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'unlinked-external' ), array( 'email' => 'verified@external.example', 'email_verified' => true ) ) ), 'verifier' => $verifier ) ) ), 'Third-party Google subject signs in independently' );
+native_assert($external_google['status'] === 'authenticated' && get_user_by('id', $external_google['user_id'])->user_email === '', 'Non-authoritative email never gains password-recovery authority');
 
 // Competing Google subjects cannot link the same customer while a lease is held.
 native_clear_rate();
@@ -605,7 +633,7 @@ native_assert( ! isset( $GLOBALS['native_options'][$google_user_lock] ), 'Cleanu
 // Two independent proofs may link Google only to the customer explicitly selected by phone.
 native_clear_rate();
 $email_before_link = get_user_by( 'id', 9 )->user_email;
-$google_start = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'google-phone-link' ), array( 'email' => 'new-google-identity@gmail.com' ) ) ), 'verifier' => $verifier ) ) ), 'Unlinked Google proof' );
+$google_start = native_legacy_social_ticket($endpoint, array('kind'=>'google','sub'=>'google-phone-link','email'=>'new-google-identity@gmail.com','authoritative'=>true), $verifier);
 native_assert( $google_start['status'] === 'registration_required' && ! isset( NextendSocialLogin::$providers['google']->links['google-phone-link'] ), 'Google proof alone does not link an arbitrary existing customer' );
 native_rejected( native_phone( $endpoint, str_repeat( 'b', 64 ), '+201012345678', array( 'ticket' => $google_start['ticket'] ) ), 'Phone proof cannot adopt a Google ticket from another attempt' );
 $combined = native_data( native_phone( $endpoint, $verifier, '+201012345678', array( 'ticket' => $google_start['ticket'] ) ), 'Combined Google and phone proof' );
@@ -614,7 +642,7 @@ native_rejected( native_phone( $endpoint, $verifier, '+201012345678', array( 'ti
 $combined_selected = native_data( native_select( $endpoint, $combined['ticket'], $verifier, 9 ), 'Explicit combined-proof account selection' );
 native_assert( $combined_selected['user_id'] === 9 && NextendSocialLogin::$providers['google']->links['google-phone-link'] === 9, 'Selected phone customer receives the verified Google subject' );
 native_assert( get_user_by( 'id', 9 )->user_email === $email_before_link, 'Linking retains the existing customer email and identity' );
-$conflict_start = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'google-conflicting-link' ), array( 'email' => 'conflicting-google-identity@gmail.com' ) ) ), 'verifier' => $verifier ) ) ), 'Separate Google proof before a subject conflict' );
+$conflict_start = native_legacy_social_ticket($endpoint, array('kind'=>'google','sub'=>'google-conflicting-link','email'=>'conflicting-google-identity@gmail.com','authoritative'=>true), $verifier);
 $conflict_picker = native_data( native_phone( $endpoint, $verifier, '+201012345678', array( 'ticket' => $conflict_start['ticket'] ) ), 'Combined proof before a subject conflict' );
 NextendSocialLogin::$providers['google']->links['google-conflicting-link'] = 11;
 $issued_before = count( $GLOBALS['native_issued'] );
@@ -628,12 +656,14 @@ native_clear_rate();
 $pending_password = native_data( $endpoint->password( native_request( array( 'identifier' => 'customer@gmail.com', 'password' => 'password-seven', 'verifier' => $verifier ) ) ), 'Pending account password proof' );
 native_assert( $pending_password['status'] === 'registration_required' && in_array( 'phone', $pending_password['fields'], true ), 'Password cannot bypass required phone completion' );
 native_rejected( $endpoint->register_customer( native_request( array( 'ticket' => $pending_password['ticket'], 'verifier' => $verifier, 'name' => 'Incomplete Customer', 'password' => 'replacement-password' ) ) ), 'Registration cannot clear a required phone step without phone proof' );
-$pending_google = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( native_google_claims() ), 'verifier' => $verifier ) ) ), 'Pending Google account proof' );
-native_assert( $pending_google['status'] === 'registration_required', 'Google cannot bypass required account completion' );
 $pending_phone = native_data( native_phone( $endpoint, $verifier ), 'Pending phone account proof' );
 $pending_selected = native_data( native_select( $endpoint, $pending_phone['ticket'], $verifier, 7 ), 'Pending selected account' );
 native_assert( $pending_selected['status'] === 'registration_required' && count( $GLOBALS['native_issued'] ) === $issued_before, 'Selecting an incomplete account never issues a shopping session' );
 native_assert( get_user_meta( 7, 'kidia_phone_setup_required', true ) === 'otp', 'Failed completion preserves the existing required-phone marker' );
+$profile_before_social = $GLOBALS['native_users'][7];
+$pending_google = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( native_google_claims() ), 'verifier' => $verifier ) ) ), 'Pending Google account proof' );
+native_assert( $pending_google['status'] === 'authenticated' && $pending_google['user_id'] === 7 && !get_user_meta(7, 'kidia_phone_setup_required', true), 'Verified existing Google identity completes without contact enrollment' );
+native_assert($GLOBALS['native_users'][7] === $profile_before_social, 'Social completion preserves password and profile');
 delete_user_meta( 7, 'kidia_phone_setup_required' );
 
 // Existing shared-phone customers can complete their own profile without merging accounts.
@@ -701,7 +731,7 @@ native_assert( wp_check_password( 'completed-password', get_user_by( 'id', $comp
 
 // New Google registrations retain both server-verified identities through profile completion.
 native_clear_rate();
-$google_registration = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'brand-new-google' ), array( 'email' => 'brand-new-google@gmail.com' ) ) ), 'verifier' => $verifier ) ) ), 'New Google registration proof' );
+$google_registration = native_legacy_social_ticket($endpoint, array('kind'=>'google','sub'=>'brand-new-google','email'=>'brand-new-google@gmail.com','authoritative'=>true), $verifier);
 $google_phone_registration = native_data( native_phone( $endpoint, $verifier, '+201022222222', array( 'ticket' => $google_registration['ticket'] ) ), 'New Google registration phone proof' );
 $google_registered = native_data( $endpoint->register_customer( native_request( array( 'ticket' => $google_phone_registration['ticket'], 'verifier' => $verifier, 'name' => 'New Google Customer', 'password' => 'new-google-password', 'email' => 'brand-new-google@gmail.com' ) ) ), 'New Google profile registration' );
 $google_id = $google_registered['user_id'];
@@ -711,9 +741,9 @@ native_assert( NextendSocialLogin::$providers['google']->links['brand-new-google
 // Google linking and registration use the same subject lease across account creation.
 native_clear_rate();
 $race_claims = array_merge( native_google_claims( 'registration-link-race' ), array( 'email' => 'registration-race@gmail.com' ) );
-$race_registration_start = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( $race_claims ), 'verifier' => $verifier ) ) ), 'Registration race Google proof' );
+$race_registration_start = native_legacy_social_ticket($endpoint, array('kind'=>'google','sub'=>$race_claims['sub'],'email'=>$race_claims['email'],'authoritative'=>true), $verifier);
 $race_registration_phone = native_data( native_phone( $endpoint, $verifier, '+201033333333', array( 'ticket' => $race_registration_start['ticket'] ) ), 'Registration race new phone proof' );
-$race_link_start = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( $race_claims ), 'verifier' => $verifier ) ) ), 'Competing link Google proof' );
+$race_link_start = native_legacy_social_ticket($endpoint, array('kind'=>'google','sub'=>$race_claims['sub'],'email'=>$race_claims['email'],'authoritative'=>true), $verifier);
 $race_link_picker = native_data( native_phone( $endpoint, $verifier, '+201112345678', array( 'ticket' => $race_link_start['ticket'] ) ), 'Competing link existing phone proof' );
 native_assert( in_array( 12, array_column( $race_link_picker['accounts'], 'id' ), true ), 'Competing fixture selects a customer without a prior Google mapping' );
 $created_before_link_race = count( $GLOBALS['native_created'] );
@@ -857,7 +887,7 @@ foreach ( array( 'phone', 'email', 'google' ) as $index => $origin ) {
         $start = native_data( $endpoint->password( native_request( array( 'identifier' => 'contact-only-' . $index . '@gmail.com', 'password' => 'initial-password', 'verifier' => $verifier ) ) ), 'Contact-only email start' );
         $params['ticket'] = $start['ticket'];
     } elseif ( $origin === 'google' ) {
-        $start = native_data( $endpoint->google( native_request( array( 'id_token' => native_jwt( array_merge( native_google_claims( 'contact-only-google' ), array( 'email' => 'contact-only-google@gmail.com' ) ) ), 'verifier' => $verifier ) ) ), 'Contact-only Google start' );
+        $start = native_legacy_social_ticket($endpoint, array('kind'=>'google','sub'=>'contact-only-google','email'=>'contact-only-google@gmail.com','authoritative'=>true), $verifier);
         $params['ticket'] = $start['ticket'];
     }
     $prepared = native_data( $endpoint->phone_enroll( native_request( $params ) ), 'Prepare ' . $origin . ' contact attempt' );

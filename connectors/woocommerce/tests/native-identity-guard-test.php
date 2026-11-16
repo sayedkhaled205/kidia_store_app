@@ -32,12 +32,9 @@ $guardEndpoint=new MobiShop_Native_Customer_Auth_Endpoint(function($user) {
     return new WP_REST_Response(['user_id'=>$user->ID]);
 }, static fn($user)=>$user instanceof WP_User);
 $claims=$apple_claims; $claims['sub']='guard-apple-uid'; $claims['email']='guard-fixture@privaterelay.appleid.com'; $claims['firebase']['identities']['apple.com']=['guard-apple-subject'];
-$ticket=native_data($guardEndpoint->apple(apple_request($claims)),'Guard Apple registration proof');
-$registration=['ticket'=>$ticket['ticket'],'verifier'=>str_repeat('c',64),'platform'=>'ios','name'=>'Guard Fixture'];
-native_rejected($guardEndpoint->register_customer(native_request($registration)),'Reserved Apple UID refuses new account');
+native_rejected($guardEndpoint->apple(apple_request($claims)),'Reserved Apple UID refuses new account');
 native_assert(!email_exists($claims['email']),'Reserved Apple UID creates no partial user');
 MobiShop_Customer_Identity_Guard::$deny=false;
-$ticket=native_data($guardEndpoint->apple(apple_request($claims)),'Fresh unreserved Apple proof'); $registration['ticket']=$ticket['ticket'];
-native_assert(native_data($guardEndpoint->register_customer(native_request($registration)),'Unreserved Apple registration')['status']==='authenticated','Apple identity guard preserves successful registration');
+native_assert(native_data($guardEndpoint->apple(apple_request($claims)),'Unreserved Apple registration')['status']==='authenticated','Apple identity guard preserves successful direct registration');
 native_assert(MobiShop_Customer_Identity_Guard::$calls>=5,'Both native writer boundaries use guard');
 echo 'Native identity guard: '.($GLOBALS['native_checks']-$before).' additional checks passed.'.PHP_EOL;

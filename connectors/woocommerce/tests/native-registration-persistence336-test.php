@@ -7,7 +7,7 @@ function persistence_google_signup(string $subject, string $email, string $phone
     global $endpoint;
     native_clear_rate();
     $claims = array_replace(native_google_claims($subject), array('email' => $email));
-    $start = native_data($endpoint->google(native_request(array('id_token' => native_jwt($claims), 'verifier' => $verifier))), 'Google signup');
+    $start = native_legacy_social_ticket($endpoint, array('kind'=>'google','sub'=>$claims['sub'],'email'=>$claims['email'],'authoritative'=>true), $verifier);
     $prepared = native_data($endpoint->phone_enroll(native_request(array('phone' => $phone, 'ticket' => $start['ticket'], 'verifier' => $verifier))), 'Prepare contact');
     return native_data($endpoint->phone_confirm(native_request(array('phone' => $phone, 'ticket' => $prepared['ticket'], 'verifier' => $verifier))), 'Confirm contact');
 }
@@ -63,7 +63,7 @@ function persistence_existing_facebook(): array {
     global $endpoint;
     native_clear_rate();
     facebook_http_fixture();
-    $pending = native_data(facebook_exchange(facebook_challenge(), array('access_token' => 'fixture-access-token')), 'Existing pending Facebook');
+    $pending = native_legacy_social_ticket($endpoint, array('kind'=>'facebook','facebook_subject'=>'700001','facebook_app_id'=>'123456789','user_id'=>7), str_repeat('f',64));
     return native_data(native_phone($endpoint, str_repeat('f', 64), '+201012345678', array('ticket' => $pending['ticket'])), 'Independent phone proof');
 }
 $facebook_provider = NextendSocialLogin::$providers['facebook'];

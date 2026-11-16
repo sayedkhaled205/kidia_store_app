@@ -97,8 +97,9 @@ $GLOBALS['native_meta'][$ownerId]=$ownerMeta;
 $google=static function($sub,$extra=[]) use (&$endpoint,$verifier) { native_clear_rate(); return $endpoint->google(native_request(array_merge(['verifier'=>$verifier,'id_token'=>native_jwt(array_replace(native_google_claims($sub),['email'=>'new-fixture@gmail.com']))],$extra))); };
 $GLOBALS['native_string_ids']=true;
 $remoteBefore=NextendSocialLogin::$providers['google']->links;
-$start=native_data($google('app-only-owner-google'),'New Google proof');
-$parallel=native_data($google('app-only-owner-google'),'Parallel older Google ticket');
+$legacy_google=static fn($sub)=>native_legacy_social_ticket($endpoint,['kind'=>'google','sub'=>$sub,'email'=>'new-fixture@gmail.com','authoritative'=>true],$verifier);
+$start=$legacy_google('app-only-owner-google');
+$parallel=$legacy_google('app-only-owner-google');
 storefront_authenticated($otp(['ticket'=>$start['ticket']]),$shadowId,'Verified owner phone completes new app-only Google link');
 native_assert(NextendSocialLogin::$providers['google']->links===$remoteBefore,'New mobile grant never changes dashboard SSO');
 storefront_authenticated($google('app-only-owner-google'),$shadowId,'Returning app-only Google');
@@ -128,7 +129,7 @@ $endpoint=$saved;
 
 // Failed issuer leaves a pending grant unusable. Fresh OTP can recover it.
 unset($GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_google_identity'],$GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_google_grant']);
-$start=native_data($google('pending-owner-google'),'Prepare pending grant');
+$start=$legacy_google('pending-owner-google');
 $issueHook=static fn()=>new WP_Error('fixture_issue_failed');
 native_rejected($otp(['ticket'=>$start['ticket']]),'Failed session issuer');
 native_assert($GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_google_grant']['active']===false,'Failed grant remains pending');
@@ -141,7 +142,7 @@ $GLOBALS['native_options']['mobishop_native_auth_settings']['registration_enable
 
 // A concurrent newer attempt cannot be activated by an older issuer response.
 unset($GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_google_identity'],$GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_google_grant']);
-$start=native_data($google('cas-owner-google'),'Prepare CAS race');
+$start=$legacy_google('cas-owner-google');
 $issueHook=static function() use ($shadowId) { $GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_google_grant']['attempt']='newer-attempt'; return new WP_REST_Response(['user_id'=>$shadowId]); };
 native_rejected($otp(['ticket'=>$start['ticket']]),'Older issuer cannot activate a newer pending attempt');
 native_assert($GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_google_grant']['active']===false,'Newer grant remains pending');
@@ -154,8 +155,9 @@ native_assert($GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_google_gr
 // Facebook follows the same isolated grant path with strict app-scoped provider proof.
 $fbRemote=$GLOBALS['native_facebook_rows'];
 facebook_http_fixture('812003','new-facebook@example.test');
-$fbStart=native_data(facebook_exchange(facebook_challenge(),['access_token'=>'fixture-access-token']),'New Facebook identity');
-$fbParallel=native_data(facebook_exchange(facebook_challenge(),['access_token'=>'fixture-access-token']),'Parallel Facebook ticket');
+$legacy_fb=static fn()=>native_legacy_social_ticket($endpoint,['kind'=>'facebook','facebook_subject'=>'812003','facebook_app_id'=>'123456789','email'=>'new-facebook@example.test'],str_repeat('f',64));
+$fbStart=$legacy_fb();
+$fbParallel=$legacy_fb();
 storefront_authenticated($otp(['ticket'=>$fbStart['ticket'],'verifier'=>str_repeat('f',64)]),$shadowId,'Facebook and phone link app shopper only');
 native_assert($GLOBALS['native_facebook_rows']===$fbRemote,'Facebook app link never changes dashboard mappings');
 native_rejected($otp(['ticket'=>$fbParallel['ticket'],'verifier'=>str_repeat('f',64),'phone'=>'+201055550999','id_token'=>native_jwt(native_phone_claims('+201055550999'))]),'Stale customer ticket cannot steal app-reserved Facebook identity');
@@ -164,6 +166,6 @@ native_assert($GLOBALS['native_facebook_rows']===$fbRemote,'Stale Facebook ticke
 storefront_authenticated(facebook_exchange(facebook_challenge(),['access_token'=>'fixture-access-token']),$shadowId,'Returning app-only Facebook');
 $GLOBALS['native_meta'][$shadowId]['_mobishop_storefront_facebook_identity']='wrong-scope';
 $unlinked=native_data(facebook_exchange(facebook_challenge(),['access_token'=>'fixture-access-token']),'Different Facebook scope');
-native_assert($unlinked['status']!=='authenticated','Other app/subject cannot reuse grant');
+native_assert(!in_array($unlinked['user_id']??0,[$ownerId,$shadowId],true),'Other app/subject cannot reuse owner grant');
 native_assert($GLOBALS['native_meta'][$ownerId]===$ownerMeta,'Management record remains unchanged by mobile linking');
 echo 'Management login parity: '.($GLOBALS['native_checks']-$before)." additional checks passed.\n";

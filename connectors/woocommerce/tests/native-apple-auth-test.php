@@ -15,6 +15,12 @@ function apple_request(array $claims, array $extra = array()) {
     native_clear_rate();
     return native_request(array_merge(array('id_token'=>native_jwt($claims), 'verifier'=>str_repeat('c',64), 'platform'=>'ios'),$extra));
 }
+function apple_legacy_ticket(array $claims): array {
+    global $endpoint;
+    return native_legacy_social_ticket($endpoint, array('kind'=>'apple','email'=>$claims['email'],
+        'apple_subject'=>$claims['firebase']['identities']['apple.com'][0], 'firebase_project'=>$claims['aud'],
+        'firebase_uid'=>$claims['sub']), str_repeat('c',64), array('platform'=>'ios'));
+}
 $ios = native_data($endpoint->config(native_request(array('platform'=>'ios'))),'Apple ready config');
 native_assert($ios['methods']['apple'] && !$ios['methods']['phone_otp'] && $ios['firebase']['projectId']==='test-project','Apple does not depend on phone OTP');
 native_assert(!native_data($endpoint->config(native_request(array('platform'=>'android'))),'Android config')['methods']['apple'],'Apple not advertised on Android');
@@ -28,9 +34,11 @@ foreach(array(
 ) as $override) native_rejected($endpoint->apple(apple_request(array_merge($apple_claims,$override))),'Invalid Apple claims rejected');
 native_rejected($endpoint->apple(apple_request($apple_claims,array('id_token'=>'forged'))),'Bad signature rejected');
 $issued = count($GLOBALS['native_issued']);
-native_rejected($endpoint->apple(apple_request(array_merge($apple_claims,array('email'=>'customer@gmail.com')))),'Matching email cannot merge existing account');
-native_assert(count($GLOBALS['native_issued'])===$issued,'Conflict issued no customer session');
-$ticket = native_data($endpoint->apple(apple_request($apple_claims)),'New Apple account');
+$collision_claims=$apple_claims; $collision_claims['email']='customer@gmail.com'; $collision_claims['sub']='collision-apple-firebase';
+$collision_claims['firebase']['identities']['apple.com']=array('apple.collision.subject');
+$collision=native_data($endpoint->apple(apple_request($collision_claims)),'Apple email conflict creates independent customer');
+native_assert($collision['user_id']!==7 && get_user_by('id',$collision['user_id'])->user_email==='' && count($GLOBALS['native_issued'])===$issued+1,'Email collision never transfers existing account');
+$ticket = apple_legacy_ticket($apple_claims);
 native_assert($ticket['fields']===array('name'),'Apple collects name only, no forced password/phone');
 $registration = array('ticket'=>$ticket['ticket'],'verifier'=>str_repeat('c',64),'platform'=>'ios','name'=>'Apple Fixture');
 native_rejected($endpoint->register_customer(native_request(array_merge($registration,array('name'=>'')))),'Missing name rejected');
@@ -50,13 +58,13 @@ foreach (array('_mobishop_apple_identity', '_mobishop_apple_subject', '_mobishop
     $claims['email'] = "fixture$index@privaterelay.appleid.com";
     $claims['sub'] = "firebase-fixture-$index";
     $claims['firebase']['identities']['apple.com'] = array("apple.subject.$index");
-    $ticket = native_data($endpoint->apple(apple_request($claims)), 'Metadata failure registration');
+    $ticket = apple_legacy_ticket($claims);
     $request = array('ticket'=>$ticket['ticket'], 'verifier'=>str_repeat('c',64), 'platform'=>'ios','name'=>'Fixture');
     $GLOBALS['native_fail_meta']=$failed_key;
     native_rejected($endpoint->register_customer(native_request($request)), 'Partial identity binding rejected');
     unset($GLOBALS['native_fail_meta']);
     native_assert(!email_exists($claims['email']), 'Failed identity binding rolls back only newly created customer');
-    $retry = native_data($endpoint->apple(apple_request($claims)), 'Fresh proof can retry');
+    $retry = apple_legacy_ticket($claims);
     $request['ticket']=$retry['ticket'];
     native_assert(native_data($endpoint->register_customer(native_request($request)), 'Retry registration')['status']==='authenticated','Fresh registration succeeds after failure');
 }

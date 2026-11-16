@@ -13,10 +13,12 @@ function sanitize_email($s) { return $s; } function sanitize_text_field($s) { re
 function is_email($s) { return filter_var($s, FILTER_VALIDATE_EMAIL) !== false; }
 function absint($s) { return abs((int)$s); } function wp_unslash($s) { return $s; }
 function is_wp_error($s) { return false; } function user_can($u, $cap) { return !empty($u->caps[$cap]); }
+function wp_doing_ajax() { return true; }
 function get_user_meta($id, $key, $single=true) { return $GLOBALS['meta'][$id][$key] ?? ''; }
 function update_user_meta($id, $key, $value) { $GLOBALS['meta'][$id][$key] = $value; }
 function get_user_by($kind, $value) { foreach ($GLOBALS['users'] as $user) if (($kind === 'id' && $user->ID === $value) || ($kind === 'email' && $user->user_email === $value)) return $user; return false; }
-function get_users($args) { $out=[]; foreach ($GLOBALS['users'] as $u) { $matched=false; foreach($args['meta_query'] ?? [] as $clause) if(is_array($clause) && in_array(get_user_meta($u->ID,$clause['key']),$clause['value'],true)) $matched=true; if($matched) $out[]=($args['fields'] ?? '') === 'ids' ? $u->ID : $u; } return ($args['number'] ?? -1) < 0 ? $out : array_slice($out,0,$args['number']); }
+require __DIR__.'/website-meta-query-fixture.php';
+function get_users($args) { $out=[]; foreach ($GLOBALS['users'] as $u) if (website_fixture_meta_matches($u->ID, $args['meta_query'] ?? [])) $out[]=($args['fields'] ?? '') === 'ids' ? $u->ID : $u; return ($args['number'] ?? -1) < 0 ? $out : array_slice($out,0,$args['number']); }
 function wp_update_user($data) { foreach($data as $k=>$v) $GLOBALS['users'][$data['ID']]->$k=$v; return $data['ID']; }
 function wc_get_order($id) { return $GLOBALS['order']; }
 function email_exists($email) { $u=get_user_by('email',$email); return $u ? $u->ID : false; }
@@ -98,5 +100,22 @@ check(invoke('get_purchase_return_target',home_url('/wishlist/')) === '','Missin
 $GLOBALS['account_page_id']=-1;
 check(invoke('get_purchase_return_target',home_url('/customer-area/purchases/')) === '','Missing WooCommerce account page does not permit an invented route');
 
+function esc_attr($value) { return htmlspecialchars((string)$value, ENT_QUOTES); }
+fixtureUser(70, 'social@example.test');
+$GLOBALS['meta'][70] = ['_mobishop_social_login_only'=>'1','billing_phone'=>'+201000000070','fme_billing_phone'=>'+201000000070'];
+check(invoke('find_customer_phone_for_user',70) === '', 'Social contact phone is not a login identity');
+check(invoke('find_customer_by_phone','01000000070') === false, 'Legacy fallback cannot authenticate social shipping contact');
+$GLOBALS['current'] = 70;
+ob_start(); invoke('render_account_login_phone'); ob_end_clean();
+check(get_user_meta(70,'kidia_login_phone') === '', 'Rendering account never promotes social shipping phone');
+$GLOBALS['meta'][70]['kidia_login_phone'] = '+201000000071';
+check(invoke('find_customer_phone_for_user',70) === '01000000071', 'Verified social phone is preserved');
+// Exclude contact-only rows before the two-candidate ambiguity limit.
+foreach ([80,81,82] as $id) { fixtureUser($id, 'candidate'.$id.'@example.test'); $GLOBALS['meta'][$id]=['billing_phone'=>'+201000000080']; }
+$GLOBALS['meta'][80]['_mobishop_social_login_only']='1';
+check(invoke('find_customer_by_phone','01000000080') === false, 'Social contact cannot hide a second legacy owner after LIMIT 2');
+$_SERVER['REQUEST_METHOD']='POST'; $_POST=['action'=>'fme_lwp_process_otp_validation','phone_number'=>'+201000000080'];
+$before=$GLOBALS['meta']; $instance->prepare_phone_account_match();
+check($GLOBALS['meta']===$before, 'Ambiguous legacy phone is never promoted to a guessed identity');
 echo json_encode(['checks'=>$checks,'failures'=>count($failures),'details'=>$failures],JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES)."\n";
 exit($failures?1:0);

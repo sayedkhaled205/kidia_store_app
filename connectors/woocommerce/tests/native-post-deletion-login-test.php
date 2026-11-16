@@ -29,9 +29,8 @@ $different = $endpoint->apple(apple_request(array_merge($apple_claims,['sub'=>'r
 native_assert(is_wp_error($different) && $different->get_error_code()==='mobishop_native_invalid_credentials', 'Nonpending UID mismatch still fails closed');
 wp_delete_user($apple_id,0);
 $fresh = native_data($endpoint->apple(apple_request(array_merge($apple_claims,['sub'=>'recreated-firebase-fixture']))),'Completed deletion permits fresh registration');
-native_assert($fresh['status']==='registration_required', 'Erased Apple account starts registration rather than returning deleted data');
-$new = native_data($endpoint->register_customer(native_request(['ticket'=>$fresh['ticket'],'verifier'=>str_repeat('c',64),'platform'=>'ios','name'=>'Recreated Fixture'])),'Fresh Apple registration');
-native_assert($new['status']==='authenticated','Fresh verified account can sign in after completed erasure');
+native_assert($fresh['status']==='authenticated' && $fresh['user_id']!==$apple_id, 'Erased Apple identity signs into a new customer immediately');
+native_assert(get_user_meta($fresh['user_id'],'_mobishop_firebase_uid',true)==='recreated-firebase-fixture','Recreated account retains the new provider identity');
 $saved_phone = $GLOBALS['native_meta'][8]['kidia_login_phone'];
 $GLOBALS['native_meta'][8]['kidia_login_phone'] = '+201500000001';
 $ticket_count = count(native_ticket_options());

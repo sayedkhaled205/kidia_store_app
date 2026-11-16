@@ -13,8 +13,8 @@ $claims = array_merge( native_google_claims( 'rightful-google-fixture-subject' )
 native_clear_rate();
 $issued_before = count( $GLOBALS['native_issued'] );
 $result = $endpoint->google( native_request( array( 'id_token'=>native_jwt( $claims ), 'verifier'=>str_repeat( 'd', 64 ) ) ) );
-native_rejected( $result, 'Unlinked Google subject cannot adopt an unverified preclaimed account' );
-native_assert( $result->get_error_code() === 'mobishop_native_additional_proof_required', 'Existing account offers independent account proof' );
-native_assert( ! isset( NextendSocialLogin::$providers['google']->links['rightful-google-fixture-subject'] ), 'Rejected collision leaves no provider link' );
-native_assert( count( $GLOBALS['native_issued'] ) === $issued_before, 'Rejected collision issues no session' );
+$signed_in=native_data($result,'Verified Google subject signs in independently');
+native_assert($signed_in['user_id']!==$claimed['user_id'] && get_user_by('id',$signed_in['user_id'])->user_email==='', 'New subject cannot adopt the preclaimed account or its email');
+native_assert(NextendSocialLogin::$providers['google']->links['rightful-google-fixture-subject']===$signed_in['user_id'], 'Provider binds only its new customer');
+native_assert(count($GLOBALS['native_issued'])===$issued_before+1 && $GLOBALS['native_users'][$claimed['user_id']]['password']==='claimant-fixture-password', 'Existing credentials preserved while independent customer signs in');
 echo "Email ownership regression passed.\n";

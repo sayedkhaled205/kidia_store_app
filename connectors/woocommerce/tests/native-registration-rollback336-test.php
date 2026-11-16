@@ -19,7 +19,7 @@ $verifier = str_repeat('e',64); $phone = '+201299990002';
 $start = static function()use($endpoint,$email,$subject,$verifier,$phone) {
     native_clear_rate();
     $claims = array_replace(native_google_claims($subject),array('email'=>$email));
-    $google = native_data($endpoint->google(native_request(array('id_token'=>native_jwt($claims),'verifier'=>$verifier))), 'Fresh Google registration');
+    $google = native_legacy_social_ticket($endpoint, array('kind'=>'google','sub'=>$claims['sub'],'email'=>$claims['email'],'authoritative'=>true), $verifier);
     $prepared = native_data($endpoint->phone_enroll(native_request(array('phone'=>$phone,'ticket'=>$google['ticket'],'verifier'=>$verifier))), 'Prepare contact');
     return native_data($endpoint->phone_confirm(native_request(array('phone'=>$phone,'ticket'=>$prepared['ticket'],'verifier'=>$verifier))), 'Confirm contact');
 };

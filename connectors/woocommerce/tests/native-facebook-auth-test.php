@@ -185,13 +185,14 @@ native_rejected(facebook_exchange(facebook_challenge(),array('access_token'=>'fi
 array_pop($GLOBALS['native_facebook_rows']);
 $GLOBALS['native_meta'][7]['_mobishop_facebook_identity']=hash('sha256','123456789|700001');
 $provider->removeConnectionByUserID(7);
-$unlinked=native_data(facebook_exchange(facebook_challenge(),array('access_token'=>'fixture-access-token')),'Unlinked identity');
-native_assert($unlinked['status']==='registration_required','Local marker alone cannot resurrect a Nextend unlink');
+$before_unlink_users=count($GLOBALS['native_users']); $before_unlink_sessions=count($GLOBALS['native_issued']);
+native_rejected(facebook_exchange(facebook_challenge(),array('access_token'=>'fixture-access-token')),'Stale local marker cannot resurrect a Nextend unlink');
+native_assert(count($GLOBALS['native_users'])===$before_unlink_users && count($GLOBALS['native_issued'])===$before_unlink_sessions, 'Ambiguous unlinked identity leaves no orphan or session');
 $provider->linkUserToProviderIdentifier(7,'700001');
 
 // Unlinked Facebook email is only profile data; verified phone and selection grant account access.
 facebook_http_fixture('710001','customer@gmail.com');
-$start=native_data(facebook_exchange(facebook_challenge(),array('access_token'=>'fixture-access-token')),'Matching email Facebook');
+$start=native_legacy_social_ticket($endpoint, array('kind'=>'facebook','facebook_subject'=>'710001','facebook_app_id'=>'123456789','email'=>'customer@gmail.com'), str_repeat('f',64));
 native_assert($start['status']==='registration_required' && !$provider->getUserIDByProviderIdentifier('710001'),'Matching email does not link or authenticate');
 native_rejected($endpoint->register_customer(native_request(array('ticket'=>$start['ticket'],'verifier'=>str_repeat('f',64),'name'=>'Fixture','password'=>'fixture-password'))),'No registration without phone proof');
 $phone=native_data(native_phone($endpoint,str_repeat('f',64),'+201012345678',array('ticket'=>$start['ticket'])),'Facebook verified shared phone');
@@ -205,7 +206,7 @@ native_assert(!get_user_meta(9,'_mobishop_google_subject',true) || get_user_meta
 function facebook_registration($subject,$phone,$email=null) {
     global $endpoint;
     facebook_http_fixture($subject,$email);
-    $start=native_data(facebook_exchange(facebook_challenge(),array('access_token'=>'fixture-access-token')),'New Facebook identity');
+    $start=native_legacy_social_ticket($endpoint, array('kind'=>'facebook','facebook_subject'=>$subject,'facebook_app_id'=>'123456789') + ($email !== null ? array('email'=>$email) : array()), str_repeat('f',64));
     $enroll=native_data($endpoint->phone_enroll(native_request(array('ticket'=>$start['ticket'],'verifier'=>str_repeat('f',64),'phone'=>$phone))),'Facebook contact prepare');
     return native_data($endpoint->phone_confirm(native_request(array('ticket'=>$enroll['ticket'],'verifier'=>str_repeat('f',64),'phone'=>$phone))),'Facebook contact confirm');
 }
@@ -223,7 +224,7 @@ native_assert($owner['status']==='registration_required','OTP cannot authenticat
 
 // Pending existing accounts retain independent phone proof and recheck ownership under leases.
 $GLOBALS['native_meta'][7]['kidia_phone_setup_required']='account'; facebook_http_fixture();
-$pending=native_data(facebook_exchange(facebook_challenge(),array('access_token'=>'fixture-access-token')),'Pending existing Facebook');
+$pending=native_legacy_social_ticket($endpoint, array('kind'=>'facebook','facebook_subject'=>'700001','facebook_app_id'=>'123456789','user_id'=>7), str_repeat('f',64));
 native_assert($pending['status']==='registration_required','Existing Facebook pending profile not bypassed');
 native_rejected($endpoint->phone_enroll(native_request(array('ticket'=>$pending['ticket'],'verifier'=>str_repeat('f',64),'phone'=>'+201088887772'))),'Existing account cannot relax phone proof');
 $verified=native_data(native_phone($endpoint,str_repeat('f',64),'+201012345678',array('ticket'=>$pending['ticket'])),'Pending Facebook phone verified');
@@ -265,14 +266,14 @@ facebook_http_fixture();
 
 // Another Facebook subject already attached to the selected user cannot be replaced.
 facebook_http_fixture('760001');
-$start=native_data(facebook_exchange(facebook_challenge(),array('access_token'=>'fixture-access-token')),'New Facebook to occupied user');
+$start=native_legacy_social_ticket($endpoint, array('kind'=>'facebook','facebook_subject'=>'760001','facebook_app_id'=>'123456789'), str_repeat('f',64));
 $phone=native_data(native_phone($endpoint,str_repeat('f',64),'+201012345678',array('ticket'=>$start['ticket'])),'Occupied shared phone');
 native_rejected(native_select($endpoint,$phone['ticket'],str_repeat('f',64),7),'Existing customer provider subject cannot be overwritten');
 native_assert($provider->getUserIDByProviderIdentifier('700001')===7 && !$provider->getUserIDByProviderIdentifier('760001'),'Original provider binding preserved');
 
 // A pending account becoming elevated while acquiring its lease cannot be changed.
 $GLOBALS['native_meta'][7]['kidia_phone_setup_required']='account'; facebook_http_fixture();
-$pending=native_data(facebook_exchange(facebook_challenge(),array('access_token'=>'fixture-access-token')),'Facebook pending role-race');
+$pending=native_legacy_social_ticket($endpoint, array('kind'=>'facebook','facebook_subject'=>'700001','facebook_app_id'=>'123456789','user_id'=>7), str_repeat('f',64));
 $verified=native_data(native_phone($endpoint,str_repeat('f',64),'+201012345678',array('ticket'=>$pending['ticket'])),'Facebook role-race verified phone');
 $before_user=$GLOBALS['native_users'][7]; $issued=count($GLOBALS['native_issued']);
 $GLOBALS['on_native_lock']=static function() { unset($GLOBALS['on_native_lock']); $GLOBALS['native_users'][7]['roles']=array('administrator'); };
@@ -285,7 +286,7 @@ $GLOBALS['native_users'][50010]=array('login'=>'race-phone-owner','email'=>'race
 $GLOBALS['native_users'][50011]=array('login'=>'race-website-owner','email'=>'race-website-owner@example.test','password'=>'fixture-password','name'=>'Race Website Owner','roles'=>array('customer'));
 $GLOBALS['native_meta'][50010]=array('kidia_login_phone'=>'+201055550001');
 facebook_http_fixture('770001');
-$start=native_data(facebook_exchange(facebook_challenge(),array('access_token'=>'fixture-access-token')),'External website race start');
+$start=native_legacy_social_ticket($endpoint, array('kind'=>'facebook','facebook_subject'=>'770001','facebook_app_id'=>'123456789'), str_repeat('f',64));
 $GLOBALS['native_facebook_before_insert']=static function($id,$subject) {
     $GLOBALS['native_facebook_rows'][]=array('type'=>'fb','id'=>50011,'subject'=>$subject);
 };

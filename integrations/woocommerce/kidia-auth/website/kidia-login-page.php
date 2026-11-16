@@ -338,7 +338,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		 * dedicated identity has been stored. */
 		if ( empty( $users ) ) {
 			$users = $this->find_users_by_phone_meta( array( 'fme_billing_phone', 'billing_phone' ), $forms );
-			$users = array_values( array_filter( $users, static fn( $id ): bool => ! get_user_meta( $id, 'kidia_unverified_phone', true ) || get_user_meta( $id, self::LOGIN_PHONE_META, true ) ) );
+			$users = array_values( array_filter( $users, static fn( $id ): bool => ( ! get_user_meta( $id, 'kidia_unverified_phone', true ) && ! get_user_meta( $id, '_mobishop_social_login_only', true ) ) || get_user_meta( $id, self::LOGIN_PHONE_META, true ) ) );
 		}
 
 		/* Never guess when the same phone is already present on two accounts. */
@@ -363,6 +363,13 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 				'compare' => 'IN',
 			);
 		}
+		if ( array_intersect( array( 'billing_phone', 'fme_billing_phone' ), $keys ) ) {
+			$meta_query = array( 'relation' => 'AND', $meta_query );
+			// Exclude contact-only matches before the ambiguity limit is applied.
+			foreach ( array( 'kidia_unverified_phone', '_mobishop_social_login_only', self::LOGIN_PHONE_META ) as $key ) {
+				$meta_query[] = array( 'relation' => 'OR', array( 'key' => $key, 'compare' => 'NOT EXISTS' ), array( 'key' => $key, 'value' => '' ) );
+			}
+		}
 
 		return get_users(
 			array(
@@ -384,7 +391,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 		$users = $this->find_users_by_phone_meta( array( self::LOGIN_PHONE_META ), $forms );
 		if ( empty( $users ) ) {
 			$users = $this->find_users_by_phone_meta( array( 'fme_billing_phone', 'billing_phone' ), $forms );
-			$users = array_values( array_filter( $users, static fn( $id ): bool => ! get_user_meta( $id, 'kidia_unverified_phone', true ) || get_user_meta( $id, self::LOGIN_PHONE_META, true ) ) );
+			$users = array_values( array_filter( $users, static fn( $id ): bool => ( ! get_user_meta( $id, 'kidia_unverified_phone', true ) && ! get_user_meta( $id, '_mobishop_social_login_only', true ) ) || get_user_meta( $id, self::LOGIN_PHONE_META, true ) ) );
 		}
 
 		if ( 1 !== count( $users ) ) {
@@ -516,6 +523,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 
 	private function find_customer_phone_for_user( int $user_id ): string {
 		foreach ( array( self::LOGIN_PHONE_META, 'fme_billing_phone', 'billing_phone' ) as $key ) {
+			if ( $key !== self::LOGIN_PHONE_META && get_user_meta( $user_id, '_mobishop_social_login_only', true ) ) continue;
 			$phone = $this->local_phone( (string) get_user_meta( $user_id, $key, true ) );
 			if ( preg_match( '/^01[0125][0-9]{8}$/', $phone ) ) {
 				return $phone;
@@ -542,7 +550,7 @@ final class Kidia_Store_Custom_Login_Page_V020 {
 
 		$phone = (string) get_user_meta( $user_id, self::LOGIN_PHONE_META, true );
 		$contact = (string) get_user_meta( $user_id, 'kidia_unverified_phone', true );
-		if ( '' === $phone ) {
+		if ( '' === $phone && ! get_user_meta( $user_id, '_mobishop_social_login_only', true ) ) {
 			$legacy = $contact === '' ? (string) get_user_meta( $user_id, 'fme_billing_phone', true ) : '';
 			if ( '' === $legacy && $contact === '' ) {
 				$legacy = (string) get_user_meta( $user_id, 'billing_phone', true );
