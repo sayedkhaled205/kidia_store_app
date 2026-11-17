@@ -75,6 +75,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   bool _existingOtpSendFailed = false;
   _AuthStep _step = _AuthStep.identifier;
   bool _busy = false;
+  bool _providerPending = false;
   bool _resolving = false;
   bool _closing = false;
   bool _completed = false;
@@ -187,422 +188,492 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         ),
         body: SafeArea(
           top: false,
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                _ui.number('auth_side_padding'),
-                _ui.number('auth_top_spacing'),
-                _ui.number('auth_side_padding'),
-                24,
-              ),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: AutofillGroup(
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _StoreMark(
-                          storeName: storeName,
-                          logoUrl: logo,
-                          scale:
-                              ref
-                                  .watch(cmsPageLayoutProvider('account'))
-                                  .value
-                                  ?.header
-                                  .number('auth_logo_scale', 1) ??
-                              1,
-                          aspectRatio:
-                              ref
-                                  .watch(cmsPageLayoutProvider('account'))
-                                  .value
-                                  ?.header
-                                  .number('logo_aspect_ratio', 0) ??
-                              0,
-                        ),
-                        SizedBox(height: _ui.number('auth_logo_gap')),
-                        Text(
-                          _title(copy),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                fontSize: _ui.number('auth_title_size'),
-                                fontWeight: FontWeight.w700,
-                                color: _ui.color('auth_title_color'),
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (_step == _AuthStep.identifier)
-                          Text(
-                            config?.supportsPhone == true
-                                ? copy.identifierIntro
-                                : (hasIdentifier
-                                      ? copy.intro
-                                      : copy.chooseMethod),
-                            textAlign: TextAlign.center,
-                            style: _secondaryStyle,
-                          )
-                        else
-                          ..._identitySummary(copy),
-                        const SizedBox(height: 24),
-                        if (configState.isLoading && config == null)
-                          const Center(
-                            child: CircularProgressIndicator(
-                              key: Key('auth-config-loading'),
-                            ),
-                          )
-                        else if (configState.hasError ||
-                            config == null ||
-                            !config.enabled)
-                          Column(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Keep autofill and form state alive while the provider finishes.
+              Visibility(
+                visible: !_providerPending,
+                maintainState: true,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      _ui.number('auth_side_padding'),
+                      _ui.number('auth_top_spacing'),
+                      _ui.number('auth_side_padding'),
+                      24,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: AutofillGroup(
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              _StoreMark(
+                                storeName: storeName,
+                                logoUrl: logo,
+                                scale:
+                                    ref
+                                        .watch(cmsPageLayoutProvider('account'))
+                                        .value
+                                        ?.header
+                                        .number('auth_logo_scale', 1) ??
+                                    1,
+                                aspectRatio:
+                                    ref
+                                        .watch(cmsPageLayoutProvider('account'))
+                                        .value
+                                        ?.header
+                                        .number('logo_aspect_ratio', 0) ??
+                                    0,
+                              ),
+                              SizedBox(height: _ui.number('auth_logo_gap')),
                               Text(
-                                copy.unavailable,
+                                _title(copy),
                                 textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(
+                                      fontSize: _ui.number('auth_title_size'),
+                                      fontWeight: FontWeight.w700,
+                                      color: _ui.color('auth_title_color'),
+                                    ),
                               ),
-                              const SizedBox(height: 12),
-                              TextButton(
-                                key: const Key('auth-config-retry'),
-                                onPressed: () =>
-                                    ref.invalidate(nativeAuthConfigProvider),
-                                child: Text(copy.retry),
-                              ),
-                            ],
-                          )
-                        else ...[
-                          if (!_restartRequired) ..._fields(copy, config),
-                          if (_error != null) ...[
-                            const SizedBox(height: 12),
-                            Semantics(
-                              liveRegion: true,
-                              child: Text(
-                                _error!,
-                                key: const Key('auth-error'),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                              ),
-                            ),
-                          ],
-                          if (_restartRequired)
-                            _primaryButton(
-                              key: const Key('auth-restart'),
-                              label: copy.restartSignIn,
-                              onPressed: _changeIdentifier,
-                            ),
-                          if (!_restartRequired &&
-                              _hasSubmit &&
-                              (_step != _AuthStep.identifier ||
-                                  hasIdentifier)) ...[
-                            const SizedBox(height: 20),
-                            _primaryButton(
-                              key: Key(_submitKey),
-                              label: _submitLabel(copy),
-                              onPressed: () => _submit(copy, config),
-                            ),
-                            if (_step == _AuthStep.identifier &&
-                                ((lastLogin == LastLoginMethod.phone &&
-                                        config.supportsPhone) ||
-                                    (lastLogin == LastLoginMethod.email &&
-                                        config.allows('email_password'))))
-                              _lastLoginBadge(
-                                '${copy.lastLogin} · ${lastLogin == LastLoginMethod.phone ? (copy.isArabic ? 'الموبايل' : 'Phone') : (copy.isArabic ? 'الإيميل' : 'Email')}',
-                              ),
-                          ],
-                          if (_step == _AuthStep.password &&
-                              !_existingOtpSendFailed &&
-                              config.allows('phone_otp') &&
-                              _identity?.allows('phone_otp') == true)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Wrap(
-                                alignment: WrapAlignment.center,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Text(copy.or, style: _secondaryStyle),
+                              const SizedBox(height: 8),
+                              if (_step == _AuthStep.identifier)
+                                Text(
+                                  config?.supportsPhone == true
+                                      ? copy.identifierIntro
+                                      : (hasIdentifier
+                                            ? copy.intro
+                                            : copy.chooseMethod),
+                                  textAlign: TextAlign.center,
+                                  style: _secondaryStyle,
+                                )
+                              else
+                                ..._identitySummary(copy),
+                              const SizedBox(height: 24),
+                              if (configState.isLoading && config == null)
+                                const Center(
+                                  child: CircularProgressIndicator(
+                                    key: Key('auth-config-loading'),
+                                  ),
+                                )
+                              else if (configState.hasError ||
+                                  config == null ||
+                                  !config.enabled)
+                                Column(
+                                  children: [
+                                    Text(
+                                      copy.unavailable,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextButton(
+                                      key: const Key('auth-config-retry'),
+                                      onPressed: () => ref.invalidate(
+                                        nativeAuthConfigProvider,
+                                      ),
+                                      child: Text(copy.retry),
+                                    ),
+                                  ],
+                                )
+                              else ...[
+                                if (!_restartRequired) ..._fields(copy, config),
+                                if (_error != null) ...[
+                                  const SizedBox(height: 12),
+                                  Semantics(
+                                    liveRegion: true,
+                                    child: Text(
+                                      _error!,
+                                      key: const Key('auth-error'),
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.error,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                if (_restartRequired)
+                                  _primaryButton(
+                                    key: const Key('auth-restart'),
+                                    label: copy.restartSignIn,
+                                    onPressed: _changeIdentifier,
+                                  ),
+                                if (!_restartRequired &&
+                                    _hasSubmit &&
+                                    (_step != _AuthStep.identifier ||
+                                        hasIdentifier)) ...[
+                                  const SizedBox(height: 20),
+                                  _primaryButton(
+                                    key: Key(_submitKey),
+                                    label: _submitLabel(copy),
+                                    onPressed: () => _submit(copy, config),
+                                  ),
+                                  if (_step == _AuthStep.identifier &&
+                                      ((lastLogin == LastLoginMethod.phone &&
+                                              config.supportsPhone) ||
+                                          (lastLogin == LastLoginMethod.email &&
+                                              config.allows('email_password'))))
+                                    _lastLoginBadge(
+                                      '${copy.lastLogin} · ${lastLogin == LastLoginMethod.phone ? (copy.isArabic ? 'الموبايل' : 'Phone') : (copy.isArabic ? 'الإيميل' : 'Email')}',
+                                    ),
+                                ],
+                                if (_step == _AuthStep.password &&
+                                    !_existingOtpSendFailed &&
+                                    config.allows('phone_otp') &&
+                                    _identity?.allows('phone_otp') == true)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Wrap(
+                                      alignment: WrapAlignment.center,
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      children: [
+                                        Text(copy.or, style: _secondaryStyle),
+                                        TextButton(
+                                          key: const Key('auth-use-otp'),
+                                          onPressed: _busy
+                                              ? null
+                                              : () => _perform(
+                                                  (flow) => _sendOtp(
+                                                    flow,
+                                                    _identity!.identifier,
+                                                  ),
+                                                ),
+                                          child: Text(copy.useOtp),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                if ([
+                                      _AuthStep.method,
+                                      _AuthStep.password,
+                                      _AuthStep.accountEmailPassword,
+                                      _AuthStep.recovery,
+                                    ].contains(_step) &&
+                                    _identity?.requiresEmailRegistration !=
+                                        true &&
+                                    config.passwordResetUri != null)
                                   TextButton(
-                                    key: const Key('auth-use-otp'),
+                                    key: const Key('auth-forgot-password'),
                                     onPressed: _busy
+                                        ? null
+                                        : () => _perform((flow) async {
+                                            final opened = await launchUrl(
+                                              config.passwordResetUri!,
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                            if (!opened && _active(flow)) {
+                                              throw StateError(
+                                                'Password recovery did not open.',
+                                              );
+                                            }
+                                          }),
+                                    child: Text(copy.forgotPassword),
+                                  ),
+                                if ([
+                                      _AuthStep.accountEmailPassword,
+                                      _AuthStep.emailRegistration,
+                                    ].contains(_step) &&
+                                    _identity?.kind == 'phone')
+                                  TextButton(
+                                    key: const Key('auth-choose-method'),
+                                    onPressed: _busy
+                                        ? null
+                                        : () => _chooseMethodStep(
+                                            _AuthStep.method,
+                                          ),
+                                    child: Text(copy.chooseAnotherWay),
+                                  ),
+                                if (_step == _AuthStep.otp)
+                                  TextButton(
+                                    key: const Key('auth-resend'),
+                                    onPressed:
+                                        _busy ||
+                                            _resendSeconds > 0 ||
+                                            _challenge == null
                                         ? null
                                         : () => _perform(
                                             (flow) => _sendOtp(
                                               flow,
-                                              _identity!.identifier,
+                                              _challenge!.phone,
+                                              previous: _challenge,
+                                              ticket: _otpTicket,
                                             ),
                                           ),
-                                    child: Text(copy.useOtp),
+                                    child: Text(
+                                      _resendSeconds > 0
+                                          ? '${copy.resendOtp} ($_resendSeconds)'
+                                          : copy.resendOtp,
+                                    ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          if ([
-                                _AuthStep.method,
-                                _AuthStep.password,
-                                _AuthStep.accountEmailPassword,
-                                _AuthStep.recovery,
-                              ].contains(_step) &&
-                              _identity?.requiresEmailRegistration != true &&
-                              config.passwordResetUri != null)
-                            TextButton(
-                              key: const Key('auth-forgot-password'),
-                              onPressed: _busy
-                                  ? null
-                                  : () => _perform((flow) async {
-                                      final opened = await launchUrl(
-                                        config.passwordResetUri!,
-                                        mode: LaunchMode.externalApplication,
-                                      );
-                                      if (!opened && _active(flow)) {
-                                        throw StateError(
-                                          'Password recovery did not open.',
-                                        );
-                                      }
-                                    }),
-                              child: Text(copy.forgotPassword),
-                            ),
-                          if ([
-                                _AuthStep.accountEmailPassword,
-                                _AuthStep.emailRegistration,
-                              ].contains(_step) &&
-                              _identity?.kind == 'phone')
-                            TextButton(
-                              key: const Key('auth-choose-method'),
-                              onPressed: _busy
-                                  ? null
-                                  : () => _chooseMethodStep(_AuthStep.method),
-                              child: Text(copy.chooseAnotherWay),
-                            ),
-                          if (_step == _AuthStep.otp)
-                            TextButton(
-                              key: const Key('auth-resend'),
-                              onPressed:
-                                  _busy ||
-                                      _resendSeconds > 0 ||
-                                      _challenge == null
-                                  ? null
-                                  : () => _perform(
-                                      (flow) => _sendOtp(
-                                        flow,
-                                        _challenge!.phone,
-                                        previous: _challenge,
-                                        ticket: _otpTicket,
+                                if (showGoogle ||
+                                    showFacebook ||
+                                    showApple) ...[
+                                  if (hasIdentifier) ...[
+                                    const SizedBox(height: 28),
+                                    Center(
+                                      child: SizedBox(
+                                        width: 176,
+                                        child: Row(
+                                          key: const Key('auth-social-or'),
+                                          children: [
+                                            const Expanded(
+                                              child: Divider(
+                                                color: Color(0xFFE5E5E5),
+                                                endIndent: 18,
+                                              ),
+                                            ),
+                                            Text(
+                                              copy.or,
+                                              style: _secondaryStyle,
+                                            ),
+                                            const Expanded(
+                                              child: Divider(
+                                                color: Color(0xFFE5E5E5),
+                                                indent: 18,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                              child: Text(
-                                _resendSeconds > 0
-                                    ? '${copy.resendOtp} ($_resendSeconds)'
-                                    : copy.resendOtp,
-                              ),
-                            ),
-                          if (showGoogle || showFacebook || showApple) ...[
-                            if (hasIdentifier) ...[
-                              const SizedBox(height: 28),
-                              Center(
-                                child: SizedBox(
-                                  width: 176,
-                                  child: Row(
-                                    key: const Key('auth-social-or'),
+                                    const SizedBox(height: 20),
+                                  ],
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    textDirection: TextDirection.ltr,
                                     children: [
-                                      const Expanded(
-                                        child: Divider(
-                                          color: Color(0xFFE5E5E5),
-                                          endIndent: 18,
+                                      if (showApple) ...[
+                                        _loginOption(
+                                          last:
+                                              lastLogin ==
+                                              LastLoginMethod.apple,
+                                          copy: copy,
+                                          child: Tooltip(
+                                            message: copy.continueWithApple,
+                                            child: OutlinedButton(
+                                              key: const Key('auth-apple'),
+                                              onPressed: _busy
+                                                  ? null
+                                                  : () => _perform((
+                                                      flow,
+                                                    ) async {
+                                                      _resetForProviderSwitch();
+                                                      final result =
+                                                          await (_actions
+                                                                  as NativeAppleAuthActions)
+                                                              .apple();
+                                                      if (_active(flow)) {
+                                                        await _acceptProviderResult(
+                                                          result,
+                                                          flow,
+                                                        );
+                                                      }
+                                                    }, provider: true),
+                                              style: OutlinedButton.styleFrom(
+                                                fixedSize: const Size.square(
+                                                  52,
+                                                ),
+                                                minimumSize: const Size.square(
+                                                  52,
+                                                ),
+                                                padding: EdgeInsets.zero,
+                                                visualDensity:
+                                                    VisualDensity.standard,
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                backgroundColor: Colors.black,
+                                                foregroundColor: Colors.white,
+                                                side: BorderSide.none,
+                                                shape: const CircleBorder(),
+                                              ),
+                                              child: Semantics(
+                                                label: copy.continueWithApple,
+                                                child: const Icon(
+                                                  Icons.apple,
+                                                  size: 28,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                      Text(copy.or, style: _secondaryStyle),
-                                      const Expanded(
-                                        child: Divider(
-                                          color: Color(0xFFE5E5E5),
-                                          indent: 18,
+                                        if (showGoogle || showFacebook)
+                                          const SizedBox(width: 4),
+                                      ],
+                                      if (showGoogle)
+                                        _loginOption(
+                                          last:
+                                              lastLogin ==
+                                              LastLoginMethod.google,
+                                          copy: copy,
+                                          child: Tooltip(
+                                            message: copy.continueWithGoogle,
+                                            excludeFromSemantics: true,
+                                            child: OutlinedButton(
+                                              key: const Key('auth-google'),
+                                              onPressed: _busy
+                                                  ? null
+                                                  : () => _perform((
+                                                      flow,
+                                                    ) async {
+                                                      final expectedPhone =
+                                                          _resetForProviderSwitch();
+                                                      final result =
+                                                          expectedPhone == null
+                                                          ? await _actions!
+                                                                .google()
+                                                          : await (_actions
+                                                                    as NativeExistingPhoneGoogleActions)
+                                                                .googleForPhone(
+                                                                  expectedPhone,
+                                                                );
+                                                      if (_active(flow)) {
+                                                        await _acceptProviderResult(
+                                                          result,
+                                                          flow,
+                                                        );
+                                                      }
+                                                    }, provider: true),
+                                              style: OutlinedButton.styleFrom(
+                                                visualDensity:
+                                                    VisualDensity.standard,
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                fixedSize: Size.square(
+                                                  _ui.numberOr(
+                                                    'auth_google_button_height',
+                                                    52,
+                                                  ),
+                                                ),
+                                                minimumSize: Size.square(
+                                                  _ui.numberOr(
+                                                    'auth_google_button_height',
+                                                    52,
+                                                  ),
+                                                ),
+                                                padding: EdgeInsets.zero,
+                                                backgroundColor: Colors.white,
+                                                side: const BorderSide(
+                                                  color: Color(0xFFDADCE0),
+                                                  width: 1.5,
+                                                ),
+                                                shape: const CircleBorder(),
+                                              ),
+                                              child: Semantics(
+                                                label: copy.continueWithGoogle,
+                                                child: Image.asset(
+                                                  'assets/branding/google-g.png',
+                                                  key: const Key(
+                                                    'auth-google-brand',
+                                                  ),
+                                                  width: 28,
+                                                  height: 28,
+                                                  fit: BoxFit.contain,
+                                                  excludeFromSemantics: true,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                      ),
+                                      if (showGoogle && showFacebook)
+                                        const SizedBox(width: 4),
+                                      if (showFacebook)
+                                        _loginOption(
+                                          last:
+                                              lastLogin ==
+                                              LastLoginMethod.facebook,
+                                          copy: copy,
+                                          child: Tooltip(
+                                            message: copy.continueWithFacebook,
+                                            excludeFromSemantics: true,
+                                            child: OutlinedButton(
+                                              key: const Key('auth-facebook'),
+                                              onPressed: _busy
+                                                  ? null
+                                                  : _facebook,
+                                              style: OutlinedButton.styleFrom(
+                                                visualDensity:
+                                                    VisualDensity.standard,
+                                                tapTargetSize:
+                                                    MaterialTapTargetSize
+                                                        .shrinkWrap,
+                                                fixedSize: const Size.square(
+                                                  52,
+                                                ),
+                                                minimumSize: const Size.square(
+                                                  52,
+                                                ),
+                                                padding: EdgeInsets.zero,
+                                                side: BorderSide.none,
+                                                shape: const CircleBorder(),
+                                              ),
+                                              child: Semantics(
+                                                label:
+                                                    copy.continueWithFacebook,
+                                                child: ExcludeSemantics(
+                                                  child: CustomPaint(
+                                                    key: const Key(
+                                                      'auth-facebook-brand',
+                                                    ),
+                                                    size: const Size.square(52),
+                                                    painter: _FacebookMark(),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                     ],
                                   ),
+                                ],
+                              ],
+                              const SizedBox(height: 28),
+                              Text(
+                                copy.privacyPrefix,
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: MobiShopColors.textSecondary,
+                                    ),
+                              ),
+                              StorePrivacyLink(
+                                policyUri: safeStorePrivacyUri(
+                                  config?.privacyPolicyUrl ?? '',
                                 ),
                               ),
-                              const SizedBox(height: 20),
                             ],
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              textDirection: TextDirection.ltr,
-                              children: [
-                                if (showApple) ...[
-                                  _loginOption(
-                                    last: lastLogin == LastLoginMethod.apple,
-                                    copy: copy,
-                                    child: Tooltip(
-                                      message: copy.continueWithApple,
-                                      child: OutlinedButton(
-                                        key: const Key('auth-apple'),
-                                        onPressed: _busy
-                                            ? null
-                                            : () => _perform((flow) async {
-                                                _resetForProviderSwitch();
-                                                final result =
-                                                    await (_actions
-                                                            as NativeAppleAuthActions)
-                                                        .apple();
-                                                if (_active(flow)) {
-                                                  await _acceptProviderResult(
-                                                    result,
-                                                    flow,
-                                                  );
-                                                }
-                                              }),
-                                        style: OutlinedButton.styleFrom(
-                                          fixedSize: const Size.square(52),
-                                          minimumSize: const Size.square(52),
-                                          padding: EdgeInsets.zero,
-                                          visualDensity: VisualDensity.standard,
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                          backgroundColor: Colors.black,
-                                          foregroundColor: Colors.white,
-                                          side: BorderSide.none,
-                                          shape: const CircleBorder(),
-                                        ),
-                                        child: Semantics(
-                                          label: copy.continueWithApple,
-                                          child: const Icon(
-                                            Icons.apple,
-                                            size: 28,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  if (showGoogle || showFacebook)
-                                    const SizedBox(width: 4),
-                                ],
-                                if (showGoogle)
-                                  _loginOption(
-                                    last: lastLogin == LastLoginMethod.google,
-                                    copy: copy,
-                                    child: Tooltip(
-                                      message: copy.continueWithGoogle,
-                                      excludeFromSemantics: true,
-                                      child: OutlinedButton(
-                                        key: const Key('auth-google'),
-                                        onPressed: _busy
-                                            ? null
-                                            : () => _perform((flow) async {
-                                                final expectedPhone =
-                                                    _resetForProviderSwitch();
-                                                final result =
-                                                    expectedPhone == null
-                                                    ? await _actions!.google()
-                                                    : await (_actions
-                                                              as NativeExistingPhoneGoogleActions)
-                                                          .googleForPhone(
-                                                            expectedPhone,
-                                                          );
-                                                if (_active(flow)) {
-                                                  await _acceptProviderResult(
-                                                    result,
-                                                    flow,
-                                                  );
-                                                }
-                                              }),
-                                        style: OutlinedButton.styleFrom(
-                                          visualDensity: VisualDensity.standard,
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                          fixedSize: Size.square(
-                                            _ui.numberOr(
-                                              'auth_google_button_height',
-                                              52,
-                                            ),
-                                          ),
-                                          minimumSize: Size.square(
-                                            _ui.numberOr(
-                                              'auth_google_button_height',
-                                              52,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                          backgroundColor: Colors.white,
-                                          side: const BorderSide(
-                                            color: Color(0xFFDADCE0),
-                                            width: 1.5,
-                                          ),
-                                          shape: const CircleBorder(),
-                                        ),
-                                        child: Semantics(
-                                          label: copy.continueWithGoogle,
-                                          child: Image.asset(
-                                            'assets/branding/google-g.png',
-                                            key: const Key('auth-google-brand'),
-                                            width: 28,
-                                            height: 28,
-                                            fit: BoxFit.contain,
-                                            excludeFromSemantics: true,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                if (showGoogle && showFacebook)
-                                  const SizedBox(width: 4),
-                                if (showFacebook)
-                                  _loginOption(
-                                    last: lastLogin == LastLoginMethod.facebook,
-                                    copy: copy,
-                                    child: Tooltip(
-                                      message: copy.continueWithFacebook,
-                                      excludeFromSemantics: true,
-                                      child: OutlinedButton(
-                                        key: const Key('auth-facebook'),
-                                        onPressed: _busy ? null : _facebook,
-                                        style: OutlinedButton.styleFrom(
-                                          visualDensity: VisualDensity.standard,
-                                          tapTargetSize:
-                                              MaterialTapTargetSize.shrinkWrap,
-                                          fixedSize: const Size.square(52),
-                                          minimumSize: const Size.square(52),
-                                          padding: EdgeInsets.zero,
-                                          side: BorderSide.none,
-                                          shape: const CircleBorder(),
-                                        ),
-                                        child: Semantics(
-                                          label: copy.continueWithFacebook,
-                                          child: ExcludeSemantics(
-                                            child: CustomPaint(
-                                              key: const Key(
-                                                'auth-facebook-brand',
-                                              ),
-                                              size: const Size.square(52),
-                                              painter: _FacebookMark(),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ],
-                        const SizedBox(height: 28),
-                        Text(
-                          copy.privacyPrefix,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: MobiShopColors.textSecondary),
-                        ),
-                        StorePrivacyLink(
-                          policyUri: safeStorePrivacyUri(
-                            config?.privacyPolicyUrl ?? '',
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
+              if (_providerPending)
+                Center(
+                  key: const Key('auth-provider-progress'),
+                  child: Semantics(
+                    liveRegion: true,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(copy.signingIn, textAlign: TextAlign.center),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -1548,13 +1619,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     });
   }
 
-  Future<void> _perform(Future<void> Function(int flow) operation) async {
+  Future<void> _perform(
+    Future<void> Function(int flow) operation, {
+    bool provider = false,
+  }) async {
     if (_busy || _closing) return;
     final flow = _flow;
     final request = ++_operation;
     FocusScope.of(context).unfocus();
     setState(() {
       _busy = true;
+      _providerPending = provider;
       _error = null;
     });
     try {
@@ -1566,7 +1641,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         _showError(error);
       }
     } finally {
-      if (_active(flow) && request == _operation) setState(() => _busy = false);
+      if (_active(flow) && request == _operation) {
+        setState(() {
+          _busy = false;
+          if (!_completed) _providerPending = false;
+        });
+      }
     }
   }
 
@@ -1837,6 +1917,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       if (_active(flow)) {
         setState(() {
           _busy = false;
+          if (!_completed) _providerPending = false;
           _resolving = false;
         });
       }
@@ -1976,7 +2057,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     } finally {
       if (identical(_websiteAttempt, attempt)) _websiteAttempt = null;
     }
-  });
+  }, provider: true);
 
   void _finish() {
     if (!widget.popOnSuccess) return;

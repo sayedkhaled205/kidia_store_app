@@ -25,6 +25,93 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
 
 void main() {
+  testWidgets(
+    'provider cancellation preserves autofill without saving a password',
+    (tester) async {
+      final response = Completer<NativeAuthResult>();
+      final actions = _Actions()..googleFuture = response.future;
+      await _Fixture(actions: actions).pump(tester);
+      await _identify(tester, 'customer@example.invalid');
+      await tester.enterText(
+        find.byKey(const Key('auth-password')),
+        'test-password',
+      );
+      tester.testTextInput.log.clear();
+      await _tap(tester, 'auth-google', settle: false);
+      expect(find.byKey(const Key('auth-provider-progress')), findsOneWidget);
+      expect(
+        tester.testTextInput.log.where(
+          (call) => call.method == 'TextInput.finishAutofillContext',
+        ),
+        isEmpty,
+      );
+      response.completeError(PlatformException(code: 'sign_in_canceled'));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('auth-provider-progress')), findsNothing);
+      expect(
+        tester
+            .widget<TextFormField>(find.byKey(const Key('auth-password')))
+            .controller!
+            .text,
+        'test-password',
+      );
+      expect(
+        tester.testTextInput.log.where(
+          (call) => call.method == 'TextInput.finishAutofillContext',
+        ),
+        isEmpty,
+      );
+    },
+  );
+  for (final provider in ['apple', 'google', 'facebook']) {
+    testWidgets(
+      '$provider keeps a neutral screen until the session is committed',
+      (tester) async {
+        final response = Completer<NativeAuthResult>();
+        final commit = Completer<void>();
+        final actions = _Actions()
+          ..configuration = const NativeAuthConfig(
+            methods: {
+              'email_password': true,
+              'phone_otp': true,
+              'google': true,
+              'apple': true,
+              'facebook_native': true,
+            },
+          )
+          ..googleFuture = response.future
+          ..appleFuture = response.future
+          ..facebookFuture = response.future
+          ..commitFuture = commit.future;
+        final fixture = _Fixture(actions: actions);
+        await fixture.pump(tester);
+        await _tap(tester, 'auth-$provider', settle: false);
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.byKey(const Key('auth-provider-progress')), findsOneWidget);
+        expect(find.byKey(const Key('auth-email')), findsNothing);
+        expect(find.byKey(const Key('auth-phone')), findsNothing);
+        expect(actions.sentPhones, isEmpty);
+        response.complete(_authenticated());
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.byKey(const Key('auth-provider-progress')), findsOneWidget);
+        expect(find.byKey(const Key('auth-email')), findsNothing);
+        expect(find.byKey(const Key('auth-phone')), findsNothing);
+        expect(actions.commits, 1);
+        commit.complete();
+        await tester.pumpAndSettle();
+        expect(find.text('CUSTOMER 7'), findsOneWidget);
+        expect(actions.sentPhones, isEmpty);
+        expect(tester.takeException(), isNull);
+      },
+      variant: TargetPlatformVariant(
+        provider == 'apple'
+            ? {TargetPlatform.iOS}
+            : {TargetPlatform.iOS, TargetPlatform.android},
+      ),
+    );
+  }
+
   for (final provider in ['apple', 'google', 'facebook']) {
     testWidgets(
       '$provider enrollment never inherits the previous registration details',
@@ -576,11 +663,14 @@ void main() {
         await tester.tap(find.byKey(Key('auth-$provider')));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 50));
-        expect(find.byKey(const Key('auth-password')), findsOneWidget);
+        expect(find.byKey(const Key('auth-provider-progress')), findsOneWidget);
+        expect(find.byKey(const Key('auth-password')), findsNothing);
         expect(tester.takeException(), isNull);
         commit.complete();
         await tester.pumpAndSettle();
         expect(find.byKey(const Key('auth-error')), findsOneWidget);
+        expect(find.byKey(const Key('auth-password')), findsOneWidget);
+        expect(find.byKey(const Key('auth-provider-progress')), findsNothing);
         expect(find.text('+201012345678'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
@@ -896,16 +986,18 @@ void main() {
     },
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
-  testWidgets('Android never offers Apple from a misconfigured server', (
-    tester,
-  ) async {
-    final actions = _Actions()
-      ..configuration = const NativeAuthConfig(
-        methods: {'email_password': true, 'apple': true},
-      );
-    await _Fixture(actions: actions).pump(tester);
-    expect(find.byKey(const Key('auth-apple')), findsNothing);
-  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+  testWidgets(
+    'Android never offers Apple from a misconfigured server',
+    (tester) async {
+      final actions = _Actions()
+        ..configuration = const NativeAuthConfig(
+          methods: {'email_password': true, 'apple': true},
+        );
+      await _Fixture(actions: actions).pump(tester);
+      expect(find.byKey(const Key('auth-apple')), findsNothing);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
   testWidgets('equal social circles and last successful method hint', (
     tester,
   ) async {
@@ -2044,8 +2136,13 @@ void main() {
       await fixture.pump(tester, route: '/account?tab=orders');
       fixture.router.push('/auth');
       await tester.pumpAndSettle();
+      final providerButton = find.byKey(const Key('auth-google'));
+      await tester.ensureVisible(providerButton);
+      await tester.pump();
+      final providerPosition = tester.getCenter(providerButton);
       await _tap(tester, 'auth-google', settle: false);
-      await _tap(tester, 'auth-google', settle: false);
+      await tester.tapAt(providerPosition);
+      await tester.pump();
       expect(fixture.actions.googleCalls, 1);
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
@@ -2276,6 +2373,7 @@ class _Actions
   @override
   Future<NativeAuthResult> apple() async {
     if (appleError != null) throw appleError!;
+    if (appleFuture != null) return await appleFuture!;
     return appleResult ??
         const NativeAuthResult(
           status: NativeAuthStatus.registrationRequired,
@@ -2288,6 +2386,7 @@ class _Actions
   @override
   Future<NativeAuthResult> facebook() async {
     if (facebookError != null) throw facebookError!;
+    if (facebookFuture != null) return await facebookFuture!;
     return facebookResult ?? _authenticated();
   }
 
@@ -2297,6 +2396,8 @@ class _Actions
   NativeAuthResult? appleResult;
   NativeAuthResult? facebookResult;
   Future<void>? commitFuture;
+  Future<NativeAuthResult>? appleFuture;
+  Future<NativeAuthResult>? facebookFuture;
   final passwordIdentifiers = <String>[];
   NativeAuthConfig configuration = const NativeAuthConfig(
     phoneCountryCode: '20',
