@@ -90,7 +90,7 @@ class AccountScreen extends ConsumerWidget {
             cmsContentHorizontalPadding(pageLayout),
             compactIos ? 4 : MobiShopSpacing.md,
             cmsContentHorizontalPadding(pageLayout),
-            compactIos ? 4 : MobiShopSpacing.xl,
+            compactIos ? 4 : MobiShopSpacing.xs,
           ),
           children: <Widget>[
             if (summarySettings.enabled)
@@ -198,7 +198,7 @@ class AccountScreen extends ConsumerWidget {
             ),
             if (session != null &&
                 pageLayout.element('logout_button').enabled) ...<Widget>[
-              SizedBox(height: compactIos ? 0 : MobiShopSpacing.lg),
+              SizedBox(height: compactIos ? 0 : MobiShopSpacing.xs),
               CmsElementFrame(
                 component: pageLayout.element('logout_button'),
                 child: Center(
