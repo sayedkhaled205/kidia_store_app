@@ -101,6 +101,7 @@ require_once MOBISHOP_PATH . 'api/class-customer-account-deletion.php';
 require_once MOBISHOP_PATH . 'api/class-category-page-endpoint.php';
 require_once MOBISHOP_PATH . 'api/class-store-api-price-compatibility.php';
 require_once MOBISHOP_PATH . 'api/class-discount-rules-prices.php';
+require_once MOBISHOP_PATH . 'api/class-discount-rules-catalogue-query.php';
 require_once MOBISHOP_PATH . 'api/class-page-layout-endpoint.php';
 require_once MOBISHOP_PATH . 'api/class-splash-screen-endpoint.php';
 
