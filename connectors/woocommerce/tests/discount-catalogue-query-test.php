@@ -723,6 +723,20 @@ namespace {
 	$GLOBALS['wp_filter']['woocommerce_product_is_on_sale']=(object)['callbacks'=>[10=>[['function'=>static fn()=>true]]]];
 	$checks['scope retains independent sale callback'] = $scope->invoke(null,new FakeProduct(502,'simple',100,100),[$none]);
 	unset($GLOBALS['wp_filter']);
+	$targets = new \ReflectionMethod(MobiShop_Discount_Rules_Catalogue_Query::class,'conservative_targets');
+	$GLOBALS['test_term_members']['product_cat'][77]=[1,2];
+	$GLOBALS['test_term_members']['product_tag'][88]=[2];
+	\Wdr\App\Controllers\ManageDiscount::$rules=[new FakeRule([
+		(object)['type'=>'product_category','method'=>'in_list','value'=>[77]],
+		(object)['type'=>'product_tags','method'=>'not_in_list','value'=>[88]],
+	])];
+	$checks['taxonomy exclusion narrows the affected rule'] = $targets->invoke(null,[1,2])===[1];
+	\Wdr\App\Controllers\ManageDiscount::$rules[]=new FakeRule([(object)['type'=>'products','method'=>'in_list','value'=>[2]]]);
+	$checks['taxonomy exclusion cannot exclude another rule target'] = $targets->invoke(null,[1,2])===[1,2];
+	array_pop(\Wdr\App\Controllers\ManageDiscount::$rules);
+	add_filter('woocommerce_product_get_tag_ids',static fn($v)=>$v);
+	$checks['custom taxonomy membership keeps broad candidates'] = $targets->invoke(null,[1,2])===[1,2];
+	unset($GLOBALS['hooks']['woocommerce_product_get_tag_ids']);
 	foreach ( $checks as $label => $passed ) {
 		if ( ! $passed ) {
 			$fail( $label );

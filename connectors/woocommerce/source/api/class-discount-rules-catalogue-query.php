@@ -262,7 +262,7 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 				// Ignoring a recognised exclusion only widens candidates. With no positive filter
 				// the rule could affect all products, so do not narrow at all.
 				if ( 'not_in_list' === $method && $known ) {
-					if ( is_array( $values ) && self::can_narrow_taxonomy_exclusion( $type ) ) {
+					if ( is_array( $values ) && self::can_narrow_taxonomy_exclusion( $type, $rule ) ) {
 						$rule_excluded = array_merge( $rule_excluded, self::term_filter_targets( $values, 'product_category' === $type ? 'product_cat' : 'product_tag', $q_lookup ) );
 					}
 					continue;
@@ -295,9 +295,20 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 	/** Category/tag exclusions are unconditional in FlyCart and inherited by all children.
 	 * Keep broader candidates whenever another extension can change those memberships.
 	 */
-	private static function can_narrow_taxonomy_exclusion( $type ): bool {
+	private static function can_narrow_taxonomy_exclusion( $type, $rule ): bool {
 		if ( ! in_array( $type, array( 'product_category', 'product_tags' ), true ) ) { return false; }
-		foreach ( array( 'advanced_woo_discount_rules_filter_passed', 'advanced_woo_discount_rules_customer_condition_filter_passed', 'advanced_woo_discount_rules_get_product_categories', 'woocommerce_product_get_category_ids', 'woocommerce_product_get_tag_ids', 'woocommerce_product_variation_get_parent_id' ) as $hook ) {
+		global $wp_filter;
+		foreach ( ( $wp_filter['advanced_woo_discount_rules_filter_passed']->callbacks ?? array() ) as $callbacks ) {
+			foreach ( $callbacks as $entry ) {
+				$callback = $entry['function'];
+				// Our channel gate only restricts matches; FlyCart's gift callback broadens BxGY only.
+				if ( $callback instanceof Closure && ( new ReflectionFunction( $callback ) )->getClosureScopeClass()?->getName() === MobiShop_Discount_Channel::class ) { continue; }
+				if ( is_array( $callback ) && 'WDRPro\\App\\Rules\\BuyXGetY' === ( is_object( $callback[0] ) ? get_class( $callback[0] ) : $callback[0] ) && 'checkFilterPassed' === $callback[1]
+					&& is_callable( array( $rule, 'getRuleDiscountType' ) ) && 'wdr_buy_x_get_y_discount' !== $rule->getRuleDiscountType() ) { continue; }
+				return false;
+			}
+		}
+		foreach ( array( 'advanced_woo_discount_rules_customer_condition_filter_passed', 'advanced_woo_discount_rules_get_product_categories', 'woocommerce_product_get_category_ids', 'woocommerce_product_get_tag_ids', 'woocommerce_product_variation_get_parent_id' ) as $hook ) {
 			if ( has_filter( $hook ) ) { return false; }
 		}
 		return true;
