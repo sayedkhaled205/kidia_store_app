@@ -251,6 +251,7 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 				return $q_ids;
 			}
 			$rule_union = array();
+			$rule_excluded = array();
 			$has_positive = false;
 			foreach ( (array) $filters as $filter ) {
 				$type   = is_object( $filter ) ? ( $filter->type ?? null ) : ( $filter['type'] ?? null );
@@ -260,7 +261,12 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 				$known = in_array( $type, array( 'products', 'product_category', 'product_tags' ), true ) || in_array( $type, $custom_taxonomies, true );
 				// Ignoring a recognised exclusion only widens candidates. With no positive filter
 				// the rule could affect all products, so do not narrow at all.
-				if ( 'not_in_list' === $method && $known ) { continue; }
+				if ( 'not_in_list' === $method && $known ) {
+					if ( is_array( $values ) && self::can_narrow_taxonomy_exclusion( $type ) ) {
+						$rule_excluded = array_merge( $rule_excluded, self::term_filter_targets( $values, 'product_category' === $type ? 'product_cat' : 'product_tag', $q_lookup ) );
+					}
+					continue;
+				}
 				if ( 'in_list' !== $method || ! is_array( $values ) || ! $values ) {
 					return $q_ids;
 				}
@@ -280,10 +286,21 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 				}
 			}
 			if ( ! $has_positive ) { return $q_ids; }
-			$union = array_merge( $union, $rule_union );
+			$union = array_merge( $union, array_diff( $rule_union, $rule_excluded ) );
 		}
 
 		return array_values( array_unique( $union ) );
+	}
+
+	/** Category/tag exclusions are unconditional in FlyCart and inherited by all children.
+	 * Keep broader candidates whenever another extension can change those memberships.
+	 */
+	private static function can_narrow_taxonomy_exclusion( $type ): bool {
+		if ( ! in_array( $type, array( 'product_category', 'product_tags' ), true ) ) { return false; }
+		foreach ( array( 'advanced_woo_discount_rules_filter_passed', 'advanced_woo_discount_rules_customer_condition_filter_passed', 'advanced_woo_discount_rules_get_product_categories', 'woocommerce_product_get_category_ids', 'woocommerce_product_get_tag_ids', 'woocommerce_product_variation_get_parent_id' ) as $hook ) {
+			if ( has_filter( $hook ) ) { return false; }
+		}
+		return true;
 	}
 
 	private static function product_filter_targets( array $values, array $q_lookup ): array {

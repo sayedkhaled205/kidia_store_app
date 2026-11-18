@@ -706,6 +706,23 @@ namespace {
 	$out=MobiShop_Discount_Rules_Catalogue_Query::dispatch(null,$make_request(),'/wc/store/v1/products',make_handler(fn()=>42));
 	$checks['exception clears dispatch guard']=$out===42;
 
+	$scope = new \ReflectionMethod(MobiShop_Discount_Rules_Catalogue_Query::class, 'matches_rule_scope');
+	$parent = new FakeProduct(500,'variable',100,100,[501]);
+	$GLOBALS['test_products'][501] = new FakeProduct(501,'variation',100,100);
+	$childOnly = new class { public function isFilterPassed($p,$badge=false) { return $p->get_id()===501 && !$badge; } };
+	$badgeOnly = new class { public function isFilterPassed($p,$badge=false) { return $p->get_id()===501 && $badge; } };
+	$none = new class { public function isFilterPassed($p,$badge=false) { return false; } };
+	$throws = new class { public function isFilterPassed($p,$badge=false) { throw new \RuntimeException('rule unavailable'); } };
+	$checks['scope retains child-only quote'] = $scope->invoke(null,$parent,[$childOnly]);
+	$checks['scope retains child-only sale badge'] = $scope->invoke(null,$parent,[$badgeOnly]);
+	$checks['scope skips only complete rule mismatch'] = !$scope->invoke(null,$parent,[$none]);
+	$checks['scope retains unknown rule engine'] = $scope->invoke(null,$parent,[new \stdClass()]);
+	$checks['scope retains failed rule lookup'] = $scope->invoke(null,$parent,[$throws]);
+	unset($GLOBALS['test_products'][501]);
+	$checks['scope retains unreadable child'] = $scope->invoke(null,$parent,[$none]);
+	$GLOBALS['wp_filter']['woocommerce_product_is_on_sale']=(object)['callbacks'=>[10=>[['function'=>static fn()=>true]]]];
+	$checks['scope retains independent sale callback'] = $scope->invoke(null,new FakeProduct(502,'simple',100,100),[$none]);
+	unset($GLOBALS['wp_filter']);
 	foreach ( $checks as $label => $passed ) {
 		if ( ! $passed ) {
 			$fail( $label );
