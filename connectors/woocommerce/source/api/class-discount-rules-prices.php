@@ -147,6 +147,13 @@ final class MobiShop_Discount_Rules_Prices {
 				$limits = (array) ( $item['quantity_limits'] ?? array() );
 				$limits['editable'] = false;
 				$item['quantity_limits'] = (object) $limits;
+				// FlyCart carries this internal gift marker in the variation map.
+				// Keep real size/colour selections, without displaying its storage key.
+				if ( isset( $item['variation'] ) && is_array( $item['variation'] ) ) {
+					$item['variation'] = array_values( array_filter( $item['variation'], static function ( $variation ) {
+						return 'wdr_free_product' !== ( ( (array) $variation )['attribute'] ?? '' );
+					} ) );
+				}
 			}
 		}
 		unset( $item );
