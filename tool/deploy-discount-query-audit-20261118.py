@@ -31,7 +31,7 @@ def main():
     old_loader = loader.read_bytes()
     anchor = b"require_once MOBISHOP_PATH . 'api/class-discount-rules-prices.php';"
     addition = b"require_once MOBISHOP_PATH . 'api/class-discount-rules-catalogue-query.php';"
-    before_loader = old_loader.replace(addition + b'\n', b'')
+    before_loader = old_loader.replace(b'\n' + addition, b'')
     assert digest(before_loader) == LOADERS[site], 'Current loader changed'
     assert before_loader.count(anchor) == 1 and addition not in before_loader
     after_loader = before_loader.replace(anchor, anchor + b'\n' + addition)

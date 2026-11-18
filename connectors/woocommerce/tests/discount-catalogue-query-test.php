@@ -720,6 +720,13 @@ namespace {
 	add_filter('woocommerce_product_get_tag_ids',static fn($v)=>$v);
 	$checks['custom taxonomy membership keeps broad candidates'] = $targets->invoke(null,[1,2])===[1,2];
 	unset($GLOBALS['hooks']['woocommerce_product_get_tag_ids']);
+	$GLOBALS['test_parent_of'][22]=20;
+	$GLOBALS['test_term_members']['product_cat'][77]=[20];
+	$GLOBALS['test_term_members']['product_tag'][88]=[22];
+	$checks['child-only excluded term does not exclude parent'] = $targets->invoke(null,[20])===[20];
+	$checks['child-only excluded term does not exclude direct variation'] = $targets->invoke(null,[22])===[22];
+	$GLOBALS['test_term_members']['product_tag'][88]=[20];
+	$checks['parent excluded term applies to direct variation'] = $targets->invoke(null,[22])===[];
 	foreach ( $checks as $label => $passed ) {
 		if ( ! $passed ) {
 			$fail( $label );

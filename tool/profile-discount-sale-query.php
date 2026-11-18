@@ -20,9 +20,9 @@ $rules=(new ReflectionMethod('MobiShop_Discount_Rules_Catalogue_Query','active_a
 foreach($targets as $id) {
  $p=wc_get_product($id); if(!$p)continue;
  $evaluated[]=$id;
+ $t=microtime(true); $original=$p->is_on_sale(); $times['original_sale']+=microtime(true)-$t;
  $t=microtime(true); $before=$schema->price_fields($p); $times['schema']+=microtime(true)-$t;
  $t=microtime(true); $after=MobiShop_Discount_Rules_Prices::prices($p,$before); $times['quote']+=microtime(true)-$t;
- $t=microtime(true); $original=(($args[0]??'')!=='candidate'||$before===$after)?$p->is_on_sale():false; $times['original_sale']+=microtime(true)-$t;
  $changed+=(int)($before!==$after); $sale=MobiShop_Discount_Rules_Prices::sale_state($before,$after,$original); $sales+=(int)$sale; if($sale)$sale_ids[]=$id;
 }
 $final=array_values(array_unique(array_merge(array_diff(array_intersect($ids,wc_get_product_ids_on_sale()),$evaluated),$sale_ids)));sort($final,SORT_NUMERIC);

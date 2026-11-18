@@ -132,10 +132,9 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 				if ( ! $product ) {
 					continue;
 				}
+				$original_sale = $product->is_on_sale();
 				$before = $schema->price_fields( $product );
 				$quoted = MobiShop_Discount_Rules_Prices::prices( $product, $before );
-				// The original badge matters only when the price overlay made no change.
-				$original_sale = $quoted === $before ? $product->is_on_sale() : false;
 				$evaluated[] = $id;
 				if ( MobiShop_Discount_Rules_Prices::sale_state( $before, $quoted, $original_sale ) ) {
 					$dynamic[] = $id;
@@ -221,7 +220,7 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 				// the rule could affect all products, so do not narrow at all.
 				if ( 'not_in_list' === $method && $known ) {
 					if ( is_array( $values ) && self::can_narrow_taxonomy_exclusion( $type, $rule ) ) {
-						$rule_excluded = array_merge( $rule_excluded, self::term_filter_targets( $values, 'product_category' === $type ? 'product_cat' : 'product_tag', $q_lookup ) );
+						$rule_excluded = array_merge( $rule_excluded, self::term_exclusions( $values, 'product_category' === $type ? 'product_cat' : 'product_tag', $q_lookup ) );
 					}
 					continue;
 				}
@@ -315,6 +314,19 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 			return array();
 		}
 		return self::product_filter_targets( $object_ids, $q_lookup );
+	}
+
+	/** FlyCart checks parent terms for a variation, never a child's terms for its parent. */
+	private static function term_exclusions( array $values, string $taxonomy, array $q_lookup ): array {
+		global $wpdb;
+		$objects = get_objects_in_term( array_map( 'intval', $values ), $taxonomy );
+		if ( is_wp_error( $objects ) || ! $objects || ! $q_lookup ) { return array(); }
+		$members = array_fill_keys( array_map( 'intval', $objects ), true );
+		$excluded = array();
+		foreach ( $wpdb->get_results( 'SELECT ID, post_parent FROM ' . $wpdb->posts . ' WHERE ID IN (' . implode( ',', array_map( 'intval', array_keys( $q_lookup ) ) ) . ')' ) as $row ) {
+			if ( isset( $members[ (int) $row->post_parent ?: (int) $row->ID ] ) ) { $excluded[] = (int) $row->ID; }
+		}
+		return $excluded;
 	}
 
 	/** Only currently active, date/usage/language-valid rules allowed on this request's channel. */
