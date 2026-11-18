@@ -7,14 +7,14 @@ import subprocess
 import sys
 import urllib.request
 
-SOURCE = 'c6fbb9baa68825904ff02f4b2e82392877bc6685'
+SOURCE = '40d7016c2e76be0c93ae08e04893c0958e47ce3b'
 ROOTS = {'staging': '/home/kidiastg/public_html', 'live': '/home/kidiastore/public_html'}
 LOADERS = {
     'staging': 'b387b24ffb0f5795946f633537666583151e20bce1d1a26c2b20a1cefaad08f0',
     'live': '1ca7701d42cf7a03da0c395d0a1091c0d27647a6b71fea882707156fc3be2d70',
 }
 FILES = {
-    'api/class-discount-rules-catalogue-query.php': (None, '0b27261524de35cdf818a41e932f8226637f009de01449c41990995e0e91f220'),
+    'api/class-discount-rules-catalogue-query.php': ('0b27261524de35cdf818a41e932f8226637f009de01449c41990995e0e91f220', 'c5da5e6549b0240d3633abcc2f6f7adb109f23ceedd8f6e9779ddb80bd6fbbfa'),
     'api/class-discount-rules-prices.php': ('d834c3122523fcc565e46fdf262ec609537550ad8306bf3b17e79978c0d1416d', '53bfdd5ca6808fa4fe63f2042144f36b561d46dcb267115cd5b568bc89ec789a'),
 }
 

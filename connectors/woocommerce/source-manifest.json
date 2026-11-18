@@ -2472,8 +2472,8 @@
     "api/class-discount-rules-catalogue-query.php": {
       "source": "connectors/woocommerce/source/api/class-discount-rules-catalogue-query.php",
       "newline": "lf",
-      "source_sha256": "0b27261524de35cdf818a41e932f8226637f009de01449c41990995e0e91f220",
-      "sha256": "0b27261524de35cdf818a41e932f8226637f009de01449c41990995e0e91f220"
+      "source_sha256": "c5da5e6549b0240d3633abcc2f6f7adb109f23ceedd8f6e9779ddb80bd6fbbfa",
+      "sha256": "c5da5e6549b0240d3633abcc2f6f7adb109f23ceedd8f6e9779ddb80bd6fbbfa"
     },
     "api/class-discount-rules-prices.php": {
       "source": "connectors/woocommerce/source/api/class-discount-rules-prices.php",
