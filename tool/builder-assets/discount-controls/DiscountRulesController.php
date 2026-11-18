@@ -11,7 +11,7 @@ final class DiscountRulesController extends Controller
     public function handle(Request $request)
     {
         $request->validate(['store'=>'required|string|max:80']);
-        $store = $request->user()->stores()->where('public_id', $request->input('store'))->firstOrFail();
+        $store = $request->user()->accessibleStores()->where('public_id', $request->input('store'))->firstOrFail();
         $headers = ['Cache-Control'=>'no-store, private', 'Vary'=>'Cookie'];
         if ($store->isShopify() || $store->isOdoo()) {
             return response()->json(['ok'=>false,'message'=>'These controls require a connected WooCommerce store.'], 422, $headers);
