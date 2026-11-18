@@ -1,16 +1,20 @@
 <?php
 function wp_parse_url( $url, $component = -1 ) { return parse_url( $url, $component ); }
+function sanitize_key( $value ) { return preg_replace('/[^a-z0-9_\-]/', '', strtolower($value)); }
+function wp_unslash( $value ) { return stripslashes($value); }
 define( 'ABSPATH', __DIR__ );
 $hooks = array(); $checks = 0;
 function add_filter( $name, $callback, $priority, $args ) { $GLOBALS['hooks'][$name] = $callback; }
 function add_action( $name, $callback, $priority, $args ) { add_filter( $name, $callback, $priority, $args ); }
 function check( $ok, $message ) { $GLOBALS['checks']++; if ( ! $ok ) throw new RuntimeException( $message ); }
 require __DIR__ . '/../source/includes/class-mobishop-discount-channel.php';
+require __DIR__ . '/../source/includes/class-mobishop-coupon-channel.php';
 MobiShop_Discount_Channel::register();
 $rule = static fn( $scope ) => (object) array( 'additional' => json_encode( array( 'mobishop_channel' => $scope, 'condition_relationship' => 'and' ) ) );
 foreach ( array( 'website', 'mobile' ) as $channel ) {
     $_SERVER = array( 'REQUEST_URI' => '/shop/wp-json/wc/store/v1/cart' ); $_GET = array();
     if ( $channel === 'mobile' ) $_SERVER['HTTP_X_MOBISHOP_CHANNEL'] = 'mobile';
+    check( MobiShop_Coupon_Channel::current_channel() === $channel, 'coupons and offers use the same API channel' );
     foreach ( array( 'all', 'website', 'mobile' ) as $scope ) {
         $allowed = $scope === 'all' || $scope === $channel;
         check( MobiShop_Discount_Channel::allowed( $rule( $scope ) ) === $allowed, 'channel matrix' );
@@ -23,8 +27,10 @@ foreach ( array( 'website', 'mobile' ) as $channel ) {
 }
 $_SERVER = array( 'REQUEST_URI'=>'/check-out/', 'HTTP_X_MOBISHOP_CHANNEL'=>'mobile' );
 $_GET = array( 'mobishop_channel'=>'mobile', 'mobishop-checkout88'=>'1' );
+$_REQUEST = $_GET;
 $_COOKIE = array( 'mobishop_checkout88'=>str_repeat('a',64) );
 check( MobiShop_Discount_Channel::current() === 'website', 'forged flags/cookie/header on website do not grant checkout context' );
+check( MobiShop_Coupon_Channel::current_channel() === 'website', 'website query flags cannot enable app-only coupons' );
 check( MobiShop_Discount_Channel::scope((object)array()) === 'all', 'legacy default all' );
 check( MobiShop_Discount_Channel::scope($rule('unexpected')) === 'all', 'old invalid metadata retains legacy default' );
 check( ! MobiShop_Discount_Channel::api_route('/fake/wc/store/v1/cart'), 'not arbitrary path' );
@@ -32,4 +38,6 @@ check( MobiShop_Discount_Channel::api_route('/shop/', '/wc/store/v1/cart'), 'pla
 check( ! MobiShop_Discount_Channel::api_route('/wp-admin/admin.php'), 'admin not app' );
 MobiShop_Discount_Channel::verified_embedded_checkout();
 check( MobiShop_Discount_Channel::current() === 'mobile', 'verified embedded flow retains app eligibility' );
+$_SERVER = array( 'REQUEST_URI'=>'/check-out/' ); $_REQUEST = $_GET = array();
+check( MobiShop_Coupon_Channel::current_channel() === 'mobile', 'verified embedded checkout retains app coupon eligibility without headers' );
 echo "PASS: $checks discount channel checks\n";
