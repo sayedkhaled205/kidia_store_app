@@ -119,6 +119,7 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 
 		if ( $candidates ) {
 			self::prime_caches( $candidates );
+			$rules = self::active_allowed_rules();
 			// Use Woo's price-only schema, without building descriptions, images or extensions.
 			$container = \Automattic\WooCommerce\StoreApi\StoreApi::container();
 			$schema = new class(
@@ -130,6 +131,9 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 			foreach ( $candidates as $id ) {
 				$product = wc_get_product( $id );
 				if ( ! $product ) {
+					continue;
+				}
+				if ( ! self::matches_rule_scope( $product, $rules ) ) {
 					continue;
 				}
 				$original_sale = $product->is_on_sale();
@@ -172,11 +176,50 @@ final class MobiShop_Discount_Rules_Catalogue_Query {
 		foreach ( $candidates as $id ) {
 			$product = wc_get_product( $id );
 			if ( $product && $product->is_type( 'variable' ) ) {
-				$child_ids = array_merge( $child_ids, $product->get_visible_children() );
+				$child_ids = array_merge( $child_ids, $product->get_children() );
 			}
 		}
 		if ( $child_ids ) {
 			_prime_post_caches( array_values( array_unique( $child_ids ) ), true, true );
+		}
+	}
+
+	/** Avoid FlyCart's expensive HTML/sale-badge calculation for products no rule can match.
+	 * Use the rule engine itself, including both quote and badge modes and every child.
+	 * An unknown engine shape or error retains the product for the original calculation.
+	 */
+	private static function matches_rule_scope( $product, array $rules ): bool {
+		try {
+			global $wp_filter;
+			foreach ( array( 'woocommerce_product_is_on_sale' => 'isProductInSale', 'advanced_woo_discount_rules_get_product_discount_price' => 'getDiscountPriceOfAProduct' ) as $hook => $method ) {
+				foreach ( ( $wp_filter[ $hook ]->callbacks ?? array() ) as $callbacks ) {
+					foreach ( $callbacks as $entry ) {
+						$callback = $entry['function'];
+						if ( ! is_array( $callback ) || ! ( $callback[0] instanceof \Wdr\App\Controllers\ManageDiscount ) || $method !== $callback[1] ) { return true; }
+					}
+				}
+			}
+			foreach ( $rules as $rule ) {
+				if ( ! is_callable( array( $rule, 'isFilterPassed' ) ) ) { return true; }
+			}
+			$products = array( $product );
+			if ( $product->is_type( 'variable' ) ) {
+				foreach ( $product->get_children() as $id ) {
+					$child = wc_get_product( $id );
+					if ( ! $child ) { return true; }
+					$products[] = $child;
+				}
+			}
+			foreach ( $products as $candidate ) {
+				foreach ( $rules as $rule ) {
+					if ( $rule->isFilterPassed( $candidate, false ) || $rule->isFilterPassed( $candidate, true ) ) {
+						return true;
+					}
+				}
+			}
+			return false;
+		} catch ( Throwable $error ) {
+			return true;
 		}
 	}
 
