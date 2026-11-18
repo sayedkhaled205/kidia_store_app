@@ -90,7 +90,7 @@ try {
             $assert(array_map('intval',array_column($page->get_data(),'id'))===[$expected[1]],'Pagination second result '.(int)$sale);
             $assert((int)$page->get_headers()['X-WP-Total']===count($expected),'Pagination total '.(int)$sale);
             [$bad]=$request(['include'=>$fixture_ids,'orderby'=>'include','per_page'=>1,'page'=>count($expected)+1,'on_sale'=>$sale]);
-            $assert($bad->get_status()===400,'Out-of-range page '.(int)$sale);
+            $assert($bad->get_status()===200 && $bad->get_data()===[] && (int)$bad->get_headers()['X-WP-Total']===count($expected),'Out-of-range page preserves empty result and total '.(int)$sale);
         }
     }
     // Filter hooks must be removed: a normal follow-up retains every fixture.
