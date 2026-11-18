@@ -76,8 +76,8 @@ final class MobiShop_Coupon_Channel {
 	}
 
 	public static function current_channel(): string {
-		$header = sanitize_key( (string) ( $_SERVER['HTTP_X_MOBISHOP_CHANNEL'] ?? '' ) );
-		$requested = isset( $_REQUEST['mobishop_channel'] ) ? sanitize_key( wp_unslash( $_REQUEST['mobishop_channel'] ) ) : '';
-		return 'mobile' === $header || 'mobile' === $requested ? 'mobile' : 'website';
+		// Share the verified embedded-checkout context and API channel rules.
+		// A public website query parameter alone must not grant app-only offers.
+		return MobiShop_Discount_Channel::current();
 	}
 }

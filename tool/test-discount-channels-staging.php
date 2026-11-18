@@ -91,6 +91,9 @@ try {
 		foreach($response->get_data()['items'] as $item) {
 			$raw=WC()->cart->get_cart_item($item['key']);
 			if(\WDRPro\App\Rules\BOGO::isFreeProduct($raw) && ((array)$item['quantity_limits'])['editable']!==false) throw new RuntimeException('Gift quantity unlocked in app');
+			if(\WDRPro\App\Rules\BOGO::isFreeProduct($raw)) foreach($item['variation']??[] as $variation) {
+				if((((array)$variation)['attribute']??'')==='wdr_free_product') throw new RuntimeException('Internal gift marker visible in app');
+			}
 		}
 		$results[]=array('quantity'=>$quantity,'website'=>$total,'app_minor'=>$api_total,'gifts'=>$gifts);
 	}

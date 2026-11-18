@@ -158,6 +158,27 @@ d.addEventListener('mobishop:discount-saved',()=>refreshes++);
   assert.equal(d.querySelector('.mdrc-dialog'),null);
  }
 
+ open('create');
+ assert.match(d.querySelector('.mdrc-form').textContent,/Enter 15 for 15% off/);
+ field('Start date (optional)').value='2026-11-18T11:50';
+ field('End date (optional)').value='2026-11-18T04:50';
+ const beforeInvalidDates=writes.length;
+ button('Save').click(); await tick(); await tick();
+ assert.equal(writes.length,beforeInvalidDates,'reversed dates never start a save');
+ assert.match(d.querySelector('.mdrc-error').textContent,/end date must follow/);
+ assert.equal(button('Cancel').disabled,false);
+ field('End date (optional)').value='2026-11-18T16:50';
+ field('Value').value='0.15';
+ button('Save').click(); await tick(); await tick();
+ assert.equal(writes.at(-1).date_to,'2026-11-18 16:50');
+ assert.equal(writes.at(-1).value,0.15,'fractional percentages are preserved, never silently multiplied');
+ assert.equal(d.querySelector('.mdrc-dialog'),null);
+ open('create');
+ field('Discount kind').value='flat'; field('Discount kind').dispatchEvent(new w.Event('change'));
+ assert.match(d.querySelector('.mdrc-form').textContent,/Enter the discount amount in the store currency/);
+ assert(!d.querySelector('.mdrc-form').textContent.includes('Enter 15 for 15% off'));
+ button('Cancel').click();
+
  let finishTargets;
  pendingTargets=new Promise(resolve=>finishTargets=resolve);
  open('create'); const detachedResults=d.querySelector('.mdrc-picker-results'); button('Cancel').click();

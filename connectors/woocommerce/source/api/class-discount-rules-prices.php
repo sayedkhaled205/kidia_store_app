@@ -88,6 +88,12 @@ final class MobiShop_Discount_Rules_Prices {
 		}
 	}
 
+	/** Preserve Woo's sale flag when the overlay did not change its price fields. */
+	public static function sale_state( array $before, array $after, bool $original ): bool {
+		return $after === $before ? $original
+			: '' !== ( $after['regular_price'] ?? '' ) && (int) $after['price'] < (int) $after['regular_price'];
+	}
+
 	private static function item( array $item ): array {
 		if ( empty( $item['id'] ) || ! isset( $item['prices'] ) || ! ( is_array( $item['prices'] ) || is_object( $item['prices'] ) ) ) {
 			return $item;
@@ -97,7 +103,7 @@ final class MobiShop_Discount_Rules_Prices {
 		$after = self::prices( $product, $before );
 		if ( $after !== $before ) {
 			$item['prices'] = is_object( $item['prices'] ) ? (object) $after : $after;
-			$item['on_sale'] = '' !== ( $after['regular_price'] ?? '' ) && (int) $after['price'] < (int) $after['regular_price'];
+			$item['on_sale'] = self::sale_state( $before, $after, (bool) ( $item['on_sale'] ?? false ) );
 		}
 		return $item;
 	}
@@ -147,6 +153,13 @@ final class MobiShop_Discount_Rules_Prices {
 				$limits = (array) ( $item['quantity_limits'] ?? array() );
 				$limits['editable'] = false;
 				$item['quantity_limits'] = (object) $limits;
+				// FlyCart carries this internal gift marker in the variation map.
+				// Keep real size/colour selections, without displaying its storage key.
+				if ( isset( $item['variation'] ) && is_array( $item['variation'] ) ) {
+					$item['variation'] = array_values( array_filter( $item['variation'], static function ( $variation ) {
+						return 'wdr_free_product' !== ( ( (array) $variation )['attribute'] ?? '' );
+					} ) );
+				}
 			}
 		}
 		unset( $item );

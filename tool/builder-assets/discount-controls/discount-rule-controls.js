@@ -823,6 +823,9 @@
 
     var valueField = buildNumberField('Value', '', 0.01);
     form.appendChild(valueField.el);
+    var valueNote = document.createElement('p');
+    valueNote.className = 'mdrc-note mdrc-note-full';
+    form.appendChild(valueNote);
 
     var minQtyField = buildNumberField('Minimum quantity', 1, 1);
     form.appendChild(minQtyField.el);
@@ -865,6 +868,12 @@
       discountKindField.el.hidden = !showKindValue || type === 'set';
       valueField.el.hidden = !showKindValue;
       valueField.labelSpan.textContent = type === 'set' ? 'Set price' : 'Value';
+      valueNote.hidden = !showKindValue;
+      valueNote.textContent = type === 'set'
+        ? 'Enter the total price for one bundle in the store currency.'
+        : discountKindField.select.value === 'percentage'
+          ? 'Enter 15 for 15% off. Entering 0.15 means 0.15% off.'
+          : 'Enter the discount amount in the store currency.';
 
       var showMinQty = type === 'bulk' || type === 'set' || type === 'bxgx' || type === 'bxgy';
       minQtyField.el.hidden = !showMinQty;
@@ -879,6 +888,7 @@
     }
 
     typeField.select.addEventListener('change', updateVisibility);
+    discountKindField.select.addEventListener('change', updateVisibility);
     updateVisibility();
 
     var saveState = {};
@@ -968,6 +978,10 @@
 
       var dateFrom = formatDateTimeValue(dateFromField.input.value);
       var dateTo = formatDateTimeValue(dateToField.input.value);
+      if (dateFrom && dateTo && dateTo < dateFrom) {
+        modal.showError('The end date must follow the start date.');
+        return;
+      }
       if (dateFrom) payloadBase.date_from = dateFrom;
       if (dateTo) payloadBase.date_to = dateTo;
 
