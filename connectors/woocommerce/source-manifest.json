@@ -2469,11 +2469,17 @@
       "source_sha256": "242a0d4a7fb4050657761235d65231fa69303c9141539ce7ba7656b57cf8be4f",
       "sha256": "242a0d4a7fb4050657761235d65231fa69303c9141539ce7ba7656b57cf8be4f"
     },
+    "api/class-discount-rules-catalogue-query.php": {
+      "source": "connectors/woocommerce/source/api/class-discount-rules-catalogue-query.php",
+      "newline": "lf",
+      "source_sha256": "0b27261524de35cdf818a41e932f8226637f009de01449c41990995e0e91f220",
+      "sha256": "0b27261524de35cdf818a41e932f8226637f009de01449c41990995e0e91f220"
+    },
     "api/class-discount-rules-prices.php": {
       "source": "connectors/woocommerce/source/api/class-discount-rules-prices.php",
       "newline": "lf",
-      "source_sha256": "d834c3122523fcc565e46fdf262ec609537550ad8306bf3b17e79978c0d1416d",
-      "sha256": "d834c3122523fcc565e46fdf262ec609537550ad8306bf3b17e79978c0d1416d"
+      "source_sha256": "53bfdd5ca6808fa4fe63f2042144f36b561d46dcb267115cd5b568bc89ec789a",
+      "sha256": "53bfdd5ca6808fa4fe63f2042144f36b561d46dcb267115cd5b568bc89ec789a"
     },
     "api/class-embedded-checkout88.php": {
       "newline": "lf",
@@ -2903,9 +2909,9 @@
     },
     "includes/class-mobishop.php": {
       "source": "connectors/woocommerce/source/includes/class-mobishop.php",
-      "newline": "crlf",
-      "source_sha256": "84d0167dbb6948ed4023b98cce6a4c02df59f7238b6e8a41b8af6015e51de207",
-      "sha256": "1d32100a21b952f208b44ed70ae2100a29735a9b0ee7d99374d84b85f2b071d0"
+      "newline": "lf",
+      "source_sha256": "0394df15381f22f72534fd6e42171c8fb952b9a6ed6b6cb85bce1352ab5a02fd",
+      "sha256": "0394df15381f22f72534fd6e42171c8fb952b9a6ed6b6cb85bce1352ab5a02fd"
     },
     "includes/class-native-checkout-bootstrap50.php": {
       "source": "connectors/woocommerce/source/includes/class-native-checkout-bootstrap50.php",
@@ -3114,8 +3120,8 @@
     "readme.txt": {
       "source": "connectors/woocommerce/source/readme.txt",
       "newline": "lf",
-      "source_sha256": "e5c6dcc5043d121e685ddced1bea0cc3bb8a850521eb6c5f151a39a12e115519",
-      "sha256": "e5c6dcc5043d121e685ddced1bea0cc3bb8a850521eb6c5f151a39a12e115519"
+      "source_sha256": "20a07d8db0a09de72ba9676970e0b8275ac29bb697330101fd3dd3bbe4a777e7",
+      "sha256": "20a07d8db0a09de72ba9676970e0b8275ac29bb697330101fd3dd3bbe4a777e7"
     }
   },
   "baseline_release": {

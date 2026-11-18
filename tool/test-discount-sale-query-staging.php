@@ -97,6 +97,10 @@ try {
     [$after]=$request(['include'=>$fixture_ids,'orderby'=>'include','per_page'=>10]);
     $assert(array_map('intval',array_column($after->get_data(),'id'))===$fixture_ids,'No leaked filter after requests');
     if(in_array($case,['simple','zero'],true)) {
+        [$stock]=$request(['include'=>[$a,$sold],'stock_status'=>['instock'],'on_sale'=>true]);
+        $assert($stock->get_status()===200 && array_map('intval',array_column($stock->get_data(),'id'))===[$a],'In-stock filter preserved');
+        [$sold_response]=$request(['include'=>[$a,$sold],'stock_status'=>['outofstock'],'on_sale'=>true]);
+        $assert($sold_response->get_status()===200 && array_map('intval',array_column($sold_response->get_data(),'id'))===[$sold],'Explicit out-of-stock filter preserved');
         [$children]=$request(['include'=>[$large,$small],'type'=>'variation','orderby'=>'include','on_sale'=>true]);
         $assert($children->get_status()===200 && array_map('intval',array_column($children->get_data(),'id'))===[$large,$small],'Parent rule includes directly queried variations');
         [$slug]=$request(['slug'=>get_post($small)->post_name,'on_sale'=>true]);
@@ -110,6 +114,10 @@ try {
     foreach($created as $id) {
         clean_post_cache($id); wp_cache_delete($id,'post_meta');
         delete_transient('wc_var_prices_'.$id); delete_transient('wc_product_children_'.$id);
+        foreach(['wc_var_prices_','wc_product_children_'] as $prefix) {
+            wp_cache_delete('_transient_'.$prefix.$id,'options');
+            wp_cache_delete('_transient_timeout_'.$prefix.$id,'options');
+        }
         WC_Cache_Helper::invalidate_cache_group('product_'.$id);
         if(false!==get_transient('wc_var_prices_'.$id)||false!==get_transient('wc_product_children_'.$id)) throw new RuntimeException('Fixture transient remains');
     }
