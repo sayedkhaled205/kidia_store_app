@@ -90,6 +90,9 @@ jobs:
           php connectors/woocommerce/tests/push-analytics-test.php
           php connectors/woocommerce/tests/discount-rules-prices-test.php
           php connectors/woocommerce/tests/discount_rules_summary_test.php
+          php connectors/woocommerce/tests/discount-channel-test.php
+          php connectors/woocommerce/tests/discount-gift-cart-test.php
+          php connectors/woocommerce/tests/discount-catalogue-query-test.php
       - name: Validate connector release tag
         if: github.event_name == 'release'
         env:
