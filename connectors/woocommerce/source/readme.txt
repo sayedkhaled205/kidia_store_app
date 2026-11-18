@@ -103,6 +103,7 @@ Yes. Application language, direction, typography, and other visual settings can 
 = 1.46.140 =
 * Keep mobile-only coupons eligible throughout verified in-app checkout using the same channel rules as offers.
 * Prevent website query parameters from selecting mobile-only coupon eligibility.
+* Hide internal gift metadata in mobile carts while preserving selected variations and locked gift quantities.
 
 = 1.46.139 =
 * Allow verified Google, Facebook and Apple sign-in without a separate phone enrollment step.

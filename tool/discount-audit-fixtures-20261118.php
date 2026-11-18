@@ -40,6 +40,11 @@ if($mode==='track-rule') {
     if(!$journal || !$row || !str_starts_with($row['title'],'QA-DISCOUNT-'.$run.'-')) throw new RuntimeException('Not an audit rule');
     $journal['rules']=array_values(array_unique(array_merge($journal['rules'],[$id]))); update_option($key,$journal,false);
 }
+if($mode==='track-coupon') {
+    $id=(int)($args[1]??0); $post=get_post($id);
+    if(!$journal || !$post || $post->post_type!=='shop_coupon' || !str_starts_with(strtolower($post->post_title),'qa-discount-'.$run.'-')) throw new RuntimeException('Not an audit coupon');
+    $journal['coupons']=array_values(array_unique(array_merge($journal['coupons']??[],[$id]))); update_option($key,$journal,false);
+}
 if($mode==='cleanup' && $journal) {
     foreach($journal['products'] as $id) {
         if(get_post_meta($id,'_mobishop_discount_audit_run',true)!==$run) throw new RuntimeException('Fixture ownership changed');
@@ -48,8 +53,16 @@ if($mode==='cleanup' && $journal) {
         $title=$wpdb->get_var($wpdb->prepare("SELECT title FROM {$wpdb->prefix}wdr_rules WHERE id=%d",$id));
         if(!str_starts_with((string)$title,'QA-DISCOUNT-'.$run.'-')) throw new RuntimeException('Rule ownership changed');
     }
+    foreach($journal['coupons']??[] as $id) {
+        $post=get_post($id);
+        if(!$post || $post->post_type!=='shop_coupon' || !str_starts_with(strtolower($post->post_title),'qa-discount-'.$run.'-')) throw new RuntimeException('Coupon ownership changed');
+    }
     // Recoverable trash/soft-delete only; existing catalogue and campaigns stay intact.
     foreach($journal['rules'] as $id) $wpdb->update($wpdb->prefix.'wdr_rules',['enabled'=>0,'deleted'=>1],['id'=>$id]);
+    foreach($journal['coupons']??[] as $id) {
+        wp_trash_post($id); clean_post_cache($id);
+        if(get_post_status($id)!=='trash') throw new RuntimeException('Coupon was not trashed');
+    }
     foreach($journal['products'] as $id) {
         wp_trash_post($id); clean_post_cache($id);
         if(get_post_status($id)!=='trash') throw new RuntimeException('Fixture was not trashed');

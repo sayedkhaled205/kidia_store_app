@@ -1,6 +1,6 @@
 <?php
 /** Read-only quote cost probe. Never create an order or change catalogue data. */
-if (!defined('WP_CLI') || !WP_CLI || wp_parse_url(home_url(), PHP_URL_HOST)!=='staging.kidiastore.com') throw new RuntimeException('Staging only');
+if (!defined('WP_CLI') || !WP_CLI || !in_array(wp_parse_url(home_url(), PHP_URL_HOST), ['staging.kidiastore.com','kidiastore.com'],true)) throw new RuntimeException('Audit stores only');
 $_SERVER['REQUEST_URI']='/wp-json/wc/store/v1/products';
 $_SERVER['HTTP_X_MOBISHOP_CHANNEL']='mobile';
 global $wpdb;
