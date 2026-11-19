@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
 import 'package:mobishop_store_app/features/product/presentation/product_image_gallery.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/shared/widgets/common/cached_product_image_preview.dart';
 import 'package:mobishop_store_app/features/product/presentation/widgets/product_option_tiles.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_attribute.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
@@ -22,6 +23,91 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/product_test_data.dart';
 
 void main() {
+  testWidgets(
+    'thumbnail strip stays small while gallery keeps original images',
+    (tester) async {
+      _useTallSurface(tester);
+      final images = [
+        CatalogImage(
+          source: Uri.parse('https://example.com/original-a.jpg'),
+          thumbnail: Uri.parse('https://example.com/thumb-a.jpg'),
+          cardVariant: Uri.parse('https://example.com/card-a.jpg'),
+        ),
+        CatalogImage(source: Uri.parse('https://example.com/original-b.jpg')),
+      ];
+      final product = CatalogProduct(
+        id: 91,
+        name: 'Gallery product',
+        slug: 'gallery',
+        type: 'simple',
+        prices: testMoney,
+        isInStock: true,
+        images: images,
+      );
+      final base = CmsPageLayout.fallback('product');
+      await tester.pumpWidget(
+        _testApp(
+          ProductDetailScreen(
+            productId: product.id,
+            repository: ProductFakeCatalogRepository(product: product),
+          ),
+          productLayout: CmsPageLayout(
+            page: base.page,
+            header: base.header,
+            footer: base.footer,
+            elements: [
+              for (final e in base.elements)
+                CmsPageComponent(
+                  id: e.id,
+                  type: e.type,
+                  enabled: e.enabled,
+                  settings: {
+                    ...e.settings,
+                    if (e.type == 'image_gallery') 'show_thumbnails': true,
+                  },
+                ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      final thumbnails = tester
+          .widgetList<AppNetworkImage>(
+            find.byWidgetPredicate(
+              (w) => w is AppNetworkImage && w.width == 54,
+            ),
+          )
+          .toList();
+      expect(thumbnails.map((w) => w.imageUrl), [
+        images[0].thumbnail.toString(),
+        images[1].source.toString(),
+      ]);
+      expect(thumbnails.every((w) => w.decodeAtDisplaySize), isTrue);
+      final main = tester.widget<AppNetworkImage>(
+        find.byKey(const Key('product-image-0')),
+      );
+      expect(
+        (main.placeholder as CachedProductImagePreview).imageUrl,
+        images[0].cardVariant.toString(),
+      );
+      expect(
+        tester
+            .widget<AppNetworkImage>(find.byKey(const Key('product-image-0')))
+            .imageUrl,
+        images[0].source.toString(),
+      );
+      await tester.tap(find.byKey(const Key('open-product-image-0')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      final gallery = tester.widget<ProductImageGallery>(
+        find.byType(ProductImageGallery),
+      );
+      expect(gallery.images.map((i) => i.source), images.map((i) => i.source));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('gallery follows color before size without enabling purchase', (
     tester,
   ) async {

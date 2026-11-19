@@ -142,6 +142,9 @@ void main() {
         expect(client.lastQuery?.containsKey('per_page'), isFalse);
         expect(client.lastQuery?['category'], '2');
         expect(client.lastQuery?['calculate_price_range'], isTrue);
+        expect(client.lastQuery?['mobishop_available_sizes'], isTrue);
+        expect(client.lastQuery?['calculate_rating_counts'], isFalse);
+        expect(client.lastQuery?['calculate_stock_status_counts'], isFalse);
         expect(
           client.lastQuery?['calculate_attribute_counts[0][taxonomy]'],
           'pa_size',
