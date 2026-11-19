@@ -230,8 +230,10 @@ class StoreApiCatalogRemoteDataSource
       ..addAll(const <String, dynamic>{
         'mobishop_available_sizes': true,
         'calculate_price_range': true,
-        'calculate_rating_counts': true,
-        'calculate_stock_status_counts': true,
+        // The app uses price/attribute facets; these unused aggregates add work
+        // to every filter read. Product/variation stock checks are separate.
+        'calculate_rating_counts': false,
+        'calculate_stock_status_counts': false,
       });
     for (int index = 0; index < requestedTaxonomies.length; index++) {
       parameters['calculate_attribute_counts[$index][taxonomy]'] =

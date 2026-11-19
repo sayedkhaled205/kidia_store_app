@@ -29,6 +29,7 @@ import 'package:mobishop_store_app/features/page_builder/presentation/providers/
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cms_page_chrome.dart';
 import 'package:mobishop_store_app/features/page_builder/presentation/widgets/preview_edit_region.dart';
 import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart';
+import 'package:mobishop_store_app/shared/widgets/common/cached_product_image_preview.dart';
 import 'package:mobishop_store_app/shared/widgets/product/product_badge.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1430,6 +1431,14 @@ class _ProductGalleryState extends State<_ProductGallery> {
             final Widget imageWidget = AppNetworkImage(
               key: Key('product-image-$imageIndex'),
               imageUrl: image.source.toString(),
+              placeholder:
+                  image.cardVariant != null && image.cardVariant != image.source
+                  ? CachedProductImagePreview(
+                      imageUrl: image.cardVariant.toString(),
+                      fit: fit,
+                      backgroundColor: galleryBackground,
+                    )
+                  : null,
               width: double.infinity,
               height: double.infinity,
               fit: fit,
@@ -1546,7 +1555,11 @@ class _ProductGalleryState extends State<_ProductGallery> {
                   );
                 },
                 child: AppNetworkImage(
-                  imageUrl: widget.images[index].source.toString(),
+                  imageUrl:
+                      (widget.images[index].thumbnail ??
+                              widget.images[index].source)
+                          .toString(),
+                  decodeAtDisplaySize: true,
                   width: 54,
                   height: 54,
                   fit: BoxFit.cover,
