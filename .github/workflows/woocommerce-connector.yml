@@ -76,6 +76,7 @@ jobs:
           php connectors/woocommerce/tests/address-book-adapter-contract-test.php no-provider
           php connectors/woocommerce/tests/address-book-adapter-contract-test.php legacy
           php connectors/woocommerce/tests/checkout-destination-contract-test.php
+          php connectors/woocommerce/tests/store-api-shipping-compatibility-test.php
           php connectors/woocommerce/tests/store-notifications-contract-test.php
           php connectors/woocommerce/tests/native-website-payment-contract-test.php
           php connectors/woocommerce/tests/native-payment92-test.php
