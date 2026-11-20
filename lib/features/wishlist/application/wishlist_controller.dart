@@ -16,6 +16,9 @@ class WishlistController extends ChangeNotifier {
     required this.repository,
     required this.catalogRepository,
   }) {
+    _wishlistSubscription = repository.productIdChanges.listen(
+      (ids) => unawaited(_refreshAfterExternalSave(ids)),
+    );
     if (catalogRepository is CatalogChangeSource) {
       _catalogSubscription = (catalogRepository as CatalogChangeSource)
           .catalogChanges
@@ -35,9 +38,18 @@ class WishlistController extends ChangeNotifier {
   String? _mutationError;
   bool _isMutating = false;
   bool _isDisposed = false;
+  bool _productsNeedRefresh = false;
   int _requestSerial = 0;
   Future<void> _mutationTail = Future<void>.value();
   StreamSubscription<int>? _catalogSubscription;
+  StreamSubscription<List<int>>? _wishlistSubscription;
+
+  Future<void> _refreshAfterExternalSave(List<int> ids) async {
+    // Own mutations already update this list; cards on other tabs do not.
+    await _mutationTail;
+    if (_isDisposed || listEquals(_productIds, _normalizeIds(ids))) return;
+    await load(background: true);
+  }
 
   WishlistStatus get status => _status;
   List<int> get productIds => List<int>.unmodifiable(_productIds);
@@ -57,9 +69,10 @@ class WishlistController extends ChangeNotifier {
       return;
     }
     final int serial = ++_requestSerial;
+    _productsNeedRefresh = true;
     if (!background) _status = WishlistStatus.loading;
     _loadError = null;
-    _mutationError = null;
+    if (!background) _mutationError = null;
     _notify();
 
     try {
@@ -72,6 +85,7 @@ class WishlistController extends ChangeNotifier {
       if (storedIds.isEmpty) {
         _productIds = const <int>[];
         _products = const <CatalogProduct>[];
+        _productsNeedRefresh = false;
         _status = WishlistStatus.empty;
         _notify();
         return;
@@ -92,6 +106,7 @@ class WishlistController extends ChangeNotifier {
       _products = List<CatalogProduct>.unmodifiable(
         availableIds.map((int productId) => byId[productId]!),
       );
+      _productsNeedRefresh = false;
       _status = availableIds.isEmpty
           ? WishlistStatus.empty
           : WishlistStatus.ready;
@@ -225,6 +240,8 @@ class WishlistController extends ChangeNotifier {
     }
     _isMutating = false;
     _notify();
+    // A mutation invalidates a pending hydration even when its save fails.
+    if (_productsNeedRefresh) unawaited(load(background: true));
   }
 
   void clearMutationError() {
@@ -269,6 +286,7 @@ class WishlistController extends ChangeNotifier {
     _isDisposed = true;
     _requestSerial++;
     _catalogSubscription?.cancel();
+    _wishlistSubscription?.cancel();
     super.dispose();
   }
 }
