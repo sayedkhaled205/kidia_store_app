@@ -33,6 +33,59 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   test(
+    'tag retries share a pending read but never cache settled results',
+    () async {
+      const tags = '/wp-json/wc/store/v1/products/tags';
+      final reader = Reader();
+      final cache = PublicCatalogCache(reader, store: 'store');
+      final held = Completer<StoreApiResponse>();
+      reader.read = () => held.future;
+      final first = cache.get(
+        tags,
+        queryParameters: {'page': 1, 'search': 'a'},
+      );
+      await expectLater(
+        first.timeout(const Duration(milliseconds: 1)),
+        throwsA(isA<TimeoutException>()),
+      );
+      final retry = cache.get(
+        tags,
+        queryParameters: {'search': 'a', 'page': 1},
+      );
+      expect(reader.calls, 1);
+      held.complete(const StoreApiResponse(data: []));
+      await Future.wait([first, retry]);
+      await cache.get(tags, queryParameters: {'page': 1, 'search': 'a'});
+      expect(reader.calls, 2);
+    },
+  );
+
+  test(
+    'tag errors release pending reads and invalidation keeps new requests',
+    () async {
+      const tags = '/wp-json/wc/store/v1/products/tags';
+      final reader = Reader();
+      final cache = PublicCatalogCache(reader, store: 'store');
+      var held = Completer<StoreApiResponse>();
+      reader.read = () => held.future;
+      final first = cache.get(tags);
+      final firstFailure = expectLater(first, throwsA(same(offline)));
+      cache.invalidate();
+      final old = held;
+      held = Completer<StoreApiResponse>();
+      final second = cache.get(tags);
+      old.completeError(offline);
+      await firstFailure;
+      final shared = cache.get(tags);
+      expect(reader.calls, 2);
+      held.complete(const StoreApiResponse(data: []));
+      await Future.wait([second, shared]);
+      await cache.get(tags);
+      expect(reader.calls, 3);
+    },
+  );
+
+  test(
     'published catalog invalidation fetches fresh data and cache-busters do not duplicate entries',
     () async {
       final reader = Reader();

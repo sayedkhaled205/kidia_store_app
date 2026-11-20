@@ -27,6 +27,7 @@ import 'package:mobishop_store_app/features/checkout/domain/repositories/checkou
 class StoreApiCheckoutRepository
     implements
         CheckoutRepository,
+        CheckoutSafetyRepository,
         CheckoutRecoveryRepository,
         CheckoutShippingRepository {
   StoreApiCheckoutRepository({
@@ -511,7 +512,7 @@ class StoreApiCheckoutRepository
         await _releaseKnownRejection(key);
       }
       Error.throwWithStackTrace(
-        dispatched ? _requiringRecovery(error) : error,
+        dispatched ? _requiringRecovery(error) : _notDispatched(error),
         stackTrace,
       );
     } on CheckoutApiTransportException catch (error, stackTrace) {
@@ -559,7 +560,7 @@ class StoreApiCheckoutRepository
         Error.throwWithStackTrace(mapped, stackTrace);
       }
       Error.throwWithStackTrace(
-        dispatched ? _requiringRecovery(mapped) : mapped,
+        dispatched ? _requiringRecovery(mapped) : _notDispatched(mapped),
         stackTrace,
       );
     } on CartRepositoryException catch (error, stackTrace) {
@@ -572,6 +573,7 @@ class StoreApiCheckoutRepository
           authoritativeCart: error.serverCart,
           cause: error,
           requiresOutcomeRecovery: dispatched,
+          confirmedNotDispatched: !dispatched,
         ),
         stackTrace,
       );
@@ -653,6 +655,10 @@ class StoreApiCheckoutRepository
       );
     }
   }
+
+  @override
+  Future<bool> refreshCheckoutSafety() async =>
+      (await _loadSafetyCapability()).enforced;
 
   @override
   Future<CheckoutAttemptRecovery> recoverPendingOrder() =>
@@ -844,6 +850,22 @@ class StoreApiCheckoutRepository
     cause: error.cause,
     requiresOutcomeRecovery: true,
   );
+
+  CheckoutRepositoryException _notDispatched(
+    CheckoutRepositoryException error,
+  ) => error.requiresOutcomeRecovery
+      ? error
+      : CheckoutRepositoryException(
+          kind: error.kind,
+          message: error.message,
+          statusCode: error.statusCode,
+          apiError: error.apiError,
+          fieldErrors: error.fieldErrors,
+          authoritativeCart: error.authoritativeCart,
+          cause: error.cause,
+          confirmedPrePaymentRejection: error.confirmedPrePaymentRejection,
+          confirmedNotDispatched: true,
+        );
 
   void _assertCurrentSession({bool requiresOutcomeRecovery = false}) {
     if (!_currentSessionIsValid()) {

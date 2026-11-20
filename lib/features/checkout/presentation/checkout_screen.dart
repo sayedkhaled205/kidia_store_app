@@ -1498,6 +1498,14 @@ class _OrderSummary extends StatelessWidget {
               key: const Key('checkout-safety-unavailable'),
               message: copy.safetyUnavailable,
             ),
+            if (controller.canRefreshSafety || controller.isRefreshingSafety)
+              TextButton(
+                key: const Key('checkout-safety-retry'),
+                onPressed: controller.canRefreshSafety
+                    ? controller.refreshSafety
+                    : null,
+                child: Text(copy.retry),
+              ),
           ],
           if (controller.hasUnresolvedSubmission &&
               (controller.canRecoverOrder ||

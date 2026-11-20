@@ -29,6 +29,11 @@ abstract interface class CheckoutShippingRepository {
   });
 }
 
+/// Recheck availability without resetting the buyer's address/payment draft.
+abstract interface class CheckoutSafetyRepository {
+  Future<bool> refreshCheckoutSafety();
+}
+
 enum CheckoutFailureKind {
   invalidInput,
   configuration,
@@ -52,6 +57,7 @@ class CheckoutRepositoryException implements Exception {
     this.cause,
     this.requiresOutcomeRecovery = false,
     this.confirmedPrePaymentRejection = false,
+    this.confirmedNotDispatched = false,
   });
 
   final CheckoutFailureKind kind;
@@ -76,6 +82,9 @@ class CheckoutRepositoryException implements Exception {
   /// Only the exact, opted-in platform guard proves this before payment/stock.
   /// Generic late HTTP errors are never sufficient to set this.
   final bool confirmedPrePaymentRejection;
+
+  /// Set only by a repository that knows the order transport was never called.
+  final bool confirmedNotDispatched;
 
   bool get isConflict => kind == CheckoutFailureKind.conflict;
 

@@ -26,6 +26,22 @@ import 'package:mobishop_store_app/shared/widgets/common/app_network_image.dart'
 
 void main() {
   testWidgets(
+    'deliberate sign-in retries failed session restore without replaying auth',
+    (tester) async {
+      final fixture = _Fixture()
+        ..auth.restoreError = StateError('Storage temporarily unavailable');
+      await fixture.pump(tester);
+      expect(fixture.auth.restoreCalls, 1);
+      await _tap(tester, 'auth-google');
+      expect(fixture.actions.googleCalls, 0);
+      fixture.auth.restoreError = null;
+      await _tap(tester, 'auth-google');
+      expect(fixture.actions.googleCalls, 1);
+      expect(fixture.actions.commits, 1);
+      expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets(
     'provider cancellation preserves autofill without saving a password',
     (tester) async {
       final response = Completer<NativeAuthResult>();
@@ -2222,8 +2238,15 @@ Future<void> _startOtp(WidgetTester tester) async {
 }
 
 class _TestAuthController extends AuthController {
+  Object? restoreError;
+  int restoreCalls = 0;
   @override
-  Future<AuthSession?> build() async => null;
+  Future<AuthSession?> build() async {
+    restoreCalls++;
+    if (restoreError != null) throw restoreError!;
+    return null;
+  }
+
   void publish(AuthSession session) => state = AsyncData(session);
 }
 

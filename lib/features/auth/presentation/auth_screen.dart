@@ -1633,6 +1633,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       _error = null;
     });
     try {
+      final session = ref.read(authControllerProvider);
+      if (session.hasError && !session.isLoading && !session.hasValue) {
+        // Retry a failed restore on a new action, never a sign-in submission.
+        ref.invalidate(authControllerProvider);
+      }
       await ref.read(authControllerProvider.future);
       if (!_active(flow) || request != _operation) return;
       await operation(flow);

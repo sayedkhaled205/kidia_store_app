@@ -86,6 +86,17 @@ void main() {
         false,
       );
       expect(repository.writes, 1);
+      await controller.retry(); // Still offline after the uncertain write.
+      final readsAfterFailedRetry = repository.reads;
+      repository.failRead = false;
+      expect(
+        (await controller.addSelection(
+          ProductPurchaseSelection(productId: 38),
+        )).succeeded,
+        false,
+      );
+      expect(repository.reads, readsAfterFailedRetry);
+      expect(repository.writes, 1);
       repository.failRead = false;
       await controller.retry();
       expect(container.read(cartBadgeCountProvider), 2);
