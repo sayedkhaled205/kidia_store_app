@@ -124,12 +124,9 @@ void main() {
   });
 }
 
-class _HeldTransport extends DioCustomerAccountApiTransport {
-  _HeldTransport()
-    : super(
-        storeUri: Uri.parse('https://shop.example'),
-        authTokenReader: () => 'test-session',
-      );
+// This widget fixture must not construct a platform-bound network client.
+// The real transport's platform/session guards have their own contract tests.
+class _HeldTransport implements DioCustomerAccountApiTransport {
   final pending = Completer<Map<String, dynamic>>();
   int reads = 0;
   @override
@@ -137,4 +134,7 @@ class _HeldTransport extends DioCustomerAccountApiTransport {
     reads++;
     return pending.future;
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
