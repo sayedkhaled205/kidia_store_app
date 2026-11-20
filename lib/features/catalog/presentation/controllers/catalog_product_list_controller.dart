@@ -480,7 +480,7 @@ class CatalogProductListController extends ChangeNotifier {
   /// jumping to page one, or shrinking the already loaded infinite list.
   Future<void> refreshSourceData() async {
     if (_disposed || isAwaitingSearch) return;
-    ++_filterOperation;
+    final filterOperation = ++_filterOperation;
     _sizesPending = false;
     if (_state.items.isEmpty || _state.page < 1) {
       await loadInitial(refresh: true);
@@ -525,11 +525,9 @@ class CatalogProductListController extends ChangeNotifier {
         if (!latest.hasNextPage) break;
       }
       if (latest == null || !_isCurrent(operation)) return;
-      final CatalogFilterData? filterData = await _loadFilterData(
-        _query(page: 1, includeFilters: true),
-      );
-      if (!_isCurrent(operation)) return;
-      _sizeMetadataFailed = filterData == null;
+      final filterQuery = _query(page: 1, includeFilters: true);
+      _sizesPending = true;
+      _sizeMetadataFailed = false;
       final int? totalItems = latest.totalItems;
       final int? totalPages = totalItems == null
           ? null
@@ -550,11 +548,23 @@ class CatalogProductListController extends ChangeNotifier {
           isInitialLoading: false,
           isRefreshing: false,
           loadMoreError: null,
+          filterData: null,
+          availableSizes: const [],
+          availableColors: _discoverColorOptions(updated),
+        ),
+      );
+      // Fresh prices/images should not wait for optional size metadata.
+      // Its separate epoch survives paging but never a changed search/filter.
+      final filterData = await _loadFilterData(filterQuery);
+      if (_disposed || filterOperation != _filterOperation) return;
+      _sizesPending = false;
+      _sizeMetadataFailed = filterData == null;
+      _replace(
+        _state.copyWith(
           filterData: filterData,
           availableSizes: filterData == null
               ? const []
-              : filterData.availableSizes ?? _discoverSizeOptions(updated),
-          availableColors: _discoverColorOptions(updated),
+              : filterData.availableSizes ?? _discoverSizeOptions(_state.items),
         ),
       );
     } catch (error) {

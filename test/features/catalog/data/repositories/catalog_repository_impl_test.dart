@@ -7,6 +7,7 @@ import 'package:mobishop_store_app/features/catalog/data/datasources/catalog_rem
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_category_model.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_filter_data_model.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_money_model.dart';
+import 'package:mobishop_store_app/features/catalog/data/models/catalog_image_model.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_product_model.dart';
 import 'package:mobishop_store_app/features/catalog/data/models/catalog_variation_model.dart';
 import 'package:mobishop_store_app/features/catalog/data/repositories/catalog_repository_impl.dart';
@@ -16,6 +17,56 @@ import 'package:mobishop_store_app/features/catalog/domain/queries/catalog_produ
 import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_repository.dart';
 
 void main() {
+  test(
+    'image snapshot survives price expiry but not store invalidation',
+    () async {
+      var now = DateTime(2026, 11, 20);
+      final changes = StreamController<int>.broadcast(sync: true);
+      final source = _ImageSource();
+      final repository = CatalogRepositoryImpl(
+        source,
+        now: () => now,
+        changes: changes.stream,
+      );
+      addTearDown(changes.close);
+      addTearDown(repository.dispose);
+      await repository.getProduct(10);
+      final original = repository.cachedProductImages(10);
+      expect(original.single.source.toString(), 'https://example.com/10.png');
+      expect(() => original.clear(), throwsUnsupportedError);
+      expect(repository.cachedProductImages(-1), isEmpty);
+      expect(repository.cachedProductImages(9999), isEmpty);
+      now = now.add(const Duration(seconds: 21));
+      source.pending = Completer<CatalogProductModel>();
+      final refresh = repository.getProduct(10);
+      expect(source.productCalls, 2);
+      expect(
+        repository.cachedProductImages(10).single.source,
+        original.single.source,
+      );
+      changes.add(1);
+      expect(repository.cachedProductImages(10), isEmpty);
+      source.pending!.complete(_ImageSource.product(10));
+      await refresh;
+      expect(repository.cachedProductImages(10), isEmpty);
+    },
+  );
+
+  test(
+    'image snapshots share bounded product storage and clear on disposal',
+    () async {
+      final repository = CatalogRepositoryImpl(_ImageSource());
+      for (var id = 1; id <= 97; id++) {
+        await repository.getProduct(id);
+      }
+      expect(repository.cachedProductImages(1), isEmpty);
+      expect(repository.cachedProductImages(2), isNotEmpty);
+      expect(repository.cachedProductImages(97), isNotEmpty);
+      await repository.dispose();
+      expect(repository.cachedProductImages(97), isEmpty);
+    },
+  );
+
   test(
     'filter metadata caches coalesce per mode, expire and evict errors',
     () async {
@@ -172,6 +223,30 @@ class _CountingSource extends _FakeCatalogRemoteDataSource {
   Future<List<CatalogVariationModel>> fetchVariations(int productId) {
     variationCalls++;
     return super.fetchVariations(productId);
+  }
+}
+
+class _ImageSource extends _FakeCatalogRemoteDataSource {
+  int productCalls = 0;
+  Completer<CatalogProductModel>? pending;
+  static CatalogProductModel product(int id) => CatalogProductModel(
+    id: id,
+    name: 'Image product $id',
+    slug: 'image-$id',
+    type: 'simple',
+    prices: const CatalogMoneyModel(
+      currencyCode: 'USD',
+      currencyMinorUnit: 2,
+      priceMinor: '2500',
+    ),
+    images: [
+      CatalogImageModel(source: Uri.parse('https://example.com/$id.png')),
+    ],
+  );
+  @override
+  Future<CatalogProductModel> fetchProduct(int productId) async {
+    productCalls++;
+    return pending?.future ?? product(productId);
   }
 }
 

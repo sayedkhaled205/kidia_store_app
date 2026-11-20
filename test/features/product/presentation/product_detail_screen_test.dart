@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../../support/viewport_rotation.dart';
 import 'package:flutter/material.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
@@ -23,6 +24,251 @@ import 'package:mobishop_store_app/features/page_builder/presentation/widgets/cm
 import '../support/product_test_data.dart';
 
 void main() {
+  for (final addImage in [false, true]) {
+    testWidgets(
+      'fresh gallery resets changed images with same first ($addImage)',
+      (tester) async {
+        _useTallSurface(tester);
+        final repository = _PendingImageRepository()..imageCount = 2;
+        await tester.pumpWidget(
+          _testApp(ProductDetailScreen(productId: 41, repository: repository)),
+        );
+        await tester.pump();
+        await tester.drag(find.byType(PageView).first, const Offset(-750, 0));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 1));
+        final images = repository.cachedProductImages(41);
+        repository.pending.complete(
+          CatalogProduct(
+            id: 41,
+            name: 'Updated images',
+            slug: 'updated',
+            type: 'simple',
+            prices: testMoney,
+            images: [
+              images.first,
+              if (addImage) images.last,
+              CatalogImage(source: Uri.parse('https://example.com/new.png')),
+            ],
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        final pager = tester.widget<PageView>(find.byType(PageView).first);
+        expect(pager.controller!.page!.round() % (addImage ? 3 : 2), 0);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'loading gallery retains the selected original when details arrive',
+    (tester) async {
+      _useTallSurface(tester);
+      final repository = _PendingImageRepository()..imageCount = 2;
+      await tester.pumpWidget(
+        _testApp(ProductDetailScreen(productId: 41, repository: repository)),
+      );
+      await tester.pump();
+      await tester.drag(find.byType(PageView).first, const Offset(-750, 0));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 1));
+      final before = tester.widget<PageView>(find.byType(PageView).first);
+      final selectedPage = before.controller!.page;
+      expect(selectedPage!.round() % 2, 1);
+      repository.pending.complete(
+        CatalogProduct(
+          id: 41,
+          name: 'Fresh gallery product',
+          slug: 'fresh',
+          type: 'simple',
+          prices: testMoney,
+          isInStock: true,
+          images: repository.cachedProductImages(41),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Fresh gallery product'), findsOneWidget);
+      final after = tester.widget<PageView>(find.byType(PageView).first);
+      expect(after.controller, same(before.controller));
+      expect(after.controller!.page!.round(), selectedPage.round());
+      await tester.tap(find.byKey(const Key('open-product-image-1')).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      final fullScreen = tester.widget<ProductImageGallery>(
+        find.byType(ProductImageGallery),
+      );
+      expect(fullScreen.initialIndex, 1);
+      expect(
+        fullScreen.images[1].source.toString(),
+        'https://example.com/second-41.png',
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'scrolling a loading preview cannot hide the first purchase bar',
+    (tester) async {
+      tester.view.physicalSize = const Size(390, 450);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final repository = _PendingImageRepository();
+      await tester.pumpWidget(
+        _testApp(
+          ProductDetailScreen(productId: 41, repository: repository),
+          productLayout: _liveStyleProductLayout(
+            footerSettings: {'hide_on_scroll': true},
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.drag(
+        find.byType(CustomScrollView).first,
+        const Offset(0, -200),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      repository.pending.complete(simpleProduct);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'listed image starts before detail data without exposing purchase',
+    (tester) async {
+      _useTallSurface(tester);
+      final repository = _PendingImageRepository();
+      await tester.pumpWidget(
+        _testApp(
+          ProductDetailScreen(
+            productId: 41,
+            repository: repository,
+            onAddToCart: (_) async {},
+          ),
+        ),
+      );
+      await tester.pump();
+      final main = tester.widget<AppNetworkImage>(
+        find.byKey(const Key('product-image-0')),
+      );
+      expect(main.imageUrl, 'https://example.com/original-41.png');
+      expect(main.decodeAtDisplaySize, isFalse);
+      expect(
+        (main.placeholder as CachedProductImagePreview).imageUrl,
+        'https://example.com/card-41.png',
+      );
+      expect(find.byKey(const Key('add-to-cart-button')), findsNothing);
+      expect(find.text(simpleProduct.name), findsNothing);
+      expect(repository.productCalls, 1);
+      repository.pending.complete(simpleProduct);
+      await tester.pumpAndSettle();
+      expect(find.text(simpleProduct.name), findsOneWidget);
+      expect(find.byKey(const Key('product-image-0')), findsNothing);
+      expect(find.byKey(const Key('add-to-cart-button')), findsOneWidget);
+    },
+  );
+
+  testWidgets('failed detail removes preview and retry waits for fresh data', (
+    tester,
+  ) async {
+    _useTallSurface(tester);
+    final repository = _PendingImageRepository();
+    await tester.pumpWidget(
+      _testApp(ProductDetailScreen(productId: 41, repository: repository)),
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('product-image-0')), findsOneWidget);
+    repository.pending.completeError(
+      const CatalogRepositoryException(
+        kind: StoreApiFailureKind.connection,
+        message: 'Offline preview test',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('product-image-0')), findsNothing);
+    expect(find.text('Offline preview test'), findsOneWidget);
+    repository.pending = Completer<CatalogProduct>();
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    expect(find.byKey(const Key('product-image-0')), findsOneWidget);
+    expect(find.byKey(const Key('add-to-cart-button')), findsNothing);
+    repository.pending.complete(simpleProduct);
+    await tester.pumpAndSettle();
+    expect(find.text(simpleProduct.name), findsOneWidget);
+  });
+
+  testWidgets('loading preview follows product and repository changes', (
+    tester,
+  ) async {
+    _useTallSurface(tester);
+    final first = _PendingImageRepository();
+    final second = _PendingImageRepository();
+    Future<void> show(int id, _PendingImageRepository repository) async {
+      await tester.pumpWidget(
+        _testApp(ProductDetailScreen(productId: id, repository: repository)),
+      );
+      await tester.pump();
+    }
+
+    await show(41, first);
+    expect(
+      tester
+          .widget<AppNetworkImage>(find.byKey(const Key('product-image-0')))
+          .imageUrl,
+      'https://example.com/original-41.png',
+    );
+    await show(42, second);
+    first.pending.complete(simpleProduct);
+    await tester.pump();
+    expect(
+      tester
+          .widget<AppNetworkImage>(find.byKey(const Key('product-image-0')))
+          .imageUrl,
+      'https://example.com/original-42.png',
+    );
+    expect(find.text(simpleProduct.name), findsNothing);
+    second.imagesAvailable = false;
+    await show(42, second);
+    expect(find.byKey(const Key('product-image-0')), findsNothing);
+    second.pending.complete(simpleProduct);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('disabled gallery does not start a preview image', (
+    tester,
+  ) async {
+    final repository = _PendingImageRepository();
+    final base = CmsPageLayout.fallback('product');
+    await tester.pumpWidget(
+      _testApp(
+        ProductDetailScreen(productId: 41, repository: repository),
+        productLayout: CmsPageLayout(
+          page: base.page,
+          header: base.header,
+          footer: base.footer,
+          elements: [
+            for (final e in base.elements)
+              CmsPageComponent(
+                id: e.id,
+                type: e.type,
+                enabled: e.type == 'image_gallery' ? false : e.enabled,
+                settings: e.settings,
+              ),
+          ],
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('product-image-0')), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    repository.pending.complete(simpleProduct);
+    await tester.pumpAndSettle();
+  });
+
   testWidgets(
     'thumbnail strip stays small while gallery keeps original images',
     (tester) async {
@@ -1218,6 +1464,31 @@ Widget _testApp(Widget home, {Locale? locale, CmsPageLayout? productLayout}) {
       home: home,
     ),
   );
+}
+
+class _PendingImageRepository extends ProductFakeCatalogRepository
+    implements CatalogProductImagePreviewSource {
+  Completer<CatalogProduct> pending = Completer<CatalogProduct>();
+  bool imagesAvailable = true;
+  int imageCount = 1;
+  @override
+  List<CatalogImage> cachedProductImages(int productId) => imagesAvailable
+      ? [
+          CatalogImage(
+            source: Uri.parse('https://example.com/original-$productId.png'),
+            cardVariant: Uri.parse('https://example.com/card-$productId.png'),
+          ),
+          if (imageCount > 1)
+            CatalogImage(
+              source: Uri.parse('https://example.com/second-$productId.png'),
+            ),
+        ]
+      : [];
+  @override
+  Future<CatalogProduct> getProduct(int productId) {
+    productCalls++;
+    return pending.future;
+  }
 }
 
 CmsPageLayout _liveStyleProductLayout({

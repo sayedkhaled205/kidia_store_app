@@ -46,7 +46,116 @@ class Transport extends DioCustomerAccountApiTransport {
   }
 }
 
+class HeldTransport extends Transport {
+  HeldTransport(super.server);
+  final reads = <Completer<Map<String, dynamic>>>[];
+  @override
+  Future<Map<String, dynamic>> fetchWishlist() {
+    final pending = Completer<Map<String, dynamic>>();
+    reads.add(pending);
+    return pending.future;
+  }
+
+  void finish(int index, List<int> ids) =>
+      reads[index].complete({'product_ids': ids});
+}
+
 void main() {
+  test(
+    'old failed read cannot clear a newer pending request after a failed write',
+    () async {
+      final transport = HeldTransport(Server());
+      final repository = CustomerWishlistRepository(transport);
+      final oldFailure = expectLater(
+        repository.loadProductIds(),
+        throwsStateError,
+      );
+      final mutationFailure = expectLater(
+        repository.updateAtomically((ids) => [2, ...ids]),
+        throwsStateError,
+      );
+      transport.reads[1].completeError(StateError('write pre-read failed'));
+      await mutationFailure;
+      final fresh = repository.loadProductIds();
+      transport.reads[0].completeError(StateError('old read failed'));
+      await oldFailure;
+      final follower = repository.loadProductIds();
+      expect(transport.reads.length, 3);
+      transport.finish(2, [7]);
+      expect(await Future.wait([fresh, follower]), everyElement([7]));
+    },
+  );
+
+  test(
+    'concurrent hearts share one read but later reads remain fresh',
+    () async {
+      final transport = HeldTransport(Server());
+      final repository = CustomerWishlistRepository(transport);
+      final hearts = List.generate(12, (_) => repository.loadProductIds());
+      expect(transport.reads.length, 1);
+      transport.finish(0, [1, 2]);
+      expect(await Future.wait(hearts), everyElement([1, 2]));
+      final next = repository.loadProductIds();
+      expect(transport.reads.length, 2);
+      transport.finish(1, [3]);
+      expect(await next, [3]);
+    },
+  );
+
+  test('shared failure allows a new request', () async {
+    final transport = HeldTransport(Server());
+    final repository = CustomerWishlistRepository(transport);
+    final first = expectLater(repository.loadProductIds(), throwsStateError);
+    final second = expectLater(repository.loadProductIds(), throwsStateError);
+    expect(transport.reads.length, 1);
+    transport.reads[0].completeError(StateError('offline'));
+    await Future.wait([first, second]);
+    final retry = repository.loadProductIds();
+    expect(transport.reads.length, 2);
+    transport.finish(1, [2]);
+    expect(await retry, [2]);
+  });
+
+  test('mutation reads fresh state and fences a late shared read', () async {
+    final transport = HeldTransport(Server());
+    final repository = CustomerWishlistRepository(transport);
+    final old = repository.loadProductIds();
+    final oldFollower = repository.loadProductIds();
+    final mutation = repository.updateAtomically((ids) => [2, ...ids]);
+    expect(transport.reads.length, 2);
+    transport.finish(1, [1]);
+    expect(await mutation, [2, 1]);
+    final fresh = repository.loadProductIds();
+    expect(transport.reads.length, 3);
+    transport.finish(0, [1]);
+    await Future<void>.delayed(Duration.zero);
+    // The old response must join the new generation, not clear or expose it.
+    final follower = repository.loadProductIds();
+    expect(transport.reads.length, 3);
+    transport.finish(2, [2, 1]);
+    expect(
+      await Future.wait([old, oldFollower, fresh, follower]),
+      everyElement([2, 1]),
+    );
+  });
+
+  test('explicit device import invalidates pending remote snapshots', () async {
+    final transport = HeldTransport(Server());
+    final device = DeviceWishlist();
+    final repository = CustomerWishlistRepository(
+      transport,
+      deviceRepository: device,
+    );
+    final old = repository.loadProductIds();
+    await repository.importDeviceItems();
+    transport.finish(0, [1]);
+    await Future<void>.delayed(Duration.zero);
+    expect(transport.reads.length, 2);
+    transport.finish(1, [8, 9, 1]);
+    expect(await old, [8, 9, 1]);
+    expect(device.ids, [8, 9]);
+  });
+
   test(
     'legacy device favorites require explicit import and stay preserved',
     () async {
@@ -82,9 +191,15 @@ void main() {
         authTokenReader: () => token,
         dio: dio,
       );
-      final pending = transport.fetchWishlist();
+      final repository = CustomerWishlistRepository(transport);
+      final pending = repository.loadProductIds();
+      final second = repository.loadProductIds();
       final result = expectLater(
         pending,
+        throwsA(isA<CustomerAccountTransportException>()),
+      );
+      final secondResult = expectLater(
+        second,
         throwsA(isA<CustomerAccountTransportException>()),
       );
       final handler = await requested.future;
@@ -101,6 +216,7 @@ void main() {
         ),
       );
       await result;
+      await secondResult;
       dio.close();
     },
   );

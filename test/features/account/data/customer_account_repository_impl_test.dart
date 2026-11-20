@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/account/data/network/customer_account_api_transport.dart';
 import 'package:mobishop_store_app/features/account/data/repositories/customer_account_repository_impl.dart';
@@ -5,6 +6,54 @@ import 'package:mobishop_store_app/features/account/domain/entities/customer_acc
 import 'package:mobishop_store_app/features/account/domain/repositories/customer_account_repository.dart';
 
 void main() {
+  test(
+    'account and address metadata start together without serial latency',
+    () async {
+      final transport = _HeldAccountTransport();
+      final result = CustomerAccountRepositoryImpl(transport).getAccount();
+      expect(transport.accountStarted, isTrue);
+      expect(transport.configStarted, isTrue);
+      transport.account.complete(await _FakeAccountTransport().fetchAccount());
+      transport.configuration.complete(
+        await _FakeAccountTransport().fetchAddressConfig(),
+      );
+      final account = await result;
+      expect(account.profile.id, 7);
+      expect(
+        account.addressFields
+            .singleWhere((f) => f.key == 'billing_postcode')
+            .required,
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'failed optional configuration keeps account and fallback fields',
+    () async {
+      final transport = _HeldAccountTransport();
+      final result = CustomerAccountRepositoryImpl(transport).getAccount();
+      transport.configuration.completeError(StateError('old plugin'));
+      transport.account.complete(await _FakeAccountTransport().fetchAccount());
+      expect((await result).profile.id, 7);
+    },
+  );
+
+  test(
+    'account failure does not wait for optional config or leak its later failure',
+    () async {
+      final transport = _HeldAccountTransport();
+      final result = expectLater(
+        CustomerAccountRepositoryImpl(transport).getAccount(),
+        throwsA(isA<CustomerAccountRepositoryException>()),
+      );
+      transport.account.completeError(StateError('account unavailable'));
+      await result;
+      transport.configuration.completeError(StateError('config unavailable'));
+      await Future<void>.delayed(Duration.zero);
+    },
+  );
+
   test('country and state metadata remain merchant-owned', () async {
     final transport = _FakeAccountTransport();
     transport.config = {
@@ -261,5 +310,23 @@ class _FakeAccountTransport implements CustomerAccountApiTransport {
           ? values
           : <String, String>{...values, 'shipping_address_1': 'Old address'},
     };
+  }
+}
+
+class _HeldAccountTransport extends _FakeAccountTransport {
+  final account = Completer<Map<String, dynamic>>();
+  final configuration = Completer<Map<String, dynamic>>();
+  bool accountStarted = false;
+  bool configStarted = false;
+  @override
+  Future<Map<String, dynamic>> fetchAccount() {
+    accountStarted = true;
+    return account.future;
+  }
+
+  @override
+  Future<Map<String, dynamic>> fetchAddressConfig() {
+    configStarted = true;
+    return configuration.future;
   }
 }

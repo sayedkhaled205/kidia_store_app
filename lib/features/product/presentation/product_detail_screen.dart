@@ -74,6 +74,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   int _wishlistRevision = 0;
   bool _footerHidden = false;
   int _trackedProductId = 0;
+  GlobalKey _galleryKey = GlobalKey();
 
   @override
   void initState() {
@@ -103,6 +104,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   }
 
   void _createController() {
+    _galleryKey = GlobalKey();
+    _footerHidden = false;
     _controller = ProductDetailController(
       repository: widget.repository,
       productId: widget.productId,
@@ -149,7 +152,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         actions: _buildCmsActions(context, copy),
         body: NotificationListener<ScrollUpdateNotification>(
           onNotification: (ScrollUpdateNotification notification) {
-            if (!layout.footer.boolean('hide_on_scroll', false) ||
+            if (_controller.status != ProductDetailStatus.success ||
+                !layout.footer.boolean('hide_on_scroll', false) ||
                 notification.scrollDelta == null) {
               return false;
             }
@@ -243,7 +247,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     switch (_controller.status) {
       case ProductDetailStatus.initial:
       case ProductDetailStatus.loading:
-        return _ProductLoading(copy: copy);
+        return _buildLoadingBody(copy, layout);
       case ProductDetailStatus.empty:
         return _ProductEmpty(copy: copy);
       case ProductDetailStatus.failure:
@@ -263,10 +267,43 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           product: product,
           copy: copy,
           pageLayout: layout,
+          galleryKey: _galleryKey,
           onReviewsRequested: widget.onReviewsRequested,
           onRelatedProductsRequested: widget.onRelatedProductsRequested,
         );
     }
+  }
+
+  Widget _buildLoadingBody(_ProductCopy copy, CmsPageLayout layout) {
+    final repository = widget.repository;
+    final gallery = layout.element('image_gallery');
+    if (!gallery.enabled || repository is! CatalogProductImagePreviewSource) {
+      return _ProductLoading(copy: copy);
+    }
+    final images = (repository as CatalogProductImagePreviewSource)
+        .cachedProductImages(widget.productId);
+    if (images.isEmpty) return _ProductLoading(copy: copy);
+
+    // Start the original image in parallel with the authoritative detail read.
+    // Only images are reused: price, options and purchasing still await load().
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: _ProductGallery(
+            key: _galleryKey,
+            images: images,
+            productName: '',
+            settings: gallery,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: _ProductLoading(copy: copy),
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _handlePurchasePressed() async {
@@ -363,6 +400,7 @@ class _ProductContent extends StatefulWidget {
     required this.product,
     required this.copy,
     required this.pageLayout,
+    required this.galleryKey,
     this.onReviewsRequested,
     this.onRelatedProductsRequested,
   });
@@ -372,6 +410,7 @@ class _ProductContent extends StatefulWidget {
   final CatalogProduct product;
   final _ProductCopy copy;
   final CmsPageLayout pageLayout;
+  final GlobalKey galleryKey;
   final ValueChanged<CatalogProduct>? onReviewsRequested;
   final ValueChanged<CatalogProduct>? onRelatedProductsRequested;
 
@@ -462,6 +501,7 @@ class _ProductContentState extends State<_ProductContent> {
               page: 'product',
               target: pageLayout.element('image_gallery').id,
               child: _ProductGallery(
+                key: widget.galleryKey,
                 images: images,
                 productName: product.name,
                 settings: pageLayout.element('image_gallery'),
@@ -1258,6 +1298,7 @@ class _RelatedProductsSectionState extends State<_RelatedProductsSection> {
 
 class _ProductGallery extends StatefulWidget {
   const _ProductGallery({
+    super.key,
     required this.images,
     required this.productName,
     required this.settings,
@@ -1301,13 +1342,13 @@ class _ProductGalleryState extends State<_ProductGallery> {
   @override
   void didUpdateWidget(_ProductGallery oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final Uri? oldSource = oldWidget.images.isEmpty
-        ? null
-        : oldWidget.images.first.source;
-    final Uri? newSource = widget.images.isEmpty
-        ? null
-        : widget.images.first.source;
-    if (oldSource != newSource) {
+    final imagesChanged =
+        oldWidget.images.length != widget.images.length ||
+        List.generate(
+          widget.images.length,
+          (i) => i,
+        ).any((i) => oldWidget.images[i].source != widget.images[i].source);
+    if (imagesChanged) {
       _page = 0;
       _pageController.dispose();
       _pageController = PageController(initialPage: _initialPage());
@@ -1420,7 +1461,7 @@ class _ProductGalleryState extends State<_ProductGallery> {
               PointerDeviceKind.trackpad,
             },
           ),
-          key: ValueKey<String>(widget.images.first.source.toString()),
+          key: ObjectKey(_pageController),
           controller: _pageController,
           itemCount: widget.images.length == 1 ? 1 : null,
           onPageChanged: (int page) =>
