@@ -105,15 +105,15 @@ class _ProductWishlistButtonState extends ConsumerState<ProductWishlistButton> {
     }
     final binding = _binding;
     final repository = _repository;
+    // Preserve the visible intent even when the first read failed or was stale.
+    final shouldAdd = addAfterSignIn || !_selected;
     setState(() => _busy = true);
     try {
       final id = widget.productId;
       final ids = await repository.updateProductIds(
-        (current) => addAfterSignIn
+        (current) => shouldAdd
             ? (current.contains(id) ? current : [id, ...current])
-            : current.contains(id)
-            ? current.where((value) => value != id).toList()
-            : [id, ...current],
+            : current.where((value) => value != id).toList(),
       );
       if (mounted && binding == _binding) {
         setState(() => _selected = ids.contains(widget.productId));

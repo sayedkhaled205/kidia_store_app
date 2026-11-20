@@ -88,6 +88,20 @@ class PublicCatalogCache implements StoreApiClient {
     String path, {
     Map<String, dynamic>? queryParameters,
   }) async {
+    if (path == '/wp-json/wc/store/v1/products/tags') {
+      // A filter's UI timeout must not start another identical in-flight read.
+      // Tags still have no settled/disk cache; each later visit reads the store.
+      final key =
+          '$path?${jsonEncode(SplayTreeMap<String, dynamic>.from({...?queryParameters}))}';
+      final generation = _generation;
+      return _pending[key] ??= (() async {
+        try {
+          return await network.get(path, queryParameters: queryParameters);
+        } finally {
+          if (generation == _generation) _pending.remove(key);
+        }
+      })();
+    }
     if (!supports(path)) {
       return network.get(path, queryParameters: queryParameters);
     }

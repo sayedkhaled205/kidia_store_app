@@ -57,6 +57,8 @@ const Object _notProvided = Object();
 
 class CartController extends AsyncNotifier<CartViewState> {
   int _mutationRevision = 0;
+  bool _requiresExplicitRetry = false;
+  Future<void>? _retryFuture;
   CartRepository get _repository => ref.read(cartRepositoryProvider);
 
   @override
@@ -77,11 +79,20 @@ class CartController extends AsyncNotifier<CartViewState> {
     return CartViewState(cart: cart);
   }
 
-  Future<void> retry() async {
+  Future<void> retry() =>
+      _retryFuture ??= _retry().whenComplete(() => _retryFuture = null);
+
+  Future<void> _retry() async {
+    if (!ref.mounted || (state.asData?.value.hasPendingMutation ?? false)) {
+      return;
+    }
     final String ownerToken = _authToken;
     state = const AsyncLoading<CartViewState>();
     final result = await AsyncValue.guard<CartViewState>(build);
-    if (ref.mounted && ownerToken == _authToken) state = result;
+    if (ref.mounted && ownerToken == _authToken) {
+      if (result.hasValue) _requiresExplicitRetry = false;
+      state = result;
+    }
   }
 
   Future<void> refreshCart() async {
@@ -212,10 +223,24 @@ class CartController extends AsyncNotifier<CartViewState> {
     String label = '',
   }) async {
     final String requestedOwner = _authToken;
+    final int requestedRevision = _mutationRevision;
     if (state.asData == null) {
       try {
-        // Share the in-flight bootstrap. Never replay a cart mutation or create
-        // a second cart request just because the first product was tapped early.
+        final error = state.error;
+        if (!state.isLoading &&
+            !_requiresExplicitRetry &&
+            error is CartRepositoryException &&
+            (error.kind == CartFailureKind.connection ||
+                error.kind == CartFailureKind.timeout ||
+                error.kind == CartFailureKind.server)) {
+          // A new tap may recover a failed read, never an uncertain write.
+          await retry();
+        }
+        if (!ref.mounted || requestedOwner != _authToken) {
+          return const CartActionResult.failure(
+            'The customer session changed.',
+          );
+        }
         await future;
       } catch (error) {
         return CartActionResult.failure(_failure(error).message);
@@ -230,7 +255,7 @@ class CartController extends AsyncNotifier<CartViewState> {
         'Unable to load the cart. Please retry from your bag.',
       );
     }
-    if (current.hasPendingMutation) {
+    if (current.hasPendingMutation || requestedRevision != _mutationRevision) {
       return const CartActionResult.failure(
         'Please wait for the current cart update to finish.',
       );
@@ -296,6 +321,7 @@ class CartController extends AsyncNotifier<CartViewState> {
             );
           }
           if (uncertain) {
+            _requiresExplicitRetry = true;
             const message =
                 'Unable to confirm the cart update. Open your cart and refresh before trying again.';
             state = AsyncError<CartViewState>(

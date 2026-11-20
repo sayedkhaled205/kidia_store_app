@@ -44,4 +44,6 @@ final customerAccountRepositoryProvider = Provider<CustomerAccountRepository>(
 
 final customerAccountProvider = FutureProvider.autoDispose<CustomerAccount>(
   (Ref ref) => ref.watch(customerAccountRepositoryProvider).getAccount(),
+  // The profile exposes retry; do not hide it behind repeated timed-out reads.
+  retry: (retryCount, error) => null,
 );

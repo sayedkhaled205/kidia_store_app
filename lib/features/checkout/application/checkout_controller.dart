@@ -75,6 +75,7 @@ class CheckoutController extends ChangeNotifier {
   bool _customerUpdateDirty = false;
   bool _isUpdatingCustomer = false;
   bool _isRecoveringOrder = false;
+  bool _isRefreshingSafety = false;
   bool _hasUnresolvedSubmission = false;
   bool _isDisposed = false;
 
@@ -188,6 +189,14 @@ class CheckoutController extends ChangeNotifier {
   bool get hasActiveSubmission => _activeSubmission != null;
   bool get isUpdatingCustomer => _isUpdatingCustomer;
   bool get isRecoveringOrder => _isRecoveringOrder;
+  bool get isRefreshingSafety => _isRefreshingSafety;
+  bool get canRefreshSafety =>
+      !_isDisposed &&
+      !_isRefreshingSafety &&
+      !_hasUnresolvedSubmission &&
+      _status == CheckoutStatus.ready &&
+      _activeSubmission == null &&
+      repository is CheckoutSafetyRepository;
   bool get canRecoverOrder =>
       !_isDisposed &&
       _hasUnresolvedSubmission &&
@@ -201,6 +210,7 @@ class CheckoutController extends ChangeNotifier {
   bool get needsShipping => _checkout?.needsShipping ?? false;
   bool get hasDynamicFields => _checkout?.hasDynamicFields ?? false;
   bool get canSubmit =>
+      !_isRefreshingSafety &&
       !_hasUnresolvedSubmission &&
       !_isRecoveringOrder &&
       (_checkout?.serverSafetyRequired != true ||
@@ -211,6 +221,28 @@ class CheckoutController extends ChangeNotifier {
       (!supportsShippingQuotes || shippingReady);
 
   String? errorFor(String field) => _fieldErrors[field];
+
+  Future<void> refreshSafety() async {
+    if (!canRefreshSafety) return;
+    final serial = _requestSerial;
+    _isRefreshingSafety = true;
+    _notify();
+    try {
+      final enforced = await (repository as CheckoutSafetyRepository)
+          .refreshCheckoutSafety();
+      if (!_isDisposed &&
+          serial == _requestSerial &&
+          !_hasUnresolvedSubmission &&
+          cart != null) {
+        _applyAuthoritativeCart(cart!, serverSafetyEnforced: enforced);
+      }
+    } catch (_) {
+      // Keep checkout disabled and its retry visible; no order was submitted.
+    } finally {
+      _isRefreshingSafety = false;
+      if (!_isDisposed) _notify();
+    }
+  }
 
   List<CheckoutFieldDefinition> fieldsFor(CheckoutFieldGroup group) {
     return List<CheckoutFieldDefinition>.unmodifiable(
@@ -725,6 +757,7 @@ class CheckoutController extends ChangeNotifier {
 
   bool _isKnownOrderRejection(CheckoutRepositoryException error) {
     if (error.requiresOutcomeRecovery) return false;
+    if (error.confirmedNotDispatched) return true;
     if (error.confirmedPrePaymentRejection) return true;
     if (error.statusCode == null &&
         (error.kind == CheckoutFailureKind.invalidInput ||
@@ -1034,7 +1067,10 @@ class CheckoutController extends ChangeNotifier {
     return errors.isEmpty;
   }
 
-  void _applyAuthoritativeCart(Cart authoritativeCart) {
+  void _applyAuthoritativeCart(
+    Cart authoritativeCart, {
+    bool? serverSafetyEnforced,
+  }) {
     _checkout = CheckoutState(
       cart: authoritativeCart,
       savedAddresses: _checkout?.savedAddresses ?? const [],
@@ -1043,7 +1079,8 @@ class CheckoutController extends ChangeNotifier {
           _checkout?.allowDifferentShippingAddress ?? false,
       hasUnresolvedSubmission: _hasUnresolvedSubmission,
       serverSafetyRequired: _checkout?.serverSafetyRequired ?? false,
-      serverSafetyEnforced: _checkout?.serverSafetyEnforced ?? false,
+      serverSafetyEnforced:
+          serverSafetyEnforced ?? _checkout?.serverSafetyEnforced ?? false,
       paymentMethodLabels:
           _checkout?.paymentMethodLabels ?? const <String, String>{},
       fieldDefinitions:

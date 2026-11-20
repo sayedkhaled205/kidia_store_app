@@ -37,7 +37,17 @@ class AppNetworkImage extends StatelessWidget {
   final bool decodeAtDisplaySize;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => _ImageRecovery(
+    imageUrl: imageUrl,
+    builder: (context, retryKey, onError) =>
+        _buildImage(context, retryKey, onError),
+  );
+
+  Widget _buildImage(
+    BuildContext context,
+    Key retryKey,
+    Widget Function(Widget) onError,
+  ) {
     final Widget image = Semantics(
       image: true,
       label: semanticLabel,
@@ -70,6 +80,7 @@ class AppNetworkImage extends StatelessWidget {
           : kIsWeb
           ? Image.network(
               imageUrl,
+              key: retryKey,
               width: width,
               height: height,
               fit: fit,
@@ -86,15 +97,16 @@ class AppNetworkImage extends StatelessWidget {
                           height: height,
                           backgroundColor: backgroundColor,
                         )),
-              errorBuilder: (context, error, stackTrace) =>
-                  errorWidget ??
-                  AppNetworkImageError(
-                    width: width,
-                    height: height,
-                    backgroundColor: backgroundColor,
-                  ),
+              errorBuilder: (context, error, stackTrace) => onError(
+                errorWidget ??
+                    AppNetworkImageError(
+                      width: width,
+                      height: height,
+                      backgroundColor: backgroundColor,
+                    ),
+              ),
             )
-          : _nativeImage(context),
+          : _nativeImage(context, retryKey, onError),
     );
 
     if (borderRadius == null) {
@@ -104,8 +116,12 @@ class AppNetworkImage extends StatelessWidget {
     return ClipRRect(borderRadius: borderRadius!, child: image);
   }
 
-  Widget _nativeImage(BuildContext context) {
-    if (!decodeAtDisplaySize) return _cachedImage();
+  Widget _nativeImage(
+    BuildContext context,
+    Key retryKey,
+    Widget Function(Widget) onError,
+  ) {
+    if (!decodeAtDisplaySize) return _cachedImage(retryKey, onError);
     return LayoutBuilder(
       builder: (context, constraints) {
         final renderWidth =
@@ -117,12 +133,13 @@ class AppNetworkImage extends StatelessWidget {
             : null;
         if (cacheWidth == null ||
             (fit != BoxFit.cover && fit != BoxFit.contain)) {
-          return _cachedImage();
+          return _cachedImage(retryKey, onError);
         }
         final renderHeight =
             height ??
             (constraints.hasBoundedHeight ? constraints.maxHeight : null);
         return Image(
+          key: retryKey,
           image: DisplaySizedCachedImage(
             imageUrl,
             targetWidth: cacheWidth,
@@ -146,44 +163,130 @@ class AppNetworkImage extends StatelessWidget {
                       height: height,
                       backgroundColor: backgroundColor,
                     ),
-          errorBuilder: (context, error, stack) =>
-              errorWidget ??
-              AppNetworkImageError(
-                width: width,
-                height: height,
-                backgroundColor: backgroundColor,
-              ),
+          errorBuilder: (context, error, stack) => onError(
+            errorWidget ??
+                AppNetworkImageError(
+                  width: width,
+                  height: height,
+                  backgroundColor: backgroundColor,
+                ),
+          ),
         );
       },
     );
   }
 
-  Widget _cachedImage() => CachedNetworkImage(
-    imageUrl: imageUrl,
-    width: width,
-    height: height,
-    fit: fit,
-    alignment: alignment,
-    fadeInDuration: const Duration(milliseconds: 220),
-    fadeOutDuration: const Duration(milliseconds: 120),
-    placeholderFadeInDuration: const Duration(milliseconds: 120),
-    placeholder: (BuildContext context, String url) {
-      return placeholder ??
-          AppNetworkImageLoading(
-            width: width,
-            height: height,
-            backgroundColor: backgroundColor,
+  Widget _cachedImage(Key retryKey, Widget Function(Widget) onError) =>
+      CachedNetworkImage(
+        key: retryKey,
+        imageUrl: imageUrl,
+        width: width,
+        height: height,
+        fit: fit,
+        alignment: alignment,
+        fadeInDuration: const Duration(milliseconds: 220),
+        fadeOutDuration: const Duration(milliseconds: 120),
+        placeholderFadeInDuration: const Duration(milliseconds: 120),
+        placeholder: (BuildContext context, String url) {
+          return placeholder ??
+              AppNetworkImageLoading(
+                width: width,
+                height: height,
+                backgroundColor: backgroundColor,
+              );
+        },
+        errorWidget: (BuildContext context, String url, Object error) {
+          return onError(
+            errorWidget ??
+                AppNetworkImageError(
+                  width: width,
+                  height: height,
+                  backgroundColor: backgroundColor,
+                ),
           );
-    },
-    errorWidget: (BuildContext context, String url, Object error) {
-      return errorWidget ??
-          AppNetworkImageError(
-            width: width,
-            height: height,
-            backgroundColor: backgroundColor,
-          );
-    },
-  );
+        },
+      );
+}
+
+class _ImageRecovery extends StatefulWidget {
+  const _ImageRecovery({required this.imageUrl, required this.builder});
+  final String imageUrl;
+  final Widget Function(BuildContext, Key, Widget Function(Widget)) builder;
+  @override
+  State<_ImageRecovery> createState() => _ImageRecoveryState();
+}
+
+class _ImageRecoveryState extends State<_ImageRecovery>
+    with WidgetsBindingObserver {
+  int _attempt = 0;
+  bool _failed = false;
+  bool _wasPaused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ImageRecovery oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.imageUrl != widget.imageUrl) {
+      _failed = false;
+      _attempt++;
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) _wasPaused = true;
+    if (state == AppLifecycleState.resumed && _wasPaused) {
+      _wasPaused = false;
+      if (TickerMode.valuesOf(context).enabled &&
+          (ModalRoute.of(context)?.isCurrent ?? true)) {
+        _retry();
+      }
+    }
+  }
+
+  void _retry() {
+    if (!mounted || !_failed || widget.imageUrl.trim().isEmpty) return;
+    setState(() {
+      _failed = false;
+      _attempt++;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final attempt = _attempt;
+    return widget.builder(context, ValueKey((widget.imageUrl, attempt)), (
+      fallback,
+    ) {
+      if (attempt == _attempt) _failed = true;
+      final label = Localizations.localeOf(context).languageCode == 'ar'
+          ? 'إعادة تحميل الصورة'
+          : 'Retry image';
+      return Semantics(
+        button: true,
+        label: label,
+        child: Tooltip(
+          message: label,
+          child: GestureDetector(
+            onTap: _retry,
+            behavior: HitTestBehavior.opaque,
+            child: fallback,
+          ),
+        ),
+      );
+    });
+  }
 }
 
 class AppNetworkImageLoading extends StatefulWidget {

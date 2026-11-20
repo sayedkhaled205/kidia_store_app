@@ -22,8 +22,13 @@ class _SignedOut extends AuthController {
 class _Repository implements WishlistRepository {
   List<int> ids = [8];
   bool fail = false;
+  bool failRead = false;
   @override
-  Future<List<int>> loadProductIds() async => List.of(ids);
+  Future<List<int>> loadProductIds() async {
+    if (failRead) throw const WishlistStorageException('Offline');
+    return List.of(ids);
+  }
+
   @override
   Future<void> saveProductIds(List<int> values) async {
     if (fail) throw StateError('storage unavailable');
@@ -62,6 +67,26 @@ Widget _app(WishlistRepository repository) => ProviderScope(
   ),
 );
 void main() {
+  testWidgets(
+    'empty heart after a failed read preserves save intent on recovery',
+    (tester) async {
+      final repository = _Repository()
+        ..ids = [1, 8]
+        ..failRead = true;
+      await tester.pumpWidget(_app(repository));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.favorite_border_rounded), findsNWidgets(2));
+      repository.failRead = false;
+      await tester.tap(find.byKey(const Key('product-card-wishlist-1')));
+      await tester.pumpAndSettle();
+      expect(repository.ids, [1, 8]);
+      expect(find.byIcon(Icons.favorite_rounded), findsOneWidget);
+      await tester.tap(find.byKey(const Key('product-card-wishlist-1')));
+      await tester.pumpAndSettle();
+      expect(repository.ids, [8]);
+      expect(tester.takeException(), isNull);
+    },
+  );
   testWidgets('mounted customer hearts share one transport request', (
     tester,
   ) async {
