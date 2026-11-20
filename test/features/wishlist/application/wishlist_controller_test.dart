@@ -4,11 +4,133 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:mobishop_store_app/features/wishlist/application/wishlist_controller.dart';
+import 'package:mobishop_store_app/features/wishlist/domain/repositories/wishlist_repository.dart';
 
 import '../support/wishlist_test_data.dart';
 
 void main() {
   group('WishlistController', () {
+    test('an open wishlist follows saves and removals from product cards', () async {
+      final storage = FakeWishlistRepository(ids: [1]);
+      final catalog = FakeWishlistCatalogRepository(
+        products: [wishlistProductOne, wishlistProductTwo]);
+      final controller = WishlistController(
+        repository: storage, catalogRepository: catalog);
+      addTearDown(controller.dispose);
+      await controller.load();
+
+      await storage.updateProductIds((ids) => [2, ...ids]);
+      await _waitFor(() => controller.products.length == 2);
+      expect(controller.products.map((p) => p.id), [2, 1]);
+      await storage.updateProductIds((ids) => ids.where((id) => id != 2).toList());
+      await _waitFor(() => controller.products.length == 1);
+      expect(controller.products.single.id, 1);
+    });
+
+    test('own mutations do not add redundant catalog hydration requests', () async {
+      final storage = FakeWishlistRepository(ids: [1]);
+      final catalog = FakeWishlistCatalogRepository();
+      final controller = WishlistController(
+        repository: storage, catalogRepository: catalog);
+      addTearDown(controller.dispose);
+      await controller.load();
+      await controller.add(2, product: wishlistProductTwo);
+      await controller.remove(1);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.products.map((p) => p.id), [2]);
+      expect(catalog.productQueries, hasLength(1));
+    });
+
+    test('disposed wishlist does not reload after another screen saves', () async {
+      final storage = FakeWishlistRepository(ids: [1]);
+      final catalog = FakeWishlistCatalogRepository();
+      final controller = WishlistController(
+        repository: storage, catalogRepository: catalog);
+      await controller.load();
+      controller.dispose();
+      await storage.updateProductIds((ids) => [2, ...ids]);
+      await Future<void>.delayed(Duration.zero);
+      expect(catalog.productQueries, hasLength(1));
+    });
+
+    test('removal during external hydration still shows the new saved product', () async {
+      final pending = Completer<CatalogPage<CatalogProduct>>();
+      final storage = FakeWishlistRepository(ids: [1]);
+      var calls = 0;
+      final catalog = FakeWishlistCatalogRepository(onGetProducts: (query) async {
+        calls++;
+        if (calls == 2) return pending.future;
+        return catalogPage(calls == 1
+          ? [wishlistProductOne] : [wishlistProductTwo]);
+      });
+      final controller = WishlistController(
+        repository: storage, catalogRepository: catalog);
+      addTearDown(controller.dispose);
+      await controller.load();
+      await storage.updateProductIds((ids) => [2, ...ids]);
+      await _waitFor(() => calls == 2);
+      expect(await controller.remove(1), isTrue);
+      await _waitFor(() => controller.products.length == 1);
+      expect(controller.products.single.id, 2);
+      pending.complete(catalogPage([wishlistProductTwo, wishlistProductOne]));
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.products.map((p) => p.id), [2]);
+      expect(storage.ids, [2]);
+    });
+
+    test('failed removal recovers pending external hydration and keeps its error', () async {
+      final pending = Completer<CatalogPage<CatalogProduct>>();
+      final storage = FakeWishlistRepository(ids: [1]);
+      var calls = 0;
+      final catalog = FakeWishlistCatalogRepository(onGetProducts: (query) async {
+        calls++;
+        if (calls == 2) return pending.future;
+        return catalogPage(calls == 1
+          ? [wishlistProductOne] : [wishlistProductTwo, wishlistProductOne]);
+      });
+      final controller = WishlistController(
+        repository: storage, catalogRepository: catalog);
+      addTearDown(controller.dispose);
+      await controller.load();
+      await storage.updateProductIds((ids) => [2, ...ids]);
+      await _waitFor(() => calls == 2);
+      storage.onSave = (_) async => throw StateError('offline');
+      expect(await controller.remove(1), isFalse);
+      await _waitFor(() => controller.products.length == 2);
+      pending.complete(catalogPage([wishlistProductTwo, wishlistProductOne]));
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.products.map((p) => p.id), [2, 1]);
+      expect(controller.mutationError, isNotEmpty);
+      expect(storage.ids, [2, 1]);
+    });
+
+    test('failed removal also recovers a pending external ID read', () async {
+      final pending = Completer<List<int>>();
+      final storage = FakeWishlistRepository(ids: [1]);
+      final catalog = FakeWishlistCatalogRepository(
+        products: [wishlistProductOne, wishlistProductTwo]);
+      final controller = WishlistController(
+        repository: storage, catalogRepository: catalog);
+      addTearDown(controller.dispose);
+      await controller.load();
+      var reads = 0;
+      storage.onLoad = () async {
+        reads++;
+        if (reads == 2) return pending.future;
+        return List<int>.of(storage.ids);
+      };
+      await storage.updateProductIds((ids) => [2, ...ids]);
+      await _waitFor(() => reads == 2);
+      storage.onSave = (_) async => throw StateError('offline');
+      expect(await controller.remove(1), isFalse);
+      await _waitFor(() => controller.products.length == 2);
+      pending.complete([2, 1]);
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.products.map((p) => p.id), [2, 1]);
+      expect(controller.mutationError, isNotEmpty);
+      expect(storage.ids, [2, 1]);
+    });
+
     test('an add before loading preserves previously persisted items', () async {
       final storage = FakeWishlistRepository(ids: [1]);
       final controller = WishlistController(repository: storage,

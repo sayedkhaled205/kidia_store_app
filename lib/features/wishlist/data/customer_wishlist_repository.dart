@@ -12,6 +12,13 @@ class CustomerWishlistRepository
 
   final DioCustomerAccountApiTransport transport;
   final WishlistRepository? deviceRepository;
+  Future<List<int>>? _pendingRead;
+  int _readRevision = 0;
+
+  void _invalidateRead() {
+    _readRevision++;
+    _pendingRead = null;
+  }
 
   @override
   Future<int> pendingDeviceItemCount() async {
@@ -24,7 +31,13 @@ class CustomerWishlistRepository
   @override
   Future<void> importDeviceItems() async {
     final local = await deviceRepository?.loadProductIds() ?? <int>[];
-    if (local.isNotEmpty) await transport.mutateWishlist(local, []);
+    if (local.isEmpty) return;
+    _invalidateRead();
+    try {
+      await transport.mutateWishlist(local, []);
+    } finally {
+      _invalidateRead();
+    }
   }
 
   List<int> _ids(Map<String, dynamic> response) {
@@ -38,22 +51,44 @@ class CustomerWishlistRepository
   }
 
   @override
-  Future<List<int>> loadProductIds() async =>
-      _ids(await transport.fetchWishlist());
+  Future<List<int>> loadProductIds() async {
+    final pending = _pendingRead;
+    if (pending != null) return pending;
+    final request = _readProductIds(_readRevision);
+    _pendingRead = request;
+    try {
+      return await request;
+    } finally {
+      if (identical(_pendingRead, request)) _pendingRead = null;
+    }
+  }
+
+  Future<List<int>> _readProductIds(int revision) async {
+    final ids = _ids(await transport.fetchWishlist());
+    // A write may have completed while the shared card read was in flight.
+    // No settled cache: only overlapping readers of this account share work.
+    return revision == _readRevision ? ids : await loadProductIds();
+  }
 
   @override
   Future<List<int>> updateAtomically(
     FutureOr<List<int>> Function(List<int>) update,
   ) async {
-    final current = await loadProductIds();
-    final next = (await update(
-      List<int>.of(current),
-    )).where((id) => id > 0).toSet().toList();
-    final add = next.where((id) => !current.contains(id)).toList();
-    final remove = current.where((id) => !next.contains(id)).toList();
-    return add.isEmpty && remove.isEmpty
-        ? current
-        : _ids(await transport.mutateWishlist(add, remove));
+    _invalidateRead();
+    try {
+      // Mutations always read fresh state, never a request begun by an old card.
+      final current = _ids(await transport.fetchWishlist());
+      final next = (await update(
+        List<int>.of(current),
+      )).where((id) => id > 0).toSet().toList();
+      final add = next.where((id) => !current.contains(id)).toList();
+      final remove = current.where((id) => !next.contains(id)).toList();
+      return add.isEmpty && remove.isEmpty
+          ? current
+          : _ids(await transport.mutateWishlist(add, remove));
+    } finally {
+      _invalidateRead();
+    }
   }
 
   @override

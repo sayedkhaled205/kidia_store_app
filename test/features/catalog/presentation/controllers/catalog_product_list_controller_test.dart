@@ -13,6 +13,110 @@ import 'package:mobishop_store_app/features/catalog/domain/repositories/catalog_
 import 'package:mobishop_store_app/features/catalog/presentation/controllers/catalog_product_list_controller.dart';
 
 void main() {
+  test(
+    'live-refresh facets survive paging without replacing the active page',
+    () async {
+      final filters = Completer<CatalogFilterData>();
+      var refreshed = false;
+      final repository = _FakeCatalogRepository(
+        products: (q) async =>
+            _page(q, items: [_product(q.page)], totalPages: 2, totalItems: 2),
+        filters: (_) => refreshed
+            ? filters.future
+            : Future.value(const CatalogFilterData()),
+      );
+      final controller = CatalogProductListController(
+        repository,
+        request: const CatalogProductListRequest(pageSize: 1),
+      );
+      addTearDown(controller.dispose);
+      await controller.loadInitial();
+      refreshed = true;
+      final refresh = controller.refreshSourceData();
+      await Future<void>.delayed(Duration.zero);
+      await controller.loadPage(2);
+      filters.complete(
+        const CatalogFilterData(
+          availableSizes: [
+            CatalogSizeOption(taxonomy: 'pa_size', term: 's', label: 'Small'),
+          ],
+        ),
+      );
+      await refresh;
+      expect(controller.state.page, 2);
+      expect(controller.state.items.single.id, 2);
+      expect(controller.state.availableSizes.single.label, 'Small');
+    },
+  );
+
+  test(
+    'live refresh displays fresh products before optional filter metadata',
+    () async {
+      final filters = Completer<CatalogFilterData>();
+      var refreshed = false;
+      final repository = _FakeCatalogRepository(
+        products: (q) async =>
+            _page(q, items: [_product(refreshed ? 2 : 1, withSizes: true)]),
+        filters: (_) => refreshed
+            ? filters.future
+            : Future.value(const CatalogFilterData()),
+      );
+      final controller = CatalogProductListController(
+        repository,
+        request: const CatalogProductListRequest(),
+      );
+      addTearDown(controller.dispose);
+      await controller.loadInitial();
+      refreshed = true;
+      final refresh = controller.refreshSourceData();
+      await Future<void>.delayed(Duration.zero);
+      expect(controller.state.items.single.id, 2);
+      expect(controller.state.isRefreshing, false);
+      expect(controller.state.availableSizes, isEmpty);
+      filters.complete(
+        const CatalogFilterData(
+          availableSizes: [
+            CatalogSizeOption(taxonomy: 'pa_size', term: 's', label: 'Small'),
+          ],
+        ),
+      );
+      await refresh;
+      expect(controller.state.availableSizes.single.label, 'Small');
+    },
+  );
+
+  test('late live-refresh filters cannot overwrite a newer search', () async {
+    final filters = Completer<CatalogFilterData>();
+    var refreshed = false;
+    final repository = _FakeCatalogRepository(
+      products: (q) async =>
+          _page(q, items: [_product(q.search == 'new' ? 3 : 1)]),
+      filters: (q) => refreshed && q.search != 'new'
+          ? filters.future
+          : Future.value(const CatalogFilterData(availableSizes: [])),
+    );
+    final controller = CatalogProductListController(
+      repository,
+      request: const CatalogProductListRequest(),
+    );
+    addTearDown(controller.dispose);
+    await controller.loadInitial();
+    refreshed = true;
+    final refresh = controller.refreshSourceData();
+    await Future<void>.delayed(Duration.zero);
+    await controller.submitSearch('new');
+    filters.complete(
+      const CatalogFilterData(
+        availableSizes: [
+          CatalogSizeOption(taxonomy: 'pa_size', term: 'old', label: 'Old'),
+        ],
+      ),
+    );
+    await refresh;
+    expect(controller.state.items.single.id, 3);
+    expect(controller.state.availableSizes, isEmpty);
+  });
+
   group('CatalogProductListController', () {
     test(
       'failed facets keep products usable without inventing stock choices',

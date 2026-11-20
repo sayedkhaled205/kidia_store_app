@@ -10,15 +10,11 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
   @override
   Future<CustomerAccount> getAccount() async {
     try {
+      // This public field metadata does not depend on the customer response.
+      // Catch its optional failure immediately, even if account loading fails.
+      final configuration = _loadAddressConfiguration();
       final Map<String, dynamic> account = await transport.fetchAccount();
-      Map<String, dynamic>? configuration;
-      try {
-        configuration = await transport.fetchAddressConfig();
-      } catch (_) {
-        // Account data must remain available when an older plugin does not yet
-        // expose the dynamic checkout-field contract.
-      }
-      return _account(account, configuration);
+      return _account(account, await configuration);
     } on CustomerAccountTransportException catch (error, stackTrace) {
       Error.throwWithStackTrace(_transportFailure(error), stackTrace);
     } on FormatException catch (error, stackTrace) {
@@ -39,6 +35,15 @@ class CustomerAccountRepositoryImpl implements CustomerAccountRepository {
         ),
         stackTrace,
       );
+    }
+  }
+
+  Future<Map<String, dynamic>?> _loadAddressConfiguration() async {
+    try {
+      return await transport.fetchAddressConfig();
+    } catch (_) {
+      // Older plugins may not expose the dynamic checkout-field contract.
+      return null;
     }
   }
 

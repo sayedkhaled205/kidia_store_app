@@ -5,6 +5,7 @@ import 'package:mobishop_store_app/core/network/store_api_exception.dart';
 import 'package:mobishop_store_app/features/catalog/data/datasources/catalog_remote_data_source.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_category.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_filter_data.dart';
+import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_image.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_page.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_product.dart';
 import 'package:mobishop_store_app/features/catalog/domain/entities/catalog_variation.dart';
@@ -17,7 +18,8 @@ class CatalogRepositoryImpl
     implements
         CatalogRepository,
         CatalogChangeSource,
-        CatalogFilterOptionsSource {
+        CatalogFilterOptionsSource,
+        CatalogProductImagePreviewSource {
   CatalogRepositoryImpl(
     this._remoteDataSource, {
     Stream<int>? changes,
@@ -138,6 +140,14 @@ class CatalogRepositoryImpl
       }
       return page;
     });
+  }
+
+  @override
+  List<CatalogImage> cachedProductImages(int productId) {
+    if (productId <= 0) return const <CatalogImage>[];
+    final cached = _products[productId];
+    if (cached == null) return const <CatalogImage>[];
+    return List<CatalogImage>.unmodifiable(cached.value.images);
   }
 
   @override
