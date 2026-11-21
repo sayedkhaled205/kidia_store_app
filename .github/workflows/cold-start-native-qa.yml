@@ -1,0 +1,63 @@
+name: Cold start native QA fixture
+on:
+  push:
+    branches: ['codex/qa-cold-start352']
+    paths: ['.github/workflows/cold-start-native-qa.yml']
+permissions:
+  contents: read
+jobs:
+  emulator-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.8'
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Freeze the verified public design
+        run: |
+          python3 - <<'PY'
+          import json, hashlib, urllib.request
+          endpoint = 'https://api.woomobile.app/v1/app-design/6990b322-e396-46bb-a188-a1e472b6bf64'
+          with urllib.request.urlopen(endpoint, timeout=30) as response:
+              publication = json.load(response)
+          bundle = publication['bundle']
+          assert hashlib.sha256(bundle.encode()).hexdigest() == '3e1ed02d03d49114abc13177affccf5fce80b53188082ea114e9b460f1b965fb'
+          defines = {
+              'STORE_URL': 'https://kidiastore.com',
+              'STORE_PLATFORM': 'woocommerce',
+              'STORE_NAME': 'Kidia Startup QA',
+              'STORE_LOCALE': 'en',
+              'APP_TEST_BUILD': True,
+              'APP_DESIGN_BUNDLE': bundle,
+              'APP_DESIGN_UPDATE_URL': endpoint,
+              'PUSH_CONFIG_URL': 'https://kidiastore.com/wp-json/mobishop/v1/push/config',
+          }
+          with open('/tmp/cold-start-qa.json', 'w') as out:
+              json.dump(defines, out)
+          PY
+      - name: Compile disposable emulator fixture
+        env:
+          MOBISHOP_ANDROID_BUILD_MODE: qa
+          ORG_GRADLE_PROJECT_APPLICATION_ID: app.woomobile.store.s6990b322e39646bba188a1e472b6bf64
+          ORG_GRADLE_PROJECT_APP_NAME: Kidia Startup QA
+        run: flutter build apk --release --target-platform android-x64 --build-number=352 --dart-define-from-file=/tmp/cold-start-qa.json
+      - name: Record source and artifact
+        run: |
+          git rev-parse HEAD > build/app/outputs/flutter-apk/source.txt
+          sha256sum build/app/outputs/flutter-apk/app-release.apk > build/app/outputs/flutter-apk/sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cold-start-352-emulator-only
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/flutter-apk/source.txt
+            build/app/outputs/flutter-apk/sha256.txt
+          retention-days: 3
