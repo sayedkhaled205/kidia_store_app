@@ -84,6 +84,17 @@ final homeReadSessionProvider = Provider<HomeReadSession>((ref) {
   return HomeReadSession();
 });
 
+// Partial public content belongs to this design/catalog/locale only. The
+// Future provider still completes only when every section has settled.
+final homeLayoutProgressProvider = Provider.autoDispose
+    .family<ValueNotifier<HomeLayout?>, String>((ref, locale) {
+      ref.watch(portableAppDesign58Provider);
+      ref.watch(catalogRepositoryProvider);
+      final progress = ValueNotifier<HomeLayout?>(null);
+      ref.onDispose(progress.dispose);
+      return progress;
+    });
+
 final homeImageDownloadProvider = Provider<Future<void> Function(String)>((
   ref,
 ) {
@@ -104,6 +115,14 @@ final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>
   (Ref ref, String locale) async {
     final design = ref.watch(portableAppDesign58Provider);
     if (design != null) {
+      final progress = ref.watch(homeLayoutProgressProvider(locale));
+      var active = true;
+      ref.onDispose(() => active = false);
+      void publish(HomeLayout? layout) => scheduleMicrotask(() {
+        // A superseded publication or manual retry must not paint late data.
+        if (active && ref.mounted) progress.value = layout;
+      });
+      publish(null);
       ref.watch(homeImagePrefetchProvider);
       final catalog = ref.watch(catalogRepositoryProvider);
       Timer? directRefresh;
@@ -111,11 +130,18 @@ final homeLayoutProvider = FutureProvider.autoDispose.family<HomeLayout, String>
       try {
         return await ref
             .read(homeReadSessionProvider)
-            .load(locale, () => design.hydrateHome(catalog, locale: locale));
+            .load(
+              locale,
+              () => design.hydrateHome(
+                catalog,
+                locale: locale,
+                onProgress: publish,
+              ),
+            );
       } finally {
-        if (ref.mounted) {
+        if (active && ref.mounted) {
           directRefresh = Timer(const Duration(minutes: 1), () {
-            if (ref.mounted) ref.invalidateSelf();
+            if (active && ref.mounted) ref.invalidateSelf();
           });
         }
       }

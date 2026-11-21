@@ -112,6 +112,24 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
     final CmsPageLayout chrome = loadedChrome ?? CmsPageLayout.fallback('home');
 
+    Widget renderLayout(HomeLayout layout) {
+      _visibleBlocks = layout.enabledBlocks
+          .where((HomeBlock block) => block is! AppHeaderBlock)
+          .toList(growable: false);
+      return HomeBlockRenderer(
+        blocks: _visibleBlocks,
+        scrollController: _scrollController,
+        keyForBlock: _keyForBlock,
+        onAction: (HomeAction action) {
+          if (action.type == 'retry_home') {
+            ref.invalidate(homeLayoutProvider(locale));
+          } else {
+            _handleHomeAction(context: context, action: action);
+          }
+        },
+      );
+    }
+
     return CmsPageScaffold(
       layout: chrome,
       defaultTitle: storeName,
@@ -157,38 +175,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                 homeLayoutAsync.when(
                   skipLoadingOnReload: true,
                   skipLoadingOnRefresh: true,
-                  data: (HomeLayout layout) {
-                    _visibleBlocks = layout.enabledBlocks
-                        .where((HomeBlock block) => block is! AppHeaderBlock)
-                        .toList(growable: false);
-                    return SliverMainAxisGroup(
-                      slivers: <Widget>[
-                        HomeBlockRenderer(
-                          blocks: _visibleBlocks,
-                          scrollController: _scrollController,
-                          keyForBlock: _keyForBlock,
-                          onAction: (HomeAction action) {
-                            if (action.type == 'retry_home') {
-                              ref.invalidate(homeLayoutProvider(locale));
-                            } else {
-                              _handleHomeAction(
-                                context: context,
-                                action: action,
-                              );
-                            }
-                          },
-                        ),
-                      ],
-                    );
-                  },
+                  data: renderLayout,
                   loading: () {
-                    return const SliverMainAxisGroup(
-                      slivers: <Widget>[
-                        SliverFillRemaining(
-                          hasScrollBody: false,
-                          child: _HomeLoadingState(),
-                        ),
-                      ],
+                    return ValueListenableBuilder<HomeLayout?>(
+                      valueListenable: ref.watch(
+                        homeLayoutProgressProvider(locale),
+                      ),
+                      builder: (context, layout, _) => layout == null
+                          ? const SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: _HomeLoadingState(),
+                            )
+                          : renderLayout(layout),
                     );
                   },
                   error: (Object error, StackTrace stackTrace) {

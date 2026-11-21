@@ -101,7 +101,13 @@ class AppDesignBundle58 {
   Future<HomeLayout> hydrateHome(
     CatalogRepository repository, {
     required String locale,
-  }) => hydrateSavedHome58(_map(_json['home']), repository, locale: locale);
+    void Function(HomeLayout)? onProgress,
+  }) => hydrateSavedHome58(
+    _map(_json['home']),
+    repository,
+    locale: locale,
+    onProgress: onProgress,
+  );
 
   static void _validateIdentity(Map<String, dynamic> value) {
     _keys(value, const {

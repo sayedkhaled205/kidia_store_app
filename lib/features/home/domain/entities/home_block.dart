@@ -849,6 +849,18 @@ class SpacerBlock extends HomeBlock {
   final double height;
 }
 
+/// The saved section reserves its place while its live merchandise loads.
+class CatalogLoadingBlock extends HomeBlock {
+  CatalogLoadingBlock(this.original)
+    : super(
+        id: original.id,
+        type: original.type,
+        enabled: original.enabled,
+        presentation: original.presentation,
+      );
+  final HomeBlock original;
+}
+
 /// A failed live section keeps its place without inventing merchandise.
 class CatalogUnavailableBlock extends HomeBlock {
   CatalogUnavailableBlock(HomeBlock original)

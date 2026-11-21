@@ -205,8 +205,66 @@ void main() {
       expect(h.configReads, 1);
       expect(h.registrations, isEmpty);
       h.messaging.permission = true;
+      h.service.didChangeAppLifecycleState(AppLifecycleState.paused);
       h.service.didChangeAppLifecycleState(AppLifecycleState.resumed);
       await _flush(tester);
+      expect(h.registrations, hasLength(1));
+    },
+  );
+
+  for (final permitted in [true, false]) {
+    testWidgets('focus returns while permission is pending $permitted', (
+      tester,
+    ) async {
+      final h = _Harness();
+      final permission = Completer<bool>();
+      h.messaging.pendingPermission = permission.future;
+      addTearDown(h.dispose);
+      final pending = h.service.initialize();
+      await _flush(tester);
+      h.service.didChangeAppLifecycleState(AppLifecycleState.inactive);
+      h.service.didChangeAppLifecycleState(AppLifecycleState.resumed);
+      permission.complete(permitted);
+      await _flush(tester);
+      await pending;
+      await tester.pump(const Duration(seconds: 10));
+      expect(h.configReads, 1);
+      expect(
+        h.messaging.operations.where((op) => op == 'permission'),
+        hasLength(1),
+      );
+      expect(h.registrations, hasLength(permitted ? 1 : 0));
+    });
+
+    testWidgets('permission focus return preserves decision $permitted', (
+      tester,
+    ) async {
+      final h = _Harness();
+      h.messaging.permission = permitted;
+      addTearDown(h.dispose);
+      await _initialize(tester, h.service);
+      h.service.didChangeAppLifecycleState(AppLifecycleState.inactive);
+      h.service.didChangeAppLifecycleState(AppLifecycleState.resumed);
+      await _flush(tester);
+      expect(h.configReads, 1);
+      expect(
+        h.messaging.operations.where((op) => op == 'permission'),
+        hasLength(1),
+      );
+      expect(h.registrations, hasLength(permitted ? 1 : 0));
+    });
+  }
+
+  testWidgets(
+    'focus return retries failed bootstrap without waiting for backoff',
+    (tester) async {
+      final h = _Harness()..configFailures = 1;
+      addTearDown(h.dispose);
+      await _initialize(tester, h.service);
+      h.service.didChangeAppLifecycleState(AppLifecycleState.inactive);
+      h.service.didChangeAppLifecycleState(AppLifecycleState.resumed);
+      await _flush(tester);
+      expect(h.configReads, 2);
       expect(h.registrations, hasLength(1));
     },
   );
@@ -360,6 +418,7 @@ class _Messaging implements PushMessagingClient {
   int configureCalls = 0;
   int initialReads = 0;
   bool permission = true;
+  Future<bool>? pendingPermission;
   String? token = 'fcm-token';
   FirebaseClientOptions? configured;
   final operations = <String>[];
@@ -373,7 +432,7 @@ class _Messaging implements PushMessagingClient {
   @override
   Future<bool> requestPermission() async {
     operations.add('permission');
-    return permission;
+    return pendingPermission ?? permission;
   }
 
   @override
