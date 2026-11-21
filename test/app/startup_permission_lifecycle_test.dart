@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +11,9 @@ import 'package:mobishop_store_app/core/app_design/app_design_bundle58.dart';
 import 'package:mobishop_store_app/core/app_design/live_app_design.dart';
 import 'package:mobishop_store_app/core/app_design/live_app_design_provider.dart';
 import 'package:mobishop_store_app/core/commerce/commerce_connection.dart';
+import 'package:mobishop_store_app/core/localization/app_locale_provider.dart';
+import 'package:mobishop_store_app/features/home/data/home_read_session.dart';
+import 'package:mobishop_store_app/features/home/domain/entities/home_block.dart';
 import 'package:mobishop_store_app/features/auth/presentation/providers/native_auth_providers.dart';
 import 'package:mobishop_store_app/features/account/application/account_deletion_recovery.dart';
 import 'package:mobishop_store_app/core/live_updates/native_live_updates_host.dart';
@@ -78,6 +82,7 @@ class TestDesignNotifier extends LiveDesignNotifier {
     ref.onDispose(engine.dispose);
     return null;
   }
+
   @override
   void configure(bool active, bool safe) =>
       engine.configure(active: active, safeToApply: safe);
@@ -90,6 +95,24 @@ void main() {
     (tester) async {
       var homeReads = 0;
       var deletionRecoveryReads = 0;
+      var failHome = false;
+      var staleHome = false;
+      var failChrome = false;
+      var chromeReads = 0;
+      Completer<HomeLayout>? pendingHome;
+      final readSession = HomeReadSession();
+      HomeLayout layout(String locale) => HomeLayout(
+        version: 1,
+        page: 'home',
+        locale: locale,
+        updatedAt: DateTime(2026),
+        blocks: [
+          if (staleHome)
+            CatalogUnavailableBlock(
+              const SpacerBlock(id: 'section', enabled: true, height: 1),
+            ),
+        ],
+      );
       final transport = Revisions();
       final designTransport = DesignTransport();
       final design = LiveAppDesign(
@@ -141,6 +164,8 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            appLocaleProvider.overrideWithValue(const Locale('en')),
+            homeReadSessionProvider.overrideWithValue(readSession),
             mobileAnalyticsProvider.overrideWithValue(NoAnalytics()),
             nativeAuthConfigProvider.overrideWith(
               (ref) async => throw StateError('Unused in lifecycle fixture'),
@@ -153,18 +178,19 @@ void main() {
             liveAppDesignProvider.overrideWith(
               () => TestDesignNotifier(design),
             ),
-            cmsPageLayoutProvider.overrideWith(
-              (ref, page) async => CmsPageLayout.fallback(page),
-            ),
+            cmsPageLayoutProvider.overrideWith((ref, page) async {
+              chromeReads++;
+              if (failChrome) throw StateError('offline fixture');
+              return CmsPageLayout.fallback(page);
+            }),
             homeLayoutProvider.overrideWith((ref, locale) async {
               homeReads++;
-              return HomeLayout(
-                version: 1,
-                page: 'home',
-                locale: locale,
-                updatedAt: DateTime(2026),
-                blocks: [],
-              );
+              return ref.read(homeReadSessionProvider).load(locale, () async {
+                if (failHome) throw StateError('offline fixture');
+                return pendingHome == null
+                    ? layout(locale)
+                    : pendingHome.future;
+              });
             }),
           ],
           child: MaterialApp.router(
@@ -209,6 +235,61 @@ void main() {
       );
       expect(deletionRecoveryReads, initialRecoveryReads + 2);
       expect(designTransport.calls, 2);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MainShell)),
+      );
+      final home = homeLayoutProvider('en');
+      Future<void> regainFocus() async {
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.inactive,
+        );
+        await tester.pump();
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pump();
+        await tester.pump();
+      }
+
+      for (final stale in [false, true]) {
+        failHome = !stale;
+        staleHome = stale;
+        container.invalidate(home);
+        await tester.pump();
+        await tester.pump();
+        expect(container.read(home).isLoading, false);
+        expect(container.read(home).hasError, !stale);
+        expect(readSession.isStale('en'), stale);
+        final before = homeReads;
+        failHome = false;
+        staleHome = false;
+        await regainFocus();
+        expect(homeReads, before + 1);
+        expect(container.read(home).hasError, false);
+        expect(readSession.isStale('en'), false);
+      }
+      pendingHome = Completer<HomeLayout>();
+      container.invalidate(home);
+      await tester.pump();
+      final pendingReads = homeReads;
+      await regainFocus();
+      expect(homeReads, pendingReads);
+      expect(container.read(home).isLoading, true);
+      pendingHome.complete(layout('en'));
+      await tester.pump();
+      expect(container.read(home).isLoading, false);
+      failChrome = true;
+      container.invalidate(cmsPageLayoutProvider('home'));
+      await tester.pump();
+      await tester.pump();
+      expect(container.read(cmsPageLayoutProvider('home')).hasError, true);
+      final beforeChrome = chromeReads;
+      failChrome = false;
+      expect(container.exists(cmsPageLayoutProvider('product')), false);
+      await regainFocus();
+      expect(chromeReads, beforeChrome + 1);
+      expect(container.exists(homeLayoutProvider('ar')), false);
+      expect(container.exists(cmsPageLayoutProvider('product')), false);
       await tester.pumpWidget(const SizedBox.shrink());
       expect(tester.takeException(), isNull);
     },

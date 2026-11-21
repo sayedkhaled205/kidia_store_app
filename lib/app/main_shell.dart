@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../core/theme/mobishop_colors.dart';
 import '../core/config/app_config.dart';
+import '../core/app_design/app_design_bundle58.dart';
+import '../core/localization/app_locale_provider.dart';
 import '../core/commerce/commerce_connection.dart';
 import '../features/auth/presentation/providers/native_auth_providers.dart';
 import '../features/account/application/account_deletion_recovery.dart';
@@ -112,7 +114,26 @@ class _MainShellState extends ConsumerState<MainShell>
         _wasBackgrounded = false;
         ref.read(mobileAnalyticsProvider).trackInBackground('app_resume');
         _refreshRemoteSettings();
+      } else {
+        _retryFailedRemoteSettings();
       }
+    }
+  }
+
+  void _retryFailedRemoteSettings() {
+    final locale = ref.read(appLocaleProvider).toLanguageTag();
+    final home = homeLayoutProvider(locale);
+    if (ref.exists(home)) {
+      final state = ref.read(home);
+      final stale = ref.exists(homeReadSessionProvider) &&
+          ref.read(homeReadSessionProvider).isStale(locale);
+      if (!state.isLoading && (state.hasError || stale)) ref.invalidate(home);
+    }
+    for (final page in AppDesignBundle58.pages) {
+      final chrome = cmsPageLayoutProvider(page);
+      if (!ref.exists(chrome)) continue;
+      final state = ref.read(chrome);
+      if (!state.isLoading && state.hasError) ref.invalidate(chrome);
     }
   }
 
