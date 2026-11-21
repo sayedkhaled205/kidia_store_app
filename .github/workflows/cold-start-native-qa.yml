@@ -1,7 +1,7 @@
 name: Cold start native QA fixture
 on:
   push:
-    branches: ['codex/qa-cold-start352']
+    branches: ['qa/cold-start352-final']
     paths: ['.github/workflows/cold-start-native-qa.yml']
 permissions:
   contents: read
