@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_core_platform_interface/firebase_core_platform_interface.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobishop_store_app/core/push/push_bootstrap_config.dart';
 import 'package:mobishop_store_app/core/push/push_messaging_client.dart';
@@ -49,6 +51,7 @@ class FakeFirebaseCore extends FirebasePlatform {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late FirebasePlatform? original;
   late FakeFirebaseCore firebase;
   setUp(() {
@@ -57,6 +60,150 @@ void main() {
     Firebase.delegatePackingProperty = firebase;
   });
   tearDown(() => Firebase.delegatePackingProperty = original);
+
+  group('notification permission decisions', () {
+    const channel = MethodChannel('plugins.flutter.io/firebase_messaging');
+    late AuthorizationStatus status;
+    late AuthorizationStatus response;
+    late int requests;
+    late bool requestFails;
+
+    Map<String, Object?> settings(AuthorizationStatus value) => {
+      'authorizationStatus': switch (value) {
+        AuthorizationStatus.notDetermined => -1,
+        AuthorizationStatus.denied => 0,
+        AuthorizationStatus.authorized => 1,
+        AuthorizationStatus.provisional => 2,
+        AuthorizationStatus.deniedPermanently => 3,
+      },
+      for (final key in [
+        'alert',
+        'announcement',
+        'badge',
+        'carPlay',
+        'lockScreen',
+        'notificationCenter',
+        'timeSensitive',
+        'criticalAlert',
+        'sound',
+        'providesAppNotificationSettings',
+      ])
+        key: -1,
+      'showPreviews': -1,
+    };
+
+    setUp(() async {
+      await FirebasePushMessagingClient().configure(pushOptions);
+      status = AuthorizationStatus.notDetermined;
+      response = AuthorizationStatus.denied;
+      requests = 0;
+      requestFails = false;
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            if (call.method == 'Messaging#getNotificationSettings') {
+              return settings(status);
+            }
+            if (call.method == 'Messaging#requestPermission') {
+              requests++;
+              if (requestFails) throw PlatformException(code: 'unavailable');
+              status = response;
+              return settings(status);
+            }
+            throw StateError('Unexpected messaging call: ${call.method}');
+          });
+    });
+
+    tearDown(() {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    });
+
+    test('first launch prompts once; denial survives a new client', () async {
+      expect(await FirebasePushMessagingClient().requestPermission(), isFalse);
+      expect(requests, 1);
+      // A new service/client after backgrounding or process restart must not
+      // ask again. The installed SDK persists whether Android already asked.
+      expect(await FirebasePushMessagingClient().requestPermission(), isFalse);
+      expect(requests, 1);
+    });
+
+    for (final denied in [
+      AuthorizationStatus.denied,
+      AuthorizationStatus.deniedPermanently,
+    ]) {
+      test('existing $denied is respected without prompting', () async {
+        status = denied;
+        expect(
+          await FirebasePushMessagingClient().requestPermission(),
+          isFalse,
+        );
+        expect(requests, 0);
+      });
+    }
+
+    test(
+      'permission granted in Settings recovers without another prompt',
+      () async {
+        expect(
+          await FirebasePushMessagingClient().requestPermission(),
+          isFalse,
+        );
+        status = AuthorizationStatus.authorized;
+        expect(await FirebasePushMessagingClient().requestPermission(), isTrue);
+        expect(requests, 1);
+        status = AuthorizationStatus.denied;
+        expect(
+          await FirebasePushMessagingClient().requestPermission(),
+          isFalse,
+        );
+        expect(requests, 1);
+      },
+    );
+
+    for (final granted in [
+      AuthorizationStatus.authorized,
+      AuthorizationStatus.provisional,
+    ]) {
+      test(
+        'existing $granted never prompts, even after Settings revocation',
+        () async {
+          status = granted;
+          expect(
+            await FirebasePushMessagingClient().requestPermission(),
+            isTrue,
+          );
+          status = AuthorizationStatus.denied;
+          expect(
+            await FirebasePushMessagingClient().requestPermission(),
+            isFalse,
+          );
+          expect(requests, 0);
+        },
+      );
+    }
+
+    test('first grant is retained without repeating the prompt', () async {
+      response = AuthorizationStatus.authorized;
+      expect(await FirebasePushMessagingClient().requestPermission(), isTrue);
+      expect(await FirebasePushMessagingClient().requestPermission(), isTrue);
+      expect(requests, 1);
+    });
+
+    test(
+      'SDK request failure is retryable and is not treated as a denial',
+      () async {
+        requestFails = true;
+        await expectLater(
+          FirebasePushMessagingClient().requestPermission(),
+          throwsA(isA<FirebaseException>()),
+        );
+        requestFails = false;
+        response = AuthorizationStatus.authorized;
+        expect(await FirebasePushMessagingClient().requestPermission(), isTrue);
+        expect(requests, 2);
+      },
+    );
+  });
 
   test(
     'push starts after merchant auth initialized its secondary project',

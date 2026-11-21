@@ -51,11 +51,16 @@ final class FirebasePushMessagingClient implements PushMessagingClient {
 
   @override
   Future<bool> requestPermission() async {
-    final permission = await FirebaseMessaging.instance.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    // Resuming refreshes Settings changes without asking again after a denial.
+    // The locked SDK also persists Android's first-request state.
+    var permission = await FirebaseMessaging.instance.getNotificationSettings();
+    if (permission.authorizationStatus == AuthorizationStatus.notDetermined) {
+      permission = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+    }
     return permission.authorizationStatus == AuthorizationStatus.authorized ||
         permission.authorizationStatus == AuthorizationStatus.provisional;
   }
