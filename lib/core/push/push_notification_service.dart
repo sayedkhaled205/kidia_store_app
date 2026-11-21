@@ -175,10 +175,17 @@ final class PushNotificationService with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Dismissing the permission prompt must not immediately ask again.
+    if (state == AppLifecycleState.inactive) return;
+    final wasActive = _active;
     _active = state == AppLifecycleState.resumed;
     if (!_active) {
       _retryTimer?.cancel();
       _eventRetryTimer?.cancel();
+      return;
+    }
+    if (wasActive) {
+      if (!_ready && !_permissionDenied) unawaited(initialize());
       return;
     }
     _permissionDenied = false;
