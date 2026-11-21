@@ -25,17 +25,24 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, hashlib
+          from pathlib import Path
           endpoint = 'https://api.woomobile.app/v1/app-design/6990b322-e396-46bb-a188-a1e472b6bf64'
           with open('tool/cold-start-qa-public-design.txt') as source:
               bundle = source.read().strip()
           assert hashlib.sha256(bundle.encode()).hexdigest() == '3e1ed02d03d49114abc13177affccf5fce80b53188082ea114e9b460f1b965fb'
+          # The fixture embeds the exact same constant value without exceeding
+          # Linux's per-argument limit. Product behavior/source stays identical.
+          config = Path('lib/core/config/app_config.dart')
+          source = config.read_text()
+          original = "'APP_DESIGN_BUNDLE',\n    defaultValue: '',"
+          assert source.count(original) == 1
+          config.write_text(source.replace(original, "'APP_DESIGN_BUNDLE',\n    defaultValue: '" + bundle + "',"))
           defines = {
               'STORE_URL': 'https://kidiastore.com',
               'STORE_PLATFORM': 'woocommerce',
               'STORE_NAME': 'Kidia Startup QA',
               'STORE_LOCALE': 'en',
               'APP_TEST_BUILD': True,
-              'APP_DESIGN_BUNDLE': bundle,
               'APP_DESIGN_UPDATE_URL': endpoint,
               'PUSH_CONFIG_URL': 'https://kidiastore.com/wp-json/mobishop/v1/push/config',
           }
