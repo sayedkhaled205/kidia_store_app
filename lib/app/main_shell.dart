@@ -74,6 +74,7 @@ class MainShell extends ConsumerStatefulWidget {
 class _MainShellState extends ConsumerState<MainShell>
     with WidgetsBindingObserver {
   bool _footerHidden = false;
+  bool _wasBackgrounded = false;
   static const List<_NavigationItem> _items = MainShell._items;
 
   @override
@@ -100,10 +101,18 @@ class _MainShellState extends ConsumerState<MainShell>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.hidden ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _wasBackgrounded = true;
+    }
     if (!AppConfig.isCmsPreview && state == AppLifecycleState.resumed) {
-      ref.read(mobileAnalyticsProvider).trackInBackground('app_resume');
-      _refreshRemoteSettings();
       ref.invalidate(accountDeletionRecoveryProvider);
+      if (_wasBackgrounded) {
+        _wasBackgrounded = false;
+        ref.read(mobileAnalyticsProvider).trackInBackground('app_resume');
+        _refreshRemoteSettings();
+      }
     }
   }
 

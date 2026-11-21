@@ -63,6 +63,37 @@ void main() {
   });
   tearDown(() => engine.dispose());
   test(
+    'confirming embedded design does not restart views but new Publish does',
+    () async {
+      engine.dispose();
+      final raw = release(1);
+      engine = LiveAppDesign(
+        transport: transport,
+        cache: cache,
+        platform: CommercePlatform.odoo,
+        origin: Uri.parse(appDesignOrigin58),
+        embeddedBundle: (jsonDecode(raw) as Map)['bundle'] as String,
+        interval: const Duration(hours: 1),
+      );
+      var notifications = 0;
+      engine.addListener(() => notifications++);
+      transport.next = raw;
+      engine.configure(active: true, safeToApply: true);
+      await settle();
+      expect(engine.revision, 1);
+      expect(notifications, 0);
+      expect(cache.value, isNotNull);
+      transport.next = release(2, color: '#112233');
+      await engine.refresh();
+      expect(notifications, 1);
+      expect(engine.design!.identity['primary_color'], '#112233');
+      transport.next = release(3, color: '#112233');
+      await engine.refresh();
+      expect(engine.revision, 3);
+      expect(notifications, 1);
+    },
+  );
+  test(
     'publishes without rebuilding and keeps offline cache across restart',
     () async {
       transport.next = release(1);

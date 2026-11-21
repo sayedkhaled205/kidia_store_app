@@ -9,6 +9,28 @@ abstract final class HomeBlockFactory {
     required HomeBlock block,
     required ValueChanged<HomeAction> onAction,
   }) {
+    if (block is CatalogLoadingBlock) {
+      final title = switch (block.original) {
+        ProductCarouselBlock value => value.title,
+        ProductGridBlock value => value.title,
+        CategoryGridBlock value => value.title,
+        _ => null,
+      };
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (title?.isNotEmpty == true) Text(title!),
+            const SizedBox(height: 12),
+            const SizedBox(
+              height: 104,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ],
+        ),
+      );
+    }
     if (block is CatalogUnavailableBlock) {
       return Builder(
         builder: (context) {

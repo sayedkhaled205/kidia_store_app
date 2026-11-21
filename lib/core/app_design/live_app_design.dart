@@ -86,10 +86,7 @@ class DioLiveDesignTransport implements LiveDesignTransport {
         followRedirects: false,
         validateStatus: (status) =>
             status == 200 || status == 304 || status == 404,
-        headers: {
-          'Accept': 'application/json',
-          'If-None-Match': ?etag,
-        },
+        headers: {'Accept': 'application/json', 'If-None-Match': ?etag},
       ),
     );
     final body = response.data;
@@ -137,8 +134,12 @@ class LiveAppDesign extends ChangeNotifier {
     required this.cache,
     required this.platform,
     required this.origin,
+    String? embeddedBundle,
     this.interval = const Duration(seconds: 30),
-  });
+  }) : _embeddedDigest = embeddedBundle == null || embeddedBundle.isEmpty
+           ? null
+           : sha256.convert(utf8.encode(embeddedBundle)).toString();
+  final String? _embeddedDigest;
   final LiveDesignTransport transport;
   final LiveDesignCache cache;
   final CommercePlatform platform;
@@ -212,7 +213,9 @@ class LiveAppDesign extends ChangeNotifier {
         _downloaded!.revision == _applied?.revision) {
       return;
     }
-    final changed = _downloaded!.digest != _applied?.digest;
+    // Confirming the design already on screen must not restart cold reads.
+    final changed =
+        _downloaded!.digest != (_applied?.digest ?? _embeddedDigest);
     _applied = _downloaded;
     if (changed) notifyListeners();
   }

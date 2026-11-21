@@ -40,6 +40,7 @@ class LiveDesignNotifier extends Notifier<AppDesignBundle58?> {
         ),
         platform: connection.platform,
         origin: connection.storeOrigin,
+        embeddedBundle: AppConfig.appDesignBundle,
       );
       _engine = engine;
       engine.addListener(() {
@@ -97,6 +98,7 @@ class _LiveAppDesignHostState extends ConsumerState<LiveAppDesignHost>
   });
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) return;
     _active = state == AppLifecycleState.resumed;
     _schedule();
   }

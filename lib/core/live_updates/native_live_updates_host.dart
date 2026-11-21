@@ -131,6 +131,8 @@ class _NativeLiveUpdatesHostState extends ConsumerState<NativeLiveUpdatesHost>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Permission dialogs lose focus without backgrounding the application.
+    if (state == AppLifecycleState.inactive) return;
     _updates?.setActive(state == AppLifecycleState.resumed);
   }
 

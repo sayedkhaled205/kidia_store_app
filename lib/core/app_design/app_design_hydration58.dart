@@ -114,6 +114,7 @@ Future<HomeLayout> hydrateSavedHome58(
   Map<String, dynamic> saved,
   CatalogRepository repository, {
   required String locale,
+  void Function(HomeLayout)? onProgress,
 }) async {
   final base = HomeLayoutModel.fromJson(saved);
   if (locale != base.locale && !const {'ar', 'en'}.contains(locale)) {
@@ -122,20 +123,37 @@ Future<HomeLayout> hydrateSavedHome58(
     );
   }
   final rawBlocks = saved['blocks'] as List;
-  final blocks = List<HomeBlock?>.filled(rawBlocks.length, null);
-  final limiter = _CatalogReadLimiter(_maxConcurrentCatalogReads);
-  Object? fatalError;
-  StackTrace? fatalStackTrace;
-
-  final tasks = <Future<void>>[];
+  final blocks = <HomeBlock>[];
+  final queries = <int, Map<String, dynamic>>{};
+  // Validate the complete selection before exposing any partial layout.
   for (var index = 0; index < rawBlocks.length; index++) {
     final json = Map<String, dynamic>.from(rawBlocks[index] as Map);
     final block = HomeBlockModel.fromJson(json);
-    if (!block.enabled || !json.containsKey('catalog_query')) {
-      blocks[index] = block;
-      continue;
+    if (block.enabled && json.containsKey('catalog_query')) {
+      final query = Map<String, dynamic>.from(json['catalog_query'] as Map);
+      validateCatalogQuery58(query, categories: block is CategoryGridBlock);
+      queries[index] = query;
+      blocks.add(CatalogLoadingBlock(block));
+    } else {
+      blocks.add(block);
     }
-    final query = Map<String, dynamic>.from(json['catalog_query'] as Map);
+  }
+  HomeLayout snapshot() => HomeLayout(
+    version: base.version,
+    page: base.page,
+    locale: locale,
+    updatedAt: base.updatedAt,
+    blocks: List<HomeBlock>.unmodifiable(blocks),
+  );
+  onProgress?.call(snapshot());
+  final limiter = _CatalogReadLimiter(_maxConcurrentCatalogReads);
+  Object? fatalError;
+
+  final tasks = <Future<void>>[];
+  for (final entry in queries.entries) {
+    final index = entry.key;
+    final block = (blocks[index] as CatalogLoadingBlock).original;
+    final query = entry.value;
     // Invoked immediately (not deferred), so each section's slot requests are
     // registered with the limiter in saved block order before the next
     // section's are, even though their catalog reads resolve out of order.
@@ -152,27 +170,16 @@ Future<HomeLayout> hydrateSavedHome58(
           // A non-transient failure is already fatal; stop handing further
           // queued reads to the limiter. In-flight reads still settle.
           fatalError ??= error;
-          fatalStackTrace ??= stackTrace;
           limiter.stop(error, stackTrace);
-          return;
+          rethrow;
         }
         blocks[index] = CatalogUnavailableBlock(block);
       }
+      if (fatalError == null) onProgress?.call(snapshot());
     }());
   }
-  await Future.wait(tasks);
-  if (fatalError != null) {
-    Error.throwWithStackTrace(fatalError!, fatalStackTrace!);
-  }
-  return HomeLayout(
-    version: base.version,
-    page: base.page,
-    // Layout, catalog queries and merchant copy remain the approved design;
-    // the interface language must not make an otherwise valid Home disappear.
-    locale: locale,
-    updatedAt: base.updatedAt,
-    blocks: blocks.cast<HomeBlock>(),
-  );
+  await Future.wait(tasks, eagerError: true);
+  return snapshot();
 }
 
 Future<HomeBlock> _hydrateCatalogBlock58(
