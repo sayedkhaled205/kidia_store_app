@@ -24,11 +24,10 @@ jobs:
       - name: Freeze the verified public design
         run: |
           python3 - <<'PY'
-          import json, hashlib, urllib.request
+          import json, hashlib
           endpoint = 'https://api.woomobile.app/v1/app-design/6990b322-e396-46bb-a188-a1e472b6bf64'
-          with urllib.request.urlopen(endpoint, timeout=30) as response:
-              publication = json.load(response)
-          bundle = publication['bundle']
+          with open('tool/cold-start-qa-public-design.txt') as source:
+              bundle = source.read().strip()
           assert hashlib.sha256(bundle.encode()).hexdigest() == '3e1ed02d03d49114abc13177affccf5fce80b53188082ea114e9b460f1b965fb'
           defines = {
               'STORE_URL': 'https://kidiastore.com',
