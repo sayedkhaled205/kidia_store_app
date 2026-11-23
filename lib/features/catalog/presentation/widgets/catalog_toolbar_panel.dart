@@ -37,13 +37,15 @@ Future<T?> showCatalogToolbarPanel<T>(
           return Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: EdgeInsets.only(top: top.toDouble()),
+              padding: EdgeInsets.fromLTRB(12, top.toDouble(), 12, 0),
               child: ConstrainedBox(
                 constraints: BoxConstraints(
                   maxHeight: (height - top).toDouble(),
                 ),
                 child: Material(
                   color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(24),
+                  clipBehavior: Clip.antiAlias,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -71,4 +73,3 @@ Future<T?> showCatalogToolbarPanel<T>(
     ),
   );
 }
-

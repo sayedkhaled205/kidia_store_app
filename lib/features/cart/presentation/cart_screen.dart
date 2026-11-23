@@ -1022,7 +1022,10 @@ class _CartCheckoutBar extends StatelessWidget {
           ? Size(0, height)
           : flat
           ? const Size.fromHeight(50)
-          : null,
+          : const Size(0, 48),
+      padding: flat
+          ? null
+          : const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       shape: radius != null
           ? RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius))
           : flat
@@ -1096,8 +1099,8 @@ class _CartCheckoutBar extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Flexible(
-                        flex: 2,
+                      Expanded(
+                        flex: 3,
                         child: FilledButton.icon(
                           key: const Key('checkout-button'),
                           style: buttonStyle,
@@ -1106,7 +1109,14 @@ class _CartCheckoutBar extends StatelessWidget {
                             Icons.lock_outline_rounded,
                             size: 19,
                           ),
-                          label: Text(copy.checkout),
+                          label: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              copy.checkout,
+                              maxLines: 1,
+                              softWrap: false,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -1353,4 +1363,3 @@ class _OptionalCartDetails extends StatelessWidget {
         )
       : child;
 }
-
