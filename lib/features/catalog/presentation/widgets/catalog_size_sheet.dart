@@ -151,7 +151,7 @@ class _CatalogOptionPanelState extends State<_CatalogOptionPanel> {
                                   horizontal: 6,
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
                                 backgroundColor: theme.colorScheme.surface,
                                 selectedColor: theme.colorScheme.primary
