@@ -1393,17 +1393,22 @@ class _ProductGalleryState extends State<_ProductGallery> {
     late final ImageStreamListener listener;
     listener = ImageStreamListener(
       (ImageInfo info, bool synchronousCall) {
-        final double width = info.image.width.toDouble();
-        final double height = info.image.height.toDouble();
-        if (!mounted || width <= 0 || height <= 0) return;
-        final double resolved = (width / height).clamp(0.45, 2.4).toDouble();
-        if (_naturalAspectRatio != resolved) {
-          setState(() => _naturalAspectRatio = resolved);
-        }
-        stream.removeListener(listener);
-        if (identical(_imageStream, stream)) {
-          _imageStream = null;
-          _imageStreamListener = null;
+        try {
+          final double width = info.image.width.toDouble();
+          final double height = info.image.height.toDouble();
+          if (!mounted || width <= 0 || height <= 0) return;
+          final double resolved = (width / height).clamp(0.45, 2.4).toDouble();
+          if (_naturalAspectRatio != resolved) {
+            setState(() => _naturalAspectRatio = resolved);
+          }
+        } finally {
+          // This listener owns a cloned handle, even though it only reads size.
+          info.dispose();
+          stream.removeListener(listener);
+          if (identical(_imageStream, stream)) {
+            _imageStream = null;
+            _imageStreamListener = null;
+          }
         }
       },
       onError: (Object error, StackTrace? stackTrace) {
