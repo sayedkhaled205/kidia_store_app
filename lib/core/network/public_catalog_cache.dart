@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'catalog_snapshot.dart';
 import 'store_api_client.dart';
 import 'store_api_exception.dart';
 
@@ -47,7 +48,8 @@ class PublicCatalogCache implements StoreApiClient {
     try {
       final raw = (await SharedPreferences.getInstance()).getString(_key);
       if (raw == null || raw.length > maxBytes) return;
-      final values = jsonDecode(raw) as Map<String, dynamic>;
+      final decoded = await decodeCatalogSnapshot(raw, maxBytes);
+      final values = jsonDecode(decoded) as Map<String, dynamic>;
       for (final entry in values.entries.take(96)) {
         final value = Map<String, dynamic>.from(entry.value as Map);
         if (value['saved'] is int &&
@@ -79,7 +81,8 @@ class PublicCatalogCache implements StoreApiClient {
           _discard(_entries.keys.first);
           raw = jsonEncode(_entries);
         }
-        await (await SharedPreferences.getInstance()).setString(_key, raw);
+        final encoded = await encodeCatalogSnapshot(raw);
+        await (await SharedPreferences.getInstance()).setString(_key, encoded);
       } catch (_) {
         /* Browsing remains available if local storage is full. */
       }
