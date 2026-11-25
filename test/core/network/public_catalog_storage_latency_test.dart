@@ -61,6 +61,52 @@ void main() {
     SharedPreferences.resetStatic();
   });
 
+  test('a burst of catalog results shares one queued disk snapshot', () async {
+    final started = Completer<void>();
+    final release = Completer<void>();
+    var writes = 0;
+    write = (call) async {
+      if (++writes == 1) {
+        started.complete();
+        await release.future;
+      }
+      disk[call.arguments['key'] as String] = call.arguments['value'] as Object;
+      return true;
+    };
+    final reader = _Reader();
+    final cache = PublicCatalogCache(reader, store: 'fixture');
+    await cache.get(path, queryParameters: {'page': 1});
+    await started.future;
+    for (var page = 2; page <= 21; page++) {
+      reader.id = page;
+      final result = await cache.get(path, queryParameters: {'page': page});
+      expect(result.data, [
+        {'id': page},
+      ]);
+    }
+    release.complete();
+    await Future<void>.delayed(Duration.zero);
+    expect(
+      writes,
+      2,
+      reason: 'Do not write the same merged snapshot 20 times.',
+    );
+    expect(jsonDecode(disk.values.single as String).length, 21);
+
+    SharedPreferences.resetStatic();
+    reader.offline = true;
+    final restarted = PublicCatalogCache(reader, store: 'fixture');
+    for (var page = 1; page <= 21; page++) {
+      expect(
+        (await restarted.get(path, queryParameters: {'page': page})).data,
+        [
+          {'id': page},
+        ],
+      );
+    }
+    await Future<void>.delayed(Duration.zero);
+  });
+
   test(
     'fresh products are readable while the optional disk write is held',
     () async {

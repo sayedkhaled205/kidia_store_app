@@ -34,6 +34,7 @@ class PublicCatalogCache implements StoreApiClient {
   final _checked = <String, DateTime>{};
   Future<void>? _loaded;
   Future<void> _writing = Future.value();
+  Future<void>? _queuedSave;
   static const maxAge = Duration(days: 7);
   static const refreshInterval = Duration(minutes: 1);
   static const maxBytes = 8 * 1024 * 1024;
@@ -68,7 +69,10 @@ class PublicCatalogCache implements StoreApiClient {
   }
 
   Future<void> _save() {
+    // All updates waiting behind a disk write share the next fresh snapshot.
+    if (_queuedSave != null) return _queuedSave!;
     _writing = _writing.then((_) async {
+      _queuedSave = null;
       try {
         var raw = jsonEncode(_entries);
         while (raw.length > maxBytes && _entries.isNotEmpty) {
@@ -80,7 +84,7 @@ class PublicCatalogCache implements StoreApiClient {
         /* Browsing remains available if local storage is full. */
       }
     });
-    return _writing;
+    return _queuedSave = _writing;
   }
 
   @override
