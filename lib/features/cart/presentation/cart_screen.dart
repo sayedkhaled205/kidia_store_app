@@ -585,6 +585,7 @@ class _CartItemCard extends StatelessWidget {
                     child: image == null
                         ? const AppNetworkImageError()
                         : AppNetworkImage(
+                            decodeAtDisplaySize: true,
                             fit: BoxFit.cover,
                             imageUrl: image.thumbnailUrl.isNotEmpty
                                 ? image.thumbnailUrl

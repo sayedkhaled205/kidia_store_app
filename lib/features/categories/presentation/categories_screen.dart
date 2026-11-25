@@ -943,6 +943,7 @@ class _CategoryEditorialRow extends StatelessWidget {
                       child: SizedBox.expand(
                         child: category.image != null
                             ? AppNetworkImage(
+                                decodeAtDisplaySize: true,
                                 imageUrl: category.image!.source.toString(),
                                 fit: category.imageFit == 'cover'
                                     ? BoxFit.cover
@@ -1005,6 +1006,7 @@ class _CategoryBanner extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               AppNetworkImage(
+                decodeAtDisplaySize: true,
                 imageUrl: category.image?.source.toString() ?? '',
                 fit: BoxFit.cover,
                 semanticLabel: category.name,

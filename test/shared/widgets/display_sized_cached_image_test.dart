@@ -40,7 +40,13 @@ class _ImageCache implements BaseCacheManager {
 }
 
 void main() {
-  for (final target in [const Size(80, 80), const Size(80, 120)]) {
+  for (final fixture in [
+    (target: const Size(80, 80), decoded: const Size(480, 240)),
+    (target: const Size(80, 120), decoded: const Size(720, 360)),
+    (target: const Size(112, 160), decoded: const Size(960, 480)),
+    (target: const Size(360, 164), decoded: const Size(1080, 540)),
+  ]) {
+    final target = fixture.target;
     testWidgets(
       'landscape image keeps enough pixels for cover $target at DPR3',
       (tester) async {
@@ -94,8 +100,8 @@ void main() {
             .where((image) => image.image != null)
             .single
             .image!;
-        expect(raw.width, (target.height * 6).ceil());
-        expect(raw.height, (target.height * 3).ceil());
+        expect(raw.width, fixture.decoded.width);
+        expect(raw.height, fixture.decoded.height);
         expect(raw.width * raw.height, lessThan(1600 * 800));
         expect(tester.takeException(), isNull);
       },
