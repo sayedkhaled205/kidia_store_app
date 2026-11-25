@@ -130,6 +130,8 @@ void main() {
       final first = PublicCatalogCache(reader, store: 'https://one.example');
       await Future.wait([first.get(path), first.get(path)]);
       expect(reader.calls, 1);
+      // Restart after the asynchronous optional cache write has settled.
+      await Future<void>.delayed(Duration.zero);
       final wait = Completer<StoreApiResponse>();
       reader.read = () => wait.future;
       final restarted = PublicCatalogCache(
@@ -227,6 +229,7 @@ void main() {
     () async {
       final reader = Reader();
       await PublicCatalogCache(reader, store: 'store').get(path);
+      await Future<void>.delayed(Duration.zero);
       const gone = StoreApiException(
         kind: StoreApiFailureKind.notFound,
         message: 'gone',

@@ -185,7 +185,11 @@ class PublicCatalogCache implements StoreApiClient {
           while (_entries.length > 96) {
             _discard(_entries.keys.first);
           }
-          await _save();
+          // The fresh public response is ready for the screen. Persist it on
+          // the existing ordered queue without delaying rendering on disk I/O.
+          // _save catches storage failures; access-error eviction below still
+          // waits for persistence before propagating the error.
+          unawaited(_save());
         }
         if (generation == _generation) _invalidated.remove(key);
         return response;
